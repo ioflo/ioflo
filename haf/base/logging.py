@@ -1,0 +1,636 @@
+"""logging.py log file making module
+
+
+"""
+print "module %s" % __name__
+
+import sys
+import os
+import time
+import datetime
+import copy
+import cStringIO
+
+
+#******haf modules******
+from .globaling import *
+from .odicting import odict
+
+from . import excepting
+from . import registering
+from . import storing 
+from . import tasking
+
+from .consoling import getConsole
+console = getConsole()
+
+#debugging support
+#debug = True
+debug = False
+
+#Class definitions
+
+
+class Logger(tasking.Tasker):
+    """Logger Task Patron Registry Class for managing Logs  
+
+       Usage:   logger.send(START) to prepare log formats also reopens files
+                logger.send(RUN) runs logs
+                logger.send(STOP) closes log files needed to flush caches
+
+       iherited instance attributes
+          .name = unique name for machine
+          .store = data store for house should be same for all frameworks
+
+          .period = desired time in seconds between runs must be non negative, zero means asap
+          .stamp = time when tasker last ran sucessfully (not interrupted by exception) 
+          .status = operational status of tasker
+          .desire = desired control asked by this or other taskers
+          .runner = generator to run tasker
+
+       Instance attributes
+          .logs = dict of logs
+          .flushStamp = time logs last flushed
+          .flushPeriod = period between flushes
+          .prefix = prefix used to create log directory
+          .path = full path name of log directory
+
+    """
+    #Counter = 0  
+    #Names = {}
+
+    def __init__(self, flushPeriod = 30.0, prefix = './', **kw):
+        """Initialize instance.
+
+           Parameters
+              flushPeriod = time in seconds between flushes
+              prefix = prefix used to create log directory
+
+        """
+        if 'preface' not in kw:
+            kw['preface'] = 'Logger'
+
+        super(Logger,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
+
+        self.logs = [] #list of logs
+        self.flushStamp = 0.0
+        self.flushPeriod = max(1.0, flushPeriod)
+        self.prefix = prefix #prefix to log directory path
+        self.path = '' #log directory path created on .reopen()
+
+    def log(self):
+        """    """
+        for log in self.logs:
+            log()
+
+        try:
+            if (self.store.stamp - self.flushStamp) >= self.flushPeriod:
+                console.profuse("Logger {0} Flushed at {1}, previous flush at {2}\n".format(
+                    self.name, self.store.stamp, self.flushStamp))
+                self.flush()
+                self.flushStamp = self.store.stamp
+
+        except TypeError:
+            self.flushStamp = self.store.stamp #forces flushStamp to be a number once store.stamp is
+
+    def reopen(self):
+        """    """
+        if not self.createPath(prefix = self.prefix):
+            return False
+
+        for log in self.logs:
+            log.createPath(prefix = self.path)
+
+            if not log.reopen():
+                return False
+
+        return True
+
+    def close(self):
+        """      """
+        for log in self.logs:
+            log.close()
+
+    def flush(self):
+        """      """
+        for log in self.logs:
+            log.flush()
+
+    def prepare(self):
+        """Called in runner on control = START    """
+        for log in self.logs:
+            log.prepare()
+
+    def resolveLinks(self):
+        """    """
+        for log in self.logs:
+            log.resolveLinks()
+
+    def addLog(self, log):
+        """   """
+        self.logs.append(log)
+        #log.prepare()
+
+    def createPath(self, prefix = './'):
+        """creates log directory path
+           creates physical directories on disk
+        """
+
+
+        try:
+            #if repened too quickly could be same so we make a do until kludge
+            path = self.path 
+
+            i = 0
+            while path == self.path: #do until keep trying until different 
+                dt = datetime.datetime.now()
+                path = "%s_%s_%04d%02d%02d_%02d%02d%02d" % \
+                    (prefix, self.name, 
+                     dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second + i)
+                path = os.path.abspath(path) #convert to proper absolute path
+                i +=1
+
+            os.makedirs(path)
+
+        except OSError, ex1:
+            print "Error: creating log directory %s \n" % (ex1)
+            return False
+
+        self.path = path
+        print "     Created Logger %s Directory = %s" % (self.name, self.path)
+
+        return True
+
+    def makeRunner(self):
+        """generator factory function to create generator to run this logger
+        """
+        #do any on creation initialization here
+        console.profuse("     Making Logger Task Runner {0}\n".format(self.name))
+
+        self.status = STOPPED #operational status of tasker
+        self.desire = STOP #default what to do next time, override below
+
+        try: #catch exceptions to close log files before exiting generator
+            while (True):
+                control = (yield (self.status )) #accept control and yield status
+                console.profuse("\n     Iterate Logger {0} with control = {1} status = {2}\n".format(
+                    self.name,
+                    ControlNames.get(control, 'Unknown'),
+                    StatusNames.get(self.status, 'Unknown')))
+
+                if control == RUN:
+                    console.profuse("     Running Logger {0} ...\n".format(self.name))
+                    self.log()
+                    self.status = RUNNING
+
+                elif control == READY:
+                    console.profuse("     Attempting Ready Logger {0}\n".format(self.name))
+                    #doesn't do anything yet
+                    console.terse("     Readied Logger {0} ...\n".format(self.name))
+                    self.status = READIED            
+
+                elif control == START:
+                    console.profuse("     Attempting Start Logger {0}\n".format(self.name))
+
+                    if self.reopen():
+                        console.terse("     Starting Logger {0} ...\n".format(self.name))
+                        self.prepare()
+                        self.log()
+                        self.desire = RUN
+                        self.status = STARTED
+                    else:
+                        self.desire = STOP
+                        self.status = STOPPED
+
+                elif control == STOP:
+                    if self.status != STOPPED:
+                        console.terse("     Stopping Logger {0} ...\n".format(self.name))
+                        self.log() #final log
+                        self.close()
+                        self.desire = STOP
+                        self.status = STOPPED
+
+                else:  #control == ABORT
+                    console.profuse("     Aborting Logger {0} ...\n".format(self.name))
+                    self.close()
+                    self.desire = ABORT
+                    self.status = ABORTED
+
+                self.stamp = self.store.stamp 
+
+        finally:
+            console.terse("     Exception Causing Abort Logger {0}\n".format(self.name))
+            self.close() #close all log files
+            self.desire = ABORT
+            self.status = ABORTED
+
+
+
+class Log(storing.Patron, registering.Registry):
+    """Log Class for logging to file
+
+       Iherited instance attributes:
+          .name = unique name for log (group)
+          .store = data store 
+
+       Instance attributes:
+          .stamp = time stamp last time logged used by once and update actions
+          .kind = text or binary
+          .fileName = file name only
+          .path = full dir path name of file
+          .file = file where log is written
+          .rule = log rule conditions for log
+          .action = function to use when logging
+          .header = header for log file
+          .formats = ordered dictionary of log format strings
+          .loggees = ordered dictionary of shares to be logged 
+    """
+    Counter = 0  
+    Names = {}
+
+    def __init__(self, kind = 'text', fileName = '', rule = NEVER, loggees = None, **kw):
+        """Initialize instance.
+           Parameters:
+           kind = text or binary
+           rule = log rule conditions (NEVER, ONCE, ALWAYS, UPDATE, CHANGE)
+           loggees = ordered dictionary of shares to be logged with tags
+
+
+        """
+        if 'preface' not in kw:
+            kw['preface'] = 'Log'
+
+        super(Log,self).__init__(**kw) #store and name inited here
+
+        self.stamp = None #time stamp last logged, None means never logged
+
+        self.kind = kind
+        if fileName:
+            self.fileName = fileName #file name only 
+        else:
+            self.fileName = self.name
+        self. path = '' #full dir path name of file
+        self.file = None #file where log is written
+
+        self.rule = rule #log rule when to log
+        self.action = None #which method to use when logging
+        self.assignRuleAction() #assign log action function
+
+        self.header = ''
+        self.formats = odict() #ordered dictionary of log format strings by tag
+        self.loggees = odict() #ordered dict of shares to be logged (loggees) by tag
+        self.lasts = odict()   #ordered dict of last values for loggees by tag
+
+        if loggees:
+            if '_time' in loggees:
+                raise excepting.ResolveError("Bad loggee tag '_time'", self.name, loggee['_time'].name)
+            self.loggees.update(loggees)
+
+
+    def __call__(self, **kw):
+        """run .action
+
+        """
+        self.action(**kw)
+        console.profuse("     Log {0} at {1}\n".format(self.name, self.stamp))
+
+
+    def createPath(self, prefix):
+        """creates full path name of file
+
+        """
+        if self.kind == 'text':
+            suffix = '.txt'
+        elif self.kind == 'binary':
+            suffix = '.log'
+
+        self.path = "%s/%s%s" % (prefix,self.fileName,suffix)
+        self.path = os.path.abspath(self.path) #convert to proper absolute path
+
+    def reopen(self):
+        """closes if open then reopens
+        """
+        self.close()  #innocuous to call close() on unopened file
+        try:
+            self.file = open(self.path, 'a+')
+
+        except IOError, ex1:
+            print "Error: creating log file %s \n" % (ex1)
+            self.file = None
+            return False
+
+        print "     Created Log file %s " % (self.path)
+
+        return True
+
+    def close(self):
+        """ close self.file if open except stdout
+        """
+        if self.file and not self.file.closed:
+            self.file.close()
+            self.file = None
+
+    def flush(self):
+        """ flush self.file if open except stdout
+        """
+        if self.file and not self.file.closed:
+            self.file.flush()
+            os.fsync(self.file.fileno())
+
+    def assignRuleAction(self, rule = None):
+        """Assigns correct log action based on rule
+
+        """
+        #should be different if binary kind
+        if rule is not None:
+            self.rule = rule
+
+        if self.rule == ONCE: 
+            self.action = self.once
+        elif self.rule == ALWAYS:
+            self.action = self.always
+        elif self.rule == UPDATE:
+            self.action = self.update
+        elif self.rule == CHANGE:
+            self.action = self.change
+        else:
+            self.action = self.never
+
+    def prepare(self):
+        """Prepare log formats and values
+
+        """
+        console.profuse("     Preparing formats for Log {0}\n".format(self.name))
+
+        #build header
+        cf = cStringIO.StringIO()
+        cf.write(self.kind)
+        cf.write('\t')
+        cf.write(LogRuleNames[self.rule])
+        cf.write('\t')
+        cf.write(self.fileName)
+        cf.write('\n')
+        cf.write('_time')
+        for tag, loggee in self.loggees.items():
+            if len(loggee) > 1:
+                for field in loggee: 
+                    cf.write('\t')
+                    cf.write(tag)
+                    cf.write('.')
+                    cf.write(field)
+            else:
+                cf.write('\t')
+                cf.write(tag)
+
+        cf.write('\n')
+        self.header = cf.getvalue()
+        cf.close()
+
+        #should be different if binary kind
+        #build formats
+        self.formats.clear()
+        self.formats['_time'] = '%0.4f'
+        for tag, loggee in self.loggees.items():
+            self.formats[tag] = odict()
+            for field, value in loggee.items():
+                self.formats[tag][field] = self.format(value)
+
+        #build last copies for if changed
+        self.lasts.clear()
+        for tag, loggee in self.loggees.items():
+            self.lasts[tag] = storing.Data(loggee.items())  #make copy of logee data
+
+        if self.stamp is None: #never logged so log headers
+            self.file.write(self.header)
+
+    def format(self, value):
+        """returns format string for value type
+
+        """
+        if isinstance(value, float):
+            return '\t%0.4f'
+        elif isinstance(value, bool):
+            return '\t%s'
+        elif isinstance(value, int) or isinstance(value, long):
+            return '\t%d'
+        else:
+            return '\t%s'
+
+    def log(self):
+        """called by conditional actions
+
+        """
+        self.stamp = self.store.stamp
+
+        #should be different if binary kind
+        cf = cStringIO.StringIO() #use string io faster than concatenation
+        try:
+            text = self.formats['_time'] % self.stamp
+        except TypeError:
+            text = '%s' % self.stamp
+        cf.write(text)
+
+        for tag, loggee in self.loggees.items():
+            if loggee: #len non zero
+                for field, value in loggee.items():
+                    try:
+                        text = self.formats[tag][field] % value
+                    except TypeError:
+                        text = '%s' % value
+                    cf.write(text)
+
+            else: #no items so just write tab
+                cf.write('\t')
+
+        cf.write('\n')
+
+        try:
+            self.file.write(cf.getvalue())
+        except ValueError, ex1: #if self.file already closed then ValueError
+            print ex1
+
+        cf.close()
+
+    def never(self):
+        """log never
+           This if for manual logging by frame action
+        """
+        pass
+
+    def once(self):
+        """log once 
+           Good for logging paramters that don't change but want record
+        """
+        if self.stamp is None:
+            self.log()
+
+    def always(self):
+        """log always
+
+        """
+        self.log()
+
+    def update(self):
+        """log if updated 
+           logs once and then only if updatee
+        """
+        if self.stamp is None: #Always log at least once even if not updated
+            self.log()
+            return
+
+        for loggee in self.loggees.values():
+            if loggee.stamp > self.stamp:  #any number is > None
+                self.log()
+                return  #first update triggers log once per cycle
+
+    def change(self):
+        """log if changed
+           logs once and then only if changed
+           requires that self.prepare has been called otherwise fields in
+           self.lasts won't match fields in log
+        """
+        if self.stamp is None: #Always log at least once even if not updated
+            self.log()
+            return
+
+        change = False
+        for tag, loggee in self.loggees.items():
+            last = self.lasts[tag] #get last Data object for each loggee
+            for field, value in loggee.items(): 
+                if getattr(last, field) != value:
+                    change = True
+                    setattr(last, field, value)
+
+        if change:
+            self.log()
+
+    def addLoggee(self, tag, loggee):
+        """
+
+        """
+        if self.stamp is None: #only add if not logged even once yet
+            if tag in self.loggees: #only add if not already there
+                raise excepting.ResolveError("Duplicate tag", tag, loggee)
+            self.loggees[tag] = loggee
+
+    def resolveLinks(self):
+        """resolves links to loggees
+
+        """
+        console.profuse("     Resolving links for Log {0}\n".format(self.name))
+
+        for tag, loggee in self.loggees.items():
+            if not isinstance(loggee, storing.Share):
+                share = self.store.fetch(loggee)
+                if not share:
+                    raise excepting.ResolveError("Loggee not in store", loggee, self.name)
+                self.loggees[tag] = share #replace link name with link
+
+def TestLog(rule = UPDATE):
+    """Module Common self test
+
+    """
+    global debug
+
+    oldDebug = debug
+    debug = True #turn on debug during tes
+
+    storing.Store.Clear() #clear registry
+    Log.clear()
+
+
+    store = storing.Store(name = 'Test')
+    heading = store.create('pose.heading').create(value = 0.0)
+    position = store.create('pose.position').create(north = 10.0, east = 5.0)
+
+    log = Log(name = 'test', store = store, kind = 'console', 
+              prefix = 'log', path = './logs/', rule = rule)
+    log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+    log.addLoggee(tag = 'pos', loggee = 'pose.position')
+    log.resolveLinks()
+    log.prepare()
+
+    print "logging log %s to file %s" % (log.name, log.fileName)
+    log() #log
+    for i in range(20):
+        store.advanceStamp(0.125)
+        if i == 5:
+            heading.value += 0.0
+            position.data.north += 0.0
+            position.data.east -= 0.0
+        elif i == 10:
+            pass
+        else:
+            heading.value = float(i)
+            position.data.north += 2.0
+            position.data.east -= 1.5
+
+        log() #log
+
+
+
+    log.close()
+
+    debug = oldDebug #restore debug value
+
+
+
+def Test(rule = UPDATE):
+    """Module Common self test
+
+    """
+    global debug
+
+    oldDebug = debug
+    debug = True #turn on debug during tes
+
+    storing.Store.Clear()
+    Logger.clear()
+    Log.clear()
+
+    store = storing.Store(name = 'Test')
+
+    heading = store.create('pose.heading').create(value = 0.0)
+    position = store.create('pose.position').create(north = 10.0, east = 5.0)
+
+    log = Log(name = 'test', store = store, kind = 'text', 
+              prefix = 'log', path = './logs/', rule = rule)
+    log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+    log.addLoggee(tag = 'pos', loggee = 'pose.position')
+    log.resolveLinks()
+
+    logger = Logger(name = 'Test', store = store)
+    logger.addLog(log) 
+
+    status = logger.runner.send(START) #also prepares logs
+    status = logger.runner.send(RUN)
+
+    for i in range(20):
+        store.advanceStamp(0.125)
+        if i == 5:
+            heading.value += 0.0
+            position.data.north += 0.0
+            position.data.east -= 0.0
+        elif i == 10:
+            pass
+        else:
+            heading.value = float(i)
+            position.data.north += 2.0
+            position.data.east -= 1.5
+
+        status = logger.runner.send(RUN)
+
+    status = logger.runner.send(STOP)
+
+    status = logger.runner.send(START)
+    store.advanceStamp(0.125)
+    heading.value += 5.0
+    status = logger.runner.send(RUN)
+    status = logger.runner.send(STOP)
+
+    debug = oldDebug #restore debug value
+
+
+if __name__ == "__main__":
+    Test()
+
