@@ -13,7 +13,7 @@
 
 * Concurrent micro-threading framework
 
-* Comprehensive pub/sub framwork
+* Comprehensive pub/sub framework
 
 * Dependency injection framework
 
