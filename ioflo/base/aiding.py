@@ -16,7 +16,7 @@ import re
 import string
 from collections import deque
 
-#******haf modules******
+
 from .globaling import *
 
 from .consoling import getConsole

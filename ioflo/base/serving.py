@@ -11,7 +11,7 @@ import cStringIO
 
 from collections import deque
 
-#******haf modules******
+
 from .odicting import odict
 from .globaling import *
 
@@ -276,7 +276,7 @@ class Server(tasking.Tasker):
 
 def TestOpenStuff():
     """    """
-    import haf.base.storing as storing
+    import ioflo.base.storing as storing
 
     global debug
     debug = True
@@ -295,8 +295,8 @@ def Test(verbose = False):
 
 
     """
-    import haf.base.storing as storing
-    import haf.base.tasking as tasking
+    import ioflo.base.storing as storing
+    import ioflo.base.tasking as tasking
 
     global debug
     oldDebug = debug

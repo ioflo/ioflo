@@ -7,7 +7,7 @@ import copy
 from collections import deque
 from itertools import izip
 
-#******haf modules******
+
 from .globaling import *
 from . import excepting
 from . import registering

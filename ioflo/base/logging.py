@@ -12,7 +12,7 @@ import copy
 import cStringIO
 
 
-#******haf modules******
+
 from .globaling import *
 from .odicting import odict
 

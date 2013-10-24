@@ -10,7 +10,7 @@ from collections import deque
 import inspect
 
 
-#******haf modules******
+
 from .globaling import *
 
 from . import aiding

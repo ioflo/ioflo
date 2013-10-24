@@ -390,7 +390,7 @@ def BoxLineSegs(north = 0.0, east = 0.0, track = 0.0, length = 0.0, width = 0.0)
        length is length of box
        width is width of box
     """
-    from haf.base.aiding import RotateFSToNE
+    from .aiding import RotateFSToNE
     #aiding.RotateFSToNE(heading = -track, forward = pn, starboard = pe)
     lines = []
 

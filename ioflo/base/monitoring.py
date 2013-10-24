@@ -4,7 +4,7 @@
 """
 print "module %s" % __name__
 
-#******haf modules******
+
 from .globaling import *
 
 from . import aiding

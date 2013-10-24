@@ -6,7 +6,7 @@ print "Module %s" % __name__
 
 import random
 
-#******haf modules******
+
 from .globaling import *
 
 #debugging support

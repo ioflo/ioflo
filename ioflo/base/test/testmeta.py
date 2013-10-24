@@ -16,10 +16,10 @@ def Run(fileName = None, period = 0.2, real = False,
         verbose = 0, profiling = False):
     """Run once """
 
-    import haf.base.skedding as skedding
+    import ioflo.base.skedding as skedding
 
     if not fileName:
-        fileName = "../../app/plan/meta.haf"
+        fileName = "../../app/plan/meta.flo"
 
 
     print "Building ..."
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     sys.stderr.write(str(sys.argv) + "\n") #joins list items with space separator
 
-    filename = '../../app/plan/meta.haf'
+    filename = '../../app/plan/meta.flo'
     period = 0.125
     verbose = 0
     real = False

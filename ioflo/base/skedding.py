@@ -10,7 +10,7 @@ from collections import deque
 from .consoling import getConsole
 console = getConsole()
 
-#******haf modules******
+
 from .odicting import odict
 from .globaling import *
 

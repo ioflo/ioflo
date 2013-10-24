@@ -11,7 +11,7 @@ import re
 from collections import deque
 from itertools import izip
 
-#******haf modules******
+
 from .odicting import odict
 from .globaling import *
 
@@ -393,7 +393,7 @@ class Builder(object):
 
             self.currentHouse.assignRegistries()
 
-            from .. import CreateAllInstances, _InstanceModules # haf/__init__.py
+            from .. import CreateAllInstances, _InstanceModules # ioflo/__init__.py
             CreateAllInstances(self.currentHouse.store, _InstanceModules)
 
             console.profuse("     Clearing current Framer, Frame, Log etc.\n")

@@ -11,7 +11,7 @@ from collections import deque
 import inspect
 
 
-#******haf modules******
+
 from ...base.odicting import odict
 from ...base.globaling import *
 

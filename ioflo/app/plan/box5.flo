@@ -1,0 +1,62 @@
+#example mission box5.flo
+#with loagrefactored box mission with load
+# uses exit context to increment counter
+
+house box5
+
+init max.depth to 50.0
+
+init boxer.heading to 0.0
+init boxer.turn to 90.0
+init boxer.leg to 0.0
+init boxer.nlegs to 4.0
+
+framer vehiclesim be active first vehicle_run
+
+frame vehicle_run
+   do simulator motion uuv
+
+framer mission be active first leg
+
+frame depthmax
+   go abort if depth >= .max.depth 
+
+frame leg in depthmax
+   set elapsed to 20.0
+   set heading from boxer.heading
+   set depth to 5.0
+   set speed to 2.5
+   go gpsfix if elapsed >= goal 
+   go mission_stop if .boxer.leg >= .boxer.nlegs 
+
+frame gpsfix
+   aux gps
+   go leg if done gps
+   exit
+      inc boxer.heading from boxer.turn
+      inc boxer.leg by 1.0
+
+frame abort
+   set depth to 0.0
+   set speed to 2.5
+   go mission_stop if depth == 0.0 +- 0.25 
+
+frame mission_stop  
+   bid stop all
+
+framer autopilot be active first autopilot_run
+
+frame autopilot_run
+   do controller pid speed
+   do controller pid heading
+   do controller pid depth
+   do controller pid pitch
+   
+logger logger to ../log/
+log state   on update
+loggee position state.position heading state.heading depth state.depth speed state.speed
+
+log goal   on update
+loggee heading goal.heading depth goal.depth speed goal.speed
+
+load ../plan/gps.flo

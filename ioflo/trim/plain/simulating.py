@@ -11,7 +11,7 @@ from collections import deque
 import random
 
 
-#******haf modules******
+
 from ...base.globaling import *
 
 from ...base import aiding

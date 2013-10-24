@@ -8,7 +8,6 @@ import struct
 from collections import deque
 import inspect
 
-#******haf modules******
 from .odicting import odict
 from .globaling import *
 

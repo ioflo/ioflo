@@ -1,4 +1,4 @@
-""" haf app run package"""
+""" app run package"""
 print "\nPackage at %s" % __path__[0]
 
 from ...base.globaling import *
@@ -15,11 +15,10 @@ def Run( fileName = None,
 
     console = getConsole(verbosity=Console.Wordage[verbose])
 
-    #from haf.base import building
-    from haf.base import skedding
+    from ...base import skedding
 
     if not fileName:
-        fileName = "../plan/box1.haf"
+        fileName = "../plan/box1.flo"
 
 
     console.terse( "Building ...")

@@ -16,7 +16,7 @@ import time
 import copy
 from collections import deque #double ended que, pronounced deck
 
-#******haf modules******
+
 from .globaling import *
 
 from . import aiding

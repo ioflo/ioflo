@@ -21,7 +21,7 @@ import pdb
 import copy
 #from collections import deque
 
-#******haf modules******
+
 from .globaling import *
 
 from . import excepting

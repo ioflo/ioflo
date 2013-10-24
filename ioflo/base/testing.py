@@ -10,7 +10,7 @@ import pstats
 import time
 import struct
 
-#******haf modules******
+
 from .globaling import *
 from .consoling import getConsole
 
@@ -27,7 +27,7 @@ def Test(fileName = None, period = 0.2, real = False,
     import tasking
 
     if not fileName:
-        fileName = "../plan/box1.haf"
+        fileName = "../plan/box1.flo"
 
     console.terse( "Building ...")
     skedder = tasking.Skedder(name = "TestSkedder",
@@ -54,12 +54,12 @@ if __name__ == "__main__":
     import sys
     import getopt
 
-    from haf.base.consoling import getConsole
+    from ioflo.base.consoling import getConsole
 
     console = getConsole(verbosity=console.Wordage.profuse)
     console.profuse(str(sys.argv) + "\n")
 
-    filename = '../plan/box1.haf'
+    filename = '../plan/box1.flo'
     period = 0.125
     verbose = 0
     real = False

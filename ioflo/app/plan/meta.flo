@@ -1,0 +1,85 @@
+# meta.flo
+# bootstrap house and framer that builds rest of houses and framers
+# This is a test of the line continuation \
+# how does this work
+
+house meta
+
+init meta.name to value "test"
+init meta.spot to when "now" where "here"
+init meta.name to value "test2"
+
+framer testmeta be active first testmeta
+
+frame testmeta
+   print "Hello World"
+   print 1 2 3 4 5
+   set elapsed to 1.0
+   go next if elapsed >= goal
+   
+frame testtimeout
+   print "timeout"
+   timeout 1.0
+   
+frame testrecurred
+   print "recurred"
+   set recurred to 4
+   recur
+      print "recurred again"
+   go next if recurred >= goal
+   
+frame testrepeat
+   print "repeat"
+   recur
+      print "repeated again"
+   repeat 2
+   
+frame doslave
+   print doslave
+   ready testslave #benter
+   native
+   print start testslave
+   start testslave # enter
+   run testslave # recur
+   go next if done testslave
+   stop testslave # exit
+   
+frame abortslave
+   print abortslave
+   abort testslave
+   go next if status testslave is aborted
+
+frame finish
+   bid stop all
+
+
+logger logger to ../log/
+log meta on once
+loggee name meta.name version meta.version platform meta.platform
+
+
+framer testslave be slave first slave1 # slave framer
+
+frame slave1
+   print slave1
+   go next 
+   
+frame slave2
+   print slave2
+   repeat 3
+   recur
+      print slave2 again
+
+frame slave3 #so complete
+   print slave3
+   done
+
+server server one as server to ../log/ rx :55551 with stuff 5 
+server server two as server to ../log/ \
+   rx :55552 \
+   from value in .meta.name # trailing comment
+server server to ../log/ # trailing comment
+
+tasker tasker one as tasker  with stuff 5
+tasker tasker two as tasker  from value in .meta.name
+tasker tasker 

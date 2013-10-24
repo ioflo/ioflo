@@ -9,7 +9,7 @@ import re
 import copy
 
 
-#******haf modules******
+
 from .globaling import *
 from .odicting import odict
 

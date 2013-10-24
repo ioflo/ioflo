@@ -27,7 +27,7 @@ if __name__ == "__main__":
         sys.stderr.write("go arguments:\n")
         sys.stderr.write(str(sys.argv) + "\n") #joins list items with space separator
 
-    filename = '../plan/box1.haf'
+    filename = '../plan/box1.flo'
     period = 0.125
     verbose = 2
     real = False
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         print sys.path
 
         # absolute import since command line
-        from haf.app.run import Run
+        from ioflo.app.run import Run
 
         Run(fileName = filename, period = period, 
             verbose = verbose, real = real)
