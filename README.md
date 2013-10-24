@@ -1,9 +1,7 @@
 
 ![Logo](docs/images/ioflo_logo.png?raw=true)
 
-#IoFlo
-
-
+#ioflo
 
 * Automated reasoning engine
 
