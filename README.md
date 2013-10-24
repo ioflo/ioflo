@@ -1,7 +1,9 @@
 
 ![Logo](docs/images/ioflo_logo.png?raw=true)
 
-#ioflo  - Enabling The Programmable World
+#ioflo
+
+##Enabling The Programmable World
 
 * Automated reasoning engine
 
