@@ -5,6 +5,9 @@
 
 ##Enabling The Programmable World
 
+http://ioflo.com
+
+
 * Automated reasoning engine
 
 * Automation operating system
@@ -20,7 +23,8 @@
 * Dependency injection framework
 
 
-![Logo](docs/images/ioflo_o.png?raw=true)
+![O](docs/images/ioflo_o.png?raw=true)
+
 
 # FloScript
 
@@ -39,3 +43,5 @@
 
 
 ### Apache v2 license
+
+![LogoBlack](docs/images/ioflo_logo_black.png?raw=true)
