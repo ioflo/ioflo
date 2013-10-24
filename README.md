@@ -1,7 +1,7 @@
 
 ![Logo](docs/images/ioflo_logo.png?raw=true)
 
-#ioflo
+#IoFlo
 
 
 
@@ -22,7 +22,7 @@
 
 ![Logo](docs/images/ioflo_o.png?raw=true)
 
-# floscript
+# FloScript
 
 * Convenient, user friedly configuration language for ioflo
 
