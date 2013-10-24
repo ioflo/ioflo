@@ -11,3 +11,4 @@ ioflo
 
 ##Hierarchical action framework
 
+![Logo](docs/images/ioflo_logo.png?raw=true)
