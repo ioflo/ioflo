@@ -122,9 +122,12 @@ class Skedder(object):
         else:
             self.metaData = [
                 ("name", "meta.name", odict(value="Test")),
-                ("version", "meta.version", odict(value="0.0.6")),
+                ("version", "meta.version", odict(value="0.7.2")),
                 ("platform", "meta.platform",
-                 odict([("os", "unix"), ("processor", "intel"), ]) )
+                     odict([("os", "unix"), ("processor", "intel"), ])),
+                ("period", "meta.period", odict(value=self.period)),
+                ("real", "meta.real", odict(value=self.real)),
+                ("filepath", "meta.filepath", odict(value=self.filePath)),
             ] 
 
         self.ready = deque() #deque of taskers in run order

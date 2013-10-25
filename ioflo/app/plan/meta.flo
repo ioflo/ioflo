@@ -55,7 +55,7 @@ frame finish
 
 logger logger to ../log/
 log meta on once
-loggee name meta.name version meta.version platform meta.platform
+loggee name meta.name version meta.version period meta.period
 
 
 framer testslave be slave first slave1 # slave framer
