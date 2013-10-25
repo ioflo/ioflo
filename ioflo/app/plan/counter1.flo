@@ -1,0 +1,38 @@
+#example mission counter1.flo
+# Design pattern: Counting iterations of aux framer
+# uses forced enter exit to inc a counter and 
+# run aux all in one frame
+
+house uuv
+
+framer mission be active first leg
+
+frame setup
+   set .leg to 0
+   set .nlegs to 3
+   
+frame leg in setup
+   aux myaux
+   go me if done myaux  #forced exit entry 
+   go finish if .leg >= .nlegs
+   exit
+      inc .leg by 1
+
+frame finish
+   bid stop uuvlogger
+   bid stop me
+
+logger uuvlogger to ./logs/
+log leg on update
+loggee leg leg
+
+framer myaux be aux first myaux1
+
+frame myaux1
+   go next if elapsed >= 1.0
+   
+frame myaux2
+   timeout 1.0
+      
+frame myaux3
+   done
