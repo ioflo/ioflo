@@ -1,5 +1,5 @@
-#example mission box5.flo
-#with loagrefactored box mission with load
+# example mission box5.flo
+# refactored box mission with load
 # uses exit context to increment counter
 
 house box5

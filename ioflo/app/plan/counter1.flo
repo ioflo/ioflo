@@ -22,7 +22,7 @@ frame finish
    bid stop uuvlogger
    bid stop me
 
-logger uuvlogger to ./logs/
+logger uuvlogger to ../log/
 log leg on update
 loggee leg leg
 

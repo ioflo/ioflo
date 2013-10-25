@@ -13,7 +13,6 @@ framer testmeta be active first testmeta
 
 frame testmeta
    print "Hello World"
-   print 1 2 3 4 5
    set elapsed to 1.0
    go next if elapsed >= goal
    
@@ -35,10 +34,7 @@ frame testrepeat
    repeat 2
    
 frame doslave
-   print doslave
    ready testslave #benter
-   native
-   print start testslave
    start testslave # enter
    run testslave # recur
    go next if done testslave
