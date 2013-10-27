@@ -51,9 +51,14 @@ http://ioflo.com
 
 
 ![SysArch](docs/images/IofloSysArch.pdf?raw=true)
+
 ![ArchParts](docs/images/IofloArchParts.pdf?raw=true)
+
 ![Contexts](docs/images/IofloContexts.pdf?raw=true)
+
 ![Envelope](docs/images/IofloReliableEnvelope.pdf?raw=true)
+
+
 
 ![O](docs/images/ioflo_o.png?raw=true)
 
