@@ -44,4 +44,8 @@ http://ioflo.com
 
 ### Apache v2 license
 
+![O](docs/images/ioflo_o.png?raw=true)
+
+
+
 ![LogoBlack](docs/images/ioflo_logo_black.png?raw=true)
