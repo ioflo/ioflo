@@ -22,10 +22,12 @@ http://ioflo.com
 
 * Dependency injection framework
 
+* Contectual Computation Engine
 
-![ORecurse](docs/images/ioflo_o_recurse.png?raw=true)
 
 
+
+![FloScript](docs/images/floscript_logo.png?raw=true)
 
 # FloScript
 
@@ -60,7 +62,7 @@ http://ioflo.com
 
 
 
-![O](docs/images/ioflo_o.png?raw=true)
 
 
-![LogoBlack](docs/images/ioflo_logo_black.png?raw=true)
+![ORecurse](docs/images/ioflo_o_recurse.png?raw=true)
+
