@@ -129,36 +129,28 @@ class Actor(storing.Patron, registering.Registry):
               .name = unique name for actor instance
               .store = shared data store
 
-           attributes
-              .pubs = shares in data store written  by this action
-              .subs = shares in data store read but not written by this action
-
         """
         if 'preface' not in kw:
             kw['preface'] = 'Actor'
 
         super(Actor,self).__init__(name = name, **kw)
-
-        self.pubs = {}
-        self.subs = {}
-
-
+    
     def __call__(self, **kw):
         """run .action
 
         """
         return self.action(**kw)
-
+    
     def action(self, **kw):
         """Action called by Actor. Should override in subclass."""
         console.profuse("Actioning {0} with {1}\n".format(self.name, str(kw)))
 
         pass
-
+    
     def expose(self):
         """Show Actor."""
         console.terse("Actor {0}".format(self.name))
-
+    
     def resolveLinks(self, **kw):
         """Resolves any links in parms for Actor
            should be overridden by sub class

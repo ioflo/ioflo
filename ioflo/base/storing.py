@@ -89,31 +89,31 @@ class Store(registering.Registry):
             raise
 
     def fetch(self, name):
-        """Retrieve from .shares a  group (or special case share)  by its name
+        """Retrieve from .shares a  node (or special case share)  by its name
            where name is path through hierarchy (may be partial)
-           return group or share or if not exist return None
+           return node or share or if not exist return None
 
-           User of this method needs to test result to determine if group or share
+           User of this method needs to test result to determine if node or share
 
-           isinstance(gos, Share)
+           isinstance(nos, Share)
 
            since .shares is hierachical dictionary of dictionaries
            need to traverse the hirearchy
         """
         try:
             levels = name.strip('.').split('.')
-            gos = self.shares #start at top where gos =group dict or share
+            nos = self.shares #start at top where nos is node dict or share
             for level in levels:
-                gos = gos[level] #attempt dict reference
+                nos = nos[level] #attempt dict reference
 
         except KeyError: #key error when level not in dict so bad name
             return None
 
-        return gos #group or share
+        return nos #node or share
 
     def fetchShare(self, name):
         """Retrieve from .shares a  share by its name 
-           return share or if not exist or if not a share (group by same name then
+           return share or if not exist or if not a share (node by same name then
               return None
 
            since .shares is hierachical dictionary of dictionaries
@@ -121,21 +121,21 @@ class Store(registering.Registry):
         """
         try:
             levels = name.strip('.').split(".")
-            gos = self.shares #start at top where gos =group dict or share
+            nos = self.shares #start at top where nos =node dict or share
             for level in levels:
-                gos = gos[level]
+                nos = nos[level]
 
         except KeyError:
             return None
 
-        if not isinstance(gos, Share):
+        if not isinstance(nos, Share):
             return None
 
-        return gos  #this is actually a share
+        return nos  #this is actually a share
 
-    def fetchGroup(self, name):
-        """Retrieve from .shares a  group by its name from .shares
-           return group or if not exist or if not a group (share by same name then
+    def fetchNode(self, name):
+        """Retrieve from .shares a  node by its name from .shares
+           return node or if not exist or if not a node (share by same name then
               return None
 
            since .shares is hierachical dictionary of dictionaries
@@ -143,24 +143,24 @@ class Store(registering.Registry):
         """
         try:
             levels = name.strip('.').split(".")
-            gos = self.shares
+            nos = self.shares
             for level in levels:
-                gos = gos[level]
+                nos = nos[level]
 
         except KeyError:
             return None
 
-        if isinstance(gos, Share):
+        if isinstance(nos, Share):
             return None
 
-        return gos #this is actually not a share (assume group)
+        return nos # this is a node
 
 
     def add(self, share):
         """Add share to store and change shares .store to self
-           Creates group hierarchy from name as needed
+           Creates node hierarchy from name as needed
            If share already exists with same name then raises exception. Should use .change instead
-           This is to prevent inadvertant adding of shares that clobber group hierarchy
+           This is to prevent inadvertant adding of shares that clobber node hierarchy
 
            for a single item list 
               the slice [0:-1] is empty
@@ -170,21 +170,21 @@ class Store(registering.Registry):
             raise ValueError("Not Share %s" % share)
 
         levels = share.name.strip('.').split('.') #strip leading and following '.' and split
-        group = self.shares
+        node = self.shares
         for level in levels[0:-1]: #all but last
             if not level:
                 raise ValueError("Empty level in '%s'" % share.name)
 
-            group = group.setdefault(level, odict()) #add group of not exist
-            if isinstance(group, Share):
+            node = node.setdefault(level, odict()) #add node if not exist
+            if isinstance(node, Share):
                 raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
 
         tail = levels[-1]
 
-        if tail in group:
+        if tail in node:
             raise ValueError("Tail '%s' of '%s' is preexisting level" % (tail, share.name))
 
-        group[tail] = share
+        node[tail] = share
         share.changeStore(self)
 
         console.profuse("     Added share {0} to {1}\n".format(share.name, self.name))
@@ -193,31 +193,31 @@ class Store(registering.Registry):
 
     def change(self, share):
         """change existing share with same name in store to share and change share's .store to self
-           if share and group hierachy do not exist then raises exception 
-           this is to make it harder to inadvertantly mess up group hierarchy
+           if share and node hierachy do not exist then raises exception 
+           this is to make it harder to inadvertantly mess up node hierarchy
         """
         if  not isinstance(share, Share):
             raise ValueError("Not share %s" % share)
 
         levels = share.name.strip('.').split(".")
-        group = self.shares
+        node = self.shares
         for level in levels[0:-1]: #all but last
             if not level:
                 raise ValueError("Empty level in '%s'" % share.name)
 
-            if level in group: 
-                group = group[level]
-                if isinstance(group, Share):
+            if level in node: 
+                node = node[level]
+                if isinstance(node, Share):
                     raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
 
             else:
                 raise ValueError("No share with name '%s'" % share.name)
 
         tail = levels[-1]
-        if (tail not in group) or (not isinstance(group[tail], Share)):
+        if (tail not in node) or (not isinstance(node[tail], Share)):
             raise ValueError("No share with name '%s'" % share.name)
 
-        group[tail] = share
+        node[tail] = share
 
         share.changeStore(self)
 
@@ -238,22 +238,22 @@ class Store(registering.Registry):
     def expose(self):
         """   """
         print "Store name = %s, stamp = %s" % (self.name, self.stamp)
-        print "Groups & Shares:"
-        Store.ShowGroup(self.shares, indent = 0)
+        print "Nodes & Shares:"
+        Store.ShowNode(self.shares, indent = 0)
 
 
     @staticmethod
-    def ShowGroup(group, indent = 0):
-        if isinstance(group, dict):
-            for key, value in group.items():
+    def ShowNode(node, indent = 0):
+        if isinstance(node, dict):
+            for key, value in node.items():
                 for i in range(indent):
                     print "  ",
                 print ".%s " % key
-                Store.ShowGroup(value, indent = indent + 1)
+                Store.ShowNode(value, indent = indent + 1)
         else:
             for i in range(indent):
                 print "  ",
-            for key in group.keys():
+            for key in node.keys():
                 print "%s " % key,
             print
 

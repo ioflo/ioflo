@@ -1154,7 +1154,7 @@ class Builder(object):
                 index +=1
 
                 share = self.currentStore.create(path) #create so no errors at runtime
-                if not isinstance(share, storing.Share): #verify path ends in share not group
+                if not isinstance(share, storing.Share): #verify path ends in share not node
                     print "Error building %s. Loggee path not Share. path = %s tokens = %s" %\
                           (command, path, tokens)
                     return False

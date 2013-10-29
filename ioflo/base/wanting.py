@@ -45,10 +45,7 @@ class Want(acting.Actor):
        inherited attributes
           .name = unique name for actor instance
           .store = shared data store
-
-       instance attributes
-          .pubs = shares in data store written  by this action
-          .subs = shares in data store read but not written by this action
+          
     """
     Counter = 0  
     Names = {}

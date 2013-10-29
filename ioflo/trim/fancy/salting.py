@@ -1,4 +1,47 @@
-"""salting.py saltstack integration behaviors
+""" salting.py saltstack integration behaviors
+
+
+Shares
+
+.meta
+    .period
+        value
+
+.goal
+    .overload
+            value
+
+.state
+    .overload
+            value
+
+
+.salt
+    .pool 
+        alpha  ms-1 ...
+            on off
+    .overload
+        value
+    .autoscale
+        .up  
+        .down
+        .failure
+        .abort
+        
+    .eventer
+        .job
+        
+        .sub
+        
+        .event
+        
+    .bosser
+        .overload
+            .event
+            .parm
+                high low
+
+
 
 """
 print "module %s" % __name__
@@ -24,15 +67,20 @@ def CreateInstances(store):
     """Create action instances. Recreate with each new house after clear registry
     """
 
-    saltEventerJob = Eventer(name = 'saltEventerJob', store = store, 
-                                       group = 'salt.eventer.job', output = 'salt.eventer.job.event',
-                                       input_ = 'salt.eventer.job.sub', period='meta.period', 
-                                       parms = dict(throttle = 0.0))
+    saltEventerJob = Eventer(name = 'saltEventerJob', store=store, 
+                                group='salt.eventer.job',
+                                oflo='salt.eventer.job.event',
+                                iflo='salt.eventer.job.sub',
+                                period='meta.period', 
+                                parms=dict(throttle=0.0, ))
 
-    saltBosserCluster = Bosser(name = 'saltBosserCluster', store = store,
-                                         group = 'salt.bosser.pool', output = 'state.pool.overload', 
-                                         input_ = 'goal.pool.overload', pool = 'pool', event = 'event', 
-                                         parms = dict(high = 1.0, low = 0.5,))
+    saltBosserOverload = Bosser(name = 'saltBosserOverload', store=store,
+                                group='salt.bosser.overload',
+                                oflo='state.overload', 
+                                iflo='goal.overload',
+                                pool='salt.pool',
+                                event='event', 
+                                parms=dict(high=1.0, low=0.5,))
     
     
 
@@ -42,51 +90,42 @@ class Eventer(deeding.LapseDeed):
 
     """
 
-    def __init__(self, group, output, input_, parms = None, **kw):
-        """Initialize instance
-
-           group is path name of group in store, group has following subgroups or shares:
-              group.parm = share for data structure of fixed parameters or coefficients
-                 parm has the following fields:
-                    throttle = divisor
-
-              group.
-
-           output is path name of share latest event
-
-           input_ = path name of input subscription queue
-           period = path name of throttle period (framer or skedder)
-           parms is optional dictionary of initial values for group.parm fields
-
-           instance attributes
-
-           .output = reference to output share
-           .group = copy of group name
-           .parm = reference to input parameter share
-           .period = reference to throttle period
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
+    def __init__(self, group, oflo, iflo, period, parms=None, **kw):
+        """ Initialize instance
+        
+        arguments
+            group is group path name in store
+            oflo is share path name of latest event deque
+            iflo is share path name of subscriptions deque
+            period is share path name of min period of (skedder (meta) or framer)
+            parms = optional dictionary of initial values for group.parm fields
+            
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .stamp is time stamp
+            .lapse is time lapse between updates of controller
+            
+        local attributes
+            .group is group name string
+            .oflo is ref to outflo share
+            .iflo is ref to inflo share
+            .period is ref to period share
+            .parm is ref to group.parm share
+            
+ 
         """
         #call super class method
         super(Eventer, self).__init__(**kw)  
 
         self.lapse = 0.0 #time lapse in seconds calculated on update
-
         self.group = group
+        self.parm = self.store.create(group + '.parm') #create if not exist
+        self.parm.create(**(parms or dict(throttle = 0.0))) #create and update if not exist
 
-        self.parm = self.store.create(group + '.parm')#create if not exist
-        parms = parms or dict(throttle = 0.0,)
-        self.parm.create(**parms)
-
-        self.output = self.store.create(output).update(value = 0.0) #force update not just create
-
-        self.input_ = self.store.create(input_).create(value = 0.0) #create if not exist
-
+        self.oflo = self.store.create(oflo).update(value = deque()) #create and force update
+        self.iflo = self.store.create(iflo).create(value = deque()) #create if not exist 
+        self.period = self.store.create(period)
 
     def restart(self):
         """Restart Throttle"""
@@ -94,8 +133,7 @@ class Eventer(deeding.LapseDeed):
 
 
     def action(self, **kw):
-        """update will use inputs from store
-           assumes all inputs come from deeds that use value as their output attribute name
+        """ Process subscriptions and publications of events
         """
         super(Eventer,self).action(**kw) #computes lapse here
 
@@ -103,10 +141,14 @@ class Eventer(deeding.LapseDeed):
 
         if self.lapse <= 0.0: #test throttle
             pass
-
-        input_ = self.input_.value #get from store
         
-        self.output.value = out
+        #loop to process subs
+        iflo = self.iflo.value.popLeft() #get from store
+        period = self.period.value
+        throttle = self.parm.data.throttle
+        #eventually have realtime loop to determine max time to process events
+        # loop to get events here and pub to subs
+        #self.oflo.value.append(iflo)
 
         return None
 
@@ -120,35 +162,28 @@ class Bosser(deeding.LapseDeed):
 
     """
 
-    def __init__(self, group, output, input_, parms = None, **kw):
+    def __init__(self, group, oflo, iflo, pool, event, parms=None, **kw):
         """Initialize instance
 
-           group is path name of group in store, group has following subgroups or shares:
-              group.parm = share for data structure of fixed parameters or coefficients
-                 parm has the following fields:
-                    throttle = divisor
-
-              group.
-
-           output is path name of share latest event
-
-           input_ = path name of input subscription queue
-           period = path name of throttle period (framer or skedder)
-           parms is optional dictionary of initial values for group.parm fields
-
-           instance attributes
-
-           .output = reference to output share
-           .group = copy of group name
-           .parm = reference to input parameter share
-           .period = reference to throttle period
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
+        arguments
+            group is group path name in store
+            oflo is share path name of latest event deque
+            iflo is share path name of subscriptions deque
+            period is share path name of min period of (skedder (meta) or framer)
+            parms = optional dictionary of initial values for group.parm fields
+            
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .stamp is time stamp
+            .lapse is time lapse between updates of controller
+                
+        local attributes
+            .group = group name string
+            .oflo = reference to oflo share
+            .iflo = reference to iflo share
+            .parm = reference to input parameter share
+           
         """
         #call super class method
         super(Bosser, self).__init__(**kw)  
@@ -156,15 +191,13 @@ class Bosser(deeding.LapseDeed):
         self.lapse = 0.0 #time lapse in seconds calculated on update
 
         self.group = group
-
         self.parm = self.store.create(group + '.parm')#create if not exist
-        parms = parms or dict(throttle = 0.0,)
-        self.parm.create(**parms)
-
-        self.output = self.store.create(output).update(value = 0.0) #force update not just create
-
-        self.input_ = self.store.create(input_).create(value = 0.0) #create if not exist
-
+        self.parm.create(**(parms or dict(high=1.0, low=0.75)))
+        self.oflo = self.store.create(oflo).update(value = 0.0) #force update not just create
+        self.iflo = self.store.create(iflo).create(value = 0.0) #create if not exist
+        
+        self.pool = self.store.create(pool)
+        self.event = self.store.create(event).create(value=deque())
 
     def restart(self):
         """Restart """
@@ -173,7 +206,7 @@ class Bosser(deeding.LapseDeed):
 
     def action(self, **kw):
         """update will use inputs from store
-           assumes all inputs come from deeds that use value as their output attribute name
+           assumes all inputs come from deeds that use value as their oflo attribute name
         """
         super(Bosser,self).action(**kw) #computes lapse here
 
@@ -182,9 +215,9 @@ class Bosser(deeding.LapseDeed):
         if self.lapse <= 0.0: #test throttle
             pass
 
-        input_ = self.input_.value #get from store
+        iflo = self.iflo.value #get from store
         
-        self.output.value = out
+        self.oflo.value = out
 
         return None
 

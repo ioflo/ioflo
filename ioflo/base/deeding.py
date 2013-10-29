@@ -51,9 +51,6 @@ class Deed(acting.Actor):
           .name = unique name for actor instance
           .store = shared data store
 
-          .pubs = shares in data store written  by this action
-          .subs = shares in data store read but not written by this action
-
     """
     #create Deed specific registry name space
     Counter = 0  
@@ -78,10 +75,7 @@ class SinceDeed(Deed):
           .name = unique name for actor instance
           .store = shared data store
 
-          .pubs = shares in data store written  by this actor
-          .subs = shares in data store read but not written by this actor
-
-       Instance Attributes
+       local attributes
           .stamp = current time of deed evaluation in seconds
 
     """
@@ -114,10 +108,7 @@ class LapseDeed(Deed):
           .name = unique name for actor instance
           .store = shared data store
 
-          .pubs = shares in data store written  by this actor
-          .subs = shares in data store read but not written by this actor
-
-       Instance Attributes
+       local attributes
           .stamp =  current time deed evaluation in seconds
           .lapse = elapsed time betweeen evaluations of a behavior
 
