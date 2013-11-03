@@ -111,9 +111,9 @@ def Convert2BoolCoordNum(text):
        ValueError if can't
     """
     #convert to boolean if possible
-    if text.lower() == 'true':
+    if text.lower() in ['true', 'yes', 'on']:
         return (True)
-    if text.lower() == 'false':
+    if text.lower() in ['false', 'no', 'off']:
         return (False)
 
     try:
@@ -628,18 +628,18 @@ class Builder(object):
 
                 elif connective == 'with':
                     data, index = self.parseDirect(tokens, index)
-                    parms = data
+                    parms.update(data)
 
-                elif connective == 'from':
+                elif connective == 'from': 
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
                         print "     Warning: Do from non-existent share %s ... creating anyway" %\
                               (srcPath)
                     src = self.currentStore.create(srcPath)
-
-                    parms['source'] = src #this is a share
-                    parms['sourceFields'] = srcFields #this is a list
+                    #assumes src share inited before this line parsed
+                    for field in srcFields:
+                        parms[field] = src[field]
 
                 else:
                     msg = "ParseError: Building command '%s'. Bad connective got %s" % \
@@ -829,7 +829,7 @@ class Builder(object):
 
                 elif connective == 'with':
                     data, index = self.parseDirect(tokens, index)
-                    parms = data
+                    parms.update(data)
 
                 elif connective == 'from':
                     srcFields, index = self.parseFields(tokens, index)
@@ -838,10 +838,10 @@ class Builder(object):
                         print "     Warning: Do from non-existent share %s ... creating anyway" %\
                               (srcPath)
                     src = self.currentStore.create(srcPath)
-
-                    parms['source'] = src #this is a share
-                    parms['sourceFields'] = srcFields #this is a list
-
+                    #assumes src share inited before this line parsed
+                    for field in srcFields:
+                        parms[field] = src[field]
+                        
                 else:
                     msg = "ParseError: Building command '%s'. Bad connective got %s" % \
                         (command, connective)
@@ -2384,33 +2384,54 @@ class Builder(object):
         try:
             parts = []
             parms = {}
+            init = {}
+            kind = None
             connective = None
+            
             parts.append(tokens[index])
             index +=1
 
-            while index < len(tokens): #check for optional with connective
-
-                if tokens[index] in ['with', 'from']: # end of parts
+            while index < len(tokens): 
+                if tokens[index] in ['as', 'with', 'from']: # end of parts
                     connective = tokens[index]
                     index += 1 #eat token
                     break
                 parts.append(tokens[index])
-                index += 1 #eat token  
+                index += 1 #eat token
+            
+            name = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+            
+            while index < len(tokens): #options 
+                connective = tokens[index]
+                index += 1
 
-            if connective == 'with':
-                data, index = self.parseDirect(tokens, index)
-                parms = data
+                if connective == 'as':
+                    parts = []
+                    while index < len(tokens): # kind parts end when connective
+                        if tokens[index] in ['as', 'with', 'from']: # end of parts
+                            break
+                        parts.append(tokens[index])
+                        index += 1 #eat token
 
-            elif connective == 'from':
-                srcFields, index = self.parseFields(tokens, index)
-                srcPath, index = self.parsePath(tokens, index)
-                if self.currentStore.fetchShare(srcPath) is None:
-                    print "     Warning: Do from non-existent share %s ... creating anyway" %\
-                          (srcPath)
-                src = self.currentStore.create(srcPath)
-
-                parms['source'] = src #this is a share
-                parms['sourceFields'] = srcFields #this is a list            
+                    kind =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+                    if not kind:
+                        msg = "ParseError: Building command '%s'. Missing kind for connective 'as'" % (command)
+                        raise excepting.ParseError(msg, tokens, index)                                     
+            
+                elif connective == 'with':
+                    data, index = self.parseDirect(tokens, index)
+                    init = data
+    
+                elif connective == 'from':
+                    srcFields, index = self.parseFields(tokens, index)
+                    srcPath, index = self.parsePath(tokens, index)
+                    if self.currentStore.fetchShare(srcPath) is None:
+                        print "     Warning: Do from non-existent share %s ... creating anyway" %\
+                              (srcPath)
+                    src = self.currentStore.create(srcPath)
+                    # assumes that src share was inited earlier in parsing so has fields
+                    for field in srcFields:
+                        init[field] = src[field]   
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2421,18 +2442,41 @@ class Builder(object):
             print "Error building %s. Unused tokens, index = %d tokens = %s" %\
                   (command, index, tokens)
             return False
+        
+        if kind: # Create new instance from kind class with name
+            if name in deeding.Deed.Names:
+                msg = "ParseError: Building command '%s'. Deed named %s of kind %s already exists" % \
+                    (command, name, kind)
+                raise excepting.ParseError(msg, tokens, index)
 
-        actorName = parts[0]
-        actorName += "".join(part.capitalize() for part in parts[1:])
+            if kind not in deeding.Deed.Names: # expect instance of same name as kind
+                msg = "ParseError: Building command '%s'. No Deed kind of %s" %\
+                    (command, kind)
+                raise excepting.ParseError(msg, tokens, index)
 
-        if actorName not in deeding.Deed.Names:
-            print "Error building deed. No actor named %s. index = %d tokens = %s" %\
-                  (actorName, index, tokens)
-            return False
+            kinder = deeding.Deed.Names[kind]
+            #create new instance as the same type as kinder
+            actor = type(kinder)(name=name, store=self.currentStore)
+            actor.preinit(**init)         
 
-        actor = deeding.Deed.Names[actorName]
+        else: # Use an existing instance
+            if name not in deeding.Deed.Names: #instance not exist
+                msg = "ParseError: Building command '%s'. No Deed named %s" %\
+                    (command, name)
+                raise excepting.ParseError(msg, tokens, index)
+
+            actor = deeding.Deed.Names[name] #fetch existing instance
+            kind = actor.__class__.__name__
+            actor.preinit(**init)        
+
+        #if actorName not in deeding.Deed.Names:
+            #print "Error building deed. No actor named %s. index = %d tokens = %s" %\
+                  #(actorName, index, tokens)
+            #return False
+
+        #actor = deeding.Deed.Names[actorName]
+        #actor.reinit(**init)
         act = acting.Act(actor = actor, parms = parms)
-
 
         if hasattr(actor, 'restart'): #some deeds need to be restarted on frame entry
             #create restarter actor to restart actor 

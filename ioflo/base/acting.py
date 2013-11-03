@@ -45,7 +45,7 @@ class Act(object):
     """
     __slots__ = ('actor', 'parms')
 
-    def __init__(self, actor = None, parms = {}, **kw ):
+    def __init__(self, actor=None, parms=None, **kw ):
         """Initialization method for instance.
 
            attributes
@@ -56,11 +56,7 @@ class Act(object):
         super(Act,self).__init__(**kw)
 
         self.actor = actor #callable instance performs action
-
-        if parms:  
-            self.parms = parms
-        else:
-            self.parms = {} #if used default {} every instance gets same {}
+        self.parms = parms or {}
 
     def __call__(self): #make Act instance callable as function
         """Define act as callable object
@@ -174,7 +170,8 @@ class Interrupter(Actor):
 
 
     """
-
+    __slots__ = ('_interruptive')
+    
     def __init__(self,**kw ):
         """Initialization method for instance. """
 
@@ -190,10 +187,10 @@ class Transiter(Interrupter):
        Transiter  is a special actor that performs transitions between frames
 
        Parameters
-          .needs = list of Act objects that are exit needs for this trans
-          .near = source frame of trans
-          .far = target frame of trans
-          .human = text version of transition
+            needs = list of Act objects that are exit needs for this trans
+            near = source frame of trans
+            far = target frame of trans
+            human = text version of transition
 
     """
 
@@ -286,16 +283,17 @@ class Suspender(Interrupter):
           frames
 
        Instance Attributes
-          .activated = flag to indicate that the Suspender has been activated
+          ._activative = flag to indicate that the Suspender has been _activative
 
        Parameters
-          .needs = list of Act objects that are exit needs for this trans
-          .main = source frame of trans
-          .aux = target frame of trans
-          .human = text version of transition
+            needs = list of Act objects that are exit needs for this trans
+            main = source frame of trans
+            aux = target frame of trans
+            human = text version of transition
 
     """
-
+    __slots__ = ('_activative',)
+    
     def __init__(self,**kw ):
         """Initialization method for instance. """
 
@@ -303,6 +301,7 @@ class Suspender(Interrupter):
             kw['preface'] = 'Suspender'
 
         super(Suspender,self).__init__(**kw)
+        self._activative = None
 
     def action(self, needs, main, aux, human, **kw):
         """Action called by Actor  """
@@ -328,7 +327,7 @@ class Suspender(Interrupter):
                 human, framer.human, framer.elapsed)
             console.terse(msg)
 
-            self.activated = True
+            #self._activative = True
             aux.main = main  #assign aux's main to this frame
             aux.enterAll() #starts at aux.first frame
             aux.recur()
@@ -361,7 +360,7 @@ class Suspender(Interrupter):
         """Called by deactivator actor to cleanly exit      """
         console.profuse("Deactivating {0}\n".format(aux.name))
 
-        aux.exitAll()
+        aux.exitAll() # also sets .done = True
         aux.main = None
 
     def resolveLinks(self, needs, main, aux, human, **kw):
@@ -421,9 +420,10 @@ class Deactivator(Actor):
     def action(self, actor, aux, **kw):
         """Action called by Actor
         """
-        console.profuse("{0} deactivate {1} for {2}\n".format(self.name, actor, aux.name))
+        #console.profuse("{0} action {1} for {2}\n".format(self.name, actor.name, aux.name))
 
-        if hasattr(actor, 'activated'):
+        if hasattr(actor, '_activative') and not  aux.done:
+            console.profuse("{0} deactivate {1} for {2}\n".format(self.name, actor.name, aux.name))
             return actor.deactivate(aux)
 
     def expose(self):

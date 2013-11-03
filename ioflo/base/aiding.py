@@ -400,7 +400,95 @@ class SocketNB(object):
 
 #Utility Functions
 
+def Repack(n, seq):
+    """ Repacks seq into a generator of len n and returns the generator.
+        The purpose is to enable unpacking into n variables.
+        The first n-1 elements of seq are returned as the first n-1 elements of the
+        generator and any remaining elements are returned in a tuple as the
+        last element of the generator
+        None is substituted for missing elements when len(seq) < n
+        
+        Example:
+        
+        x = (1, 2, 3, 4)
+        tuple(Repack(3, x))
+        (1, 2, (3, 4))
+        
+        x = (1, 2, 3)
+        tuple(Repack(3, x))
+        (1, 2, (3,))
+        
+        x = (1, 2)
+        tuple(Repack(3, x))
+        (1, 2, ())
+        
+        x = (1, )
+        tuple(Repack(3, x))
+        (1, None, ())
+        
+        x = ()
+        tuple(Repack(3, x))
+        (None, None, ())
 
+    """
+    it = iter(seq)
+    for _i in range(n - 1):
+        yield next(it, None)
+    yield tuple(it)
+
+repack = Repack #alias
+    
+
+def Just(n, seq):
+    """ Returns a generator of just the first n elements of seq and substitutes
+        None for any missing elements. This guarantees that a generator of exactly
+        n elements is returned. This is to enable unpacking into n varaibles
+    
+        Example:
+        
+        x = (1, 2, 3, 4)
+        tuple(Just(3, x))
+        (1, 2, 3)
+        x = (1, 2, 3)
+        tuple(Just(3, x))
+        (1, 2, 3)
+        x = (1, 2)
+        tuple(Just(3, x))
+        (1, 2, None)
+        x = (1, )
+        tuple(Just(3, x))
+        (1, None, None)
+        x = ()
+        tuple(Just(3, x))
+        (None, None, None)
+        
+    """
+    it = iter(seq)
+    for _i in range(n):
+        yield next(it, None)
+        
+just = Just #alias
+
+
+from abc import ABCMeta,  abstractmethod
+class NonStringIterable:
+    """ Check for iterable that is not a string
+        Works in python 2.6 to 3.x with isinstance(x,NonStringIterable)
+        
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __iter__(self):
+        while False:
+            yield None
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is NonStringIterable:
+            if any("__iter__" in B.__dict__ for B in C.__mro__):
+                return True
+        return NotImplemented
 
 # Faster to use precompiled versions in globaling
 def IsPath(s):

@@ -69,18 +69,13 @@ class Tasker(storing.Patron, registering.Registry):
         self.source = None # future reference to share
         self.sourceFields = None #future reference to share fields
 
-    def reinit(self, period=None, schedule=None, source=None, sourceFields=None, **kw):
+    def reinit(self, period=None, schedule=None, **kw):
         if period is not None:
             self.period = period
 
         if schedule is not None:
             self.schedule = schedule
-
-        if source is not None:
-            self.source = source
-
-        if sourceFields is not None:
-            self.sourceFields = sourceFields
+        
 
     def remake(self):
         """Re make runner generator

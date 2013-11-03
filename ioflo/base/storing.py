@@ -288,49 +288,49 @@ class Patron(registering.Corpus):
 class Share(Patron):
     """Shared item in data store
 
-       so it functions somewhat like a dictionary defines:
-       __setitem__
-       __getitem__
-       __delitem__
-       __contains__
-       __iter__
-       __len__
-       clear()
-       items()
-       iteritems()
-       iterkeys()
-       itervalues()
-       keys()
-       values()
+        so it functions somewhat like a dictionary defines:
+        __setitem__
+        __getitem__
+        __delitem__
+        __contains__
+        __iter__
+        __len__
+        clear()
+        items()
+        iteritems()
+        iterkeys()
+        itervalues()
+        keys()
+        values()
 
-       properties are used so that time stamps etc are updated properly for logging
+        properties are used so that time stamps etc are updated properly for logging
+ 
+        properties (properites are stored in class):
+            .owner property holds a reference to owner of share (writer)
+            .data property holds data record 
+                one time stamp applies to the whole data structure
+            .value property manages default single field value in data
+            .truth property holds the confidence of the value/data. may be None, True, False, [0.0, 1.0]
+                truth should not be updated unless value/data is, they are coupled
+                thus log if changed on truth also uses last value
+            .unit property hold units for fields
+           
+ 
+        inherited instance attributes: 
+            .name = holds unique store path entry name of share '.' notation
+            .store = data store holding share
+ 
+        instance attributes:
+            .stamp = time stamp of this share
+         
+            ._owner used by owner property
+            ._data used by data property and also by private accessor methods
+            ._truth used by truth property
+            ._unit used by unit property
+   
 
-       properties (properites are stored in class):
-          .data property holds data record 
-             one time stamp applies to the whole data structure
-          .value property manages default single field value in data
-          .truth property holds the confidence of the value. may be None, True, False, [0.0, 1.0]
-             truth should not be updated unless value is, they are coupled
-             thus log if changed on truth also uses last value
-          .unit property hold units for fields
-          .owner property holds a reference to owner of share (writer)
-          .stamp property holds time stamp when value, truth, or owner updated
-          .name property holds unique store path entry name of share '.' notation
-          .store property holds store holding share
 
-
-       inherited instance attributes: 
-          .name = holds unique store path entry name of share '.' notation
-          .store = data store holding share
-
-       instance attributes:
-          ._data used by data property and also by private accessor methods
-          ._truth used by truth property
-          ._unit used by unit property
-          ._owner used by owner property
-
-          .stamp = time stamp of share
-
+          
 
     """
     #can't prevent attribute assignment with slots since inhereted attributes cause

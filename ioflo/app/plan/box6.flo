@@ -21,9 +21,11 @@ framer mission be active first leg
 
 frame depthmax
    go abort if depth >= .limit.depth.max
+
+frame shallow in depthmax
    aux shallow if depth >= .limit.depth.shallow # until aux done
 
-frame leg in depthmax
+frame leg in shallow
    set elapsed to 60.0
    set heading from boxer.heading
    set depth to 15.0

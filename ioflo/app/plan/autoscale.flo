@@ -2,8 +2,9 @@
 
 house autoscale
 
-init salt.pool to alpha on ms-1 on ms-2 off \
-      ms-3 off ms-4 off 
+init salt.pool.mids to alpha "alpha" ms_0 "ms-0" ms_1 "ms-1" ms_2 "ms_2" \
+      ms_3 "ms-3" ms_4 "ms-4" 
+init salt.pool.status to alpha on ms_0 on ms_1 on ms_2 off ms_3 off ms_4 off 
 init salt.autoscale.limit to up 1.5 down 0.75
 
 framer eventer be active first event
@@ -12,39 +13,14 @@ framer eventer be active first event
 
 framer overloader be active first overload
    frame overload
-      do salt bosser overload
+      #do salt bosser overload
    
 framer autoscaler be active first failure
    frame failure
-      do salt bosser failure
-      do salt bosser abort
-      go recover if .salt.autoscale.failure
-      go abort is .salt.autoscale.abort
-  
    
    frame compute in failure
-      go scaleup if salt.overload >= up \
-                in salt.autscale.limit
-      go scaledown if salt.overload <= down \
-                in salt.autocale.limit
-   
-   frame scaleup in failure
-      do salt bosser scale up
-      go compute
-
-   frame scaledown in failure
-      do salt bosser scale down
-      go compute
-
-   frame recover
-      do salt bosser fix
-      go compute
+      timeout 20
 
    frame abort
-      bid all stop
-
-logger autoscaler be active
-log autoscale to autoscale on update
-loggee overload salt.overload
-    
+      bid stop all
       
