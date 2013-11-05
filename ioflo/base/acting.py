@@ -110,7 +110,7 @@ class Nact(Act):
             self.actor.expose()
 
 
-class Actor(storing.Patron, registering.Registry):
+class Actor(registering.StoriedRegistry):
     """Actor Patron Registry Class 
        for executing actions
        via its action method 

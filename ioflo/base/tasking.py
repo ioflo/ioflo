@@ -26,7 +26,7 @@ def CreateInstances(store):
 #Class definitions
 
 
-class Tasker(storing.Patron, registering.Registry):
+class Tasker(registering.StoriedRegistry):
     """Task class, Base class for weightless threads
 
     """

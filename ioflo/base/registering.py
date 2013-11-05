@@ -17,21 +17,14 @@ console = getConsole()
 #debug = True
 debug = False
 
-#Class definitions
 
-class Corpus(object):
-    """ Catchall class to workaround python 2.6 change to root class object behavior
-       that does not allow __init__ args
-    """
-    def __init__(self, **kw):
-        """ Initializer """
-        super(Corpus, self).__init__()
 
-#Class that ensures every instance has a unique name and id 
-class Registry(Corpus):
+class Registry(object):
     """Class that ensures every instance has a unique name
        uses class variable Counter and  Names dictionary
     """
+    __slots__ = ('name')
+    
     #for base class to have distinct name space shadow these by defining in sub class def
     Counter = 0  
     Names = {}
@@ -43,9 +36,6 @@ class Registry(Corpus):
            .name = unique name for instance
 
         """
-        super(Registry, self).__init__(name = name, preface = preface, **kw)
-        #super(Registry, self).__init__()
-
         self.__class__.Counter += 1 #increment class Counter variable
 
         if not isinstance(name,str): #name must be string
@@ -60,7 +50,6 @@ class Registry(Corpus):
 
         self.name = name
         self.__class__.Names[self.name] = self #add instance to Names dict indexed by name
-
 
 
     @classmethod
@@ -93,6 +82,31 @@ class Registry(Corpus):
         """
         return cls.Names.get(name, None)
 
+
+class StoriedRegistry(Registry):
+    """Adds store attribute to Registry instances
+    """
+    __slots__ = ('store')
+    
+    def __init__(self, store=None, **kw):
+        """Initializer method for instance.
+           Inherited instance attributes:
+           .name
+           
+           New instance attributes
+           .store = reference to shared data store
+
+        """
+        super(StoriedRegistry, self).__init__(**kw)
+        self.changeStore(store=store)
+        
+    def changeStore(self, store=None):
+        """Replace .store """
+        from . import storing
+        if store is not None: 
+            if  not isinstance(store, storing.Store):
+                raise ValueError("Not store %s" % store)
+        self.store = store        
 
 def Test():
     """Module self test

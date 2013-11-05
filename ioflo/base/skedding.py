@@ -89,13 +89,14 @@ class Skedder(object):
 
     """
 
-    def __init__(  self, name = "Skedder",
-                   period = 0.125,
-                   stamp = 0.0, 
-                   real = False,
-                   houses = None,
-                   filePath = '',
-                   metaData = None):
+    def __init__(  self, name="Skedder",
+                   period=0.125,
+                   stamp=0.0, 
+                   real=False,
+                   houses=None,
+                   filePath='',
+                   mode=None, 
+                   metaData=None):
         """Initialize Skedder instance.
            parameters:
            name = name string
@@ -117,17 +118,19 @@ class Skedder(object):
         self.elapsed = aiding.Timer()
         self.house = houses or []
         self.filePath = filePath
+        self.mode = mode or []
         if metaData:
             self.metaData = metaData
         else:
             self.metaData = [
-                ("name", "meta.name", odict(value="Test")),
+                ("plan", "meta.plan", odict(value="Test")),
                 ("version", "meta.version", odict(value="0.7.2")),
                 ("platform", "meta.platform",
                      odict([("os", "unix"), ("processor", "intel"), ])),
                 ("period", "meta.period", odict(value=self.period)),
                 ("real", "meta.real", odict(value=self.real)),
                 ("filepath", "meta.filepath", odict(value=self.filePath)),
+                ("mode", "meta.mode", odict(value=self.mode)), #applied mode logging only
             ] 
 
         self.ready = deque() #deque of taskers in run order
@@ -149,18 +152,19 @@ class Skedder(object):
         console.profuse("     Add ready: {0} retime: {1} period: {2} desire {3}\n".format(
             tasker.name, retime, period, ControlNames[tasker.desire]))
 
-    def build(self, filePath='', metaData=None):
+    def build(self, filePath='', mode=None, metaData=None):
         """ Build houses from file given by filePath """
 
         console.terse("Building Houses for Skedder {0} ...\n".format(self.name))
-
-        if filePath: #use parameter otherwise use inited value
+        #use parameter otherwise use inited value
+        if filePath: 
             self.filePath = filePath
-
-        if metaData: #use parameter otherwise use inited value
+        if mode:
+            self.mode =  mode
+        if metaData: 
             self.metaData = metaData
 
-        b = building.Builder(fileName = self.filePath,  metaData = self.metaData)
+        b = building.Builder(fileName = self.filePath, mode=self.mode, metaData = self.metaData)
 
         if not b.build():
             return False

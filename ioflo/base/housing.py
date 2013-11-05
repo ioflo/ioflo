@@ -23,6 +23,7 @@ import copy
 
 
 from .globaling import *
+from .odicting import odict
 
 from . import excepting
 from . import registering
@@ -47,7 +48,7 @@ from .consoling import getConsole
 console = getConsole()
 
 #Dict of Registry Objects so can Clear and assign Names Counter variables
-Registries = dict(store = storing.Store,
+Registries = odict(store = storing.Store,
                   tasker = tasking.Tasker,
                   log = logging.Log,
                   actor = acting.Actor,
@@ -79,7 +80,7 @@ def ClearRegistries():
 
 #Class definitions
 
-class House(storing.Patron, registering.Registry):
+class House(registering.StoriedRegistry):
     """House Class for managing framework(s)
        includes store for framework and name registries for framers, frames, and actions
 
@@ -128,13 +129,13 @@ class House(storing.Patron, registering.Registry):
         self.auxes = [] #list of aux framers in house
         self.slaves = [] #list of slave taskers in house
 
-        self.names = {} #houses dict of registry Names  maybe should be odict?
-        self.counters = {} #houses dict of registry Name Counters
+        self.names = odict() #houses dict of registry Names  maybe should be odict?
+        self.counters = odict() #houses dict of registry Name Counters maybe should be odict
 
-        self.meta = {} # dict of meta data items (name, share) for skedder to access
+        self.meta = odict() # dict of meta data items (name, share) for skedder to access
 
-        for key in Registries: #initialize empty registries
-            self.names[key] = {}
+        for key in Registries: #initialize names dicts for registry Names
+            self.names[key] = odict()
             self.counters[key] = 0
 
         if not self.store:
@@ -148,8 +149,8 @@ class House(storing.Patron, registering.Registry):
         self.taskables = self.fronts + self.mids + self.backs
 
     def assignRegistries(self):
-        """Point class name registries dicts and countersto local version in house
-           Subsequent creation of instances with then be registered locally
+        """Point class Names registries dicts and counters to local version in house
+           Subsequent creation of instances will then be registered locally
         """
         for key, value in Registries.items():
             value.Names = self.names[key]

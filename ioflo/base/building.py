@@ -164,11 +164,12 @@ class Builder(object):
     """
 
     """
-    def __init__(self, fileName='', metaData=None):
+    def __init__(self, fileName='', mode=None, metaData=None):
         """
 
         """
         self.fileName = fileName #initial name of file to start building from
+        self.mode = mode or []
         self.metaData = metaData or {}
         self.files = [] #list of open file objects, appended to by load commands
         self.counts = [] #list of linectr s for open file objects
@@ -177,7 +178,7 @@ class Builder(object):
 
         self.currentFile = None
         self.currentCount = 0
-
+        self.currentMode = None #None is any
         self.currentHouse = None
         self.currentStore = None
         self.currentLogger = None
@@ -185,9 +186,10 @@ class Builder(object):
         self.currentFramer = None
         self.currentFrame = None #current frame
         self.currentContext = NATIVE
+        
 
 
-    def build(self, fileName='', metaData=None):
+    def build(self, fileName='', mode=None, metaData=None):
         """
            Allows building from multiple files. Essentially files list is stack of files
            fileName is name of first file. Load commands in any files push (append) file onto files
@@ -195,10 +197,11 @@ class Builder(object):
 
            Each house's store is inited with the metaData
         """
-
-        if fileName: #overwrite default buildFile from init
+        #overwrite default if truthy argument
+        if fileName: 
             self.fileName = fileName
-
+        if mode:
+            self.mode = mode
         if metaData:
             self.metaData = metaData
 
@@ -405,8 +408,11 @@ class Builder(object):
 
             #metaData here triples of name, path, data
             for name, path, data in self.metaData:
-                share =  self.initPathToData(path, data)
-                self.currentHouse.meta[name] = share
+                self.currentHouse.meta[name] = self.initPathToData(path, data)
+            
+            # set meta.name to house.name
+            self.currentHouse.meta['name'] = self.initPathToData('.meta.name',
+                    odict(value=self.currentHouse.name))
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -417,6 +423,11 @@ class Builder(object):
             print "Error building %s. Unused tokens, index = %d tokens = %s" %\
                   (command, index, tokens)
             return False
+        
+        msg = "     Built house {0} with meta:\n".format(self.currentHouse.name)
+        for name, share in self.currentHouse.meta.items():
+            msg += "       {0}: {1!r}\n".format(name, share)
+        console.terse(msg)        
 
         return True
 

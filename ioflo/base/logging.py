@@ -226,7 +226,7 @@ class Logger(tasking.Tasker):
 
 
 
-class Log(storing.Patron, registering.Registry):
+class Log(registering.StoriedRegistry):
     """Log Class for logging to file
 
        Iherited instance attributes:

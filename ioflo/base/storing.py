@@ -64,8 +64,11 @@ class Store(registering.Registry):
         self.stamp = stamp #must be None or number
         self.house = house
         self.shares = odict() #dictionary of data store shares indexed by name
+        
+        #create node for meta data
+        self.meta = self.createNode('.meta')
         #create share for realtime
-        self.realtime = self.create('realtime').update(value = time.time()) 
+        self.realtime = self.create('.realtime').update(value = time.time()) 
 
     def changeStamp(self, stamp):
         """change time stamp for this share """
@@ -190,6 +193,30 @@ class Store(registering.Registry):
         console.profuse("     Added share {0} to {1}\n".format(share.name, self.name))
 
         return share
+    
+    def addNode(self, name):
+        """Add node with pathname name to store
+           Creates node hierarchy from name as needed
+           If node already exists with same name then raises exception. 
+           This is to prevent inadvertant adding of node that clobber node/share hierarchy
+
+           for a single item list 
+              the slice [0:-1] is empty
+              the slice [-1] = [0] is the single item 
+        """
+        levels = name.strip('.').split('.') #strip leading and following '.' and split
+        node = self.shares
+        for level in levels:
+            if not level:
+                raise ValueError("Empty level in '%s'" % name)
+
+            node = node.setdefault(level, odict()) #add node if not exist
+            if isinstance(node, Share):
+                raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
+
+        console.profuse("     Added node {0} to {1}\n".format(name, self.name))
+
+        return node    
 
     def change(self, share):
         """change existing share with same name in store to share and change share's .store to self
@@ -234,6 +261,16 @@ class Store(registering.Registry):
             return share
 
         return self.add(Share(name = name.strip('.')))
+    
+    def createNode(self, name):
+        """Retrieve node with name if it exits  
+           otherwise create a node with  name and add to store
+        """
+        node = self.fetchNode(name)  #does node already exist
+        if node is not None: #must compare to none since empty container would also be false
+            return node
+
+        return self.addNode(name=name)   
 
     def expose(self):
         """   """
@@ -257,35 +294,7 @@ class Store(registering.Registry):
                 print "%s " % key,
             print
 
-class Patron(registering.Corpus):
-    """Class that provides for access to shared data store
-
-       instance attributes
-       .name
-       .store
-    """
-    def __init__(self, name = '', store = None, **kw):
-        """Initialize instance **kw allow multiple inheritance """
-        if not isinstance(name,str): #name must be string for super class
-            name = ''
-        self.name = name
-
-        super(Patron, self).__init__(name = name, **kw) #if subclass multiply inherits
-        #super(Patron, self).__init__() #if subclass multiply inherits
-
-        self.changeStore(store = store)
-
-
-
-    def changeStore(self, store = None):
-        """Replace .store """
-        if store is not None: 
-            if  not isinstance(store, Store):
-                raise ValueError("Not store %s" % store)
-        self.store = store
-
-
-class Share(Patron):
+class Share(object):
     """Shared item in data store
 
         so it functions somewhat like a dictionary defines:
@@ -358,8 +367,15 @@ class Share(Patron):
 
         self._owner = None
         self.stamp = None
-
-        super(Share,self).__init__(name = name, store = store, **kw)
+        
+        #when subclassed of Patron obsolete
+        #super(Share,self).__init__(name = name, store = store, **kw)
+        
+        if not isinstance(name,str): #name must be string
+            name = ''
+        self.name = name
+        
+        self.changeStore(store = store)
         #if store is not none then
         #   should really make sure share.name is path name in store and is added to store
         #   must double check above where store adds or creates share
@@ -467,6 +483,15 @@ class Share(Patron):
     def values(self):
         """  """
         return [self[key] for key in self.keys()]
+    
+    # store management
+    def changeStore(self, store = None):
+        """Replace .store """
+        if store is not None: 
+            if  not isinstance(store, Store):
+                raise ValueError("Not store %s" % store)
+        self.store = store
+    
 
     #property owner
     def getOwner(self):

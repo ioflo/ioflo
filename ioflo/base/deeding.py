@@ -242,6 +242,8 @@ class SinceDeed(Deed):
           .stamp = current time of deed evaluation in seconds
 
     """
+    __slots__ = ('stamp')
+    
     def __init__(self, **kw):
         """Initialize Instance """
         if 'preface' not in kw:
@@ -278,6 +280,8 @@ class LapseDeed(Deed):
        has restart method when resuming after noncontiguous time interruption
        builder creates implicit entry action of restarter for deed
     """
+    __slots__ = ('stamp', 'lapse')
+    
     def __init__(self, **kw):
         """Initialize Instance """
         if 'preface' not in kw:
