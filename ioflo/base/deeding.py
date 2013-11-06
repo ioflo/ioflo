@@ -9,8 +9,6 @@ import struct
 from collections import deque,  Mapping
 import inspect
 
-
-
 from .globaling import *
 from .odicting import odict
 from . import aiding
