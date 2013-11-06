@@ -574,6 +574,7 @@ class Builder(object):
 
         try:
             parms = {}
+            init = {}
             parts = []
             name = ''
             kind = None
@@ -639,9 +640,9 @@ class Builder(object):
 
                 elif connective == 'with':
                     data, index = self.parseDirect(tokens, index)
-                    parms.update(data)
+                    init.update(data)
 
-                elif connective == 'from': 
+                elif connective == 'pre': 
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -650,7 +651,7 @@ class Builder(object):
                     src = self.currentStore.create(srcPath)
                     #assumes src share inited before this line parsed
                     for field in srcFields:
-                        parms[field] = src[field]
+                        init[field] = src[field]
 
                 else:
                     msg = "ParseError: Building command '%s'. Bad connective got %s" % \
@@ -682,7 +683,7 @@ class Builder(object):
             tasker = type(kinder)(name=name, store=self.currentStore, period=period,
                                   schedule=schedule)
             kw = dict()
-            kw.update(parms)
+            kw.update(init)
             tasker.reinit(**kw)         
 
         else: # Use an existing instance
@@ -700,7 +701,7 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)             
 
             kw = dict(period=period, schedule=schedule)
-            kw.update(parms)
+            kw.update(init)
             tasker.reinit(**kw)
 
         self.currentHouse.taskers.append(tasker)
@@ -759,6 +760,7 @@ class Builder(object):
 
         try:
             parms = {}
+            init = {}
             parts = []
             name = ''
             kind = None
@@ -840,7 +842,7 @@ class Builder(object):
 
                 elif connective == 'with':
                     data, index = self.parseDirect(tokens, index)
-                    parms.update(data)
+                    init.update(data)
 
                 elif connective == 'from':
                     srcFields, index = self.parseFields(tokens, index)
@@ -851,7 +853,7 @@ class Builder(object):
                     src = self.currentStore.create(srcPath)
                     #assumes src share inited before this line parsed
                     for field in srcFields:
-                        parms[field] = src[field]
+                        init[field] = src[field]
                         
                 else:
                     msg = "ParseError: Building command '%s'. Bad connective got %s" % \
@@ -899,7 +901,7 @@ class Builder(object):
             tasker = type(kinder)(name=name, store=self.currentStore, period=period,
                                   schedule=schedule, sha=sha, dha=dha, prefix=prefix)
             kw = dict()
-            kw.update(parms)
+            kw.update(init)
             tasker.reinit(**kw)         
 
         else: # Use an existing instance
@@ -917,7 +919,7 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)             
 
             kw = dict(period=period, schedule=schedule, sha=sha, dha=dha, prefix=prefix,)
-            kw.update(parms)
+            kw.update(init)
             tasker.reinit(**kw)
 
         self.currentHouse.taskers.append(tasker)
@@ -2391,7 +2393,6 @@ class Builder(object):
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
-
         try:
             parts = []
             parms = {}
@@ -2431,7 +2432,7 @@ class Builder(object):
             
                 elif connective == 'with':
                     data, index = self.parseDirect(tokens, index)
-                    init = data
+                    parms.update(data)
     
                 elif connective == 'from':
                     srcFields, index = self.parseFields(tokens, index)
@@ -2442,7 +2443,22 @@ class Builder(object):
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
-                        init[field] = src[field]   
+                        parms[field] = src[field]
+                
+                elif connective == 'with':
+                    data, index = self.parseDirect(tokens, index)
+                    init.update(data)
+                    
+                elif connective == 'pre':
+                    srcFields, index = self.parseFields(tokens, index)
+                    srcPath, index = self.parsePath(tokens, index)
+                    if self.currentStore.fetchShare(srcPath) is None:
+                        print "     Warning: Do from non-existent share %s ... creating anyway" %\
+                              (srcPath)
+                    src = self.currentStore.create(srcPath)
+                    # assumes that src share was inited earlier in parsing so has fields
+                    for field in srcFields:
+                        init[field] = src[field]                
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2476,17 +2492,6 @@ class Builder(object):
                     (command, name)
                 raise excepting.ParseError(msg, tokens, index)
 
-            actor = deeding.Deed.Names[name] #fetch existing instance
-            kind = actor.__class__.__name__
-            actor.preinit(**init)        
-
-        #if actorName not in deeding.Deed.Names:
-            #print "Error building deed. No actor named %s. index = %d tokens = %s" %\
-                  #(actorName, index, tokens)
-            #return False
-
-        #actor = deeding.Deed.Names[actorName]
-        #actor.reinit(**init)
         act = acting.Act(actor = actor, parms = parms)
 
         if hasattr(actor, 'restart'): #some deeds need to be restarted on frame entry

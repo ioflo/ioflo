@@ -66,15 +66,15 @@ debug = False
 def CreateInstances(store):
     """Create action instances. Recreate with each new house after clear registry
     
-       init protocol: (path, valu, iflo, prim)
+       init protocol: (path, ival, mine, prim)
     """
 
     saltEventerJob = Eventer(name = 'saltEventerJob', store=store, 
-                                event=('event', odict(), False, True), 
-                                req=('req', deque(), True, True), 
-                                sub=('sub', odict()), 
-                                period=('.meta.period', None, True),
-                                parm=('parm', dict(throttle=0.0, tag='salt/job')), 
+                                event=('event', odict(), True, True), 
+                                req=('req', deque(), False, True), 
+                                sub=('sub', odict(), True), 
+                                period=('.meta.period', None),
+                                parm=('parm', dict(throttle=0.0, tag='salt/job'), True), 
                                 proem='.salt.eventer.job', )
                                 
 

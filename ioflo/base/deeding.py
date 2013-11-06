@@ -91,8 +91,8 @@ class Deed(acting.Actor):
                 raise  ValueError("Preinit value '{0}' not valid share pathname"
                                   "to init '{1}'".format(val, self.name))
             init[key] = tuple(  share.get('path'),
-                                share.get('valu'), 
-                                share.get('iflo'), 
+                                share.get('ival'), 
+                                share.get('mine'), 
                                 share.get('prim'))
         
         self.init(**init)
@@ -110,25 +110,25 @@ class Deed(acting.Actor):
             
             1- tuple of values
             
-            (path, valu, iflo, prim)
+            (path, ival, mine, prim)
             
             2- dict of key: values
             
             {
                 path: "pathnamestring",
-                valu: initial value,
-                iflo: truthy,
+                ival: initial value,
+                mine: truthy,
                 prim: truthy
             }
             
             
             In both cases, four init values are produced, that are,
-                path, valu, iflo, prim. 
+                path, ival, mine, prim. 
             
             Missing init values will be assigned a value of None
             
             The following rules are applied when given the values of
-               path, init, iflo, prim
+               path, init, mine, prim
             as determined by the corresponding tuple elements or dict keys: 
             
             For each kw arg item
@@ -141,7 +141,7 @@ class Deed(acting.Actor):
                     Else
                         If proem Then relative path of kw arg name to proem
                         Else Error
-                If iflo Then
+                If not mine Then
                     init share with init value using create (change if not exist)
                     add share to iflos dict with key given by arg/attribute name
                         If prim Then make it first item in iflos
@@ -168,11 +168,11 @@ class Deed(acting.Actor):
             
             if isinstance(val, Mapping): # dictionary
                 path = val.get('path')
-                valu = val.get('valu')
-                iflo = val.get('iflo')
+                ival = val.get('ival')
+                mine = val.get('mine')
                 prim = val.get('prim')
             else: # non dict non string iterable
-                path, valu, iflo, prim = just(4, val) #unpack 4 elements, None for default
+                path, ival, mine, prim = just(4, val) #unpack 4 elements, None for default
             
             if path:
                 if not path.startswith('.'): # full path is proem joined to path
@@ -183,32 +183,32 @@ class Deed(acting.Actor):
                                      "and node proem '{2}".format(key, path, proem))
                 path = '.'.join(proem, key)
             
-            # Infer intent of initialization of share with valu:
-            # valu is None means don't initialize share
-            # valu is anything but mapping means assign share.value to valu
-            # valu is empty mapping means assign share.value to valu (empty mapping)
-            # valu is non empty mapping means assign share[key] =val for key, val in valu.items()
+            # Infer intent of initialization of share with ival:
+            # ival is None means don't initialize share
+            # ival is anything but mapping means assign share.value to ival
+            # ival is empty mapping means assign share.value to ival (empty mapping)
+            # ival is non empty mapping means assign share[key] =val for key, val in ival.items()
             # This means there is no way to init a share.value to a non empty mapping
-            if valu is None:
-                valu = odict() #empty dict so update or create not change share
-            elif not isinstance(valu, Mapping): #make a dict with 'value' key
-                valu = odict(value=valu)
-            elif isinstance(valu, Mapping) and not valu: #empty mapping so set value
-                valu = odict(value=valu)
+            if ival is None:
+                ival = odict() #empty dict so update or create not change share
+            elif not isinstance(ival, Mapping): #make a dict with 'value' key
+                ival = odict(value=ival)
+            elif isinstance(ival, Mapping) and not ival: #empty mapping so set value
+                ival = odict(value=ival)
             
             if hasattr(self, key):
                 ValueError("Trying to init preexisting attribute"
                            "'{0}' in Deed '{1}'".format(key, self.name))            
             
-            if iflo:
-                setattr(self, key, self.store.create(path).create(valu))
+            if not mine:
+                setattr(self, key, self.store.create(path).create(ival))
                 if prim: #make primary iflo (if multiple last one wins)
                     self.iflos.insert(0, key, getattr(self, key))
                 else:
                     self.iflos[key] = getattr(self, key)
             else:
-                setattr(self, key, self.store.create(path).update(valu))
-                if prim: #make primary iflo (if multiple last one wins)
+                setattr(self, key, self.store.create(path).update(ival))
+                if prim: #make primary oflo (if multiple last one wins)
                     self.oflos.insert(0, key, getattr(self, key))
                 else:
                     self.oflos[key] = getattr(self, key)
