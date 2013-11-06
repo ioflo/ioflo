@@ -90,10 +90,10 @@ class Deed(acting.Actor):
             if not share:
                 raise  ValueError("Preinit value '{0}' not valid share pathname"
                                   "to init '{1}'".format(val, self.name))
-            init[key] = tuple(  share.get('path'),
+            init[key] = tuple(  share.get('ipath'),
                                 share.get('ival'), 
-                                share.get('mine'), 
-                                share.get('prim'))
+                                share.get('iown'), 
+                                share.get('ipri'))
         
         self.init(**init)
         return self
@@ -110,46 +110,46 @@ class Deed(acting.Actor):
             
             1- tuple of values
             
-            (path, ival, mine, prim)
+            (ipath, ival, iown, ipri)
             
             2- dict of key: values
             
             {
-                path: "pathnamestring",
+                ipath: "pathnamestring",
                 ival: initial value,
-                mine: truthy,
-                prim: truthy
+                iown: truthy,
+                ipri: truthy
             }
             
             
             In both cases, four init values are produced, that are,
-                path, ival, mine, prim. 
+                ipath, ival, iown, ipri. 
             
             Missing init values will be assigned a value of None
             
             The following rules are applied when given the values of
-               path, init, mine, prim
+               ipath, ival, iown, ipri
             as determined by the corresponding tuple elements or dict keys: 
             
             For each kw arg item
                 Create attribute with name given by kw arg item key
-                Create share with store pathname given by path
-                    If path
-                        If path starts with dot "." Then absolute path
-                        Else path does not start with dot "." Then relative path to proem
+                Create share with store pathname given by ipath
+                    If ipath
+                        If ipath starts with dot "." Then absolute path
+                        Else ipath does not start with dot "." Then relative path to proem
                            Unless proem is empty then absolute path with assumed initial dot
                     Else
                         If proem Then relative path of kw arg name to proem
                         Else Error
-                If not mine Then
+                If not iown Then
                     init share with init value using create (change if not exist)
                     add share to iflos dict with key given by arg/attribute name
-                        If prim Then make it first item in iflos
+                        If ipri Then make it first item in iflos
                     
                 Else
                     init share with init value using update
                     add share to oflos dict with key given by arg/attribute name
-                        If prim then make it first item in oflos
+                        If ipri then make it first item in oflos
                 
                 init may be single value or dict of field, values
                 
@@ -167,21 +167,21 @@ class Deed(acting.Actor):
                 raise ValueError("Bad init kw arg '{0}'. Value '{1}'. Not non string iterable".format(key, val))
             
             if isinstance(val, Mapping): # dictionary
-                path = val.get('path')
+                ipath = val.get('ipath')
                 ival = val.get('ival')
-                mine = val.get('mine')
-                prim = val.get('prim')
+                iown = val.get('iown')
+                ipri = val.get('ipri')
             else: # non dict non string iterable
-                path, ival, mine, prim = just(4, val) #unpack 4 elements, None for default
+                ipath, ival, iown, ipri = just(4, val) #unpack 4 elements, None for default
             
-            if path:
-                if not path.startswith('.'): # full path is proem joined to path
-                    path = '.'.join((proem.rstrip('.'), path)) # when proem empty prepends dot
+            if ipath:
+                if not ipath.startswith('.'): # full path is proem joined to ipath
+                    ipath = '.'.join((proem.rstrip('.'), ipath)) # when proem empty prepends dot
             else:
                 if not proem:
-                    raise ValueError("Bad init kw arg '{0}'. Missing path '{1}'"
-                                     "and node proem '{2}".format(key, path, proem))
-                path = '.'.join(proem, key)
+                    raise ValueError("Bad init kw arg '{0}'. Missing ipath '{1}'"
+                                     "and node proem '{2}".format(key, ipath, proem))
+                ipath = '.'.join(proem, key)
             
             # Infer intent of initialization of share with ival:
             # ival is None means don't initialize share
@@ -200,15 +200,15 @@ class Deed(acting.Actor):
                 ValueError("Trying to init preexisting attribute"
                            "'{0}' in Deed '{1}'".format(key, self.name))            
             
-            if not mine:
-                setattr(self, key, self.store.create(path).create(ival))
-                if prim: #make primary iflo (if multiple last one wins)
+            if not iown:
+                setattr(self, key, self.store.create(ipath).create(ival))
+                if ipri: #make primary iflo (if multiple last one wins)
                     self.iflos.insert(0, key, getattr(self, key))
                 else:
                     self.iflos[key] = getattr(self, key)
             else:
-                setattr(self, key, self.store.create(path).update(ival))
-                if prim: #make primary oflo (if multiple last one wins)
+                setattr(self, key, self.store.create(ipath).update(ival))
+                if ipri: #make primary oflo (if multiple last one wins)
                     self.oflos.insert(0, key, getattr(self, key))
                 else:
                     self.oflos[key] = getattr(self, key)

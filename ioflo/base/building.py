@@ -2491,6 +2491,10 @@ class Builder(object):
                 msg = "ParseError: Building command '%s'. No Deed named %s" %\
                     (command, name)
                 raise excepting.ParseError(msg, tokens, index)
+            
+            actor = deeding.Deed.Names[name] #fetch existing instance
+            kind = actor.__class__.__name__
+            actor.preinit(**init)                    
 
         act = acting.Act(actor = actor, parms = parms)
 
