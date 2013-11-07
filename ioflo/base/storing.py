@@ -66,15 +66,18 @@ class Store(registering.Registry):
         self.shares = odict() #dictionary of data store shares indexed by name
         
         #create node for meta data
-        self.meta = self.createNode('.meta')
+        self.metaShr = self.createNode('.meta')
+        #create share for stamp
+        self.timeShr = self.create('.time').update(value = self.stamp or 0.0)        
         #create share for realtime
-        self.realtime = self.create('.realtime').update(value = time.time()) 
+        self.realTimeShr = self.create('.realtime').update(value = time.time()) 
 
     def changeStamp(self, stamp):
-        """change time stamp for this share """
+        """change time stamp for this store """
         try: #stamp must be a number or None
             self.stamp = float(stamp)
-            self.realtime.update(value = time.time())
+            self.timeShr.update(value=self.stamp)
+            self.realTimeShr.update(value=time.time())
         except TypeError:
             self.stamp = None
             print "Error: Store %s, Change stamp to %s not a number" %\
@@ -82,10 +85,11 @@ class Store(registering.Registry):
             raise
 
     def advanceStamp(self, delta):
-        """change time stamp for this share """
+        """change time stamp for this store """
         try:
             self.stamp += delta
-            self.realtime.update(value = time.time())
+            self.timeShr.update(value=self.stamp)
+            self.realTimeShr.update(value=time.time())
         except TypeError:
             print "Error: Store %s, Can't advance stamp = %s by delta = %s" %\
                   (self.name, self.stamp, delta)

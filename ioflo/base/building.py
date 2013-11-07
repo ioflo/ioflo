@@ -588,7 +588,7 @@ class Builder(object):
             index +=1         
 
             while index < len(tokens): # name parts end when connective
-                if tokens[index] in ['as', 'at', 'be', 'in', 'with', 'from']: # end of parts
+                if tokens[index] in ['as', 'at', 'be', 'in', 'with', 'per']: # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -602,7 +602,7 @@ class Builder(object):
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'at', 'be', 'in', 'with', 'from']: # end of parts
+                        if tokens[index] in ['as', 'at', 'be', 'in', 'with', 'per']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
@@ -642,7 +642,7 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
 
-                elif connective == 'pre': 
+                elif connective == 'per': 
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -778,7 +778,7 @@ class Builder(object):
             index +=1         
 
             while index < len(tokens): # name parts end when connective
-                if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'with', 'from']: # end of parts
+                if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'with', 'per']: # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -792,7 +792,7 @@ class Builder(object):
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'with', 'from']: # end of parts
+                        if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'with', 'per']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
@@ -844,7 +844,7 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
 
-                elif connective == 'from':
+                elif connective == 'per':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -2404,7 +2404,7 @@ class Builder(object):
             index +=1
 
             while index < len(tokens): 
-                if tokens[index] in ['as', 'with', 'from']: # end of parts
+                if tokens[index] in ['as', 'to', 'from', 'with', 'per']: # end of parts
                     connective = tokens[index]
                     index += 1 #eat token
                     break
@@ -2420,7 +2420,7 @@ class Builder(object):
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'with', 'from']: # end of parts
+                        if tokens[index] in ['as', 'to', 'from', 'with', 'per']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
@@ -2430,7 +2430,7 @@ class Builder(object):
                         msg = "ParseError: Building command '%s'. Missing kind for connective 'as'" % (command)
                         raise excepting.ParseError(msg, tokens, index)                                     
             
-                elif connective == 'with':
+                elif connective == 'to':
                     data, index = self.parseDirect(tokens, index)
                     parms.update(data)
     
