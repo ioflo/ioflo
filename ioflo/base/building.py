@@ -2484,7 +2484,8 @@ class Builder(object):
             kinder = deeding.Deed.Names[kind]
             #create new instance as the same type as kinder
             actor = type(kinder)(name=name, store=self.currentStore)
-            actor.preinit(**init)         
+            actor.preinitio(**init)
+            actor.initio(**actor.ioinit)
 
         else: # Use an existing instance
             if name not in deeding.Deed.Names: #instance not exist
@@ -2494,7 +2495,8 @@ class Builder(object):
             
             actor = deeding.Deed.Names[name] #fetch existing instance
             kind = actor.__class__.__name__
-            actor.preinit(**init)                    
+            actor.preinitio(**init)
+            actor.initio(**actor.ioinit)
 
         act = acting.Act(actor = actor, parms = parms)
 

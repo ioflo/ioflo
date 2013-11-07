@@ -70,26 +70,26 @@ debug = False
 def CreateInstances(store):
     """Create action instances. Recreate with each new house after clear registry
     
-       init protocol: (path, ival, mine, prim)
+       init protocol: (ipath, ival, iown, ipri)
     """
 
-    saltEventerJob = Eventer(name = 'saltEventerJob', store=store, 
-                                event=('event', odict(), True, True), 
-                                req=('req', deque(), False, True), 
-                                sub=('sub', odict(), True), 
-                                period=('.meta.period', None),
-                                parm=('parm', dict(throttle=0.0, tag='salt/job'), True), 
-                                proem='.salt.eventer.job', )
+    Eventer(name = 'saltEventerJob', store=store).ioinit.update(
+        event=('event', odict(), True, True), 
+        req=('req', deque(), False, True), 
+        sub=('sub', odict(), True), 
+        period=('.meta.period', None),
+        parm=('parm', dict(throttle=0.0, tag='salt/job'), True), 
+        proem='.salt.eventer.job', )  
                                 
 
-    saltBosserOverload = Bosser(name = 'saltBosserOverload', store=store,
-                                overload=('.salt.overload', 0.0, True, True),
-                                event=('event', deque(), False, True),
-                                req=('.salt.eventer.job.req', deque(), True), 
-                                poolMid=('.salt.pool.mid', ), 
-                                poolStatus=('.salt.pool.status', ),
-                                parm=('parm', dict(), True), 
-                                proem='salt.bosser.overload',)
+    Bosser(name = 'saltBosserOverload', store=store).ioinit.update(
+        overload=('.salt.overload', 0.0, True, True),
+        event=('event', deque(), False, True),
+        req=('.salt.eventer.job.req', deque(), True), 
+        poolMid=('.salt.pool.mid', ), 
+        poolStatus=('.salt.pool.status', ),
+        parm=('parm', dict(), True), 
+        proem='salt.bosser.overload',)
     
     
 
@@ -99,8 +99,7 @@ class Eventer(deeding.LapseDeed):
 
     """
 
-    def __init__(self, event=None, req=None, sub=None, period=None, parm=None,
-                 proem="", **kw):
+    def __init__(self, **kw):
         """ Initialize instance
         
         arguments
@@ -115,10 +114,14 @@ class Eventer(deeding.LapseDeed):
         inherited attributes
             .name is actor name string
             .store is data store ref
+            .ioinit is dict of ioinit data for initio
             .stamp is time stamp
             .lapse is time lapse between updates of controller
             
-        local attributes created by init
+        local attributes
+            .client is salt client interface
+            
+        local attributes created by initio
             .node is proem node
             .oflos is ref to out flos odict
             .iflos is ref to in flos odict
@@ -135,20 +138,11 @@ class Eventer(deeding.LapseDeed):
 
         """
         #call super class method
-        super(Eventer, self).__init__(**kw)  
-        
-        self.init(proem=proem, event=event, sub=sub, req=req, period=period, parm=parm)
-        
-        
-    def reinit(self, **kw):
-        """ Override default Deed method"""
+        super(Eventer, self).__init__(**kw)
         
         self.client = salt.client.api.APIClient()
+             
         
-    #def restart(self):
-        #"""Restart Throttle"""
-        #pass
-
 
     def action(self, **kw):
         """ Process subscriptions and publications of events
@@ -191,7 +185,7 @@ class Eventer(deeding.LapseDeed):
             utag = '/'.join([edata['tag'], edata['data']['_stamp']])
             edata['data']['utag'] = utag
             self.event.value[utag] = edata #pub to odict of all events
-            console.verbose("Eventer '{0}' event tag '{1}'\n".format(self.name, utag))
+            console.verbose("     Eventer '{0}' event tag '{1}'\n".format(self.name, utag))
             # loop to pub event to subscribers
             for tag, shares in self.sub.value.items():
                 if edata['tag'].startswith(tag):
@@ -210,8 +204,7 @@ class Bosser(deeding.LapseDeed):
 
     """
 
-    def __init__(self, overload=None, event=None, req=None, poolMid=None,
-                 poolStatus=None, parm=None, proem="", **kw):
+    def __init__(self, **kw):
         """Initialize instance
 
         arguments
@@ -226,10 +219,17 @@ class Bosser(deeding.LapseDeed):
         inherited attributes
             .name is actor name string
             .store is data store ref
+            .ioinit is dict of ioinit data for initio
             .stamp is time stamp
             .lapse is time lapse between updates of controller
             
-        local attributes created by init
+        local attributes
+            .client is interface to salt
+            .loadavgs is dict of loadavg for each minion in pool
+            .cpus is dict of cpus for each minion in pool
+            .overloads is dict of overloads for each minion in pool
+            
+        local attributes created by initio
             .node is proem node
             .oflos is ref to out flos odict
             .iflos is ref to in flos odict
@@ -245,23 +245,12 @@ class Bosser(deeding.LapseDeed):
            
         """
         #call super class method
-        super(Bosser, self).__init__(**kw)  
-
-        self.init(proem=proem, overload=overload, event=event, req=req, poolMid=poolMid,
-                  poolStatus=poolStatus, parm=parm, )
+        super(Bosser, self).__init__(**kw)
         
-    def reinit(self, **kw):
-        """ Override default Deed method"""
         self.client = salt.client.api.APIClient()
         self.loadavgs = {}
         self.cpus = {}
         self.overloads = {}
-        self.pool = {}
-        
-    
-    #def restart(self):
-        #"""Restart """
-        #pass
 
 
     def action(self, **kw):

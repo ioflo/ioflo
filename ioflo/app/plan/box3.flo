@@ -87,14 +87,14 @@ loggee heading goal.heading depth goal.depth speed goal.speed
 
 framer gps be aux first gps1
 
-frame gps1
-   set depth to 0.0
-   go next if depth == 0.0 +- 0.25
+   frame gps1
+      set depth to 0.0
+      go next if depth == 0.0 +- 0.25
+      
+   frame gps2
+      set speed to 0.0
+      go next if elapsed >= 10.0
    
-frame gps2
-   set speed to 0.0
-   go next if elapsed >= 10.0
-
-frame gps3
-   done
+   frame gps3
+      done
 

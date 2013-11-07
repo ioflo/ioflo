@@ -17,18 +17,18 @@ framer overloader be active first overload at 1.0
    
 framer autoscaler be active first compute at 1.0
    frame failure
-      go abort if .time >= 20
+      go abort if .time >= 60
       
    frame compute in failure
       go scaleup if .salt.overload >= up in .salt.autoscale.limit
       go scaledown if .salt.overload <= down in .salt.autoscale.limit
       
    frame scaleup in failure
-      put off into ms_1 in .salt.pool.status
+      put on into ms_1 in .salt.pool.status
       go wait if always
       
    frame scaledown in failure
-      put on into ms_1 in .salt.pool.status
+      put off into ms_1 in .salt.pool.status
       go wait if always
    
    frame wait in failure

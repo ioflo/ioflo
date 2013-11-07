@@ -23,7 +23,7 @@ frame northleg in depthmax
    go next if elapsed >= goal
 
 frame eastleg in depthmax
-   set heading to 9.0
+   set heading to 90.0
    go next if elapsed >= goal
 
 frame southleg in depthmax

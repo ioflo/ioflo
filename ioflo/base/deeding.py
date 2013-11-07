@@ -54,7 +54,7 @@ class Deed(acting.Actor):
     Counter = 0  
     Names = {}
 
-    def __init__(self,  **kw):
+    def __init__(self, ioinit=None, **kw):
         """ Initialize super
             super init arguments
                 preface
@@ -66,7 +66,9 @@ class Deed(acting.Actor):
 
         super(Deed,self).__init__(**kw)
         
-    def preinit(self,  **kw):
+        self.ioinit = ioinit or {} #dict with ioinit arguments
+        
+    def preinitio(self,  **kw):
         """ Parse time Reinit
             Enables initializing instance at parse time from FloScript options
             
@@ -93,10 +95,11 @@ class Deed(acting.Actor):
                                 share.get('iown'), 
                                 share.get('ipri'))
         
-        self.init(**init)
+        #self.initio(**init)
+        self.ioinit.update(init)
         return self
     
-    def init(self, proem="", **kw):
+    def initio(self, proem="", **kw):
         """ Intialize and hookup ioflo shares from node pathname proem and kw arguments.
             This implements a generic Deed interface protocol for associating the
             input and output data flow shares to the Deed.
@@ -213,17 +216,7 @@ class Deed(acting.Actor):
             
         self.node = self.store.fetchNode(proem) # None if not exist
         
-        self.reinit()
-        
         return self #allow chaining
-    
-    def reinit(self,  **kw):
-        """ Subclasses should override this to perform any reinitialization that
-            needs to happen after init is performed at parse time not module load time.
-            
-          """
-        pass           
-            
 
 class SinceDeed(Deed):
     """SinceDeed Deed Actor Patron Registry Class
@@ -235,6 +228,7 @@ class SinceDeed(Deed):
        inherited attributes
           .name = unique name for actor instance
           .store = shared data store
+          .ioinit = dict of ioinit data for initio
 
        local attributes
           .stamp = current time of deed evaluation in seconds
@@ -270,6 +264,7 @@ class LapseDeed(Deed):
        inherited attributes
           .name = unique name for actor instance
           .store = shared data store
+          .ioinit = dict of ioinit data for initio
 
        local attributes
           .stamp =  current time deed evaluation in seconds
