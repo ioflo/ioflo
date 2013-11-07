@@ -167,7 +167,7 @@ class Eventer(deeding.LapseDeed):
         #loop to process sub requests
         while self.req.value: # some requests
             tag, share = self.req.value.popleft()
-            console.verbose("Eventer '{0}' subreq tag '{1}' share '{2}'\n".format(self.name, tag, share.name))
+            console.verbose("     Eventer '{0}' subreq tag '{1}' share '{2}'\n".format(self.name, tag, share.name))
             if tag in self.sub.value and self.sub.value[tag] != share:
                 self.sub.value[tag].append(share)
             else: #first time
@@ -278,7 +278,7 @@ class Bosser(deeding.LapseDeed):
         
         while self.event.value: #deque of events is not empty
             edata = self.event.value.popleft()
-            console.verbose("Bosser {0} got event {1}\n".format(self.name, edata['tag']))
+            console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
             if data.get('success'): #only ret events
                 if data['fun'] == 'status.loadavg':
@@ -303,7 +303,7 @@ class Bosser(deeding.LapseDeed):
         if count and count == sum([1 for key in self.poolStatus if self.poolStatus[key]]):
             overload = sum(self.overloads.values()) / count
             self.overload.value = overload
-            console.terse("Overload updated to {0:0.4f}\n".format(overload))
+            console.terse("     Overload updated to {0:0.4f}\n".format(overload))
                 
         target = ','.join([mid for key, mid in self.poolMid.items() if self.poolStatus[key]])
         
@@ -314,7 +314,7 @@ class Bosser(deeding.LapseDeed):
         result = None
         try:
             result = self.client.run(cmd)
-            console.verbose("Salt command result = {0}\n".format(result))
+            console.verbose("     Salt command result = {0}\n".format(result))
         except EauthAuthenticationError as ex:
             console.verbose("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
                       
@@ -331,7 +331,7 @@ class Bosser(deeding.LapseDeed):
         result = None
         try:
             result = self.client.run(cmd)
-            console.verbose("Salt command result = {0}\n".format(result))
+            console.verbose("     Salt command result = {0}\n".format(result))
         except EauthAuthenticationError as ex:
             console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
                       
