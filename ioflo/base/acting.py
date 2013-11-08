@@ -19,11 +19,6 @@ from . import framing
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
 
 def CreateInstances(store):
     """Create action instances
@@ -527,11 +522,6 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
 
     import framing
 
@@ -568,7 +558,6 @@ def Test():
     poke = Poke(name = 'put', store = store)
     poke(name = 'autopilot.depth', value = dict(depth = 5))
 
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

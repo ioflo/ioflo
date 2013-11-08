@@ -26,14 +26,6 @@ from . import acting
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-
-#Constant Definitions
-
-
 #Class definitions
 #since put is explicity then no subclasses for a given share
 def CreateInstances(store):
@@ -67,11 +59,8 @@ class Poke(acting.Actor):
         super(Poke,self).__init__(**kw)  
 
     def action(self, share, data, **kw):
-        """Put data into share
-
-        """
-        if debug:
-            print "Put %s into %s" % ( data, share.name)
+        """Put data into share """
+        console.profuse("Put {0} into {1}\n".format( data, share.name))
 
         share.update(data)
 
@@ -98,11 +87,8 @@ class DirectPoke(Poke):
         super(DirectPoke,self).__init__(**kw)  
 
     def action(self, data, destination, **kw):
-        """Put data into share
-
-        """
-        if debug:
-            print "Put %s into %s" % ( data, destination.name)
+        """Put data into share """
+        console.profuse("Put {0} into {1}\n".format( data, destination.name))
 
         destination.update(data)
 
@@ -140,8 +126,8 @@ class IndirectPoke(Poke):
                  in both field lists
 
         """
-        if debug: print "Copy %s in %s into %s in %s" %\
-           (sourceFields, source.name, destinationFields, destination.name)
+        console.profuse("Copy {0} in {1} into {2} in {3}\n".format(
+            sourceFields, source.name, destinationFields, destination.name))
 
         data = odict()
 
@@ -150,9 +136,8 @@ class IndirectPoke(Poke):
 
         destination.update(data) #updates time stamp as well
 
-        if debug: print "Copied %s into %s" %\
-           (data, destination.name)
-
+        console.profuse("Copied {0} into {1}\n".format(
+                    data, destination.name))        
         return None
 
 class DirectInc(Poke):
@@ -190,12 +175,10 @@ class DirectInc(Poke):
             destination.update(dstData) 
 
         except TypeError, ex1: #in case value is not a number
-            if debug:
-                print ex1
-
-        if debug:
-            print "Inc %s in %s by %s to %s" %\
-                  ( data.keys(), destination.name, data.values(), dstData.values())
+            console.profuse("Error in Inc: {0}\n".format(ex1))            
+            
+        console.profuse("Inc {0} in {1} by {2} to {3}\n".format(
+                data.keys(), destination.name, data.values(), dstData.values()))        
 
 class IndirectInc(Poke):
     """Indirect Poke Class to copy values from one share to another
@@ -232,13 +215,11 @@ class IndirectInc(Poke):
             destination.update(data) 
 
         except TypeError, ex1:
-            if debug:
-                print ex1
-
-        if debug:
-            print "Inc %s in %s from %s in %s to %s" %\
-                  ( destinationFields, destination.name, sourceFields, source.name, data.values)
-
+            console.profuse("Error in Inc: {0}\n".format(ex1))     
+        
+        console.profuse("Inc {0} in {1} from {2} in {3} to {4}\n".format(
+            destinationFields, destination.name, sourceFields, source.name, data.values))         
+        
         return None
 
 
@@ -246,14 +227,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
-
-    debug = oldDebug #restore debug value
+    pass
 
 
 if __name__ == "__main__":

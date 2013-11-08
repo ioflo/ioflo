@@ -13,12 +13,6 @@ from . import excepting
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-
-
 class Registry(object):
     """Class that ensures every instance has a unique name
        uses class variable Counter and  Names dictionary
@@ -114,11 +108,7 @@ def Test():
 
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
+    
     x = Registry()
     print x.name
     y = Registry()
@@ -130,8 +120,6 @@ def Test():
     print Registry.Names
     print Registry.VerifyName(name)
 
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

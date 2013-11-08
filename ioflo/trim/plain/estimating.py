@@ -21,12 +21,6 @@ from ...base import deeding
 from ...base.consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
-
 
 def CreateInstances(store):
     """Create action instances
@@ -307,15 +301,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-    #clear registries
-
-
-    debug = oldDebug #restore debug value
+    pass
 
 
 if __name__ == "__main__":

@@ -21,13 +21,6 @@ from ...base.consoling import getConsole
 console = getConsole()
 
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
-
-
 def CreateInstances(store):
     """Create action instances
        must be function so can recreate after clear registry
@@ -1497,10 +1490,6 @@ class GradientSimulator(deeding.LapseDeed):
 
 def TestSalinity():
     """           """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
 
     #clear registries
     storing.Store.Clear()
@@ -1537,11 +1526,6 @@ def TestMotion():
     """
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -1580,17 +1564,12 @@ def TestMotion():
     simulator.update()
     simulator.expose()
 
-    debug = oldDebug #restore debug value
 
 
 def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
 
     #clear registries
     print "\nTesting Controllers\n"
@@ -1630,8 +1609,6 @@ def Test():
 
         store.advanceStamp(0.125)
 
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

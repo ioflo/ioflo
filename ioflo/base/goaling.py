@@ -24,10 +24,6 @@ from . import acting
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
 #Class definitions
 #instance should be only one should use singleton or borg
 def CreateInstances(store):
@@ -140,15 +136,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
-
-    debug = oldDebug #restore debug value
-
+    pass
 
 if __name__ == "__main__":
     test()

@@ -23,15 +23,6 @@ from .consoling import getConsole
 console = getConsole()
 
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
-
-
-#Class definitions
-
 def CreateInstances(store):
     """Create action instances
        must be function so can recreate after clear registry
@@ -162,14 +153,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
-
-    debug = oldDebug #restore debug value
+    pass
 
 
 if __name__ == "__main__":

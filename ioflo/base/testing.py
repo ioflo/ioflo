@@ -14,7 +14,6 @@ import struct
 from .globaling import *
 from .consoling import getConsole
 
-debug  = False
 
 def Test(fileName = None, period = 0.2, real = False, 
          verbose = 0, profiling = False):

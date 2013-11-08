@@ -42,9 +42,6 @@ from .. import trim
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
 
 def Convert2Num(text):
     """converts text to python type in order
@@ -256,19 +253,16 @@ class Builder(object):
 
                         try: #ParseError ParseWarning
                             if not self.dispatch(tokens):
-                                print "Script Parsing stopped line %d in file %s" %\
-                                      (self.currentCount, self.currentFile.name)
-                                print lineView
+                                console.terse("Script Parsing stopped at line {0} in file {1}\n".format(
+                                    self.currentCount, self.currentFile.name))
+                                console.terse(lineView + '\n')
                                 return False
 
-                        except excepting.ParseError, ex1:
-                            print
-                            print ex1
-                            print "Script line %d in file %s" %\
-                                  (self.currentCount, self.currentFile.name)
-                            print lineView
-                            #in the future also save to error file
-                            #return False  
+                        except excepting.ParseError as ex1:
+                            console.terse("\n{0}\n\n".format(ex1))
+                            console.terse("Script line {0} in file {1}\n".format(
+                                self.currentCount, self.currentFile.name))
+                            console.terse(lineView + '\n')
                             raise
 
                         #dispatch evals commands. self.currentFile may be changed by load command
@@ -279,42 +273,41 @@ class Builder(object):
                     if self.files:
                         self.currentFile = self.files.pop()
                         self.currentCount = self.counts.pop()
-                        print "Resume loading from file %s." % self.currentFile.name
+                        console.terse("Resume loading from file {0}.\n".format(self.currentFile.name))
                     else:
                         self.currentFile = None
 
                 #building done so now resolve links and collect actives inactives
                 for house in self.houses:
-                    print "Ordering taskable taskers for house %s" % house.name
+                    console.terse("Ordering taskable taskers for house {0}\n".format(house.name))
                     house.orderTaskables()
 
-                    print "Resolving links for house %s" % house.name
+                    console.terse("Resolving links for house %s".format(house.name))
                     house.resolveLinks()
 
-                    print "Tracing outlines for house %s" % house.name
+                    console.terse("Tracing outlines for house {0}".format(house.name))
                     house.traceOutlines() #traces the outlines in each frame
 
                     if console._verbosity >= console.Wordage.concise:
                         house.showAllTaskers()
 
-                        #print out framework hierarchiy
+                        #show framework hierarchiy
                         for framer in house.framers:
                             framer.showHierarchy()
 
-                        #print out hierarchy of each house's store
-                        print "\nData Store for %s" % house.name
+                        #show hierarchy of each house's store
+                        console.concise( "\nData Store for {0}\n".format(house.name))
                         house.store.expose() 
 
                 return True
 
             except excepting.ResolveError, ex1:
-                print ex1
+                console.terse("{0}\n".format(ex1))
                 return False
-                #in future save to file
 
 
-        except IOError, ex1:
-            print "Error opening mission file  %s \n" % (ex1)
+        except IOError as ex1:
+            console.terse("Error opening mission file  {0}\n".format(ex1))
             return False
 
         finally:
@@ -329,9 +322,10 @@ class Builder(object):
         command = tokens[0]
         index = 1
         if command not in CommandList:
-            print "Error building %s. Unknown command %s, index = %d tokens = %s" %\
-                  (command, command, index, tokens)
-            return False
+            msg = "ParseError: Building {0}. Unknown command {1}, index = {2} tokens = {3}".format(
+                     command, command, index, tokens)
+            raise excepting.ParseError(msg, tokens, index)
+        
         commandMethod = 'build' + command.capitalize()
         if hasattr(self, commandMethod):
             return(getattr(self, commandMethod )(command, tokens, index))
@@ -341,12 +335,8 @@ class Builder(object):
 
     def buildGeneric(self, command, tokens, index):
         """Called with no build method exists for a command """
-
-        print "No build method for command %s" % (command)
-        for token in tokens:
-            print token,
-        print
-        return False
+        msg = "ParseError: No build method for command {0}.".format(command)
+        raise excepting.ParseError(msg, tokens, index)        
 
     def buildLoad(self, command, tokens, index):
         """
@@ -361,17 +351,16 @@ class Builder(object):
 
             self.currentFile = open(name,"r+")
             self.currentCount = 0
-            print "Loading from file %s." % self.currentFile.name
+            console.terse("Loading from file (0).\n".format(self.currentFile.name))
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+                (command)
+            raise excepting.ParseError(msg, tokens, index)
 
         return True
 
@@ -392,7 +381,8 @@ class Builder(object):
             self.houses.append(self.currentHouse)
             self.currentStore = self.currentHouse.store
 
-            print "     Created house %s. Assigning registries, creating instances ..." % name
+            console.terse("     Created house {0}. Assigning registries, "
+                          "creating instances ...\n".format(name))
 
             self.currentHouse.assignRegistries()
 
@@ -413,16 +403,15 @@ class Builder(object):
             # set meta.name to house.name
             self.currentHouse.meta['name'] = self.initPathToData('.meta.name',
                     odict(value=self.currentHouse.name))
-
+            
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+                (command)
+            raise excepting.ParseError(msg, tokens, index)            
         
         msg = "     Built house {0} with meta:\n".format(self.currentHouse.name)
         for name, share in self.currentHouse.meta.items():
@@ -481,8 +470,8 @@ class Builder(object):
             destinationPath, index = self.parsePath(tokens, index)
 
             if self.currentStore.fetchShare(destinationPath) is None:
-                print "     Warning: Init of non-preexistent share %s ... creating anyway" %\
-                      (destinationPath)
+                console.terse("     Warning: Init of non-preexistent share {0} ..."
+                        " creating anyway\n".format(destinationPath))
 
             destination = self.currentStore.create(destinationPath)
 
@@ -646,8 +635,8 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Do from non-existent share %s ... creating anyway" %\
-                              (srcPath)
+                        console.terse("     Warning: Do 'per' non-existent share {0} ..."
+                                      " creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     #assumes src share inited before this line parsed
                     for field in srcFields:
@@ -848,8 +837,8 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Do from non-existent share %s ... creating anyway" %\
-                              (srcPath)
+                        console.terse("     Warning: Init 'per' non-existent share {0}"
+                                      " ... creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     #assumes src share inited before this line parsed
                     for field in srcFields:
@@ -952,14 +941,14 @@ class Builder(object):
 
         """
         if not self.currentHouse:
-            print "Error building %s. No current house. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
-
+            msg = "ParseError: Building command '{0}'. No current house.".format(
+                command, index, tokens)
+            raise excepting.ParseError(msg, tokens, index)                
+            
         if not self.currentStore:
-            print "Error building %s. No current store. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "ParseError: Building command '{0}'. No current store.".format(
+                            command, index, tokens)
+            raise excepting.ParseError(msg, tokens, index)   
 
         try:
             name = tokens[index]
@@ -4091,9 +4080,6 @@ def Test(fileName = None, verbose = False):
 
 
     """
-    global debug
-
-
     import globaling
     import aiding
 
@@ -4131,16 +4117,6 @@ def Test(fileName = None, verbose = False):
                   deeding, arbiting, controlling,
                   tasking, framing, logging, interfacing, serving, 
                   housing, monitoring, testing]
-
-
-    oldDebug = debug
-    #debug = True #turn on debug during tes
-    debug = False
-
-    debug = verbose
-
-    for m in allModules:
-        m.debug = debug
 
 
     if not fileName:
@@ -4192,11 +4168,6 @@ def Test(fileName = None, verbose = False):
         for house in houses:
             for tasker in house.taskers:
                 status = tasker.runner.send(STOP) # closes files
-
-    for m in allModules:
-        m.debug = oldDebug
-
-    debug = oldDebug #restore debug value
 
     return b
 

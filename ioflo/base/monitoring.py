@@ -14,9 +14,6 @@ from . import tasking
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
 
 #Class definitions
 class Monitor(tasking.Tasker):
@@ -294,12 +291,7 @@ def TestOut():
 
 
     """
-    global debug
-
-    oldDebug = debug
-    #debug = True #turn on debug during test
-    debug = False
-
+    
     m = MonitorOut(store = storing.Store())
     print "ready to go"
     status = m.start()
@@ -310,10 +302,6 @@ def TestOut():
     #status = m.stop()
 
 
-    debug = oldDebug #restore debug value
-
-
-
 
 def Test():
     """Module self test
@@ -322,12 +310,6 @@ def Test():
 
     """
     import storing
-
-    global debug
-
-    oldDebug = debug
-    #debug = True #turn on debug during test
-    debug = False
 
     m = Monitor(store = storing.Store())
     print "ready to go"
@@ -343,10 +325,6 @@ def Test():
 
 
             break
-
-
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

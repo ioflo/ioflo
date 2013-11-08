@@ -9,14 +9,6 @@ import random
 
 from .globaling import *
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
-
-
-#Class definitions
 
 class ParameterError(Exception):
     """Used to indicate a function parameter is either of the wrong type or value
@@ -102,15 +94,8 @@ def Test():
 
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
+    
     raise ParameterError("Expected something else", 'whatever', 1)
-
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

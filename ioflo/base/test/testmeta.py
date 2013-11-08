@@ -9,9 +9,6 @@ import struct
 import argparse
 
 
-debug  = False
-
-
 def Run(fileName = None, period = 0.2, real = False, 
         verbose = 0, profiling = False):
     """Run once """

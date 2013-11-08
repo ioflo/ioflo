@@ -25,9 +25,6 @@ from . import excepting
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
 
 class NMEAParser(object):
     """NMEA Serial String Parser Object   
@@ -150,17 +147,7 @@ def Test(verbose = True):
 
 
     """
-    global debug
-    oldDebug = debug
-
-    debug = verbose
-
-
-    debug = oldDebug #restore debug value
-
-
-
-
+    pass
 
 if __name__ == "__main__":
     #module test routines

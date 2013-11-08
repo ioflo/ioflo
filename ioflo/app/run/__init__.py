@@ -4,8 +4,6 @@ print "\nPackage at %s" % __path__[0]
 from ...base.globaling import *
 from ...base.consoling import getConsole, Console
 
-debug  = False
-
 def Run( fileName = None,
          period = 0.2,
          real = False, 

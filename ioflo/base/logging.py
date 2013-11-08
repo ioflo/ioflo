@@ -24,10 +24,6 @@ from . import tasking
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
 #Class definitions
 
 
@@ -530,11 +526,6 @@ def TestLog(rule = UPDATE):
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
     storing.Store.Clear() #clear registry
     Log.clear()
 
@@ -571,7 +562,6 @@ def TestLog(rule = UPDATE):
 
     log.close()
 
-    debug = oldDebug #restore debug value
 
 
 
@@ -579,10 +569,6 @@ def Test(rule = UPDATE):
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
 
     storing.Store.Clear()
     Logger.clear()
@@ -628,7 +614,6 @@ def Test(rule = UPDATE):
     status = logger.runner.send(RUN)
     status = logger.runner.send(STOP)
 
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

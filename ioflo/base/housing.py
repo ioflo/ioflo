@@ -48,6 +48,8 @@ from .consoling import getConsole
 console = getConsole()
 
 #Dict of Registry Objects so can Clear and assign Names Counter variables
+# Frame names registry is held by each framer. Separate frame name space per framer
+
 Registries = odict(store = storing.Store,
                   tasker = tasking.Tasker,
                   log = logging.Log,
@@ -60,14 +62,6 @@ Registries = odict(store = storing.Store,
                   fiat = fiating.Fiat,
                   want = wanting.Want,
                   complete = completing.Complete)
-
-#debugging support
-#debug = True
-debug = False
-
-#dictionary of Registry subclasses from which to get registries Names Counter
-
-# Frame names registry is held by each framer. Separate frame name space per framer
 
 
 def ClearRegistries():
@@ -193,14 +187,10 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
+    
     house = House()
 
-    debug = oldDebug #restore debug value
+    
 
 
 if __name__ == "__main__":

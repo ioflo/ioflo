@@ -21,13 +21,6 @@ from ...base import deeding
 from ...base.consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
-
-
 def CreateInstances(store):
     """Create action instances
        must be function so can recreate after clear registry
@@ -226,11 +219,6 @@ def TestPID():
     """
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -297,18 +285,13 @@ def TestPID():
     controllerPIDPitch.update()
     controllerPIDPitch.expose()
 
-    debug = oldDebug #restore debug value
 
 
 def TestMotion():
     """
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
+    
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -347,18 +330,13 @@ def TestMotion():
     controller.update()
     controller.expose()
 
-    debug = oldDebug #restore debug value
 
 
 def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
+    
     #clear registries
     print "\nTesting Controllers\n"
     storing.Store.Clear()
@@ -397,8 +375,6 @@ def Test():
 
         store.advanceStamp(0.125)
 
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

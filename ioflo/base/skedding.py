@@ -24,11 +24,6 @@ from . import building
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-#Class definitions
 
 class Skedder(object):
     """Schedules weightless tasker objects based on generators.
@@ -300,11 +295,6 @@ def Test(real = False, verbose = False):
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = verbose #turn on debug during test
-
     import housing
     reload(housing)
 
@@ -330,7 +320,6 @@ def Test(real = False, verbose = False):
     skedder = Skedder(name = "TestTasker", period = 0.125, real = real, houses = [house])
     skedder.run()
 
-    debug = oldDebug #restore debug value
 
 def TestProfile(real = False, verbose = False):
     """Module Common self test
@@ -340,11 +329,6 @@ def TestProfile(real = False, verbose = False):
     """
     import cProfile
     import pstats
-
-    global debug
-
-    oldDebug = debug
-    debug = verbose #turn on debug during test
 
     import housing
     reload(housing)
@@ -376,12 +360,6 @@ def TestProfile(real = False, verbose = False):
     p.sort_stats('time').print_stats()
     p.print_callers()
     p.print_callees()
-
-
-
-
-    debug = oldDebug #restore debug value
-
 
 if __name__ == "__main__":
     Test()

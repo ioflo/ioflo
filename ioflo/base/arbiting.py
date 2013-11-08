@@ -16,10 +16,6 @@ from . import deeding
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
 
 def CreateInstances(store):
     """Create action instances
@@ -418,11 +414,6 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -534,8 +525,6 @@ def Test():
     arbiter.default.truth = 0.8
     arbiter.update()
     arbiter.expose()
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

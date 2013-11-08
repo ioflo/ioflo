@@ -7,10 +7,6 @@ import math
 import re
 
 
-#debugging support
-#debug = True
-debug = False
-
 #Globals
 #Constant Definitions
 TIME1970 = 2208988800L #offset secs between SNTP epoch=1900 & unix epoch=1970
@@ -126,14 +122,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
-    debug = oldDebug #restore debug value
-
+    pass
 
 if __name__ == "__main__":
     Test()

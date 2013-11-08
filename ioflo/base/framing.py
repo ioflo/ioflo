@@ -17,9 +17,6 @@ from . import tasking
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
 
 #Class definitions
 
@@ -1180,12 +1177,6 @@ def TestFrame():
     import wanting
 
 
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
     try:
         Frame.Clear() #clear registry
 
@@ -1273,7 +1264,6 @@ def TestFrame():
         print ex1
         raise
 
-    debug = oldDebug #restore debug value
     return f1
 
 def Test():
@@ -1282,17 +1272,7 @@ def Test():
 
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
     TestFrame()
-
-
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

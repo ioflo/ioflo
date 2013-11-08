@@ -22,11 +22,6 @@ console = getConsole()
 
 from .aiding import NonStringIterable, just
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
 
 def CreateInstances(store):
     """Create action instances
@@ -322,13 +317,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
-    debug = oldDebug #restore debug value
+    pass
 
 
 if __name__ == "__main__":

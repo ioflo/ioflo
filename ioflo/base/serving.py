@@ -21,9 +21,6 @@ from . import tasking
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
 
 def CreateInstances(store):
     """Create server instances which automatically get registered on object creation
@@ -278,8 +275,6 @@ def TestOpenStuff():
     """    """
     import ioflo.base.storing as storing
 
-    global debug
-    debug = True
 
     storing.Store.Clear() #clear registry
     s1 = ServerTask(store = storing.Store())
@@ -297,14 +292,6 @@ def Test(verbose = False):
     """
     import ioflo.base.storing as storing
     import ioflo.base.tasking as tasking
-
-    global debug
-    oldDebug = debug
-    #debug = True #turn on debug during test
-    debug = verbose
-
-
-    aiding.debug = False
 
     storing.Store.Clear() #clear registry
     tasking.Tasker.Clear()
@@ -327,7 +314,6 @@ def Test(verbose = False):
 
             break
 
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":

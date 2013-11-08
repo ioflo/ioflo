@@ -19,12 +19,6 @@ from ...base import deeding
 from ...base.consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-#Constant Definitions
-
 
 def CreateInstances(store):
     """Create action instances
@@ -244,11 +238,7 @@ class BoxPositionDetector(deeding.Deed):
 
 def TestBox():
     """           """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during test
-
+    
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -317,13 +307,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
-    debug = oldDebug #restore debug value
+    pass
 
 
 if __name__ == "__main__":

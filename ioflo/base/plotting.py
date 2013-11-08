@@ -18,11 +18,6 @@ from numpy import *
 from math import *
 from pylab import *
 
-
-#debugging support
-#debug = True
-debug = False
-
 #Function Definitions
 
 def PlotPosition(path = './test/logs/', name = "position.txt", 
@@ -1471,25 +1466,12 @@ def Nudge(dh = 0.0, dv = 0.0):
 
 
 
-def Test(debugOn = True):
+def Test():
     """tests core code.
 
 
     """
-    global debug
-
-    oldDebug = debug
-
-    if debugOn:
-        debug = True #turn on debug during test
-    else:
-        debug = False #turn off debug during test
-
-
-    debug = oldDebug #restore debug value
-
-
-
+    pass
 
 
 if __name__ == "__main__":

@@ -17,15 +17,10 @@ import time
 import struct
 
 
-debug = True
-#debug = False
-
-
 if __name__ == "__main__":
 
-    if debug:
-        sys.stderr.write("go arguments:\n")
-        sys.stderr.write(str(sys.argv) + "\n") #joins list items with space separator
+    sys.stderr.write("go arguments:\n")
+    sys.stderr.write(str(sys.argv) + "\n") #joins list items with space separator
 
     filename = '../plan/box1.flo'
     period = 0.125
@@ -38,17 +33,14 @@ if __name__ == "__main__":
     try:
         (opts, pargs) = getopt.getopt(sys.argv[1:], "hrv:f:p:") #format 
     except getopt.GetoptError, e:
-        #print help info and exit
-        if debug:
-            sys.stderr.write("Error processin %s" % str(sys.argv)) #joins list items with space separator
-            sys.stderr.write("Usage: %s" % usage) #joins list items with space separator
+        sys.stderr.write("Error processin %s" % str(sys.argv)) #joins list items with space separator
+        sys.stderr.write("Usage: %s" % usage) #joins list items with space separator
 
         sys.exit(2)
 
 
-    if debug:
-        sys.stderr.write("go options parsed:\n")
-        sys.stderr.write(str(opts) + "\n") #joins list items with space separator
+    sys.stderr.write("go options parsed:\n")
+    sys.stderr.write(str(opts) + "\n") #joins list items with space separator
 
     help = False
 
@@ -66,8 +58,7 @@ if __name__ == "__main__":
             help = True
 
     if not help:
-        if debug:
-            sys.stderr.write("fileName = %s, period = %0.3f verbose = %d real = %s \n" %\
+        sys.stderr.write("fileName = %s, period = %0.3f verbose = %d real = %s \n" %\
                              (filename, period, verbose, real))
 
         print sys.path

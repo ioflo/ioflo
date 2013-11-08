@@ -62,10 +62,6 @@ from ...base import deeding
 from ...base.consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
 
 def CreateInstances(store):
     """Create action instances. Recreate with each new house after clear registry
@@ -341,13 +337,7 @@ def Test():
     """Module Common self test
 
     """
-    global debug
-
-    oldDebug = debug
-    debug = True #turn on debug during tes
-
-
-    debug = oldDebug #restore debug value
+    pass
 
 
 if __name__ == "__main__":

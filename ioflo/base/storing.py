@@ -19,12 +19,6 @@ from . import registering
 from .consoling import getConsole
 console = getConsole()
 
-#debugging support
-#debug = True
-debug = False
-
-#Class definitions
-
 
 class Store(registering.Registry):
     """global data store to be shared amoungst all taskers.
@@ -770,12 +764,9 @@ optimize.bind_all(Data)
 
 def Test():
     """Module self test """
-    global debug
+
 
     try:
-        oldDebug = debug
-        debug = True #turn on debug during tes
-
         Store.Clear()
 
         store = Store()
@@ -831,8 +822,6 @@ def Test():
         print e1.message
 
     return store
-
-    debug = oldDebug #restore debug value
 
 
 if __name__ == "__main__":
