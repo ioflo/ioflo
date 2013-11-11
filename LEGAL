@@ -1,8 +1,7 @@
 LEGAL INFORMATION
 
-This LEGAL.txt file accompanies the "Hierarchical Action Framework and HAFScript components of 
-WRADIA (Weigtless Reconfigurable Agents for Distributed Intelligent Autonomy)" program. It includes 
-notices required by the licenses as well as general legal notices.
+This LEGAL.txt file accompanies the "ioflo, FloScript, Hierarchical Action Framework and HAFScript. 
+It includes notices required by the licenses as well as general legal notices.
 
 =========================================
  COPYRIGHT AND ATTRIBUTION NOTICES
@@ -28,11 +27,11 @@ ioflo, floscript, HAFScript, WRADIA are trademarks of ProSapien LLC
 =========================================
 
 Except as explicitly indicated in the file itself, the contents of all files 
-that make up this product are subject to the Apache License, Version 2.0 (the "License");
+that make up this product are subject to the MIT License (MIT) (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://opensource.org/licenses/MIT
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
