@@ -32,7 +32,7 @@ Shares
         
     .eventer
         .job
-            .sub
+            .pub
             .event
         
     .bosser
@@ -66,47 +66,31 @@ console = getConsole()
 def CreateInstances(store):
     """Create action instances. Recreate with each new house after clear registry
     
-       init protocol: (ipath, ival, iown, ipri)
+       init protocol:  inode  and (ipath, ival, iown, ipri)
     """
 
     Eventer(name = 'saltEventerJob', store=store).ioinit.update(
         event=('event', odict(), True, True), 
         req=('req', deque(), False, True), 
-        sub=('sub', odict(), True), 
+        pub=('pub', odict(), True), 
         period=('.meta.period', None),
         parm=('parm', dict(throttle=0.0, tag='salt/job'), True), 
-        proem='.salt.eventer.job', )  
+        inode='.salt.eventer.job', )  
                                 
 
-    Bosser(name = 'saltBosserOverload', store=store).ioinit.update(
+    OverloadBosser(name = 'saltBosserOverload', store=store).ioinit.update(
         overload=('.salt.overload', 0.0, True, True),
         event=('event', deque(), False, True),
         req=('.salt.eventer.job.req', deque(), True), 
         poolMid=('.salt.pool.mid', ), 
         poolStatus=('.salt.pool.status', ),
         parm=('parm', dict(), True), 
-        proem='salt.bosser.overload',)
+        inode='.salt.bosser.overload',)
     
-    
-
-class Eventer(deeding.LapseDeed):
-    """Eventer LapseDeed Deed Class
-       Salt Eventer
-
-    """
-
-    def __init__(self, **kw):
-        """ Initialize instance
+class SaltDeed(deeding.LapseDeed):
+    """ Base class for Deeds that interface with Salt
+        Adds salt client interface attribute .client
         
-        arguments
-            event is share initer of event deque
-            sub is share initer of subscribers odict
-            req is share initer of subscriptions request deque
-            period is share path name of min period of (skedder (meta) or framer)
-            parm = proem.parm field values
-                throttle
-            proem is node path name in store
-            
         inherited attributes
             .name is actor name string
             .store is data store ref
@@ -116,29 +100,52 @@ class Eventer(deeding.LapseDeed):
             
         local attributes
             .client is salt client interface
+    
+    """
+    def __init__(self, **kw):
+        """ Initialize instance """
+        #call super class method
+        super(SaltDeed, self).__init__(**kw)
+        
+        self.client = salt.client.api.APIClient()    
+
+class Eventer(SaltDeed):
+    """ Eventer LapseDeed Deed Class
+        Salt Eventer
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of controller
+            .client is salt client interface
             
+            
+        arguments to update .ioinit attribute
+            event is share initer of event deque
+            pub is share initer of publications to subscribers odict
+            req is share initer of subscriptions request deque
+            period is share path name of min period of (skedder (meta) or framer)
+            parm = inode.parm field values
+                throttle
+            inode is node path name in store
+
         local attributes created by initio
-            .node is proem node
+            .inode is inode node
             .oflos is ref to out flos odict
             .iflos is ref to in flos odict
             
             .event is ref to event share, value is deque of events incoming
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
-            .sub is ref to sub share, with tag fields, value list of subscriber shares
-                each subscriber share value is deque of events put there by Eventer
+            .pub is ref to pub share, with tag fields, value list of publication to subscriber shares
+                each pub share value is deque of events put there by Eventer
             .period is ref to period share
             .parm is ref to node.parm share
                 throttle is divisor or period max portion of period to consume each run
-        
-
-        """
-        #call super class method
-        super(Eventer, self).__init__(**kw)
-        
-        self.client = salt.client.api.APIClient()
+    """
              
-        
 
     def action(self, **kw):
         """ Process subscriptions and publications of events
@@ -150,18 +157,18 @@ class Eventer(deeding.LapseDeed):
         if self.lapse <= 0.0:
             pass
         
-        #if not self.sub.value: #no subscriptions so request one
-            #subscriber = self.store.create("salt.sub.test").update(value=deque())
-            #self.req.value.append(("salt/job/", subscriber))
+        #if not self.pub.value: #no pub to subscriptions so request one
+            #publication = self.store.create("salt.pub.test").update(value=deque())
+            #self.req.value.append(("salt/job/", publication))
         
         #loop to process sub requests
         while self.req.value: # some requests
             tag, share = self.req.value.popleft()
             console.verbose("     Eventer '{0}' subreq tag '{1}' share '{2}'\n".format(self.name, tag, share.name))
-            if tag in self.sub.value and self.sub.value[tag] != share:
-                self.sub.value[tag].append(share)
+            if tag in self.pub.value and self.pub.value[tag] != share:
+                self.pub.value[tag].append(share)
             else: #first time
-                self.sub.value[tag] = [share]
+                self.pub.value[tag] = [share]
         
         #eventually have realtime check to throttle ratio limit time 
         # in event loop processing events
@@ -182,42 +189,26 @@ class Eventer(deeding.LapseDeed):
             edata['data']['utag'] = utag
             self.event.value[utag] = edata #pub to odict of all events
             console.verbose("     Eventer '{0}' event tag '{1}'\n".format(self.name, utag))
-            # loop to pub event to subscribers
-            for tag, shares in self.sub.value.items():
+            # loop to pub event to publications for subscribers
+            for tag, shares in self.pub.value.items():
                 if edata['tag'].startswith(tag):
                     for share in shares:
                         share.value.append(edata)
 
         return None
 
-    def expose(self):
-        """prints out controller state"""
-        pass
 
-class Bosser(deeding.LapseDeed):
+class OverloadBosser(SaltDeed):
     """Bosser LapseDeed Deed Class
        Salt Bosser
-
-    """
-
-    def __init__(self, **kw):
-        """Initialize instance
-
-        arguments
-            overload is share initer of current overload value for pool
-            event is share initer of events deque() subbed from eventer
-            req is share initer of subscription requests deque() for eventer
-            poolMid is share initer of pool minon ids
-            poolStatus is share initer of pool minon status on or off
-            parm = proem.parm field values
-            proem is node path name in store
-            
+       
         inherited attributes
             .name is actor name string
             .store is data store ref
             .ioinit is dict of ioinit data for initio
             .stamp is time stamp
             .lapse is time lapse between updates of controller
+            .client is salt client interface
             
         local attributes
             .client is interface to salt
@@ -225,8 +216,19 @@ class Bosser(deeding.LapseDeed):
             .cpus is dict of cpus for each minion in pool
             .overloads is dict of overloads for each minion in pool
             
+        
+        arguments to update of .ioinit attribute
+            overload is share initer of current overload value for pool
+            event is share initer of events deque() subbed from eventer
+            req is share initer of subscription requests deque() for eventer
+            poolMid is share initer of pool minon ids
+            poolStatus is share initer of pool minon status on or off
+            parm = inode.parm field values
+            inode is node path name in store
+            
+            
         local attributes created by initio
-            .node is proem node
+            .node is inode node
             .oflos is ref to out flos odict
             .iflos is ref to in flos odict
             
@@ -239,9 +241,16 @@ class Bosser(deeding.LapseDeed):
             .parm is ref to node.parm share
                 
            
+
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance
+
+        
         """
         #call super class method
-        super(Bosser, self).__init__(**kw)
+        super(OverloadBosser, self).__init__(**kw)
         
         self.client = salt.client.api.APIClient()
         self.loadavgs = {}
@@ -256,7 +265,7 @@ class Bosser(deeding.LapseDeed):
             request events for associated jobid
            
         """
-        super(Bosser,self).action(**kw) #computes lapse here
+        super(OverloadBosser, self).action(**kw) #computes lapse here
 
         if self.lapse <= 0.0:
             pass
@@ -327,9 +336,6 @@ class Bosser(deeding.LapseDeed):
                 
         return None
 
-    def expose(self):
-        """ prints out state"""
-        pass
 
 
 

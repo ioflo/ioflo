@@ -37,6 +37,8 @@ framer autoscaler be active first compute at 1.0
    frame abort
       bid stop all
 
-logger logger to ../log/
+logger logger to ../log/ flush 1
 log autoscale to autoscale on update
 loggee overload salt.overload
+log event to event on fifo
+loggee event salt.eventer.job.event

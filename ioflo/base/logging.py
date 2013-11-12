@@ -11,7 +11,7 @@ import datetime
 import copy
 import cStringIO
 
-
+from collections import deque, MutableSequence, MutableMapping
 
 from .globaling import *
 from .odicting import odict
@@ -265,7 +265,7 @@ class Log(registering.StoriedRegistry):
             self.fileName = fileName #file name only 
         else:
             self.fileName = self.name
-        self. path = '' #full dir path name of file
+        self.path = '' #full dir path name of file
         self.file = None #file where log is written
 
         self.rule = rule #log rule when to log
@@ -349,6 +349,10 @@ class Log(registering.StoriedRegistry):
             self.action = self.update
         elif self.rule == CHANGE:
             self.action = self.change
+        elif self.rule == LIFO:
+            self.action = self.lifo
+        elif self.rule == FIFO:
+            self.action = self.fifo         
         else:
             self.action = self.never
 
@@ -446,6 +450,60 @@ class Log(registering.StoriedRegistry):
             print ex1
 
         cf.close()
+    
+    def logSeries(self, fifo=False):
+        """ called by conditional actions
+            Log and remove all elements of sequence
+            Default is lifo order
+            If fifo Then log in fifo order
+            head is left tail is right
+            lifo is log tail to head
+            fifo is log head to tail
+        """
+        self.stamp = self.store.stamp
+
+        #should be different if binary kind
+        cf = cStringIO.StringIO() #use string io faster than concatenation
+        try:
+            stamp = self.formats['_time'] % self.stamp
+        except TypeError:
+            stamp = '%s' % self.stamp
+        
+        if self.loggees:
+            tag, loggee = self.loggees.items()[0] # only works for one loggee
+            if loggee: # not empty
+                field, value = loggee.items()[0] # only first item
+                d = deque()
+                if isinstance(value, MutableSequence): #has pop method
+                    while value: # not empty
+                        d.appendleft(value.pop()) #remove and copy in order
+                
+                elif isinstance(value, MutableMapping): # has popitem method
+                    while value: # not empty
+                        d.appendleft(value.popitem()) #remove and copy in order
+                
+                else: #not mutable sequence or mapping so log normally
+                    d.appendleft(value)
+                        
+                while d: # not empty
+                    if fifo:
+                        element = d.popleft()
+                    else: #lifo
+                        element = d.pop()
+                        
+                    try:
+                        text = self.formats[tag][field] % (element, )
+                    except TypeError:
+                        text = '%s' % element
+                    cf.write("%s\t%s\n" % (stamp, text))                          
+                    
+        try:
+            self.file.write(cf.getvalue())
+        except ValueError, ex1: #if self.file already closed then ValueError
+            print ex1
+
+        cf.close()
+
 
     def never(self):
         """log never
@@ -465,6 +523,18 @@ class Log(registering.StoriedRegistry):
 
         """
         self.log()
+    
+    def lifo(self):
+        """log lifo sequence
+            log elements in lifo order from sequence until empty 
+        """
+        self.logSeries()       
+    
+    def fifo(self):
+        """log fifo sequence
+            log elements in fifo order from sequence until empty 
+        """
+        self.logSeries(fifo=True)    
 
     def update(self):
         """log if updated 

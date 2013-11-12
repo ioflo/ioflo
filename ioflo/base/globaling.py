@@ -37,10 +37,12 @@ ONCE = 1
 ALWAYS = 2
 UPDATE = 3
 CHANGE = 4
+LIFO = 5
+FIFO = 6
 LogRuleNames = {NEVER : 'Never', ONCE : 'Once', ALWAYS : 'Always', 
-                UPDATE : 'Update', CHANGE : 'Change'}
+                UPDATE : 'Update', CHANGE : 'Change', LIFO : 'Lifo', FIFO: 'Fifo',}
 LogRuleValues = {'Never' : NEVER, 'Once' : ONCE,  'Always' : ALWAYS, 
-                 'Update' : UPDATE, 'Change' : CHANGE}
+                 'Update' : UPDATE, 'Change' : CHANGE, 'Lifo' : LIFO, 'Fifo' : FIFO,}
 
 #Task schedule context
 INACTIVE = 0

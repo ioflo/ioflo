@@ -22,11 +22,16 @@ from .globaling import *
 from .consoling import getConsole
 console = getConsole()
 
-class fifo(deque):  #new-style class to add put get methods
-    """Extends deque to support FIFO queue access
 
-       put inserts item at tail of queue = back (right side) of deque
-       get retrieves item from head of queue = front (left side) of deque
+class fifo(deque):  #new-style class to add put get methods
+    """ Extends deque to support more convenient FIFO queue access
+       
+       for any python sequence to determin if it is empty just use "if s:"
+       
+       local methods
+       .put inserts non-None item at tail, back (right side) of deque
+       .get retrieves item from head, front, (left side) of deque, None if empty
+       
 
        inherited methods:
        .append()  = add to right side of deque
@@ -43,7 +48,8 @@ class fifo(deque):  #new-style class to add put get methods
 
     def put(self, item):
         """Puts item at tail of queue = back of deque
-           If item is None don't put on Queue otherwise can't tell if fifo empty
+           If item is None don't put on Queue. Symmetric with get which returns
+           None if queue empty
         """
         if item is not None:
             self.append(item)
@@ -58,14 +64,6 @@ class fifo(deque):  #new-style class to add put get methods
             item = None
 
         return item
-
-    def empty(self):
-        """Returns True if list empty, False otherwise.
-        """
-        if len(self) == 0:
-            return True
-        else:
-            return False
 
 
 
@@ -392,6 +390,26 @@ class SocketNB(object):
 
 
 #Utility Functions
+
+def NameToPath(name):
+    """ Converts camel case name into share path where uppercase letters denote
+        nodes in path
+        
+        Assumes Name is of the correct format to be Identifier.
+    """
+    pathParts = []
+    nameParts = list(name)
+    for c in nameParts:
+        if c.isupper():
+            pathParts.append('.')
+            pathParts.append(c.lower())
+        else:
+            pathParts.append(c)
+        
+    path = ''.join(pathParts)
+    return path
+
+nameToPath = NameToPath
 
 def Repack(n, seq):
     """ Repacks seq into a generator of len n and returns the generator.

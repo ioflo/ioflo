@@ -20,7 +20,7 @@ from . import acting
 from .consoling import getConsole
 console = getConsole()
 
-from .aiding import NonStringIterable, just
+from .aiding import NonStringIterable, just, nameToPath
 
 
 def CreateInstances(store):
@@ -67,7 +67,7 @@ class Deed(acting.Actor):
         """ Parse time Reinit
             Enables initializing instance at parse time from FloScript options
             
-            Each argument name is the name of an init method keyword except proem
+            Each argument name is the name of an init method keyword except inode
             Each argument value is the init pathname string of the share holding the
                four init values for that argument as fields in the share.
                creates tuples to pass to method .init
@@ -78,7 +78,7 @@ class Deed(acting.Actor):
         """
         init = dict()
         for key, val in kw.items():
-            if key == 'proem': #just return path name string for proem
+            if key == 'inode': #just return path name string for inode
                 init[key] =  val
                 continue
             share = self.store.fetchShare(val)
@@ -90,17 +90,23 @@ class Deed(acting.Actor):
                                 share.get('iown'), 
                                 share.get('ipri'))
         
-        #self.initio(**init)
         self.ioinit.update(init)
         return self
     
-    def initio(self, proem="", **kw):
-        """ Intialize and hookup ioflo shares from node pathname proem and kw arguments.
+    def initio(self, inode="", **kw):
+        """ Intialize and hookup ioflo shares from node pathname inode and kw arguments.
             This implements a generic Deed interface protocol for associating the
             input and output data flow shares to the Deed.
             
-            kw arguments may be either tuples (lists or other non-string iterables), or dicts.
-            The init behavior is based on the form of the argument.
+            The inode argument is a pathname string of the share node for the instance
+            where associated shares may be placed. If inode is empty then the default
+            value for inode will be created from the instance name where uppercase
+            letters indicate intermediate nodes. For example an Deed instance named
+            thingGoneWrong would have a default inode of "thing.gone.wrong".
+            
+            The values of the items in the **kw argument may be either tuples
+            (lists or other non-string iterables), or dicts.
+            The init behavior is based on the form of the argument value.
             
             There are the following 2 forms:
             
@@ -127,16 +133,18 @@ class Deed(acting.Actor):
                ipath, ival, iown, ipri
             as determined by the corresponding tuple elements or dict keys: 
             
+            inode is provided pathname else default derived form instance name
+            
             For each kw arg item
                 Create attribute with name given by kw arg item key
                 Create share with store pathname given by ipath
                     If ipath
                         If ipath starts with dot "." Then absolute path
-                        Else ipath does not start with dot "." Then relative path to proem
-                           Unless proem is empty then absolute path with assumed initial dot
+                        Else ipath does not start with dot "." Then relative path to inode
+                           
                     Else
-                        If proem Then relative path of kw arg name to proem
-                        Else Error
+                        ipath is relative path of kw arg name to inode
+                        
                 If not iown Then
                     init share with init value using create (change if not exist)
                     add share to iflos dict with key given by arg/attribute name
@@ -149,7 +157,7 @@ class Deed(acting.Actor):
                 
                 init may be single value or dict of field, values
                 
-                assign .node attribute of deed to proem node if given else None
+                assign .inode attribute of deed to inode node
                 assign .iflos and .oflos dict attribute of Deed
         """
         self.iflos = odict()
@@ -169,15 +177,15 @@ class Deed(acting.Actor):
                 ipri = val.get('ipri')
             else: # non dict non string iterable
                 ipath, ival, iown, ipri = just(4, val) #unpack 4 elements, None for default
+                
+            if not inode:
+                inode = nameToPath(self.name)
             
             if ipath:
-                if not ipath.startswith('.'): # full path is proem joined to ipath
-                    ipath = '.'.join((proem.rstrip('.'), ipath)) # when proem empty prepends dot
+                if not ipath.startswith('.'): # full path is inode joined to ipath
+                    ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
             else:
-                if not proem:
-                    raise ValueError("Bad init kw arg '{0}'. Missing ipath '{1}'"
-                                     "and node proem '{2}".format(key, ipath, proem))
-                ipath = '.'.join(proem, key)
+                ipath = '.'.join(inode, key)
             
             # Infer intent of initialization of share with ival:
             # ival is None means don't initialize share
@@ -209,7 +217,7 @@ class Deed(acting.Actor):
                 else:
                     self.oflos[key] = getattr(self, key)
             
-        self.node = self.store.fetchNode(proem) # None if not exist
+        self.inode = self.store.fetchNode(inode) # None if not exist
         
         return self #allow chaining
 
