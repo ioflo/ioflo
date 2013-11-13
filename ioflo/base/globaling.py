@@ -1,7 +1,7 @@
 """globaling.py module with global constang
 
 """
-print "Module %s" % __name__
+#print "module %s" % __name__
 
 import math
 import re

@@ -2,7 +2,7 @@
 
 
 """
-print "\nPackage at %s" % __path__[0]
+#print "\nPackage at %s" % __path__[0]
 
 __all__ = ['globaling', 'aiding', 'excepting', 'interfacing',
            'registering', 'storing', 'skedding', 

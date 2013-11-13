@@ -1,5 +1,5 @@
 """ app run package"""
-print "\nPackage at %s" % __path__[0]
+#print "\nPackage at%s" % __path__[0]
 
 from ...base.globaling import *
 from ...base.consoling import getConsole, Console

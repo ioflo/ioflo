@@ -2,7 +2,7 @@
 
 
 """
-print "module %s" % __name__
+#print "module %s" % __name__
 
 import time
 import struct
@@ -140,7 +140,10 @@ class Deed(acting.Actor):
                 Create share with store pathname given by ipath
                     If ipath
                         If ipath starts with dot "." Then absolute path
-                        Else ipath does not start with dot "." Then relative path to inode
+                        Else ipath does not start with dot "." Then relative path from inode
+                        
+                        If ipath ends with dot Then the path is to a node not share
+                            node ref is created and remaining init values are ignored 
                            
                     Else
                         ipath is relative path of kw arg name to inode
@@ -164,6 +167,10 @@ class Deed(acting.Actor):
         self.oflos = odict()
         
         for key, val in kw.items():
+            if hasattr(self, key):
+                ValueError("Trying to init preexisting attribute"
+                           "'{0}' in Deed '{1}'".format(key, self.name))
+                
             if val == None:
                 continue
             
@@ -184,6 +191,12 @@ class Deed(acting.Actor):
             if ipath:
                 if not ipath.startswith('.'): # full path is inode joined to ipath
                     ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
+                
+                if ipath.endswith('.'): #init a node not share not in iflos or oflos
+                    ipath = ipath.rstrip('.') # remove trailing dot
+                    setattr(self, key, self.store.createNode(ipath))
+                    continue
+                    
             else:
                 ipath = '.'.join(inode, key)
             
@@ -199,10 +212,6 @@ class Deed(acting.Actor):
                 ival = odict(value=ival)
             elif isinstance(ival, Mapping) and not ival: #empty mapping so set value
                 ival = odict(value=ival)
-            
-            if hasattr(self, key):
-                ValueError("Trying to init preexisting attribute"
-                           "'{0}' in Deed '{1}'".format(key, self.name))            
             
             if not iown:
                 setattr(self, key, self.store.create(ipath).create(ival))

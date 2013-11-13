@@ -3,7 +3,7 @@
 """
 from __future__ import with_statement
 
-print "Module %s" % __name__
+#print "module %s" % __name__
 
 import time
 import re

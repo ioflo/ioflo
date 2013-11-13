@@ -1,7 +1,7 @@
 """detecting.py detector deed module
 
 """
-print "module %s" % __name__
+#print "module %s" % __name__
 
 import math
 import time

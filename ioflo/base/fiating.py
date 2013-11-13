@@ -1,7 +1,7 @@
 """fiating.py goal action module
 
 """
-print "module %s" % __name__
+#print "module %s" % __name__
 
 import time
 import struct

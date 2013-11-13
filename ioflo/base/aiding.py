@@ -1,7 +1,7 @@
 """aiding.py constants and basic functions
 
 """
-print "Module %s" % __name__
+#print "module %s" % __name__
 
 
 import exceptions

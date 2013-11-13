@@ -2,7 +2,7 @@
    simulates the motion of UUV or USV etc
 
 """
-print "module %s" % __name__
+#print "module %s" % __name__
 
 import math
 import time

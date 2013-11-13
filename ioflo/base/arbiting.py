@@ -1,7 +1,7 @@
 """arbiting.py arbiter deed module
 
 """
-print "module %s" % __name__
+#print "module %s" % __name__
 
 import time
 import struct

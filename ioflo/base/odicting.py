@@ -10,7 +10,7 @@ Copyright (C) 2001-2007 Orbtech, L.L.C.
 For other copyright, license, and warranty, see bottom of file.
 
 """
-print "module %s" % __name__
+#print "module %s" % __name__
 
 import optimize
 

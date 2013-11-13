@@ -46,7 +46,7 @@ init salt.pool.mid to alpha "alpha" ms_0 "ms-0" ms_1 "ms-1" ms_2 "ms_2" \
       ms_3 "ms-3" ms_4 "ms-4" 
 init salt.pool.status to alpha on ms_0 on ms_1 on ms_2 off ms_3 off ms_4 off 
 """
-print "module %s" % __name__
+#print "module %s" % __name__
 
 from collections import deque
 
