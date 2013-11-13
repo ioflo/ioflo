@@ -183,9 +183,26 @@ class WindowedFilter(deeding.LapseDeed):
        Windowed Filter  class
     """
 
-    def __init__(self, group, output, input, field, depth, parms = None, **kw):
+    def __init__(self,  **kw):
         """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+           
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(WindowedFilter,self).__init__(**kw)  
+
+
+
+    
+    def initio(self, group, output, input, field, depth, parms = None, **kw):
+        """ Override since legacy init interface
+        
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     window = effective time window for averaging in seconds
@@ -214,16 +231,7 @@ class WindowedFilter(deeding.LapseDeed):
            .field = input field name
            .depth = ref to input depth
 
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(WindowedFilter,self).__init__(**kw)  
-
         self.group = group
 
         self.parm = self.store.create(group + '.parm')#create if not exist
@@ -247,14 +255,7 @@ class WindowedFilter(deeding.LapseDeed):
         self.field = field
         self.input.create({self.field : 0.0})
 
-        self.depth = self.store.create(depth).create(value = 0.0)
-
-    
-    def initio(self, **kw):
-        """ Override since legacy init interface
-        
-            
-        """
+        self.depth = self.store.create(depth).create(value = 0.0)        
     
     def restart(self):
         """Restart 
@@ -324,9 +325,26 @@ class MinCTDFilter(deeding.LapseDeed):
        Min CTDFilter  class
     """
 
-    def __init__(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+           
+
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(MinCTDFilter,self).__init__(**kw)  
+
+
+    
+    def initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
+        """ Override since legacy init interface
+        
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     preload = initial value of filter should be max value
@@ -357,17 +375,7 @@ class MinCTDFilter(deeding.LapseDeed):
            .inlast = last input used for computing slope
            .depth = ref to vehicle depth
            .position = ref to vehicle position
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(MinCTDFilter,self).__init__(**kw)  
-
         self.group = group
 
         self.parm = self.store.create(group + '.parm')#create if not exist
@@ -407,13 +415,8 @@ class MinCTDFilter(deeding.LapseDeed):
 
         self.output = self.store.create(output)
         self.output.update(out)
-    
-    def initio(self, **kw):
-        """ Override since legacy init interface
         
-            
-        """
-    
+        
     def restart(self):
         """Restart   
            assumes one will restart in a frame while at appropriate depth
