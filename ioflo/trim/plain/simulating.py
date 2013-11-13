@@ -143,7 +143,16 @@ class UUVMotionSimulator(deeding.LapseDeed):
                              pitch = None, pitchRate = None,
                              depth = None, depthRate = None, altitude = None,
                              heading = None, headingRate = None)
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
         
     def initio(self, group, speed, speedRate, velocity,
                  depth, depthRate, pitch, pitchRate, altitude,
@@ -436,7 +445,16 @@ class USVMotionSimulator(deeding.LapseDeed):
         self.ionames = dict( speed = None, speedRate = None, 
                              heading = None, headingRate = None)
 
-        
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+                
     
     def initio(self, group, speed, speedRate,  velocity,
                  heading, headingRate, position,
@@ -637,8 +655,16 @@ class GPSSensorSimulator(deeding.LapseDeed):
         """
         #call super class method
         super(GPSSensorSimulator,self).__init__(**kw)  
-
-        
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+                
     def initio(self, group, positionOut, velocityOut, error,
                  heading, speed,  positionIn, velocityIn, 
                  scenario, parms = None, **kw):
@@ -814,7 +840,16 @@ class DVLSensorSimulator(deeding.LapseDeed):
         #call super class method
         super(DVLSensorSimulator,self).__init__(**kw)  
 
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
     def initio(self, group, velocity, currentOut, altitude,
                  heading, speed, currentIn, bottom,
                  scenario, parms = None, **kw):
@@ -985,7 +1020,16 @@ class CompassSensorSimulator(deeding.LapseDeed):
         """
         #call super class method
         super(CompassSensorSimulator,self).__init__(**kw)  
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
     
     def initio(self, group, output,input, scenario, parms = None, **kw):
         """ Override since legacy interface
@@ -1107,7 +1151,16 @@ class LinearSalinitySimulator(deeding.LapseDeed):
         #call super class method
         super(LinearSalinitySimulator,self).__init__(**kw)  
 
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
     
     def initio(self, group, output,input, depth, parms = None, **kw):
         """ Override since legacy interface
@@ -1249,7 +1302,16 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
         #call super class method
         super(SinusoidSalinitySimulator,self).__init__(**kw)  
 
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
 
     
     def initio(self, group, output,input, parms = None, **kw):
@@ -1384,7 +1446,16 @@ class GradientSimulator(deeding.LapseDeed):
         #call super class method
         super(GradientSimulator,self).__init__(**kw)  
 
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
     
     def initio(self, group, output, field, position, depth, parms = None, **kw):
         """ Override since legacy interface

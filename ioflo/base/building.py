@@ -2394,8 +2394,8 @@ class Builder(object):
 
             while index < len(tokens): 
                 if tokens[index] in ['as', 'to', 'from', 'with', 'per']: # end of parts
-                    connective = tokens[index]
-                    index += 1 #eat token
+                    #connective = tokens[index]
+                    #index += 1 #eat token
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -2438,7 +2438,7 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
                     
-                elif connective == 'pre':
+                elif connective == 'per':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -2473,7 +2473,8 @@ class Builder(object):
             kinder = deeding.Deed.Names[kind]
             #create new instance as the same type as kinder
             actor = type(kinder)(name=name, store=self.currentStore)
-            actor.preinitio(**init)
+            if init:
+                actor.preinitio(**init)
             actor.initio(**actor.ioinit)
 
         else: # Use an existing instance
@@ -2484,7 +2485,8 @@ class Builder(object):
             
             actor = deeding.Deed.Names[name] #fetch existing instance
             kind = actor.__class__.__name__
-            actor.preinitio(**init)
+            if init:
+                actor.preinitio(**init)
             actor.initio(**actor.ioinit)
 
         act = acting.Act(actor = actor, parms = parms)

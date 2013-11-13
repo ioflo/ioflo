@@ -77,7 +77,16 @@ class HeadingSensorFilter(deeding.LapseDeed):
         #call super class method
         super(HeadingSensorFilter,self).__init__(**kw)  
 
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
     
     def initio(self, group, output, input, scenario, parms = None, **kw):
         """ Override since legacy init interface
@@ -196,7 +205,16 @@ class WindowedFilter(deeding.LapseDeed):
         #call super class method
         super(WindowedFilter,self).__init__(**kw)  
 
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
 
     
     def initio(self, group, output, input, field, depth, parms = None, **kw):
@@ -339,7 +357,16 @@ class MinCTDFilter(deeding.LapseDeed):
         #call super class method
         super(MinCTDFilter,self).__init__(**kw)  
 
-
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
+        
     
     def initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
         """ Override since legacy init interface

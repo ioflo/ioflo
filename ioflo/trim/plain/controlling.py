@@ -79,6 +79,15 @@ class PIDController(deeding.LapseDeed):
         super(PIDController,self).__init__(**kw)  
 
         self.lapse = 0.0 #time lapse in seconds calculated on update
+    
+    def preinitio(self,  **kw):
+        """ Parse-time re-initio
+            This just prints warning for now since not yet supported by this class.
+            
+        """
+        console.terse("     Warning: Parse time init not supported on this deed"
+                      " '{0}'\n".format(self.name))
+        return self    
         
 
     def initio(self, group, output, input, rate, rsp, parms = None, **kw):
