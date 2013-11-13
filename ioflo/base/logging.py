@@ -451,7 +451,7 @@ class Log(registering.StoriedRegistry):
 
         cf.close()
     
-    def logSeries(self, fifo=False):
+    def logSequence(self, fifo=False):
         """ called by conditional actions
             Log and remove all elements of sequence
             Default is lifo order
@@ -528,13 +528,13 @@ class Log(registering.StoriedRegistry):
         """log lifo sequence
             log elements in lifo order from sequence until empty 
         """
-        self.logSeries()       
+        self.logSequence()       
     
     def fifo(self):
         """log fifo sequence
             log elements in fifo order from sequence until empty 
         """
-        self.logSeries(fifo=True)    
+        self.logSequence(fifo=True)    
 
     def update(self):
         """log if updated 

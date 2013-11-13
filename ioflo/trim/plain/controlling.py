@@ -27,37 +27,36 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    controllerPidSpeed = PIDController(name = 'controllerPidSpeed', store = store, 
-                                       group = 'controller.pid.speed', output = 'goal.rpm',
-                                       input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
-                                       parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
-                                                    ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
-                                                    esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0))
+    PIDController(name = 'controllerPidSpeed', store = store).ioinit.update(
+            group = 'controller.pid.speed', output = 'goal.rpm',
+            input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
+            parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
+                         ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
+                         esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0))
 
-    controllerPidHeading = PIDController(name = 'controllerPidHeading', store = store,
-                                         group = 'controller.pid.heading', output = 'goal.rudder', 
-                                         input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
-                                         parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
-                                                      ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
-                                                      esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
+    PIDController(name = 'controllerPidHeading', store = store).ioinit.update(
+            group = 'controller.pid.heading', output = 'goal.rudder', 
+            input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
+            parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
+                         ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
+                         esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
 
 
-    controllerPidDepth = PIDController(name = 'controllerPidDepth', store = store,
-                                       group = 'controller.pid.depth', output = 'goal.pitch',
-                                       input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
-                                       parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
-                                                    ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
-                                                    esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0))
+    PIDController(name = 'controllerPidDepth', store = store).ioinit.update(
+            group = 'controller.pid.depth', output = 'goal.pitch',
+            input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
+            parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
+                         ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
+                         esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0))
 
-    controllerPidPitch = PIDController(name = 'controllerPidPitch', store = store,
-                                       group = 'controller.pid.pitch', output = 'goal.stern',
-                                       input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
-                                       parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
-                                                    ger = 1.0, gff = 0.0, gpe = 2.0, gde = 0.0, gie = 0.0,
-                                                    esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
+    PIDController(name = 'controllerPidPitch', store = store).ioinit.update(
+            group = 'controller.pid.pitch', output = 'goal.stern',
+            input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
+            parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
+                         ger = 1.0, gff = 0.0, gpe = 2.0, gde = 0.0, gie = 0.0,
+                         esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
 
 #Class definitions
-#instance should be only one should use singleton or borg
 
 class PIDController(deeding.LapseDeed):
     """PIDController LapseDeed Deed Class
@@ -65,10 +64,27 @@ class PIDController(deeding.LapseDeed):
 
     """
 
-    def __init__(self, group, output, input, rate, rsp, parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance
 
-           group is path name of group in store, group has following subgroups or shares:
+           
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(PIDController,self).__init__(**kw)  
+
+        self.lapse = 0.0 #time lapse in seconds calculated on update
+        
+
+    def initio(self, group, output, input, rate, rsp, parms = None, **kw):
+        """ Override default since legacy deed interface
+        
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     wrap = where setpoint wraps around must be positive
@@ -112,20 +128,11 @@ class PIDController(deeding.LapseDeed):
            .rate = reference to input rate share
            .rsp = reference to input reference set point
 
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
+        
+        
         """
-        #call super class method
-        super(PIDController,self).__init__(**kw)  
-
-        self.lapse = 0.0 #time lapse in seconds calculated on update
-
+        
         self.group = group
-
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
             parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
@@ -143,9 +150,9 @@ class PIDController(deeding.LapseDeed):
 
         self.input = self.store.create(input).create(value = 0.0) #create if not exist
         self.rate = self.store.create(rate).create(value = 0.0)
-        self.rsp = self.store.create(rsp).create(value = 0.0)
-
-
+        self.rsp = self.store.create(rsp).create(value = 0.0)        
+        
+        
     def restart(self):
         """Restart controller   """
         self.es.value = 0.0 #reset integrator error sum to zero

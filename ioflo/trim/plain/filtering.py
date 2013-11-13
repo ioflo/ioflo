@@ -23,54 +23,66 @@ console = getConsole()
 def CreateInstances(store):
     """Create action instances
        must be function so can recreate after clear registry
-       globals useful for module self tests
     """
 
-    filterSensorHeading = HeadingSensorFilter(name = 'filterSensorHeading', 
-                                              store = store,
-                                              group = 'filter.sensor.heading', 
-                                              output = 'heading.output',
-                                              input = 'compass', 
-                                              scenario = 'scenario.magnetic',
-                                              parms = dict(phase = 0.0, amp = 0.0))
+    HeadingSensorFilter(name = 'filterSensorHeading', store = store).ioinit.update(
+        group = 'filter.sensor.heading', 
+        output = 'heading.output',
+        input = 'compass', 
+        scenario = 'scenario.magnetic',
+        parms = dict(phase = 0.0, amp = 0.0))
 
-    filterSensorSalinity = WindowedFilter(name = 'filterSensorSalinity', store = store, 
-                                          group = 'filter.sensor.salinity', output = 'state.salinity',
-                                          input = 'ctd', field = 'salinity', depth = 'state.depth',
-                                          parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
-                                                       layer = 40.0, tolerance = 5.0))
+    WindowedFilter(name = 'filterSensorSalinity', store = store).ioinit.update(
+        group = 'filter.sensor.salinity', output = 'state.salinity',
+        input = 'ctd', field = 'salinity', depth = 'state.depth',
+        parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
+                     layer = 40.0, tolerance = 5.0))
 
-    filterSensorSalinitysim = WindowedFilter(name = 'filterSensorSalinitysim', store = store, 
-                                             group = 'filter.sensor.salinitysim', output = 'state.salinity',
-                                             input = 'ctdsim', field = 'salinity', depth = 'state.depth',
-                                             parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
-                                                          layer = 40.0, tolerance = 5.0))
+    WindowedFilter(name = 'filterSensorSalinitysim', store = store).ioinit.update(
+        group = 'filter.sensor.salinitysim', output = 'state.salinity',
+        input = 'ctdsim', field = 'salinity', depth = 'state.depth',
+        parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
+                     layer = 40.0, tolerance = 5.0))
 
-    filterSensorTemperature = WindowedFilter(name = 'filterSensorTemperature', store = store, 
-                                             group = 'filter.sensor.temperature', output = 'state.temperature',
-                                             input = 'ctd', field = 'temperature', depth = 'state.depth',
-                                             parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
-                                                          layer = 40.0, tolerance = 5.0))
+    WindowedFilter(name = 'filterSensorTemperature', store = store).ioinit.update(
+        group = 'filter.sensor.temperature', output = 'state.temperature',
+        input = 'ctd', field = 'temperature', depth = 'state.depth',
+        parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
+                     layer = 40.0, tolerance = 5.0))
 
-    filterMinTemperature = MinCTDFilter(name = 'filterMinTemperature', store = store, 
-                                        group = 'filter.min.temperature', outputs = 'state.mintemps',
-                                        output = 'state.mintemp',
-                                        input = 'ctd', field = 'temperature', 
-                                        depth = 'state.depth', position = 'state.position',
-                                        parms = dict(preload = 100.0))
+    MinCTDFilter(name = 'filterMinTemperature', store = store).ioinit.update(
+        group = 'filter.min.temperature', outputs = 'state.mintemps',
+        output = 'state.mintemp',
+        input = 'ctd', field = 'temperature', 
+        depth = 'state.depth', position = 'state.position',
+        parms = dict(preload = 100.0))
 
-#Class definitions
-#instance should be only one should use singleton or borg
 
 class HeadingSensorFilter(deeding.LapseDeed):
     """HeadingSensorFilter LapseDeed Deed Class
        Heading Sensor Filter  class
     """
 
-    def __init__(self, group, output, input, scenario,
-                 parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+
+
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(HeadingSensorFilter,self).__init__(**kw)  
+
+
+    
+    def initio(self, group, output, input, scenario, parms = None, **kw):
+        """ Override since legacy init interface
+        
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     phase
@@ -94,17 +106,7 @@ class HeadingSensorFilter(deeding.LapseDeed):
 
            .input = ref to input raw heading
            .scenario = ref to input scenario declination
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(HeadingSensorFilter,self).__init__(**kw)  
-
         self.group = group
 
         self.parm = self.store.create(group + '.parm')#create if not exist
@@ -121,8 +123,8 @@ class HeadingSensorFilter(deeding.LapseDeed):
         self.output = self.store.create(output).update(value = 0.0)
         #inputs
         self.input = self.store.create(input).create(value = 0.0)
-        self.scenario = self.store.create(scenario).create(declination = 0.0)
-
+        self.scenario = self.store.create(scenario).create(declination = 0.0)        
+    
     def restart(self):
         """Restart 
 
@@ -247,7 +249,13 @@ class WindowedFilter(deeding.LapseDeed):
 
         self.depth = self.store.create(depth).create(value = 0.0)
 
-
+    
+    def initio(self, **kw):
+        """ Override since legacy init interface
+        
+            
+        """
+    
     def restart(self):
         """Restart 
 
@@ -399,7 +407,13 @@ class MinCTDFilter(deeding.LapseDeed):
 
         self.output = self.store.create(output)
         self.output.update(out)
-
+    
+    def initio(self, **kw):
+        """ Override since legacy init interface
+        
+            
+        """
+    
     def restart(self):
         """Restart   
            assumes one will restart in a frame while at appropriate depth

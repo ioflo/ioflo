@@ -26,110 +26,132 @@ def CreateInstances(store):
        must be function so can recreate after clear registry
        globals useful for module self tests
     """
-    #global simulatorMotionUuv, simulatorMotionUsv
-    #global simulatorSensorGps, simulatorSensorDvl, simulatorSensorCompass
-    #global simulatorSalinityLinear, simulatorSalinitySinusoid
 
-    simulatorMotionUuv = UUVMotionSimulator(name = 'simulatorMotionUuv', store = store, 
-                                            group = 'simulator.motion.uuv',
-                                            speed = 'state.speed', speedRate = 'state.speedRate',
-                                            velocity = 'state.velocity',
-                                            depth = 'state.depth', depthRate = 'state.depthRate',
-                                            pitch = 'state.pitch', pitchRate = 'state.pitchRate', 
-                                            altitude = 'state.altitude',
-                                            heading = 'state.heading', headingRate = 'state.headingRate',
-                                            position = 'state.position', location = 'state.location',
-                                            rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
-                                            current = 'scenario.current', bottom = 'scenario.bottom', 
-                                            onset = 'scenario.onset', origin = 'scenario.origin',
-                                            parms = dict(rpmLimit = 1200.0, sternLimit = 20.0, rudderLimit = 20.0, 
-                                                         gs = 0.0022, gpr = -0.4, gpp = 0.0, gdb = -0.1, ghr = -0.4))
+    UUVMotionSimulator(name = 'simulatorMotionUuv', store = store).ioinit.update(
+        group = 'simulator.motion.uuv',
+        speed = 'state.speed', speedRate = 'state.speedRate',
+        velocity = 'state.velocity',
+        depth = 'state.depth', depthRate = 'state.depthRate',
+        pitch = 'state.pitch', pitchRate = 'state.pitchRate', 
+        altitude = 'state.altitude',
+        heading = 'state.heading', headingRate = 'state.headingRate',
+        position = 'state.position', location = 'state.location',
+        rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
+        current = 'scenario.current', bottom = 'scenario.bottom', 
+        onset = 'scenario.onset', origin = 'scenario.origin',
+        parms = dict(rpmLimit = 1200.0, sternLimit = 20.0, rudderLimit = 20.0, 
+                     gs = 0.0022, gpr = -0.4, gpp = 0.0, gdb = -0.1, ghr = -0.4))
 
-    simulatorMotionUsv = USVMotionSimulator(name = 'simulatorMotionUsv', store = store, 
-                                            group = 'simulator.motion.usv',
-                                            speed = 'state.speed', speedRate = 'state.speedRate',
-                                            velocity = 'state.velocity',
-                                            heading = 'state.heading', headingRate = 'state.headingRate',
-                                            position = 'state.position',
-                                            rpm = 'goal.rpm', rudder = 'goal.rudder',
-                                            current = 'scenario.current',  
-                                            onset = 'scenario.onset',
-                                            parms = dict(rpmLimit = 3000.0,  rudderLimit = 20.0, 
-                                                         gs = 0.0025,  ghr = -0.25))
+    USVMotionSimulator(name = 'simulatorMotionUsv', store = store).ioinit.update( 
+        group = 'simulator.motion.usv',
+        speed = 'state.speed', speedRate = 'state.speedRate',
+        velocity = 'state.velocity',
+        heading = 'state.heading', headingRate = 'state.headingRate',
+        position = 'state.position',
+        rpm = 'goal.rpm', rudder = 'goal.rudder',
+        current = 'scenario.current',  
+        onset = 'scenario.onset',
+        parms = dict(rpmLimit = 3000.0,  rudderLimit = 20.0, 
+                     gs = 0.0025,  ghr = -0.25))
 
-    simulatorSensorGps = GPSSensorSimulator(name = 'simulatorSensorGps', store = store, 
-                                            group = 'simulator.sensor.gps',
-                                            positionOut = 'gps.position', velocityOut = 'gps.velocity',
-                                            error = 'gps.error',
-                                            heading = 'heading.output', speed = 'state.speed',
-                                            positionIn = 'state.position', velocityIn = 'state.velocity', 
-                                            scenario = 'scenario.gps',
-                                            parms = dict(noiseBand = 5.0,  noiseJitter = 2.5, 
-                                                         noiseVelocity = 0.1))
+    GPSSensorSimulator(name = 'simulatorSensorGps', store = store).ioinit.update(
+        group = 'simulator.sensor.gps',
+        positionOut = 'gps.position', velocityOut = 'gps.velocity',
+        error = 'gps.error',
+        heading = 'heading.output', speed = 'state.speed',
+        positionIn = 'state.position', velocityIn = 'state.velocity', 
+        scenario = 'scenario.gps',
+        parms = dict(noiseBand = 5.0,  noiseJitter = 2.5, 
+                     noiseVelocity = 0.1))
 
-    simulatorSensorDvl = DVLSensorSimulator(name = 'simulatorSensorDvl', store = store,
-                                            group = 'simulator.sensor.dvl',
-                                            velocity = 'dvl.velocity', currentOut = 'dvl.current',
-                                            altitude = 'dvl.altitude',
-                                            heading = 'heading.output', speed = 'state.speed', 
-                                            currentIn = 'scenario.current',
-                                            bottom = 'scenario.bottom',
-                                            scenario = 'scenario.dvl',
-                                            parms = dict(velSigma = 0.01, bias = 0.1, altSigma = 0.01))
+    DVLSensorSimulator(name = 'simulatorSensorDvl', store = store).ioinit.update(
+        group = 'simulator.sensor.dvl',
+        velocity = 'dvl.velocity', currentOut = 'dvl.current',
+        altitude = 'dvl.altitude',
+        heading = 'heading.output', speed = 'state.speed', 
+        currentIn = 'scenario.current',
+        bottom = 'scenario.bottom',
+        scenario = 'scenario.dvl',
+        parms = dict(velSigma = 0.01, bias = 0.1, altSigma = 0.01))
 
-    simulatorSensorCompass = CompassSensorSimulator(name = 'simulatorSensorCompass', 
-                                                    store = store,
-                                                    group = 'simulator.sensor.compass',
-                                                    output = 'compass', 
-                                                    input = 'state.heading', depth = 'state.depth',
-                                                    scenario = 'scenario.magnetic',
-                                                    parms = dict(phase = 24.0, amp = 1.0, sigma = 0.1))
+    CompassSensorSimulator(name = 'simulatorSensorCompass', store = store).ioinit.update(
+        group = 'simulator.sensor.compass',
+        output = 'compass', 
+        input = 'state.heading', depth = 'state.depth',
+        scenario = 'scenario.magnetic',
+        parms = dict(phase = 24.0, amp = 1.0, sigma = 0.1))
 
-    simulatorSalinityLinear = LinearSalinitySimulator(name = 'simulatorSalinityLinear', store = store, 
-                                                      group = 'simulator.salinity.linear', 
-                                                      output = 'ctdsim', depth = 'state.depth',
-                                                      input = 'state.position',
-                                                      parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                                                                   middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                                                                   layer = 20.0, shift = 2.0))
+    LinearSalinitySimulator(name = 'simulatorSalinityLinear', store = store).ioinit.update(
+        group = 'simulator.salinity.linear', 
+        output = 'ctdsim', depth = 'state.depth',
+        input = 'state.position',
+        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
+                     layer = 20.0, shift = 2.0))
 
-    simulatorSalinitySinusoid = SinusoidSalinitySimulator(name = 'simulatorSalinitySinusoid', store = store, 
-                                                          group = 'simulator.salinity.sinusoid', 
-                                                          output = 'ctdsim',
-                                                          input = 'state.position', depth = 'state.depth',
-                                                          parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                                                                       middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                                                                       layer = 20.0, shift = 2.0))
+    SinusoidSalinitySimulator(name = 'simulatorSalinitySinusoid', store = store).ioinit.update(
+        group = 'simulator.salinity.sinusoid', 
+        output = 'ctdsim',
+        input = 'state.position', depth = 'state.depth',
+        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
+                     layer = 20.0, shift = 2.0))
 
-    simulatorGradientTemperature = GradientSimulator(name = 'simulatorGradientTemperature', store = store, 
-                                                     group = 'simulator.gradient.temperature', 
-                                                     output = 'ctdsim', field = 'temperature', 
-                                                     position = 'state.position', depth = 'state.depth',
-                                                     parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                                                                  middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                                                                  layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
+    GradientSimulator(name = 'simulatorGradientTemperature', store = store).ioinit.update(
+        group = 'simulator.gradient.temperature', 
+        output = 'ctdsim', field = 'temperature', 
+        position = 'state.position', depth = 'state.depth',
+        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
+                     layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
 
-    simulatorGradientSalinity = GradientSimulator(name = 'simulatorGradientSalinity', store = store, 
-                                                  group = 'simulator.gradient.salinity', 
-                                                  output = 'ctdsim', field = 'salinity', 
-                                                  position = 'state.position', depth = 'state.depth',
-                                                  parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                                                               middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                                                               layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
+    GradientSimulator(name = 'simulatorGradientSalinity', store = store).ioinit.update(
+        group = 'simulator.gradient.salinity', 
+        output = 'ctdsim', field = 'salinity', 
+        position = 'state.position', depth = 'state.depth',
+        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
+                     layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
 
-#Class definitions
 
 class UUVMotionSimulator(deeding.LapseDeed):
     """UUVMotionsimulator LapseDeed Deed Class
        UUV motion simulator class
     """
 
-    def __init__(self, group, speed, speedRate, velocity,
+    def __init__(self, **kw):
+        """Initialize instance.
+           
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+
+           because of Center of buoyancy Center of gravity separation when pitched
+           the relationship between sternPlane and pitch rate is usually nonlinear
+           uses poor linear approx
+           better would be to make pitch rate function of pitch and stern
+
+        """
+        #call super class method
+        super(UUVMotionSimulator,self).__init__(**kw)  
+
+        #used in reset to speed up processing
+        self.ionames = dict( speed = None, speedRate = None, bottom = None,
+                             pitch = None, pitchRate = None,
+                             depth = None, depthRate = None, altitude = None,
+                             heading = None, headingRate = None)
+
+        
+    def initio(self, group, speed, speedRate, velocity,
                  depth, depthRate, pitch, pitchRate, altitude,
                  heading, headingRate, position, location,
                  rpm, stern, rudder, current, bottom, onset, origin, parms = None, **kw):
-        """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+        """ Override since legacy interface
+        
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     rpmLimit = max rpm of motor
@@ -194,24 +216,9 @@ class UUVMotionSimulator(deeding.LapseDeed):
            .bottom = ref to bottom share
            .onset = ref to onset share
            .origin = ref to origin share
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
-
-           because of Center of buoyancy Center of gravity separation when pitched
-           the relationship between sternPlane and pitch rate is usually nonlinear
-           uses poor linear approx better would be to make pitch rate function of pitch and stern
-
         """
-        #call super class method
-        super(UUVMotionSimulator,self).__init__(**kw)  
-
         self.group = group
-
+        
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
             parms = dict(rpmLimit = 1200.0, sternLimit = 20.0,rudderLimit = 20.0, 
@@ -219,13 +226,7 @@ class UUVMotionSimulator(deeding.LapseDeed):
         self.parm.create(**parms)
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
-
-        #used in reset to speed up processing
-        self.ionames = dict( speed = None, speedRate = None, bottom = None,
-                             pitch = None, pitchRate = None,
-                             depth = None, depthRate = None, altitude = None,
-                             heading = None, headingRate = None)
-
+        
         #outputs create share if not exist but force update of value
         self.speed = self.store.create(speed).update(value = 0.0)
         self.speedRate = self.store.create(speedRate).update(value = 0.0)
@@ -263,13 +264,9 @@ class UUVMotionSimulator(deeding.LapseDeed):
         self.onset.create(east = 0.0)
         self.origin = self.store.create(origin)
         self.origin.create(lat = 0.0) #preserves order
-        self.origin.create(lon = 0.0)
-
-        #init position to onset where vehicle starts relative to 0,0 origin
-        #self.position.update(north = self.onset.data.north, east = self.onset.data.east) 
-        #init location to origin lat lon
-        #self.location.update(lat = self.origin.data.lat, lon = self.origin.data.lon) 
-
+        self.origin.create(lon = 0.0)        
+        
+        
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
         """
@@ -419,11 +416,34 @@ class USVMotionSimulator(deeding.LapseDeed):
        USV motion simulator class
     """
 
-    def __init__(self, group, speed, speedRate,  velocity,
+    def __init__(self,  **kw):
+        """Initialize instance.
+           
+
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(USVMotionSimulator,self).__init__(**kw)  
+
+
+
+        #used in reset to speed up processing
+        self.ionames = dict( speed = None, speedRate = None, 
+                             heading = None, headingRate = None)
+
+        
+    
+    def initio(self, group, speed, speedRate,  velocity,
                  heading, headingRate, position,
                  rpm, rudder, current, onset, parms = None, **kw):
-        """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+        """ Override since legacy interface
+            
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     rpmLimit = max rpm of motor
@@ -464,17 +484,7 @@ class USVMotionSimulator(deeding.LapseDeed):
            .rudder = ref to rudder share
            .current = ref to current share
            .onset = ref to onset share
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(USVMotionSimulator,self).__init__(**kw)  
-
         self.group = group
 
         self.parm = self.store.create(group + '.parm')#create if not exist
@@ -485,11 +495,7 @@ class USVMotionSimulator(deeding.LapseDeed):
         self.parm.create(**parms)
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
-
-        #used in reset to speed up processing
-        self.ionames = dict( speed = None, speedRate = None, 
-                             heading = None, headingRate = None)
-
+        
         #outputs create share if not exist but force update of value
         self.speed = self.store.create(speed).update(value = 0.0)
         self.speedRate = self.store.create(speedRate).update(value = 0.0)
@@ -515,7 +521,8 @@ class USVMotionSimulator(deeding.LapseDeed):
         self.onset.create(north = 0.0) #preserves order
         self.onset.create(east = 0.0)
         #init onset position where vehicle starts relative to 0,0 origin
-        self.position.update(north = self.onset.data.north, east = self.onset.data.east)
+        self.position.update(north = self.onset.data.north, east = self.onset.data.east)        
+        
 
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
@@ -618,11 +625,26 @@ class GPSSensorSimulator(deeding.LapseDeed):
        GPS sensor simulator class
     """
 
-    def __init__(self, group, positionOut, velocityOut, error,
+    def __init__(self, **kw):
+        """Initialize instance.
+           
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(GPSSensorSimulator,self).__init__(**kw)  
+
+        
+    def initio(self, group, positionOut, velocityOut, error,
                  heading, speed,  positionIn, velocityIn, 
                  scenario, parms = None, **kw):
-        """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+        """ Override since legacy interface
+            
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     noiseBand = meters max error in position from noise simulated
@@ -662,18 +684,9 @@ class GPSSensorSimulator(deeding.LapseDeed):
 
            .scenario = ref to input scenario dropout
 
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(GPSSensorSimulator,self).__init__(**kw)  
-
         self.group = group
-
+        
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
             parms = dict(noiseBand = 5.0, noiseJitter = 2.5, noiseVelocity = 0.1)
@@ -713,7 +726,7 @@ class GPSSensorSimulator(deeding.LapseDeed):
         self.scenario = self.store.create(scenario).create(dropout = 0)
 
         #self.position.update(self.idealPosition.items()) #init position 
-
+        
 
     def restart(self):
         """Restart motion  simulator
@@ -787,11 +800,27 @@ class DVLSensorSimulator(deeding.LapseDeed):
        DVL sensor simulator class
     """
 
-    def __init__(self, group, velocity, currentOut, altitude,
+    def __init__(self, **kw):
+        """Initialize instance.
+           
+
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(DVLSensorSimulator,self).__init__(**kw)  
+
+
+    def initio(self, group, velocity, currentOut, altitude,
                  heading, speed, currentIn, bottom,
                  scenario, parms = None, **kw):
-        """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+        """ Override since legacy interface
+            
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     velSigma = noise parameter  in velocity measurement
@@ -828,17 +857,7 @@ class DVLSensorSimulator(deeding.LapseDeed):
            .currentIn = ref to input current north east share
            .bottom = ref to input bottom
            .scenario = ref to input dvl scenario for dropout
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(DVLSensorSimulator,self).__init__(**kw)  
-
         self.group = group
 
         self.parm = self.store.create(group + '.parm')#create if not exist
@@ -874,6 +893,7 @@ class DVLSensorSimulator(deeding.LapseDeed):
         self.bottom = self.store.create(bottom).create(value = 0.0)
         self.scenario = self.store.create(scenario).create(dropout = 0)
 
+        
     def restart(self):
         """Restart motion  simulator
 
@@ -953,9 +973,24 @@ class CompassSensorSimulator(deeding.LapseDeed):
        compass sensor simulator class
     """
 
-    def __init__(self, group, output,input, scenario, parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+            
+            inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(CompassSensorSimulator,self).__init__(**kw)  
+
+    
+    def initio(self, group, output,input, scenario, parms = None, **kw):
+        """ Override since legacy interface
+            
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     phase = phase of sinusoid error component degrees
@@ -981,16 +1016,8 @@ class CompassSensorSimulator(deeding.LapseDeed):
            .input = ref to heading share
            .scenario = ref to input scenario declination
 
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
 
         """
-        #call super class method
-        super(CompassSensorSimulator,self).__init__(**kw)  
-
         self.group = group
 
         self.parm = self.store.create(group + '.parm')#create if not exist
@@ -1009,7 +1036,8 @@ class CompassSensorSimulator(deeding.LapseDeed):
         #inputs
         self.input = self.store.create(input).create(value = 0.0)
         self.scenario = self.store.create(scenario).create(declination = 0.0)
-
+        
+        
     def restart(self):
         """Restart motion  simulator
 
@@ -1065,9 +1093,26 @@ class LinearSalinitySimulator(deeding.LapseDeed):
        linear salinity simulator class
     """
 
-    def __init__(self, group, output,input, depth, parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+
+
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(LinearSalinitySimulator,self).__init__(**kw)  
+
+
+    
+    def initio(self, group, output,input, depth, parms = None, **kw):
+        """ Override since legacy interface
+            
+                       group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     track = heading of gradient middle
@@ -1099,17 +1144,7 @@ class LinearSalinitySimulator(deeding.LapseDeed):
            .output = ref to ctd salinity share
            .input = ref to vehicle position share
            .depth = ref to vehicle depth share
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(LinearSalinitySimulator,self).__init__(**kw)  
-
         self.group = group
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
@@ -1132,7 +1167,7 @@ class LinearSalinitySimulator(deeding.LapseDeed):
 
         self.parm.create(**parms)
 
-
+        
     def restart(self):
         """Restart sensor  simulator
 
@@ -1201,9 +1236,26 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
        salinity sensor simulator class
     """
 
-    def __init__(self, group, output,input, parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(SinusoidSalinitySimulator,self).__init__(**kw)  
+
+
+
+    
+    def initio(self, group, output,input, parms = None, **kw):
+        """ Override since legacy interface
+            
+                       group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     track = heading of gradient center
@@ -1231,16 +1283,7 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
            .output = ref to ctd salinity share
            .input = ref to vehicle position share
 
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(SinusoidSalinitySimulator,self).__init__(**kw)  
-
         self.group = group
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
@@ -1258,7 +1301,7 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
                          spread  = 3.0, rising = True, width = 1000)
 
         self.parm.create(**parms)
-
+        
 
     def restart(self):
         """Restart sensor  simulator
@@ -1327,9 +1370,26 @@ class GradientSimulator(deeding.LapseDeed):
        gradient simulator class
     """
 
-    def __init__(self, group, output, field, position, depth, parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+
+
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(GradientSimulator,self).__init__(**kw)  
+
+
+    
+    def initio(self, group, output, field, position, depth, parms = None, **kw):
+        """ Override since legacy interface
+            
+                       group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     track = heading of gradient middle
@@ -1366,17 +1426,7 @@ class GradientSimulator(deeding.LapseDeed):
            .output = ref to ctd salinity share
            .position = ref to vehicle position share
            .depth = ref to vehicle depth share
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
-        #call super class method
-        super(GradientSimulator,self).__init__(**kw)  
-
         self.group = group
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
@@ -1401,7 +1451,7 @@ class GradientSimulator(deeding.LapseDeed):
                          layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0 )
 
         self.parm.create(**parms)
-
+        
 
     def restart(self):
         """Restart gradient  simulator

@@ -28,20 +28,17 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    estimatorPositionNlf = NLFPositionEstimator(name = 'estimatorPositionNlf', store = store,
-                                                group = 'estimator.position.nlf', 
-                                                position = 'nlf.position', 
-                                                drPosition = 'dr.position', drBias = 'dr.bias',
-                                                speed = 'state.speed', heading = 'heading.output',
-                                                current = 'dvl.current',
-                                                dvlVelocity = 'dvl.velocity',
-                                                gpsPosition = 'gps.position', gpsVelocity = 'gps.velocity',
-                                                parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
-                                                             dvlStamp = 0.0, stale = 1.0, 
-                                                             gpsPosStamp = 0.0, gpsVelStamp = 0.0))
-
-#Class definitions
-#instance should be only one should use singleton or borg
+    NLFPositionEstimator(name = 'estimatorPositionNlf', store = store).ioinit.update(
+                        group = 'estimator.position.nlf', 
+                        position = 'nlf.position', 
+                        drPosition = 'dr.position', drBias = 'dr.bias',
+                        speed = 'state.speed', heading = 'heading.output',
+                        current = 'dvl.current',
+                        dvlVelocity = 'dvl.velocity',
+                        gpsPosition = 'gps.position', gpsVelocity = 'gps.velocity',
+                        parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
+                                     dvlStamp = 0.0, stale = 1.0, 
+                                     gpsPosStamp = 0.0, gpsVelStamp = 0.0))
 
 
 class NLFPositionEstimator(deeding.LapseDeed):
@@ -49,11 +46,26 @@ class NLFPositionEstimator(deeding.LapseDeed):
        NonlinearFusion Position Estimator class
     """
 
-    def __init__(self, group, position, drPosition, drBias,
+    def __init__(self, **kw):
+        """Initialize instance.
+           
+           inherited instance attributes
+           .stamp = time stamp
+           .lapse = time lapse between updates of controller
+           .name
+           .store
+
+        """
+        #call super class method
+        super(NLFPositionEstimator,self).__init__(**kw)  
+
+        
+    
+    def initio(self, group, position, drPosition, drBias,
                  speed, heading, current, dvlVelocity, gpsPosition, gpsVelocity,
                  parms = None, **kw):
-        """Initialize instance.
-           group is path name of group in store, group has following subgroups or shares:
+        """ Override since uses legacy interface
+            group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     upsilon = fusion parameter related to uncertainty
@@ -95,18 +107,10 @@ class NLFPositionEstimator(deeding.LapseDeed):
            .gpsPosition = ref to input gps position
            .gpsVelocity = ref to input gps velocity
 
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
+        
         """
-        #call super class method
-        super(NLFPositionEstimator,self).__init__(**kw)  
-
         self.group = group
-
+        
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
             parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
@@ -152,7 +156,7 @@ class NLFPositionEstimator(deeding.LapseDeed):
 
         self.gpsVelocity = self.store.create(gpsVelocity)
         self.gpsVelocity.create(north = 0.0)#preserves order
-        self.gpsVelocity.create(east = 0.0)
+        self.gpsVelocity.create(east = 0.0)        
 
     def restart(self):
         """Restart 

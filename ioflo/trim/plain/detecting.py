@@ -26,13 +26,12 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    detectorPositionBox = BoxPositionDetector(name = 'detectorPositionBox', store = store, 
-                                              group = 'detector.position.box',
-                                              output = 'box', input = 'state.position',
-                                              parms = dict(track = 0.0, north = 0.0, east = 0.0,
-                                                           length = 10000, width = 2000, turn = 45.0))
+    BoxPositionDetector(name = 'detectorPositionBox', store = store).ioinit.update(
+                        group = 'detector.position.box',
+                        output = 'box', input = 'state.position',
+                        parms = dict(track = 0.0, north = 0.0, east = 0.0,
+                                     length = 10000, width = 2000, turn = 45.0))
 
-#Class definitions
 
 class BoxPositionDetector(deeding.Deed):
     """BoxPositionDetector  Class
@@ -41,12 +40,26 @@ class BoxPositionDetector(deeding.Deed):
        output share indicates which side in or out
     """
 
-    def __init__(self, group, output, input, parms = None, **kw):
+    def __init__(self, **kw):
         """Initialize instance.
            group is path name of group in store, group has following subgroups or shares:
            local outputs
 
-           output
+           
+           inherited instance attributes
+           .name
+           .store
+
+        """
+        #call super class method
+        super(BoxPositionDetector,self).__init__(**kw)  
+
+        
+    
+    def initio(self, group, output, input, parms = None, **kw):
+        """ Override since uses legacy interface
+            
+            output
               inside   = vehicle is inside box (Booleans True (False))
               outtop  = vehicle is outside box above top highest priority
               outbottom = vehicle is outside box below bottom next priority
@@ -81,16 +94,9 @@ class BoxPositionDetector(deeding.Deed):
 
            .parm = ref to input parameter share group.parm
 
-           inherited instance attributes
-           .name
-           .store
-
         """
-        #call super class method
-        super(BoxPositionDetector,self).__init__(**kw)  
-
         self.group = group
-
+        
         #local outputs
         self.output = self.store.create(output)#create if not exist
         #order important for display purposes
@@ -121,7 +127,8 @@ class BoxPositionDetector(deeding.Deed):
         turnright = self.parm.data.track + self.parm.data.turn
 
         self.output.update(turnleft = turnleft, turnright = turnright)
-
+        
+        
     def action(self, **kw):
         """computes box detector output
 

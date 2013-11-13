@@ -87,7 +87,7 @@ def CreateInstances(store):
         parm=('parm', dict(), True), 
         inode='.salt.bosser.overload',)
     
-class SaltDeed(deeding.LapseDeed):
+class SaltDeed(deeding.Deed):
     """ Base class for Deeds that interface with Salt
         Adds salt client interface attribute .client
         
@@ -109,7 +109,7 @@ class SaltDeed(deeding.LapseDeed):
         
         self.client = salt.client.api.APIClient()    
 
-class Eventer(SaltDeed):
+class Eventer(SaltDeed, deeding.SinceDeed):
     """ Eventer LapseDeed Deed Class
         Salt Eventer
        
@@ -118,7 +118,6 @@ class Eventer(SaltDeed):
             .store is data store ref
             .ioinit is dict of ioinit data for initio
             .stamp is time stamp
-            .lapse is time lapse between updates of controller
             .client is salt client interface
             
             
@@ -152,10 +151,7 @@ class Eventer(SaltDeed):
             subscription request are duples (tag prefix, share)
             value is 
         """
-        super(Eventer,self).action(**kw) #computes lapse here
-
-        if self.lapse <= 0.0:
-            pass
+        super(Eventer, self).action(**kw) #updates .stamp here
         
         #if not self.pub.value: #no pub to subscriptions so request one
             #publication = self.store.create("salt.pub.test").update(value=deque())
@@ -198,7 +194,7 @@ class Eventer(SaltDeed):
         return None
 
 
-class OverloadBosser(SaltDeed):
+class OverloadBosser(SaltDeed, deeding.LapseDeed):
     """Bosser LapseDeed Deed Class
        Salt Bosser
        
@@ -207,7 +203,7 @@ class OverloadBosser(SaltDeed):
             .store is data store ref
             .ioinit is dict of ioinit data for initio
             .stamp is time stamp
-            .lapse is time lapse between updates of controller
+            .lapse is time lapse between updates of deed
             .client is salt client interface
             
         local attributes
@@ -252,7 +248,6 @@ class OverloadBosser(SaltDeed):
         #call super class method
         super(OverloadBosser, self).__init__(**kw)
         
-        self.client = salt.client.api.APIClient()
         self.loadavgs = {}
         self.cpus = {}
         self.overloads = {}
@@ -265,10 +260,10 @@ class OverloadBosser(SaltDeed):
             request events for associated jobid
            
         """
-        super(OverloadBosser, self).action(**kw) #computes lapse here
+        super(OverloadBosser, self).action(**kw) #updates .stamp and .lapse here
 
-        if self.lapse <= 0.0:
-            pass
+        #if self.lapse <= 0.0:
+            #pass
         
         while self.event.value: #deque of events is not empty
             edata = self.event.value.popleft()
