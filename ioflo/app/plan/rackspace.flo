@@ -14,13 +14,15 @@ init salt.pool.m6 to mid "ms-4" status off
 
 init salt.autoscale.limit to up 0.2 down 0.19
 
-framer eventer be active first event
-   frame event
+framer eventer be active first start
+   frame start
       do salt eventer job
 
-framer overloader be active first overload at 1.0
-   frame overload
-      do salt bosser overload
+framer overloader be active first start at 1.0
+   frame start
+      do salt bosser pool numcpu
+      do salt bosser pool loadavg
+      do salt pooler overload
    
 framer autoscaler be active first compute at 1.0
    frame failure
