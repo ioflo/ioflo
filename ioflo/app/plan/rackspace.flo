@@ -2,8 +2,6 @@
 
 house autoscale
 
-house autoscale
-
 init salt.pool.m1 to mid "ioflominion_1" status on 
 init salt.pool.m2 to mid "ioflominion_2" status on 
 init salt.pool.m3 to mid "ioflominion_3" status off
