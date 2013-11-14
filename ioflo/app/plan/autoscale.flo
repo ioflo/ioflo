@@ -2,16 +2,13 @@
 
 house autoscale
 
-init salt.pool.m1 to mid "alpha" status on overload 0.0 loadavg 0.0 numcpus 1
-init salt.pool.m2 to mid "ms-0" status on overload 0.0 loadavg 0.0 numcpus 1
-init salt.pool.m3 to mid "ms-1" status on overload 0.0 loadavg 0.0 numcpus 1
-init salt.pool.m4 to mid "ms-2" status off overload 0.0 loadavg 0.0 numcpus 1
-init salt.pool.m5 to mid "ms-3" status off overload 0.0 loadavg 0.0 numcpus 1
-init salt.pool.m6 to mid "ms-4" status off overload 0.0 loadavg 0.0 numcpus 1
+init salt.pool.m1 to mid "alpha" status on 
+init salt.pool.m2 to mid "ms-0" status on 
+init salt.pool.m3 to mid "ms-1" status on 
+init salt.pool.m4 to mid "ms-2" status off 
+init salt.pool.m5 to mid "ms-3" status off 
+init salt.pool.m6 to mid "ms-4" status off 
 
-init salt.pool.mid to alpha "alpha" ms_0 "ms-0" ms_1 "ms-1" ms_2 "ms-2" \
-      ms_3 "ms-3" ms_4 "ms-4" 
-init salt.pool.status to alpha on ms_0 on ms_1 on ms_2 off ms_3 off ms_4 off 
 
 init salt.autoscale.limit to up 0.2 down 0.19
 
@@ -32,11 +29,11 @@ framer autoscaler be active first compute at 1.0
       go scaledown if .salt.overload <= down in .salt.autoscale.limit
       
    frame scaleup in failure
-      put on into ms_1 in .salt.pool.status
+      #put on into ms_1 in .salt.pool.status
       go wait if always
       
    frame scaledown in failure
-      put off into ms_1 in .salt.pool.status
+      #put off into ms_1 in .salt.pool.status
       go wait if always
    
    frame wait in failure

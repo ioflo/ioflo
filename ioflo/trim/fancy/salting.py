@@ -7,40 +7,52 @@ Shares
     .period
         value
 
-.goal
-    .overload
-            value
+.salt 
+   .pool 
+      .m1 
+         mid  status  overload  loadavg  numcpus 
+      .m2 
+         mid  status  overload  loadavg  numcpus 
+      .m3 
+         mid  status  overload  loadavg  numcpus 
+      .m4 
+         mid  status  overload  loadavg  numcpus 
+      .m5 
+         mid  status  overload  loadavg  numcpus 
+      .m6 
+         mid  status  overload  loadavg  numcpus 
+      .mid 
+         alpha  ms_0  ms_1  ms_2  ms_3  ms_4 
+      .status 
+         alpha  ms_0  ms_1  ms_2  ms_3  ms_4 
+   .autoscale 
+      .limit 
+         up  down 
+   .eventer 
+      .job 
+         .parm 
+            tag  throttle 
+         .req 
+            value 
+         .pub 
+            value 
+         .event 
+            value 
+   .overload 
+      value 
+   .bosser 
+      .overload 
+         .event 
+            value 
+         .parm 
+            value 
 
-.state
-    .overload
-            value
-
-
-.salt
-    .pool
-        .mid
-            alpha  ms_1 ...
-        .status
-            alpha ms_1 ...
-    .overload
-        value
-    .autoscale
-        .up  
-        .down
-        .failure
-        .abort
-        
-    .eventer
-        .job
-            .pub
-            .event
-        
-    .bosser
-        .overload
-            .event
-            .parm
-                high low
-
+init salt.pool.m1 to mid "alpha" status on overload 0.0 loadavg 0.0 numcpus 1
+init salt.pool.m2 to mid "ms-0" status on overload 0.0 loadavg 0.0 numcpus 1
+init salt.pool.m3 to mid "ms-1" status on overload 0.0 loadavg 0.0 numcpus 1
+init salt.pool.m4 to mid "ms-2" status off overload 0.0 loadavg 0.0 numcpus 1
+init salt.pool.m5 to mid "ms-3" status off overload 0.0 loadavg 0.0 numcpus 1
+init salt.pool.m6 to mid "ms-4" status off overload 0.0 loadavg 0.0 numcpus 1
 
 init salt.pool.mid to alpha "alpha" ms_0 "ms-0" ms_1 "ms-1" ms_2 "ms_2" \
       ms_3 "ms-3" ms_4 "ms-4" 
@@ -81,9 +93,10 @@ def CreateInstances(store):
     OverloadBosser(name = 'saltBosserOverload', store=store).ioinit.update(
         overload=('.salt.overload', 0.0, True, True),
         event=('event', deque(), False, True),
-        req=('.salt.eventer.job.req', deque(), True), 
-        poolMid=('.salt.pool.mid', ), 
-        poolStatus=('.salt.pool.status', ),
+        req=('.salt.eventer.job.req', deque(), True),
+        pool=('.salt.pool.', ), 
+        #poolMid=('.salt.pool.mid', ), 
+        #poolStatus=('.salt.pool.status', ),
         parm=('parm', dict(), True), 
         inode='.salt.bosser.overload',)
     
@@ -207,16 +220,13 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
             .client is salt client interface
             
         local attributes
-            .client is interface to salt
-            .loadavgs is dict of loadavg for each minion in pool
-            .cpus is dict of cpus for each minion in pool
-            .overloads is dict of overloads for each minion in pool
+            .poolees is odict mapping minion ids to pool shares
             
-        
         arguments to update of .ioinit attribute
             overload is share initer of current overload value for pool
             event is share initer of events deque() subbed from eventer
             req is share initer of subscription requests deque() for eventer
+            pool is node initer of shares in node are the pool minions
             poolMid is share initer of pool minon ids
             poolStatus is share initer of pool minon status on or off
             parm = inode.parm field values
@@ -232,8 +242,8 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
             .event is ref to event share, value is deque of events subbed from eventer
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
-            .poolMid is ref to poolMid share, of all minion ids in pool, each value is mid
-            .poolStatus if ref to pooStatus share is on off status of minion in pool
+            .pool is ref to pool node. Each value is share with minion details
+                mid, status, overload, loadavg, numcpu
             .parm is ref to node.parm share
                 
            
@@ -248,9 +258,7 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
         #call super class method
         super(OverloadBosser, self).__init__(**kw)
         
-        self.loadavgs = {}
-        self.cpus = {}
-        self.overloads = {}
+        self.poolees = odict() #mapping between pool shares and mid
 
 
     def action(self, **kw):
@@ -265,36 +273,45 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
         #if self.lapse <= 0.0:
             #pass
         
+        if not self.poolees:
+            for key, share in self.pool.items():
+                self.poolees[share.data.mid] = share #map minion id to share
+        
         while self.event.value: #deque of events is not empty
             edata = self.event.value.popleft()
             console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
             if data.get('success'): #only ret events
                 if data['fun'] == 'status.loadavg':
-                    self.loadavgs[data['id']] = data['return']['1-min']
+                    self.poolees[data['id']].data.loadavg = data['return']['1-min']
                 if data['fun'] == 'grains.get':
-                    self.cpus[data['id']] = data['return']
-        
+                    self.poolees[data['id']].data.numcpu = data['return']
 
-        for key, mid in self.poolMid.items():
-            if self.poolStatus.get(key): #pool member is on
-                if self.loadavgs.get(mid):
+        
+        for share in self.pool.values():
+            if share.data.status: #pool member is on
+                if share.get('loadavg') is not None and share.get('numcpu') is not None:
                     try:
-                        self.overloads[mid] = self.loadavgs[mid] / self.cpus[mid]
+                        share.data.overload = share.data.loadavg / share.data.numcpu
                     except ZeroDivisionError:
                         pass
-            else: # turned off so delete stale overload
-                if mid in self.overloads:
-                    del self.overloads[mid]
-                    
-        
-        count = len(self.overloads)
-        if count and count == sum([1 for key in self.poolStatus if self.poolStatus[key]]):
-            overload = sum(self.overloads.values()) / count
-            self.overload.value = overload
-            console.terse("     Overload updated to {0:0.4f}\n".format(overload))
+            else: # turned off clear stale overload
+                share.data.overload = None
                 
-        target = ','.join([mid for key, mid in self.poolMid.items() if self.poolStatus[key]])
+        
+        count = 0
+        overloadSum = 0.0
+        for share in self.pool.values():
+            overload = share.get('overload')
+            if overload is not None:
+                overloadSum += overload
+                count += 1
+        
+        if count:
+            self.overload.value = overloadSum / count
+            console.terse("     Overload updated to {0:0.4f}\n".format(self.overload.value))
+            
+        target = ','.join([mid for mid, share in self.poolees.items() if share.data.status])
         
         cmd = dict(mode='async', fun='grains.get', arg=['num_cpus'], 
                            tgt=target, expr_form='list',
