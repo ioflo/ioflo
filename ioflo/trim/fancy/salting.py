@@ -267,6 +267,8 @@ class OverloadPooler(SaltDeed, deeding.LapseDeed):
                 if share.get('loadavg') is not None and share.get('numcpu') is not None:
                     try:
                         share.data.overload = share.data.loadavg / share.data.numcpu
+                        console.terse("     {0} overload is {1:0.4f}\n".format(
+                             share.data.mid, share.data.overload))
                     except ZeroDivisionError:
                         pass
             else: # turned off clear stale overload
@@ -283,7 +285,8 @@ class OverloadPooler(SaltDeed, deeding.LapseDeed):
         
         if count:
             self.overload.value = overloadSum / count
-            console.terse("     Overload updated to {0:0.4f}\n".format(self.overload.value))
+            console.terse("     Pool size {0}, overload is {1:0.4f} \n".format(
+                count, self.overload.value))
             
                 
         return None
