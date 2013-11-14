@@ -4,13 +4,10 @@ house autoscale
 
 house autoscale
 
-init salt.pool.m1 to mid "alpha" status on 
-init salt.pool.m2 to mid "ms-0" status on 
-init salt.pool.m3 to mid "ms-1" status on 
-init salt.pool.m4 to mid "ms-2" status off 
-init salt.pool.m5 to mid "ms-3" status off 
-init salt.pool.m6 to mid "ms-4" status off 
-
+init salt.pool.m1 to mid "ioflominion_1" status on 
+init salt.pool.m2 to mid "ioflominion_2" status on 
+init salt.pool.m3 to mid "ioflominion_3" status off
+init salt.pool.m4 to mid "ioflominion_4" status off 
 
 init salt.autoscale.limit to up 0.2 down 0.19
 
