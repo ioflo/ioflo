@@ -228,7 +228,13 @@ class Deed(acting.Actor):
             
         self.inode = self.store.fetchNode(inode) # None if not exist
         
+        self.postinitio()
+        
         return self #allow chaining
+    
+    def postinitio(self):
+        """ Base method to be overriden in sub classes. Perform post initio setup"""
+        pass
 
 class SinceDeed(Deed):
     """SinceDeed Deed Actor Patron Registry Class

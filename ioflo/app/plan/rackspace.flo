@@ -2,8 +2,16 @@
 
 house autoscale
 
-init salt.pool.mid to m_1 "ioflominion_1" m_2  "ioflominion_2" m_3 "ioflominion_3"  
-init salt.pool.status to m_1 on m_2 off  m_3 off 
+house autoscale
+
+init salt.pool.m1 to mid "alpha" status on 
+init salt.pool.m2 to mid "ms-0" status on 
+init salt.pool.m3 to mid "ms-1" status on 
+init salt.pool.m4 to mid "ms-2" status off 
+init salt.pool.m5 to mid "ms-3" status off 
+init salt.pool.m6 to mid "ms-4" status off 
+
+
 init salt.autoscale.limit to up 0.2 down 0.19
 
 framer eventer be active first event
@@ -23,11 +31,11 @@ framer autoscaler be active first compute at 1.0
       go scaledown if .salt.overload <= down in .salt.autoscale.limit
       
    frame scaleup in failure
-      put on into ms_1 in .salt.pool.status
+      #put on into ms_1 in .salt.pool.status
       go wait if always
       
    frame scaledown in failure
-      put off into ms_1 in .salt.pool.status
+      #put off into ms_1 in .salt.pool.status
       go wait if always
    
    frame wait in failure

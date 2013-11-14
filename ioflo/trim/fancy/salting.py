@@ -89,16 +89,25 @@ def CreateInstances(store):
         parm=('parm', dict(throttle=0.0, tag='salt/job'), True), 
         inode='.salt.eventer.job', )  
                                 
-
-    OverloadBosser(name = 'saltBosserOverload', store=store).ioinit.update(
+    OverloadPooler(name = 'saltPoolerOverload', store=store).ioinit.update(
         overload=('.salt.overload', 0.0, True, True),
+        pool=('.salt.pool.', ), 
+        parm=('parm', dict(), True), 
+        inode='.salt.bosser.overload',)
+    
+    NumcpuPoolBosser(name = 'saltBosserPoolNumcpu', store=store).ioinit.update(
         event=('event', deque(), False, True),
         req=('.salt.eventer.job.req', deque(), True),
         pool=('.salt.pool.', ), 
-        #poolMid=('.salt.pool.mid', ), 
-        #poolStatus=('.salt.pool.status', ),
         parm=('parm', dict(), True), 
-        inode='.salt.bosser.overload',)
+        inode='.salt.bosser.numcpu',)
+    
+    LoadavgPoolBosser(name = 'saltBosserPoolLoadavg', store=store).ioinit.update(
+        event=('event', deque(), False, True),
+        req=('.salt.eventer.job.req', deque(), True),
+        pool=('.salt.pool.', ), 
+        parm=('parm', dict(), True), 
+        inode='.salt.bosser.loadavg',)        
     
 class SaltDeed(deeding.Deed):
     """ Base class for Deeds that interface with Salt
@@ -207,9 +216,10 @@ class Eventer(SaltDeed, deeding.SinceDeed):
         return None
 
 
-class OverloadBosser(SaltDeed, deeding.LapseDeed):
-    """Bosser LapseDeed Deed Class
-       Salt Bosser
+class OverloadPooler(SaltDeed, deeding.LapseDeed):
+    """ Overloader LapseDeed Deed Class
+        Computer the overload percentage of each active member of pool and
+        the average overload for the pool
        
         inherited attributes
             .name is actor name string
@@ -220,73 +230,37 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
             .client is salt client interface
             
         local attributes
-            .poolees is odict mapping minion ids to pool shares
             
         arguments to update of .ioinit attribute
             overload is share initer of current overload value for pool
-            event is share initer of events deque() subbed from eventer
-            req is share initer of subscription requests deque() for eventer
             pool is node initer of shares in node are the pool minions
-            poolMid is share initer of pool minon ids
-            poolStatus is share initer of pool minon status on or off
             parm = inode.parm field values
             inode is node path name in store
             
             
         local attributes created by initio
-            .node is inode node
+            .inode is inode node
             .oflos is ref to out flos odict
             .iflos is ref to in flos odict
             
             .overload is ref to overload share, value is computed overload
-            .event is ref to event share, value is deque of events subbed from eventer
-            .req is ref to subscription request share, value is deque of subscription requests
-                each request is duple of tag, share
             .pool is ref to pool node. Each value is share with minion details
                 mid, status, overload, loadavg, numcpu
             .parm is ref to node.parm share
-                
-           
 
     """
 
     def __init__(self, **kw):
-        """Initialize instance
-
-        
-        """
+        """Initialize instance """
         #call super class method
-        super(OverloadBosser, self).__init__(**kw)
-        
-        self.poolees = odict() #mapping between pool shares and mid
-
+        super(OverloadPooler, self).__init__(**kw)
 
     def action(self, **kw):
-        """ check for events
-            update overload
-            poll on minions for new overload
-            request events for associated jobid
-           
-        """
-        super(OverloadBosser, self).action(**kw) #updates .stamp and .lapse here
+        """ update overloads for pool"""
+        super(OverloadPooler, self).action(**kw) #updates .stamp and .lapse here
 
         #if self.lapse <= 0.0:
             #pass
-        
-        if not self.poolees:
-            for key, share in self.pool.items():
-                self.poolees[share.data.mid] = share #map minion id to share
-        
-        while self.event.value: #deque of events is not empty
-            edata = self.event.value.popleft()
-            console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
-            data = edata['data']
-            if data.get('success'): #only ret events
-                if data['fun'] == 'status.loadavg':
-                    self.poolees[data['id']].data.loadavg = data['return']['1-min']
-                if data['fun'] == 'grains.get':
-                    self.poolees[data['id']].data.numcpu = data['return']
-
         
         for share in self.pool.values():
             if share.data.status: #pool member is on
@@ -311,6 +285,73 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
             self.overload.value = overloadSum / count
             console.terse("     Overload updated to {0:0.4f}\n".format(self.overload.value))
             
+                
+        return None
+    
+    
+class NumcpuPoolBosser(SaltDeed, deeding.LapseDeed):
+    """Bosser LapseDeed Deed Class
+       Salt Bosser 
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            .poolees is odict mapping minion ids to pool shares
+            
+        arguments to update of .ioinit attribute
+            event is share initer of events deque() subbed from eventer
+            req is share initer of subscription requests deque() for eventer
+            pool is node initer of shares in node are the pool minions
+            parm = inode.parm field values
+            inode is node path name in store
+            
+            
+        local attributes created by initio
+            .inode is inode node
+            .oflos is ref to out flos odict
+            .iflos is ref to in flos odict
+            
+            .event is ref to event share, value is deque of events subbed from eventer
+            .req is ref to subscription request share, value is deque of subscription requests
+                each request is duple of tag, share
+            .pool is ref to pool node. Each value is share with minion details
+                mid, status, overload, loadavg, numcpu
+            .parm is ref to node.parm share
+
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(NumcpuPoolBosser, self).__init__(**kw)
+        
+        self.poolees = odict() #mapping between pool shares and mid
+
+    def postinitio(self):
+        """ initialize poolees from pool"""
+        for key, share in self.pool.items():
+            self.poolees[share.data.mid] = share #map minion id to share
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(NumcpuPoolBosser, self).action(**kw) #updates .stamp and .lapse here
+
+        while self.event.value: #deque of events is not empty
+            edata = self.event.value.popleft()
+            console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
+            data = edata['data']
+            if data.get('success'): #only ret events
+                self.poolees[data['id']].data.numcpu = data['return']
+            
         target = ','.join([mid for mid, share in self.poolees.items() if share.data.status])
         
         cmd = dict(mode='async', fun='grains.get', arg=['num_cpus'], 
@@ -329,6 +370,75 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
             if jid:
                 self.req.value.append(('salt/job/{0}'.format(jid), self.event))        
                      
+                
+        return None
+
+class LoadavgPoolBosser(SaltDeed, deeding.LapseDeed):
+    """Bosser LapseDeed Deed Class
+       Salt Bosser 
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            .poolees is odict mapping minion ids to pool shares
+            
+        arguments to update of .ioinit attribute
+            event is share initer of events deque() subbed from eventer
+            req is share initer of subscription requests deque() for eventer
+            pool is node initer of shares in node are the pool minions
+            parm = inode.parm field values
+            inode is node path name in store
+            
+            
+        local attributes created by initio
+            .inode is inode node
+            .oflos is ref to out flos odict
+            .iflos is ref to in flos odict
+            
+            .event is ref to event share, value is deque of events subbed from eventer
+            .req is ref to subscription request share, value is deque of subscription requests
+                each request is duple of tag, share
+            .pool is ref to pool node. Each value is share with minion details
+                mid, status, overload, loadavg, numcpu
+            .parm is ref to node.parm share
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(LoadavgPoolBosser, self).__init__(**kw)
+        
+        self.poolees = odict() #mapping between pool shares and mid
+
+    def postinitio(self):
+        """ initialize poolees from pool"""
+        for key, share in self.pool.items():
+            self.poolees[share.data.mid] = share #map minion id to share
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(LoadavgPoolBosser, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        while self.event.value: #deque of events is not empty
+            edata = self.event.value.popleft()
+            console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
+            data = edata['data']
+            if data.get('success'): #only ret events
+                self.poolees[data['id']].data.loadavg = data['return']['1-min']
+            
+        target = ','.join([mid for mid, share in self.poolees.items() if share.data.status])
         
         cmd = dict(mode='async', fun='status.loadavg',
                    tgt=target, expr_form='list',
@@ -347,8 +457,6 @@ class OverloadBosser(SaltDeed, deeding.LapseDeed):
                 self.req.value.append(('salt/job/{0}'.format(jid), self.event))
                 
         return None
-
-
 
 
 def Test():
