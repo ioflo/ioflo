@@ -538,7 +538,7 @@ class Log(registering.StoriedRegistry):
 
     def update(self):
         """log if updated 
-           logs once and then only if updatee
+           logs once and then only if updated
         """
         if self.stamp is None: #Always log at least once even if not updated
             self.log()
@@ -562,10 +562,15 @@ class Log(registering.StoriedRegistry):
         change = False
         for tag, loggee in self.loggees.items():
             last = self.lasts[tag] #get last Data object for each loggee
-            for field, value in loggee.items(): 
-                if getattr(last, field) != value:
-                    change = True
-                    setattr(last, field, value)
+            for field, value in loggee.items():
+                try:
+                    if getattr(last, field) != value:
+                        change = True
+                        setattr(last, field, value)
+                except AttributeError as ex: # 
+                    console.terse("Warning: Log {0}, new runtime field"
+                                  " '{1}' for loggee {2}\n".format(
+                                      self.name, field, loggee.name))                     
 
         if change:
             self.log()

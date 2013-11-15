@@ -506,7 +506,7 @@ class Share(object):
         """Force time stamp this share to store.stamp
            This is useful when share field is a collection that is modified
            in place, i.e. can't use update since update copies
-           so stampit update the stamp. 
+           so stampNow update the stamp. 
         """
         self.stamp = self.store.stamp
 

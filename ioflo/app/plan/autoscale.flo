@@ -22,30 +22,48 @@ framer overloader be active first start at 1.0
       do salt bosser pool loadavg
       do salt pooler overload
    
-framer autoscaler be active first compute at 1.0
-   frame failure
+framer autoscaler be active first startup at 1.0
+   frame safety
+      do salt bosser pool ping
       go abort if .time >= 60
-      
-   frame compute in failure
-      go scaleup if .salt.overload >= up in .salt.autoscale.limit
-      go scaledown if .salt.overload <= down in .salt.autoscale.limit
-      
-   frame scaleup in failure
-      #put on into ms_1 in .salt.pool.status
-      go wait if always
-      
-   frame scaledown in failure
-      #put off into ms_1 in .salt.pool.status
-      go wait if always
    
-   frame wait in failure
-      go compute if elapsed >= 3
+      frame startup in safety # wait 6 seconds to verify all on poolees are healthy
+         set elapsed to 6
+         go compute if healthy in .salt.status
+         go abort if elapsed >= goal and not healthy in .salt.status
+      
+      frame autoscale in safety
+         go abort if not healthy in .salt.status
+   
+      frame compute in autoscale
+         go scaleup if overload in .salt.status >= up in .salt.autoscale.limit
+         go scaledown if overload in .salt.status <= down in .salt.autoscale.limit
+         
+      frame scaleup in autoscale
+         #put on into ms_1 in .salt.pool.status
+         go wait if always
+         
+      frame scaledown in autoscale
+         #put off into ms_1 in .salt.pool.status
+         go wait if always
+      
+      frame wait in autoscale
+         go compute if elapsed >= 3
       
    frame abort
       bid stop all
 
 logger logger to ../log/ flush 1
-log autoscale to autoscale on update
-loggee overload salt.overload
-log event to event on fifo
-loggee event salt.eventer.job.event
+   log autoscale to autoscale on update
+      loggee status salt.status
+      
+   log pool to pool on change
+      loggee m1 salt.pool.m1
+      loggee m2 salt.pool.m2
+      loggee m3 salt.pool.m3
+      loggee m4 salt.pool.m4
+      loggee m5 salt.pool.m5
+      loggee m6 salt.pool.m6
+      
+   log event to event on fifo
+      loggee event salt.eventer.job.event

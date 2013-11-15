@@ -1566,8 +1566,15 @@ class Builder(object):
                 while (index < len(tokens)):   
                     act, index = self.makeNeed(tokens, index)
                     if not act:
-                        return False
-                    needs.append(act)         
+                        return False # something wrong do not know what
+                    needs.append(act)
+                    if index < len(tokens):
+                        connective = tokens[index]
+                        if connective not in ['and']:
+                            msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                                                    (command, connective)
+                            raise excepting.ParseError(msg, tokens, index)
+                        index += 1 #otherwise eat token                     
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2271,8 +2278,16 @@ class Builder(object):
                 while (index < len(tokens)):   
                     act, index = self.makeNeed(tokens, index)
                     if not act:
-                        return False
+                        return False #something wrong do not know what
                     needs.append(act)
+                    if index < len(tokens):
+                        connective = tokens[index]
+                        if connective not in ['and']:
+                            msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                                                    (command, connective)
+                            raise excepting.ParseError(msg, tokens, index)
+                        index += 1 #otherwise eat token                             
+                            
 
         except IndexError:
             msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
@@ -2342,8 +2357,15 @@ class Builder(object):
             while (index < len(tokens)):   
                 act, index = self.makeNeed(tokens, index)
                 if not act:
-                    return False
+                    return False # something wrong do know what
                 needs.append(act)
+                if index < len(tokens):
+                    connective = tokens[index]
+                    if connective not in ['and']:
+                        msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                                                (command, connective)
+                        raise excepting.ParseError(msg, tokens, index)
+                    index += 1 #otherwise eat token                 
 
         except IndexError:
             msg = "ParseError: Building command '%s'. Not enough tokens" % (command)

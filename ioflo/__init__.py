@@ -7,10 +7,8 @@ from .base.consoling import getConsole
 
 console = getConsole()
 
-console.terse("\nPackage at {0}\n".format(__path__[0]))
-
 _version = "0.6.4"
-console.terse("Version {0}\n".format(_version))
+console.terse("{0} version {1}\n".format(__path__[0], _version))
 
 __all__ = ['base', 'trim']
 

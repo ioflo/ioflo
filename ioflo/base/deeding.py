@@ -61,9 +61,9 @@ class Deed(acting.Actor):
 
         super(Deed,self).__init__(**kw)
         
-        self.ioinit = ioinit or {} #dict with ioinit arguments
+        self.ioinit = ioinit or odict() #dict with ioinit arguments
         
-    def preinitio(self,  **kw):
+    def preinitio(self, **kw):
         """ Parse time Reinit
             Enables initializing instance at parse time from FloScript options
             
@@ -76,7 +76,7 @@ class Deed(acting.Actor):
             parse time not python module load time.
             
         """
-        init = dict()
+        init = odict()
         for key, val in kw.items():
             if key == 'inode': #just return path name string for inode
                 init[key] =  val
@@ -212,6 +212,7 @@ class Deed(acting.Actor):
                 ival = odict(value=ival)
             elif isinstance(ival, Mapping) and not ival: #empty mapping so set value
                 ival = odict(value=ival)
+            #else ival is a non empty mapping leave as it
             
             if not iown:
                 setattr(self, key, self.store.create(ipath).create(ival))
