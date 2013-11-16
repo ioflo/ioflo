@@ -8,7 +8,8 @@ from .base.consoling import getConsole
 console = getConsole()
 
 _version = "0.6.4"
-console.terse("{0} version {1}\n".format(__path__[0], _version))
+
+console.profuse("{0} version {1}\n".format(__path__[0], _version))
 
 __all__ = ['base', 'trim']
 

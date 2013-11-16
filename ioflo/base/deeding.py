@@ -66,53 +66,55 @@ class Deed(acting.Actor):
     def preinitio(self, **kw):
         """ Parse time Reinit
             Enables initializing instance at parse time from FloScript options
+            by saving the init values in .ioinit attribute of the deed.
             
-            Each argument name is the name of an init method keyword except inode
-            Each argument value is the init pathname string of the share holding the
-               four init values for that argument as fields in the share.
-               creates tuples to pass to method .init
+            Each argument name is the name of an io attribute for the Deed
+            "inode" value is a pathname string for the Deed default node
+            
+            The other argument values are the pathname strings of Deed
+            specific io shares or nodes
+            
+            The inital values of the shares must be performed somewhere else
+            either in the .postinitio method of the Deed or by a FloScript command
+            such as init or put
             
             This allows dynamic initialization of Deed instances at FloScript
             parse time not python module load time.
             
+            Need to change signatue so can pass in odict as pa or list of tuples
+            like the update method for shares
+            
         """
-        init = odict()
-        for key, val in kw.items():
-            if key == 'inode': #just return path name string for inode
-                init[key] =  val
-                continue
-            share = self.store.fetchShare(val)
-            if not share:
-                raise  ValueError("Preinit value '{0}' not valid share pathname"
-                                  "to init '{1}'".format(val, self.name))
-            init[key] = tuple(  share.get('ipath'),
-                                share.get('ival'), 
-                                share.get('iown'), 
-                                share.get('ipri'))
-        
-        self.ioinit.update(init)
+        self.ioinit.update(kw)
         return self
     
     def initio(self, inode="", **kw):
         """ Intialize and hookup ioflo shares from node pathname inode and kw arguments.
             This implements a generic Deed interface protocol for associating the
-            input and output data flow shares to the Deed.
+            io data flow shares to the Deed.
             
-            The inode argument is a pathname string of the share node for the instance
+            The 'inode' argument is a pathname string of the share node for the instance
             where associated shares may be placed. If inode is empty then the default
             value for inode will be created from the instance name where uppercase
-            letters indicate intermediate nodes. For example an Deed instance named
-            thingGoneWrong would have a default inode of "thing.gone.wrong".
+            letters indicate intermediate nodes.
             
-            The values of the items in the **kw argument may be either tuples
-            (lists or other non-string iterables), or dicts.
-            The init behavior is based on the form of the argument value.
+            For example an Deed instance named 'thingGoneWrong' would have a default
+            inode of "thing.gone.wrong".
             
-            There are the following 2 forms:
+            The values of other items in the **kw argument may be either strings,
+            non-string iterables such as list or tuple, or named iterables such as
+            namedtuple or dicts.
             
-            1- tuple of values
+            The init behavior of the other arguments is based on the form of the argument value.
             
-            (ipath, ival, iown, ipri)
+            There are the following 3 forms:
+            
+            1- string
+               ipath  pathnamestring
+            
+            2- tuple of values
+            
+            (ipath, ival, iown)
             
             2- dict of key: values
             
@@ -120,23 +122,28 @@ class Deed(acting.Actor):
                 ipath: "pathnamestring",
                 ival: initial value,
                 iown: truthy,
-                ipri: truthy
             }
             
             
-            In both cases, four init values are produced, that are,
-                ipath, ival, iown, ipri. 
+            In all cases, three init values are produced, that are,
+                ipath, ival, iown,
             
             Missing init values will be assigned a value of None
             
             The following rules are applied when given the values of
-               ipath, ival, iown, ipri
-            as determined by the corresponding tuple elements or dict keys: 
+               ipath, ival, iown
+             
             
-            inode is provided pathname else default derived form instance name
+            inode if provided is a pathname else it is derived from instance name
             
             For each kw arg item
-                Create attribute with name given by kw arg item key
+                If ival not provided do not initialize share leave as is
+                
+                If ival provided and is not a non-empty Mapping Then
+                   assign ival as value of share
+                   # This means there is no way to init a share.value to a non empty mapping
+                Otherwise each item in ival is a field value item in share
+
                 Create share with store pathname given by ipath
                     If ipath
                         If ipath starts with dot "." Then absolute path
@@ -148,42 +155,64 @@ class Deed(acting.Actor):
                     Else
                         ipath is relative path of kw arg name to inode
                         
-                If not iown Then
-                    init share with init value using create (change if not exist)
-                    add share to iflos dict with key given by arg/attribute name
-                        If ipri Then make it first item in iflos
+                If iown Then
+                    init share with ival value using update 
                     
                 Else
-                    init share with init value using update
-                    add share to oflos dict with key given by arg/attribute name
-                        If ipri then make it first item in oflos
+                    init share with ival value using create ((change if not exist))
+                    
                 
-                init may be single value or dict of field, values
+                    assing attribute to with name given by kw arg item key value is ival
                 
-                assign .inode attribute of deed to inode node
-                assign .iflos and .oflos dict attribute of Deed
+                assign .inode attribute to deed that is inode node
         """
-        self.iflos = odict()
-        self.oflos = odict()
-        
         for key, val in kw.items():
             if hasattr(self, key):
-                ValueError("Trying to init preexisting attribute"
+                raise ValueError("Trying to init preexisting attribute"
                            "'{0}' in Deed '{1}'".format(key, self.name))
                 
             if val == None:
                 continue
             
-            if not isinstance(val, NonStringIterable):
-                raise ValueError("Bad init kw arg '{0}'. Value '{1}'. Not non string iterable".format(key, val))
-            
-            if isinstance(val, Mapping): # dictionary
+            if isinstance(val, basestring):
+                ipath = val
+                iown = None
+                ival = odict() # effectively will not change share
+                
+            elif isinstance(val, Mapping): # dictionary
                 ipath = val.get('ipath')
-                ival = val.get('ival')
                 iown = val.get('iown')
-                ipri = val.get('ipri')
-            else: # non dict non string iterable
-                ipath, ival, iown, ipri = just(4, val) #unpack 4 elements, None for default
+                
+                if not 'ival' in val:
+                    ival = odict() # effectively will not change share
+                
+                ival = val['ival']
+                if not (ival and isinstance(ival, Mapping)): #not non-empty mapping
+                    ival = odict(value=ival)
+                #else: #ival = ival
+            
+            elif isinstance(val, NonStringIterable): # non dict non string iterable
+                length = len(val)
+                if not length:
+                    raise ValueError("Bad init kw arg '{0}' with Value '{1}'".format(key, val))
+                
+                ipath = val[0]
+
+                if length >= 3:
+                    iown = val[2]
+                else:
+                    iown =  None
+                    
+                if length == 1:
+                    ival = odict() # effectively will not change share
+                else:
+                    ival = val[1]
+                    if not (ival and isinstance(ival, Mapping)): #not non-empty mapping
+                        ival = odict(value=ival)
+                    #else:  #ival = ival
+            
+            else:
+                raise ValueError("Bad init kw arg '{0}'with Value '{1}'".format(key, val))
                 
             if not inode:
                 inode = nameToPath(self.name)
@@ -200,32 +229,10 @@ class Deed(acting.Actor):
             else:
                 ipath = '.'.join(inode, key)
             
-            # Infer intent of initialization of share with ival:
-            # ival is None means don't initialize share
-            # ival is anything but mapping means assign share.value to ival
-            # ival is empty mapping means assign share.value to ival (empty mapping)
-            # ival is non empty mapping means assign share[key] =val for key, val in ival.items()
-            # This means there is no way to init a share.value to a non empty mapping
-            if ival is None:
-                ival = odict() #empty dict so update or create not change share
-            elif not isinstance(ival, Mapping): #make a dict with 'value' key
-                ival = odict(value=ival)
-            elif isinstance(ival, Mapping) and not ival: #empty mapping so set value
-                ival = odict(value=ival)
-            #else ival is a non empty mapping leave as it
-            
             if not iown:
                 setattr(self, key, self.store.create(ipath).create(ival))
-                if ipri: #make primary iflo (if multiple last one wins)
-                    self.iflos.insert(0, key, getattr(self, key))
-                else:
-                    self.iflos[key] = getattr(self, key)
             else:
                 setattr(self, key, self.store.create(ipath).update(ival))
-                if ipri: #make primary oflo (if multiple last one wins)
-                    self.oflos.insert(0, key, getattr(self, key))
-                else:
-                    self.oflos[key] = getattr(self, key)
             
         self.inode = self.store.fetchNode(inode) # None if not exist
         
