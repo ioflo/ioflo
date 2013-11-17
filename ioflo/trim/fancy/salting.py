@@ -78,42 +78,48 @@ console = getConsole()
 def CreateInstances(store):
     """Create action instances. Recreate with each new house after clear registry
     
-       init protocol:  inode  and (ipath, ival, iown, ipri)
+       init protocol:  inode  and (ipath, ival, iown)
     """
-
-    Eventer(name = 'saltEventerJob', store=store).ioinit.update(
-        event=('event', odict(), True, True), 
-        req=('req', deque(), False, True), 
+    EventerSalt(name = 'eventerSalt', store=store).ioinit.update(
+        period= '.meta.period',
+        req=('req', deque()), 
+        event=('event', odict(), True),
         pub=('pub', odict(), True), 
-        period=('.meta.period', None),
+        parm=('parm', odict(throttle=0.0, tag='salt'), True),)      
+    
+    EventerSalt(name = 'saltEventerJob', store=store).ioinit.update(
+        period=('.meta.period',),
+        req=('req', deque()), 
+        event=('event', odict(), True),
+        pub=('pub', odict(), True), 
         parm=('parm', odict(throttle=0.0, tag='salt/job'), True), 
-        inode='.salt.eventer.job', )  
+        inode='.salt.eventer.job', )
                                 
-    OverloadPooler(name = 'saltPoolerOverload', store=store).ioinit.update(
-        status=('.salt.status', odict(), True, True),
-        pool=('.salt.pool.', ), 
-        parm=('parm', odict(), True), 
+    OverloadPoolerSalt(name = 'saltPoolerOverload', store=store).ioinit.update(
+        status=('.salt.status', odict([('overload', 0.0), ('onCount', 0), ('offCount', 0)]), True),
+        pool= '.salt.pool.', 
+        parm= 'parm', 
         inode='.salt.pooler.overload',)
     
-    PingPoolBosser(name = 'saltBosserPoolPing', store=store).ioinit.update(
-        status=('.salt.status', odict(), False, True), 
-        event=('event', deque(), False, True),
+    PingPoolBosserSalt(name = 'saltBosserPoolPing', store=store).ioinit.update(
+        event=('event', deque()),
+        pool='.salt.pool.', 
+        status=('.salt.status', odict([('healthy', 0.0), ('deadCount', 0)])), 
         req=('.salt.eventer.job.req', deque(), True),
-        pool=('.salt.pool.', ), 
         parm=('parm', odict(timeout=5.0), True), 
         inode='.salt.bosser.pool.ping',)    
     
-    NumcpuPoolBosser(name = 'saltBosserPoolNumcpu', store=store).ioinit.update(
-        event=('event', deque(), False, True),
-        req=('.salt.eventer.job.req', deque(), True),
+    NumcpuPoolBosserSalt(name = 'saltBosserPoolNumcpu', store=store).ioinit.update(
+        event=('event', deque()),
         pool=('.salt.pool.', ), 
+        req=('.salt.eventer.job.req', deque(), True),
         parm=('parm', odict(), True), 
         inode='.salt.bosser.pool.numcpu',)
     
-    LoadavgPoolBosser(name = 'saltBosserPoolLoadavg', store=store).ioinit.update(
-        event=('event', deque(), False, True),
+    LoadavgPoolBosserSalt(name = 'saltBosserPoolLoadavg', store=store).ioinit.update(
+        event=('event', deque()),
+        pool=('.salt.pool.', ),
         req=('.salt.eventer.job.req', deque(), True),
-        pool=('.salt.pool.', ), 
         parm=('parm', odict(), True), 
         inode='.salt.bosser.pool.loadavg',)        
     
@@ -139,9 +145,8 @@ class SaltDeed(deeding.Deed):
         
         self.client = salt.client.api.APIClient()    
 
-class Eventer(SaltDeed, deeding.SinceDeed):
-    """ Eventer LapseDeed Deed Class
-        Salt Eventer
+class EventerSalt(SaltDeed, deeding.SinceDeed):
+    """ Salt Eventer
        
         inherited attributes
             .name is actor name string
@@ -181,7 +186,7 @@ class Eventer(SaltDeed, deeding.SinceDeed):
             subscription request are duples (tag prefix, share)
             value is 
         """
-        super(Eventer, self).action(**kw) #updates .stamp here
+        super(EventerSalt, self).action(**kw) #updates .stamp here
         
         #if not self.pub.value: #no pub to subscriptions so request one
             #publication = self.store.create("salt.pub.test").update(value=deque())
@@ -226,8 +231,8 @@ class Eventer(SaltDeed, deeding.SinceDeed):
         return None
 
 
-class OverloadPooler(SaltDeed, deeding.LapseDeed):
-    """ Overloader LapseDeed Deed Class
+class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Pooler Overload
         Computer the overload percentage of each active member of pool and
         the average overload for the pool
        
@@ -250,9 +255,6 @@ class OverloadPooler(SaltDeed, deeding.LapseDeed):
             
         local attributes created by initio
             .inode is inode node
-            .oflos is ref to out flos odict
-            .iflos is ref to in flos odict
-            
             .status is ref to status share, field overload is computed overload
             .pool is ref to pool node. Each value is share with minion details
                 mid, status, overload, loadavg, numcpu
@@ -263,7 +265,7 @@ class OverloadPooler(SaltDeed, deeding.LapseDeed):
     def __init__(self, **kw):
         """Initialize instance """
         #call super class method
-        super(OverloadPooler, self).__init__(**kw)
+        super(OverloadPoolerSalt, self).__init__(**kw)
         
     def postinitio(self):
         """ initialize poolees from pool"""
@@ -275,7 +277,7 @@ class OverloadPooler(SaltDeed, deeding.LapseDeed):
 
     def action(self, **kw):
         """ update overloads for pool"""
-        super(OverloadPooler, self).action(**kw) #updates .stamp and .lapse here
+        super(OverloadPoolerSalt, self).action(**kw) #updates .stamp and .lapse here
 
         #if self.lapse <= 0.0:
             #pass
@@ -312,8 +314,9 @@ class OverloadPooler(SaltDeed, deeding.LapseDeed):
                 
         return None
 
-class PingPoolBosser(SaltDeed, deeding.LapseDeed):
-    """ Deed to determine if any of the 'on' minions in pool are down
+class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Bosser Pool Ping
+        Deed to determine if any of the 'on' minions in pool are down
        
         inherited attributes
             .name is actor name string
@@ -337,10 +340,7 @@ class PingPoolBosser(SaltDeed, deeding.LapseDeed):
             
         local attributes created by initio
             .inode is inode node
-            .oflos is ref to out flos odict
-            .iflos is ref to in flos odict
-            
-            .status is ref to pool status share, overload, onCount, healthy deadCount
+            .status is ref to pool status share, healthy deadCount
             .event is ref to event share, value is deque of events subbed from eventer
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
@@ -353,7 +353,7 @@ class PingPoolBosser(SaltDeed, deeding.LapseDeed):
     def __init__(self, **kw):
         """Initialize instance """
         #call super class method
-        super(PingPoolBosser, self).__init__(**kw)
+        super(PingPoolBosserSalt, self).__init__(**kw)
         
         self.poolees = odict() #mapping between pool shares and mid
         self.cycleStart = None #timestamp start of ping cycle
@@ -373,7 +373,7 @@ class PingPoolBosser(SaltDeed, deeding.LapseDeed):
             poll the active pool minions
             request events for associated jobid
         """
-        super(PingPoolBosser, self).action(**kw) #updates .stamp and .lapse here
+        super(PingPoolBosserSalt, self).action(**kw) #updates .stamp and .lapse here
 
         #if self.lapse <= 0.0:
             #pass
@@ -446,9 +446,8 @@ class PingPoolBosser(SaltDeed, deeding.LapseDeed):
         return None
     
     
-class NumcpuPoolBosser(SaltDeed, deeding.LapseDeed):
-    """Bosser LapseDeed Deed Class
-       Salt Bosser 
+class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Bosser Pool Numcpu
        
         inherited attributes
             .name is actor name string
@@ -471,9 +470,6 @@ class NumcpuPoolBosser(SaltDeed, deeding.LapseDeed):
             
         local attributes created by initio
             .inode is inode node
-            .oflos is ref to out flos odict
-            .iflos is ref to in flos odict
-            
             .event is ref to event share, value is deque of events subbed from eventer
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
@@ -486,7 +482,7 @@ class NumcpuPoolBosser(SaltDeed, deeding.LapseDeed):
     def __init__(self, **kw):
         """Initialize instance """
         #call super class method
-        super(NumcpuPoolBosser, self).__init__(**kw)
+        super(NumcpuPoolBosserSalt, self).__init__(**kw)
         
         self.poolees = odict() #mapping between pool shares and mid
 
@@ -501,7 +497,7 @@ class NumcpuPoolBosser(SaltDeed, deeding.LapseDeed):
             poll the active pool minions
             request events for associated jobid
         """
-        super(NumcpuPoolBosser, self).action(**kw) #updates .stamp and .lapse here
+        super(NumcpuPoolBosserSalt, self).action(**kw) #updates .stamp and .lapse here
 
         while self.event.value: #deque of events is not empty
             edata = self.event.value.popleft()
@@ -535,9 +531,8 @@ class NumcpuPoolBosser(SaltDeed, deeding.LapseDeed):
                      
         return None
 
-class LoadavgPoolBosser(SaltDeed, deeding.LapseDeed):
-    """Bosser LapseDeed Deed Class
-       Salt Bosser 
+class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Bosser Pool Loadavg
        
         inherited attributes
             .name is actor name string
@@ -560,9 +555,6 @@ class LoadavgPoolBosser(SaltDeed, deeding.LapseDeed):
             
         local attributes created by initio
             .inode is inode node
-            .oflos is ref to out flos odict
-            .iflos is ref to in flos odict
-            
             .event is ref to event share, value is deque of events subbed from eventer
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
@@ -575,7 +567,7 @@ class LoadavgPoolBosser(SaltDeed, deeding.LapseDeed):
     def __init__(self, **kw):
         """Initialize instance """
         #call super class method
-        super(LoadavgPoolBosser, self).__init__(**kw)
+        super(LoadavgPoolBosserSalt, self).__init__(**kw)
         
         self.poolees = odict() #mapping between pool shares and mid
 
@@ -590,7 +582,7 @@ class LoadavgPoolBosser(SaltDeed, deeding.LapseDeed):
             poll the active pool minions
             request events for associated jobid
         """
-        super(LoadavgPoolBosser, self).action(**kw) #updates .stamp and .lapse here
+        super(LoadavgPoolBosserSalt, self).action(**kw) #updates .stamp and .lapse here
 
         #if self.lapse <= 0.0:
             #pass

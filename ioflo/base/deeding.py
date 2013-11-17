@@ -114,46 +114,55 @@ class Deed(acting.Actor):
             
             2- tuple of values
             
-            (ipath, ival, iown)
+               (ipath, ival, iown)
             
             2- dict of key: values
             
-            {
-                ipath: "pathnamestring",
-                ival: initial value,
-                iown: truthy,
-            }
+                {
+                    ipath: "pathnamestring",
+                    ival: initial value,
+                    iown: truthy,
+                }
             
             
-            In all cases, three init values are produced, that are,
+            In all cases, three init values are produced, these are:
                 ipath, ival, iown,
             
-            Missing init values will be assigned a value of None
+            Missing init values will be assigned a default value as per the rules below:
             
             The following rules are applied when given the values of
                ipath, ival, iown
-             
             
-            inode if provided is a pathname else it is derived from instance name
+            If argument 'inode' provided:
+               inode is assigned the item value which is a pathname string
+            Else
+               inode is derived from the Deed instance name
             
-            For each kw arg item
+            Assign .inode attribute with value of inode node
+            
+            For each kw item (key, val)
+                key is the name of the associated instance attribute.
+                
                 If ival not provided do not initialize share leave as is
                 
                 If ival provided and is not a non-empty Mapping Then
                    assign ival as value of share
                    # This means there is no way to init a share.value to a non empty mapping
-                Otherwise each item in ival is a field value item in share
+                   
+                Otherwise each item in ival is assigned as a field, value in the share 
 
-                Create share with store pathname given by ipath
-                    If ipath
+                Create share with pathname given by ipath
+                    If ipath is provided
+                    
                         If ipath starts with dot "." Then absolute path
+                        
                         Else ipath does not start with dot "." Then relative path from inode
                         
                         If ipath ends with dot Then the path is to a node not share
                             node ref is created and remaining init values are ignored 
                            
                     Else
-                        ipath is relative path of kw arg name to inode
+                        ipath is the default path inode.key
                         
                 If iown Then
                     init share with ival value using update 
@@ -162,10 +171,14 @@ class Deed(acting.Actor):
                     init share with ival value using create ((change if not exist))
                     
                 
-                    assing attribute to with name given by kw arg item key value is ival
+                Assign attribute name of key and value is share
                 
-                assign .inode attribute to deed that is inode node
+
         """
+        if not inode:
+            inode = nameToPath(self.name)
+        self.inode = self.store.fetchNode(inode) # None if not exist
+        
         for key, val in kw.items():
             if hasattr(self, key):
                 raise ValueError("Trying to init preexisting attribute"
@@ -185,8 +198,9 @@ class Deed(acting.Actor):
                 
                 if not 'ival' in val:
                     ival = odict() # effectively will not change share
+                else:
+                    ival = val['ival']
                 
-                ival = val['ival']
                 if not (ival and isinstance(ival, Mapping)): #not non-empty mapping
                     ival = odict(value=ival)
                 #else: #ival = ival
@@ -214,8 +228,6 @@ class Deed(acting.Actor):
             else:
                 raise ValueError("Bad init kw arg '{0}'with Value '{1}'".format(key, val))
                 
-            if not inode:
-                inode = nameToPath(self.name)
             
             if ipath:
                 if not ipath.startswith('.'): # full path is inode joined to ipath
@@ -234,7 +246,6 @@ class Deed(acting.Actor):
             else:
                 setattr(self, key, self.store.create(ipath).update(ival))
             
-        self.inode = self.store.fetchNode(inode) # None if not exist
         
         self.postinitio()
         
