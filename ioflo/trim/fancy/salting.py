@@ -315,7 +315,7 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
                 if member['loadavg'].value is not None and  member['numcpu'].value is not None:
                     try:
                         member['overload'].update(value=(member['loadavg'].value / member['numcpu'].value))
-                        console.terse("     {0} overload is {1:0.4f}\n".format(
+                        console.verbose("     {0} overload is {1:0.4f}\n".format(
                              member['mid'].value, member['overload'].value))
                     except ZeroDivisionError:
                         pass
@@ -432,7 +432,7 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             if alive: # immediately update if all alive
                 self.healthy.update(value=alive)
                 self.deadCount.update(value=deadCount)
-                console.terse("     Pool healthy is {0}\n".format(
+                console.verbose("     Pool healthy is {0}\n".format(
                     self.healthy.value))
                 
             else: # dead so far but only update as unhealthy (dead) at end of cycle
