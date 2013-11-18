@@ -20,6 +20,37 @@ from .consoling import getConsole
 console = getConsole()
 
 
+class Node(odict):
+    """ Special odict with name property to hold the pathname to the node
+    """
+    __slots__ = ['_name'] # attribute supporting name property
+    
+    
+    def __init__(self, *pa, **kwa):
+        """ Initialize instance. name is empty """
+        super(Node,self).__init__(*pa, **kwa)
+        
+        self._name = ""
+    
+    #property name
+    def getName(self):
+        """getter for name property """
+        return self._name
+
+    def setName(self, name):
+        """setter for name property """
+        self._name = name
+
+    name = property(fget = getName, fset = setName, doc = "Pathname to node.")
+    
+    def byName(self, name):
+        """ Sets name and returns self.
+            Enables setting name as part of method chaining.
+        """
+        self.name = name
+        return self
+    
+
 class Store(registering.Registry):
     """global data store to be shared amoungst all taskers.
 
@@ -38,17 +69,17 @@ class Store(registering.Registry):
     Counter = 0  
     Names = {}
 
-    def __init__(self, stamp = None, house = None, **kw):
+    def __init__(self, stamp = None, house = None, **kwa):
         """Initialize instance
 
-           *a and **kw allow multiple inheritance
+           *pa and **kwa allow multiple inheritance
 
         """
 
-        if 'preface' not in kw:
-            kw['preface'] = 'Store'
+        if 'preface' not in kwa:
+            kwa['preface'] = 'Store'
 
-        super(Store,self).__init__(**kw)
+        super(Store,self).__init__(**kwa)
 
         try: #stamp must be a number or None
             stamp = float(stamp)
@@ -57,7 +88,7 @@ class Store(registering.Registry):
 
         self.stamp = stamp #must be None or number
         self.house = house
-        self.shares = odict() #dictionary of data store shares indexed by name
+        self.shares = Node().byName('') #dictionary of data store shares indexed by name
         
         #create node for meta data
         self.metaShr = self.createNode('.meta')
@@ -172,11 +203,12 @@ class Store(registering.Registry):
 
         levels = share.name.strip('.').split('.') #strip leading and following '.' and split
         node = self.shares
+        depth = 0
         for level in levels[0:-1]: #all but last
             if not level:
                 raise ValueError("Empty level in '%s'" % share.name)
-
-            node = node.setdefault(level, odict()) #add node if not exist
+            depth += 1
+            node = node.setdefault(level, Node().byName('.'.join(levels[:depth]))) #add node if not exist
             if isinstance(node, Share):
                 raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
 
@@ -204,11 +236,12 @@ class Store(registering.Registry):
         """
         levels = name.strip('.').split('.') #strip leading and following '.' and split
         node = self.shares
+        depth = 0
         for level in levels:
             if not level:
                 raise ValueError("Empty level in '%s'" % name)
-
-            node = node.setdefault(level, odict()) #add node if not exist
+            depth += 1
+            node = node.setdefault(level, Node().byName('.'.join(levels[:depth]))) #add node if not exist
             if isinstance(node, Share):
                 raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
 
@@ -247,7 +280,6 @@ class Store(registering.Registry):
         share.changeStore(self)
 
         return share
-
 
     def create(self, name):
         """Retrieve share with name if it exits  
@@ -340,12 +372,9 @@ class Share(object):
           
 
     """
-    #can't prevent attribute assignment with slots since inhereted attributes cause
-    # empty __dict__ to be created even though override as properties
-    #if __dict__ exists then no error even if attribute not in slots
     def __init__(self, name = '',store = None, 
                  value = None, data = None, truth = None, stamp = None,
-                 unit = None, owner = None,  **kw):
+                 unit = None, owner = None,  **kwa):
         """Initialize instance
 
            Parameters:
@@ -365,9 +394,6 @@ class Share(object):
 
         self._owner = None
         self.stamp = None
-        
-        #when subclassed of Patron obsolete
-        #super(Share,self).__init__(name = name, store = store, **kw)
         
         if not isinstance(name,str): #name must be string
             name = ''

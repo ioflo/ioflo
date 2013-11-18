@@ -7,54 +7,101 @@ Shares
     .period
         value
 
-.salt 
-   .pool 
-      .m1 
-         mid  status  overload  loadavg  numcpus alive
-      .m2 
-         mid  status  overload  loadavg  numcpus alive
-      .m3 
-         mid  status  overload  loadavg  numcpus alive
-      .m4 
-         mid  status  overload  loadavg  numcpus alive
-      .m5 
-         mid  status  overload  loadavg  numcpus alive
-      .m6 
-         mid  status  overload  loadavg  numcpus alive
-    
-   .autoscale 
-      .limit 
-         up  down 
-   .eventer 
-      .job 
-         .parm 
-            tag  throttle 
-         .req 
-            value 
-         .pub 
-            value 
-         .event 
-            value 
-   .overload 
-      value
-      
-   .status
-        overload onCount offCount healthy deadCount
-   
-   
-   .bosser 
-      .overload 
-         .event 
-            value 
-         .parm 
-            value 
+.salt
+    .autoscale
+        .limit 
+           high  low 
+        
+        .status
+            .overload
+            .count
+            .healthy
+            .deadCount
 
-init salt.pool.m1 to mid "alpha" status on
-init salt.pool.m2 to mid "ms-0" status on 
-init salt.pool.m3 to mid "ms-1" status on 
-init salt.pool.m4 to mid "ms-2" status off 
-init salt.pool.m5 to mid "ms-3" status off 
-init salt.pool.m6 to mid "ms-4" status off 
+        .pool 
+            .m1 
+               .mid
+               .status
+               .overload
+               .loadavg
+               .numcpus
+               .alive
+            .m2 
+               .mid
+               .status
+               .overload
+               .loadavg
+               .numcpus
+               .alive
+            .m3 
+               .mid
+               .status
+               .overload
+               .loadavg
+               .numcpus
+               .alive
+            .m4 
+               .mid
+               .status
+               .overload
+               .loadavg
+               .numcpus
+               .alive
+            .m5 
+               .mid
+               .status
+               .overload
+               .loadavg
+               .numcpus
+               .alive
+            .m6 
+               .mid
+               .status
+               .overload
+               .loadavg
+               .numcpus
+               .alive
+            
+    .pooler 
+        .overload 
+            .parm 
+           
+   .eventer 
+        .job 
+           .parm 
+              tag  throttle 
+           .req 
+              value 
+           .pub 
+              value 
+           .event 
+              value 
+   .bosser 
+        .pool 
+           .numcpu 
+                .parm 
+                   value 
+                .event 
+                   value 
+           .loadavg 
+                .parm 
+                   value 
+                .event 
+                   value 
+           .ping 
+                .parm 
+                   timeout 
+                .event 
+                   value 
+
+init salt.autoscale.pool.m1.mid to value "alpha" 
+init salt.autoscale.pool.m1.status to value on 
+
+init salt.autoscale.pool.m2.mid to value "ms-0" 
+init salt.autoscale.pool.m3.mid to value "ms-1" 
+init salt.autoscale.pool.m4.mid to value "ms-2" 
+init salt.autoscale.pool.m5.mid to value "ms-3" 
+init salt.autoscale.pool.m6.mid to value "ms-4" 
 
 
 """
@@ -92,36 +139,30 @@ def CreateInstances(store):
         req=('req', deque()), 
         event=('event', odict(), True),
         pub=('pub', odict(), True), 
-        parm=('parm', odict(throttle=0.0, tag='salt/job'), True), 
-        inode='.salt.eventer.job', )
+        parm=('parm', odict(throttle=0.0, tag='salt/job'), True),)
                                 
     OverloadPoolerSalt(name = 'saltPoolerOverload', store=store).ioinit.update(
-        status=('.salt.status', odict([('overload', 0.0), ('onCount', 0), ('offCount', 0)]), True),
-        pool= '.salt.pool.', 
-        parm= 'parm', 
-        inode='.salt.pooler.overload',)
+        pool = '.salt.autoscale.pool.',
+        overload = ('.salt.autoscale.status.overload', 0.0, True),
+        count = ('.salt.autoscale.status.count', 0, True),)
     
     PingPoolBosserSalt(name = 'saltBosserPoolPing', store=store).ioinit.update(
+        pool='.salt.autoscale.pool.',
+        healthy = ('.salt.autoscale.status.healthy', None, True),
+        deadCount = ('.salt.autoscale.status.deadCount', 0, True),
         event=('event', deque()),
-        pool='.salt.pool.', 
-        status=('.salt.status', odict([('healthy', 0.0), ('deadCount', 0)])), 
         req=('.salt.eventer.job.req', deque(), True),
-        parm=('parm', odict(timeout=5.0), True), 
-        inode='.salt.bosser.pool.ping',)    
+        parm=('parm', odict(timeout=5.0), True),)    
     
     NumcpuPoolBosserSalt(name = 'saltBosserPoolNumcpu', store=store).ioinit.update(
+        pool='.salt.autoscale.pool.',
         event=('event', deque()),
-        pool=('.salt.pool.', ), 
-        req=('.salt.eventer.job.req', deque(), True),
-        parm=('parm', odict(), True), 
-        inode='.salt.bosser.pool.numcpu',)
+        req=('.salt.eventer.job.req', deque(), True), )
     
     LoadavgPoolBosserSalt(name = 'saltBosserPoolLoadavg', store=store).ioinit.update(
+        pool=('.salt.autoscale.pool.', ),
         event=('event', deque()),
-        pool=('.salt.pool.', ),
-        req=('.salt.eventer.job.req', deque(), True),
-        parm=('parm', odict(), True), 
-        inode='.salt.bosser.pool.loadavg',)        
+        req=('.salt.eventer.job.req', deque(), True),)        
     
 class SaltDeed(deeding.Deed):
     """ Base class for Deeds that interface with Salt
@@ -155,28 +196,15 @@ class EventerSalt(SaltDeed, deeding.SinceDeed):
             .stamp is time stamp
             .client is salt client interface
             
-            
-        arguments to update .ioinit attribute
-            event is share initer of event deque
-            pub is share initer of publications to subscribers odict
-            req is share initer of subscriptions request deque
-            period is share path name of min period of (skedder (meta) or framer)
-            parm = inode.parm field values
-                throttle
-            inode is node path name in store
-
         local attributes created by initio
             .inode is inode node
-            .oflos is ref to out flos odict
-            .iflos is ref to in flos odict
-            
             .event is ref to event share, value is deque of events incoming
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
             .pub is ref to pub share, with tag fields, value list of publication to subscriber shares
                 each pub share value is deque of events put there by Eventer
             .period is ref to period share
-            .parm is ref to node.parm share
+            .parm is ref to node.parm share with fields
                 throttle is divisor or period max portion of period to consume each run
     """
              
@@ -245,20 +273,17 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
             .client is salt client interface
             
         local attributes
-            
-        arguments to update of .ioinit attribute
-            status is share initer of current pool status 
-            pool is node initer of shares in node are the pool minions
-            parm = inode.parm field values
-            inode is node path name in store
-            
+            .members = odict of pool members,
+                 values are odicts that map to pool member shares
             
         local attributes created by initio
             .inode is inode node
-            .status is ref to status share, field overload is computed overload
-            .pool is ref to pool node. Each value is share with minion details
-                mid, status, overload, loadavg, numcpu
-            .parm is ref to node.parm share
+            .pool is ref to pool node.
+                Each value is node of pool member
+                Each pool member node has shares
+                    mid, status, overload, loadavg, numcpu
+            .overload is ref share holding computed overload
+            .count is ref share holding count of pool members
 
     """
 
@@ -266,14 +291,17 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
         """Initialize instance """
         #call super class method
         super(OverloadPoolerSalt, self).__init__(**kw)
+        self.members = odict()
         
     def postinitio(self):
-        """ initialize poolees from pool"""
-        for key, share in self.pool.items():
-            share.data.overload = None
-        self.status.data.overload = 0.0
-        self.status.data.onCount = 0
-        self.status.data.offCount = 0
+        """ initialize overload of each pool member"""
+        for key, node in self.pool.items():
+            self.members[key] = odict()
+            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
+            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))            
+            self.members[key]['overload'] = self.store.create('.'.join([node.name, 'overload'])).update(value=0.0)
+            self.members[key]['loadavg'] = self.store.create('.'.join([node.name, 'loadavg']))
+            self.members[key]['numcpu'] = self.store.create('.'.join([node.name, 'numcpu']))
 
     def action(self, **kw):
         """ update overloads for pool"""
@@ -282,35 +310,33 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
         #if self.lapse <= 0.0:
             #pass
         
-        for share in self.pool.values():
-            if share.data.status: #pool member is on
-                if share.get('loadavg') is not None and share.get('numcpu') is not None:
+        for member in self.members.values():
+            if member['status'].value: #pool member is on
+                if member['loadavg'].value is not None and  member['numcpu'].value is not None:
                     try:
-                        share.update(overload=(share.data.loadavg / share.data.numcpu))
+                        member['overload'].update(value=(member['loadavg'].value / member['numcpu'].value))
                         console.terse("     {0} overload is {1:0.4f}\n".format(
-                             share.data.mid, share.data.overload))
+                             member['mid'].value, member['overload'].value))
                     except ZeroDivisionError:
                         pass
                     except TypeError:
                         pass
-            else: # turned off clear stale overload, numcpu, loadavg
-                share.update(overload=None)
+            else: # turned off so clear overload
+                member['overload'].value = None
                 
         count = 0
         overloadSum = 0.0
-        for share in self.pool.values():
-            overload = share.get('overload')
+        for member in self.members.values():
+            overload = member['overload'].value
             if overload is not None:
                 overloadSum += overload
                 count += 1
         
         if count:
-            self.status.update(overload=overloadSum / count,
-                               onCount=count, offCount= len(self.pool) -  count)
+            self.overload.update(value=overloadSum / count)
+            self.count.update(value=count)
             console.terse("     Pool overload is {0:0.4f} with onCount {1}\n".format(
-                self.status.data.overload,  count))
-            console.terse("     Salt Status stamp {0:0.4f} Store stamp {1:0.4f}\n".format(
-                            self.status.stamp, self.store.stamp))            
+                self.overload.value,  self.count.value))           
                 
         return None
 
@@ -327,25 +353,23 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             .client is salt client interface
             
         local attributes
-            .poolees is odict mapping minion ids to pool shares
-            
-        arguments to update of .ioinit attribute
-            status is share initer of pool status uses health field
-            event is share initer of events deque() subbed from eventer
-            req is share initer of subscription requests deque() for eventer
-            pool is node initer of shares in node are the pool minions
-            parm = inode.parm field values
-            inode is node path name in store
-            
+            .members = odict of pool members by name
+                 values are odicts that map to pool member shares
+            .mids is odict mapping minion ids to pool member names
+            .alives is odict of pool members by name alive in given cycle
+            .cycleStart is timestamp start of ping cycle
             
         local attributes created by initio
             .inode is inode node
-            .status is ref to pool status share, healthy deadCount
+            .pool is ref to pool node.
+                Each value is node of pool member
+                Each pool member node has shares
+                    mid, status, overload, loadavg, numcpu
+            .healthy is ref to share with health status of pool
+            .deadCount is ref to share with count of dead members of pool
             .event is ref to event share, value is deque of events subbed from eventer
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
-            .pool is ref to pool node. Each value is share with minion details
-                mid, status, overload, loadavg, numcpu
             .parm is ref to node.parm share
                 timeout is time in seconds whereupon ping has failed
     """
@@ -355,18 +379,23 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
         #call super class method
         super(PingPoolBosserSalt, self).__init__(**kw)
         
-        self.poolees = odict() #mapping between pool shares and mid
-        self.cycleStart = None #timestamp start of ping cycle
-        self.alives = odict() #mapping of mids to boolean alive in given cycle
+        self.members = odict() 
+        self.mids = odict() 
+        self.cycleStart = None 
+        self.alives = odict() 
 
     def postinitio(self):
         """ initialize poolees from pool"""
-        for key, share in self.pool.items():
-            self.poolees[share.data.mid] = share #map minion id to share
-            self.alives[share.data.mid] = False
-            share.data.alive = None
-        self.status.data.healthy=False
-        self.status.data.deadCount=0
+        for key, node in self.pool.items():
+            self.members[key] = odict()
+            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
+            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
+            self.members[key]['alive'] = self.store.create('.'.join([node.name, 'alive'])).update(value=None)
+            self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
+            self.alives[key] = None
+            
+        self.healthy.update(value=None)
+        self.deadCount.update(value=0)
             
     def action(self, **kw):
         """ check for events
@@ -383,39 +412,40 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
             if data.get('success'): #only ret events
-                self.poolees[data['id']].update(alive=data['return'])
-                self.alives[data['id']] = True
+                self.members[self.mids[data['id']]]['alive'].update(value=data['return'])
+                self.alives[self.mids[data['id']]] = True
                 
-        for share in self.pool.values(): # clear stale active
-            if not share.data.status: #pool member is off
-                share.update(alive=None)           
+        for member in self.members.values(): # clear stale active
+            if not member['status'].value: #pool member is off
+                member['alive'].update(value=None)           
             
         if self.cycleStart is not None:
             # see if all are alive or any still dead
-            alive = True # True when any on are dead
+            alive = True # when all on are alive
             deadCount = 0
-            for share in self.pool.values():
-                if share.data.status: #pool member is on
-                    if not self.alives[share.data.mid]: #still dead
+            for key, member in self.members.items():
+                if member['status'].value: #pool member is on
+                    if not self.alives[key]: #still dead
                         alive = False
                         deadCount += 1
             
             if alive: # immediately update if all alive
-                self.status.update(healthy=alive, deadCount=deadCount)
+                self.healthy.update(value=alive)
+                self.deadCount.update(value=deadCount)
                 console.terse("     Pool healthy is {0}\n".format(
-                    self.status.data.healthy))
+                    self.healthy.value))
                 
             else: # dead so far but only update as unhealthy (dead) at end of cycle
                 if (self.stamp - self.cycleStart) > self.parm.data.timeout:
                     # cycle completed 
-                    self.status.update(deadCount=deadCount)
-                    for share in self.pool.values():
-                        if share.data.status: #pool member is on
-                            if not self.alives[share.data.mid]: #still dead
-                                share.update(alive=False) #this one dead
-                    self.status.update(healthy=False)
+                    self.deadCount.update(value=deadCount)
+                    for key, member in self.members.values():
+                        if member['status'].value: #pool member is on
+                            if not self.alives[key]: #still dead
+                                member['alive'].update(value=False) #this one dead
+                    self.healthy.update(value=False)
                     console.terse("     Pool healthy is {0} with {1} dead minions\n".format(
-                        self.status.data.healthy, self.status.data.deadCount))
+                        self.healthy.value, self.deadCount.value))
                     self.cycleStart = None
                            
         if self.cycleStart is None: #start new cycle
@@ -424,7 +454,7 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             for key in self.alives: #mark all as dead.
                 self.alives[key] = False 
             
-            target = ','.join([mid for mid, share in self.poolees.items() if share.data.status])
+            target = ','.join([member['mid'].value for member in self.members.values() if member['status'].value ])
             
             cmd = dict(mode='async', fun='test.ping',
                        tgt=target, expr_form='list',
@@ -458,25 +488,16 @@ class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             .client is salt client interface
             
         local attributes
-            .poolees is odict mapping minion ids to pool shares
-            
-        arguments to update of .ioinit attribute
-            event is share initer of events deque() subbed from eventer
-            req is share initer of subscription requests deque() for eventer
-            pool is node initer of shares in node are the pool minions
-            parm = inode.parm field values
-            inode is node path name in store
-            
+            .members = odict of pool members by name
+                 values are odicts that map to pool member shares
+            .mids is odict mapping minion ids to pool member names
             
         local attributes created by initio
             .inode is inode node
+            .pool is ref to pool node
             .event is ref to event share, value is deque of events subbed from eventer
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
-            .pool is ref to pool node. Each value is share with minion details
-                mid, status, overload, loadavg, numcpu
-            .parm is ref to node.parm share
-
     """
 
     def __init__(self, **kw):
@@ -484,13 +505,18 @@ class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
         #call super class method
         super(NumcpuPoolBosserSalt, self).__init__(**kw)
         
-        self.poolees = odict() #mapping between pool shares and mid
+        self.members = odict() 
+        self.mids = odict() 
 
     def postinitio(self):
         """ initialize poolees from pool"""
-        for key, share in self.pool.items():
-            self.poolees[share.data.mid] = share #map minion id to share
-            share.data.numcpu = None
+        for key, node in self.pool.items():
+            self.members[key] = odict()
+            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
+            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
+            self.members[key]['numcpu'] = self.store.create('.'.join([node.name, 'numcpu'])).update(value=None)
+            self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
+            
             
     def action(self, **kw):
         """ check for events
@@ -504,13 +530,13 @@ class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
             if data.get('success'): #only ret events
-                self.poolees[data['id']].update(numcpu=data['return'])
-                
-        for share in self.pool.values(): # clear stale numcpu
-            if not share.data.status: #pool member is off
-                share.update(numcpu=None)
+                self.members[self.mids[data['id']]]['numcpu'].update(value=data['return'])
+        
+        for member in self.members.values(): # clear stale numcpu
+            if not member['status'].value: #pool member is off
+                member['numcpu'].update(value=None)                    
             
-        target = ','.join([mid for mid, share in self.poolees.items() if share.data.status])
+        target = ','.join([member['mid'].value for member in self.members.values() if member['status'].value ])
         
         cmd = dict(mode='async', fun='grains.get', arg=['num_cpus'], 
                            tgt=target, expr_form='list',
@@ -543,24 +569,16 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             .client is salt client interface
             
         local attributes
-            .poolees is odict mapping minion ids to pool shares
-            
-        arguments to update of .ioinit attribute
-            event is share initer of events deque() subbed from eventer
-            req is share initer of subscription requests deque() for eventer
-            pool is node initer of shares in node are the pool minions
-            parm = inode.parm field values
-            inode is node path name in store
-            
+            .members = odict of pool members by name
+                 values are odicts that map to pool member shares
+            .mids is odict mapping minion ids to pool member names
             
         local attributes created by initio
             .inode is inode node
+            .pool is ref to pool node
             .event is ref to event share, value is deque of events subbed from eventer
             .req is ref to subscription request share, value is deque of subscription requests
                 each request is duple of tag, share
-            .pool is ref to pool node. Each value is share with minion details
-                mid, status, overload, loadavg, numcpu
-            .parm is ref to node.parm share
             
     """
 
@@ -569,13 +587,17 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
         #call super class method
         super(LoadavgPoolBosserSalt, self).__init__(**kw)
         
-        self.poolees = odict() #mapping between pool shares and mid
+        self.members = odict() 
+        self.mids = odict() 
 
     def postinitio(self):
         """ initialize poolees from pool"""
-        for key, share in self.pool.items():
-            self.poolees[share.data.mid] = share #map minion id to share
-            share.data.loadavg = None
+        for key, node in self.pool.items():
+            self.members[key] = odict()
+            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
+            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
+            self.members[key]['loadavg'] = self.store.create('.'.join([node.name, 'loadavg'])).update(value=None)
+            self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
             
     def action(self, **kw):
         """ check for events
@@ -592,13 +614,13 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
             if data.get('success'): #only ret events
-                self.poolees[data['id']].update(loadavg=data['return']['1-min'])
+                self.members[self.mids[data['id']]]['loadavg'].update(value=data['return']['1-min'])
         
-        for share in self.pool.values(): # clear stale loadavg
-            if not share.data.status: #pool member is off
-                share.data.loadavg = None        
+        for member in self.members.values(): # clear stale loadavg
+            if not member['status'].value: #pool member is off
+                member['loadavg'].update(value=None)              
             
-        target = ','.join([mid for mid, share in self.poolees.items() if share.data.status])
+        target = ','.join([member['mid'].value for member in self.members.values() if member['status'].value ])
         
         cmd = dict(mode='async', fun='status.loadavg',
                    tgt=target, expr_form='list',

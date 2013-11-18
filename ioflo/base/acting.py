@@ -66,7 +66,7 @@ class Act(object):
         if self.actor:
             self.actor.expose()
 
-    def resolveLinks(self, *pa, **kw):
+    def resolveLinks(self, *pa, **kwa):
         """Resolve any links in associated parms for actors
            Should be overridden if use arguments
         """
