@@ -7,7 +7,15 @@ init salt.pool.m2 to mid "ioflominion_2" status on
 init salt.pool.m3 to mid "ioflominion_3" status off
 init salt.pool.m4 to mid "ioflominion_4" status off 
 
-init salt.autoscale.limit to up 0.2 down 0.19
+init salt.autoscale.pool.m1.mid to value "ioflominion_1" 
+init salt.autoscale.pool.m1.status to value on 
+init salt.autoscale.pool.m2.mid to value "ioflominion_2" 
+init salt.autoscale.pool.m2.status to value on 
+init salt.autoscale.pool.m3.mid to value "ioflominion_3" 
+init salt.autoscale.pool.m3.status to value on 
+init salt.autoscale.pool.m4.mid to value "ioflominion_4" 
+
+init salt.autoscale.limit to high 0.9 low 0.8
 
 framer eventer be active first start
    frame start
@@ -19,30 +27,75 @@ framer overloader be active first start at 1.0
       do salt bosser pool loadavg
       do salt pooler overload
    
-framer autoscaler be active first compute at 1.0
-   frame failure
+framer autoscaler be active first startup at 1.0
+   frame safety
+      do salt bosser pool ping
       go abort if .time >= 60
-      
-   frame compute in failure
-      go scaleup if .salt.overload >= up in .salt.autoscale.limit
-      go scaledown if .salt.overload <= down in .salt.autoscale.limit
-      
-   frame scaleup in failure
-      #put on into ms_1 in .salt.pool.status
-      go wait if always
-      
-   frame scaledown in failure
-      #put off into ms_1 in .salt.pool.status
-      go wait if always
    
-   frame wait in failure
-      go compute if elapsed >= 3
+      frame startup in safety # wait 6 seconds to verify all on poolees are healthy
+         set elapsed to 6
+         go compute if .salt.autoscale.status.healthy
+         go abort if elapsed >= goal and not .salt.autoscale.status.healthy
+      
+      frame autoscale in safety
+         go abort if not .salt.autoscale.status.healthy
+   
+      frame compute in autoscale
+         go scaleup if .salt.autoscale.status.overload >= high in .salt.autoscale.limit
+         go scaledown if .salt.autoscale.status.overload <= low in .salt.autoscale.limit
+         
+      frame scaleup in autoscale
+         print SCALE UP HERE
+         go wait if always
+         
+      frame scaledown in autoscale
+         print SCALE DOWN HERE
+         go wait if always
+      
+      frame wait in autoscale
+         go compute if elapsed >= 3
       
    frame abort
       bid stop all
 
 logger logger to ../log/ flush 1
-log autoscale to autoscale on update
-loggee overload salt.overload
-log event to event on fifo
-loggee event salt.eventer.job.event
+   log autoscale to autoscale on update
+      loggee overload salt.autoscale.status.overload
+      loggee count salt.autoscale.status.count
+      loggee healthy salt.autoscale.status.healthy
+      loggee deadCount salt.autoscale.status.deadCount
+      
+   log overload to overload on change
+      loggee m1 salt.autoscale.pool.m1.overload
+      loggee m2 salt.autoscale.pool.m2.overload
+      loggee m3 salt.autoscale.pool.m3.overload
+      loggee m4 salt.autoscale.pool.m4.overload
+      loggee m5 salt.autoscale.pool.m5.overload
+      loggee m6 salt.autoscale.pool.m6.overload
+   
+   log numcpu to numcpu on change
+      loggee m1 salt.autoscale.pool.m1.numcpu
+      loggee m2 salt.autoscale.pool.m2.numcpu
+      loggee m3 salt.autoscale.pool.m3.numcpu
+      loggee m4 salt.autoscale.pool.m4.numcpu
+      loggee m5 salt.autoscale.pool.m5.numcpu
+      loggee m6 salt.autoscale.pool.m6.numcpu
+      
+   log loadavg to loadavg on change
+      loggee m1 salt.autoscale.pool.m1.loadavg
+      loggee m2 salt.autoscale.pool.m2.loadavg
+      loggee m3 salt.autoscale.pool.m3.loadavg
+      loggee m4 salt.autoscale.pool.m4.loadavg
+      loggee m5 salt.autoscale.pool.m5.loadavg
+      loggee m6 salt.autoscale.pool.m6.loadavg
+      
+   log alive to alive on change
+      loggee m1 salt.autoscale.pool.m1.alive
+      loggee m2 salt.autoscale.pool.m2.alive
+      loggee m3 salt.autoscale.pool.m3.alive
+      loggee m4 salt.autoscale.pool.m4.alive
+      loggee m5 salt.autoscale.pool.m5.alive
+      loggee m6 salt.autoscale.pool.m6.alive
+      
+   log event to event on fifo
+      loggee event salt.eventer.job.event

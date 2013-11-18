@@ -11,7 +11,7 @@ init salt.autoscale.pool.m4.mid to value "ms-2"
 init salt.autoscale.pool.m5.mid to value "ms-3" 
 init salt.autoscale.pool.m6.mid to value "ms-4" 
 
-init salt.autoscale.limit to up 0.2 down 0.19
+init salt.autoscale.limit to high 0.9 low 0.8
 
 framer eventer be active first start
    frame start
