@@ -511,7 +511,8 @@ class Printer(Actor):
     def action(self, message, **kw):
         """Action called by Actor
         """
-        console.profuse("{0} printer {1}\n".format(self.name, message))
+        #console.terse("{0} printer {1}\n".format(self.name, message))
+        console.terse("*** {0} ***\n".format(message))
 
     def expose(self):
         """   """
