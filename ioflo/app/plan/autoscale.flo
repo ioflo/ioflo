@@ -42,17 +42,6 @@ framer clouder be active first start at 1.0
       do salt chaser run test as run chaser salt
       go start if elapsed >= 10.0
       
-
-framer destroyer be active first start at 1.0
-   frame start
-      enter
-         do salt pooler change #computes destroyee
-         do salt runner cloud destroy
-      go next
-   
-   frame stop   
-      do salt chaser cloud destroy
-      #go start if elapsed >= 10.0
    
 framer autoscaler be active first startup at 1.0
    frame safety
@@ -77,13 +66,36 @@ framer autoscaler be active first startup at 1.0
             
          frame scaledown in autoscale
             print SCALE DOWN HERE
-            go wait if always
+            aux destroyer
+            go wait if done destroyer
          
          frame wait in autoscale
             go compute if elapsed >= 3
       
    frame abort
       bid stop all
+      
+framer destroyer be aux first start at 1.0
+   frame start
+      enter
+         do salt pooler change #computes destroyee
+      go next if .salt.autoscale.status.destroyee
+      go done
+      
+   frame destroy
+      enter
+         do salt runner cloud destroy
+      go next
+   
+   frame wait
+      print DESTROYING
+      do salt chaser cloud destroy
+      go done if .salt.chaser.cloud.destroy.success
+      go done if elapsed >= 10.0
+      
+   frame done
+      print DESTROYED
+      done
 
 logger logger to ../log/ flush 1
    log autoscale to autoscale on update
@@ -125,6 +137,14 @@ logger logger to ../log/ flush 1
       loggee m4 salt.autoscale.pool.m4.alive
       loggee m5 salt.autoscale.pool.m5.alive
       loggee m6 salt.autoscale.pool.m6.alive
+      
+   log status to status on change
+      loggee m1 salt.autoscale.pool.m1.status
+      loggee m2 salt.autoscale.pool.m2.status
+      loggee m3 salt.autoscale.pool.m3.status
+      loggee m4 salt.autoscale.pool.m4.status
+      loggee m5 salt.autoscale.pool.m5.status
+      loggee m6 salt.autoscale.pool.m6.status
       
    log event to event on fifo
       loggee event salt.eventer.event

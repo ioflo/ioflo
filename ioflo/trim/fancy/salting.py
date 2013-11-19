@@ -1205,7 +1205,7 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                         self.ret.value.update(data['ret'])
                         if data.get('success'): #only ret events
                             self.success.value = True
-                            self.members[self.mids[self.destroyee.value]]['status'] = False
+                            self.members[self.mids[self.destroyee.value]]['status'].value = False
                             console.terse("Disabled '{0}'\n".format(self.destroyee.value))
                         
                 elif parts[1] == 'cloud':
