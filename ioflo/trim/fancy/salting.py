@@ -225,6 +225,8 @@ def CreateInstances(store):
         event=('event', deque()), )
     
     DestroyCloudChaserSalt(name = 'saltChaserCloudDestroy', store=store).ioinit.update(
+        destroyee ='.salt.autoscale.status.destroyee',
+        pool = '.salt.autoscale.pool.',
         success=('success', False, True), 
         kind=('kind', odict(new=False, ret=False), True), 
         ret=('ret', odict(), True),
@@ -1144,7 +1146,9 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
             
         local attributes created by initio
             .inode is inode node
-            .success if ref to success share, value is True if destroy successful
+            .destroyee is ref to share with mid of detroyed minion
+            .pool is ref to pool member node
+            .success is ref to success share, value is True if destroy successful
             .kind is ref to event kinds recieved share fields are event kinds
             .ret is ref to ret share, value is odict of ret event from call
             .event is ref to event share, value is deque of events subbed from eventer
@@ -1155,11 +1159,16 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
         """Initialize instance """
         #call super class method
         super(DestroyCloudChaserSalt, self).__init__(**kw)
-
+        self.members = odict()
+        self.mids = odict()
 
     def postinitio(self):
         """ initialize """
-        pass
+        for key, node in self.pool.items():
+            self.members[key] = odict()
+            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
+            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
+            self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
     
     def restart(self):
         """ Restart Deed
@@ -1196,6 +1205,8 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                         self.ret.value.update(data['ret'])
                         if data.get('success'): #only ret events
                             self.success.value = True
+                            self.members[self.mids[self.destroyee.value]]['status'] = False
+                            console.terse("Disabled '{0}'\n".format(self.destroyee.value))
                         
                 elif parts[1] == 'cloud':
                     mid = parts[2]
