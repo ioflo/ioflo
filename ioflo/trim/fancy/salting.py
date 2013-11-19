@@ -17,6 +17,8 @@ Shares
             .count
             .healthy
             .deadCount
+            .destroyee
+            .createe
 
         .pool 
             .m1 
@@ -64,9 +66,12 @@ Shares
             
     .pooler 
         .overload 
-            .parm 
+            .parm
+    
+    .pooler
+        .destroy
            
-   .eventer 
+    .eventer 
         .job 
            .parm 
               tag  throttle 
@@ -76,7 +81,7 @@ Shares
               value 
            .event 
               value 
-   .bosser 
+    .bosser 
         .pool 
            .numcpu 
                 .parm 
@@ -110,6 +115,7 @@ init salt.autoscale.pool.m6.mid to value "ms-4"
 from collections import deque
 
 import salt.client.api
+from salt.exceptions import EauthAuthenticationError
 
 from ...base.odicting import odict
 from ...base.globaling import *
@@ -132,38 +138,98 @@ def CreateInstances(store):
         req=('req', deque()), 
         event=('event', odict(), True),
         pub=('pub', odict(), True), 
-        parm=('parm', odict(throttle=0.0, tag='salt'), True),)      
+        parm=('parm', odict(throttle=0.0, tag='salt/'), True),)
+    
+    EventerSalt(name = 'saltEventer', store=store).ioinit.update(
+        period= '.meta.period',
+        req=('req', deque()), 
+        event=('event', odict(), True),
+        pub=('pub', odict(), True), 
+        parm=('parm', odict(throttle=0.0, tag='salt/'), True),)     
     
     EventerSalt(name = 'saltEventerJob', store=store).ioinit.update(
         period=('.meta.period',),
         req=('req', deque()), 
         event=('event', odict(), True),
         pub=('pub', odict(), True), 
-        parm=('parm', odict(throttle=0.0, tag='salt/job'), True),)
+        parm=('parm', odict(throttle=0.0, tag='salt/job/'), True),)
+    
+    EventerSalt(name = 'saltEventerRun', store=store).ioinit.update(
+        period=('.meta.period',),
+        req=('req', deque()), 
+        event=('event', odict(), True),
+        pub=('pub', odict(), True), 
+        parm=('parm', odict(throttle=0.0, tag='salt/run/'), True),)    
+    
+    EventerSalt(name = 'saltEventerCloud', store=store).ioinit.update(
+        period=('.meta.period',),
+        req=('req', deque()), 
+        event=('event', odict(), True),
+        pub=('pub', odict(), True), 
+        parm=('parm', odict(throttle=0.0, tag='salt/cloud/'), True),)    
                                 
     OverloadPoolerSalt(name = 'saltPoolerOverload', store=store).ioinit.update(
         pool = '.salt.autoscale.pool.',
         overload = ('.salt.autoscale.status.overload', 0.0, True),
         count = ('.salt.autoscale.status.count', 0, True),)
     
+    ChangePoolerSalt(name = 'saltPoolerChange', store=store).ioinit.update(
+        pool = '.salt.autoscale.pool.',
+        destroyee = ('.salt.autoscale.status.destroyee', "", True),
+        createe = ('.salt.autoscale.status.createe', "", True),)    
+    
     PingPoolBosserSalt(name = 'saltBosserPoolPing', store=store).ioinit.update(
         pool='.salt.autoscale.pool.',
         healthy = ('.salt.autoscale.status.healthy', None, True),
         deadCount = ('.salt.autoscale.status.deadCount', 0, True),
         event=('event', deque()),
-        req=('.salt.eventer.job.req', deque(), True),
+        req=('.salt.eventer.req', deque(), True),
         parm=('parm', odict(timeout=5.0), True),)    
     
     NumcpuPoolBosserSalt(name = 'saltBosserPoolNumcpu', store=store).ioinit.update(
         pool='.salt.autoscale.pool.',
         event=('event', deque()),
-        req=('.salt.eventer.job.req', deque(), True), )
+        req=('.salt.eventer.req', deque(), True), )
     
     LoadavgPoolBosserSalt(name = 'saltBosserPoolLoadavg', store=store).ioinit.update(
         pool=('.salt.autoscale.pool.', ),
         event=('event', deque()),
-        req=('.salt.eventer.job.req', deque(), True),)        
+        req=('.salt.eventer.req', deque(), True),)
     
+    CloudRunnerSalt(name = 'cloudRunnerSalt', store=store).ioinit.update(
+        event='event',
+        req=('.salt.eventer.req', deque(), True),)
+    
+    ListsizesCloudRunnerSalt(name = 'saltRunnerCloudListsizes', store=store).ioinit.update(
+        event=('.salt.chaser.cloud.listsizes.event', deque()),
+        req=('.salt.eventer.req', deque(), True),)
+    
+    DestroyCloudRunnerSalt(name = 'saltRunnerCloudDestroy', store=store).ioinit.update(
+        destroyee='.salt.autoscale.status.destroyee', 
+        event=('.salt.chaser.cloud.destroy.event', deque()),
+        req=('.salt.eventer.req', deque(), True),)    
+    
+    RunChaserSalt(name = 'runChaserSalt', store=store).ioinit.update(
+        kind=('kind', odict(new=False, ret=False), True), 
+        ret=('ret', odict(), True),
+        event=('event', deque()), )
+    
+    RunChaserSalt(name = 'saltChaserRun', store=store).ioinit.update(
+        kind=('kind', odict(new=False, ret=False), True), 
+        ret=('ret', odict(), True),
+        event=('event', deque()), )    
+    
+    ListsizesCloudChaserSalt(name = 'saltChaserCloudListsizes', store=store).ioinit.update(
+        kind=('kind', odict(new=False, ret=False), True), 
+        ret=('ret', odict(), True),
+        event=('event', deque()), )
+    
+    DestroyCloudChaserSalt(name = 'saltChaserCloudDestroy', store=store).ioinit.update(
+        success=('success', False, True), 
+        kind=('kind', odict(new=False, ret=False), True), 
+        ret=('ret', odict(), True),
+        event=('event', deque()), )    
+
 class SaltDeed(deeding.Deed):
     """ Base class for Deeds that interface with Salt
         Adds salt client interface attribute .client
@@ -224,6 +290,8 @@ class EventerSalt(SaltDeed, deeding.SinceDeed):
         while self.req.value: # some requests
             tag, share = self.req.value.popleft()
             console.verbose("     Eventer '{0}' subreq tag '{1}' share '{2}'\n".format(self.name, tag, share.name))
+            if not share: #value not inited to put empty deque()
+                share.value = deque()
             if tag in self.pub.value and self.pub.value[tag] != share:
                 self.pub.value[tag].append(share)
             else: #first time
@@ -294,7 +362,7 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
         self.members = odict()
         
     def postinitio(self):
-        """ initialize overload of each pool member"""
+        """ initialize members of pool"""
         for key, node in self.pool.items():
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
@@ -337,6 +405,79 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
             self.count.update(value=count)
             console.terse("     Pool overload is {0:0.4f} with onCount {1}\n".format(
                 self.overload.value,  self.count.value))           
+                
+        return None
+    
+class ChangePoolerSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Pooler Change
+        Computes the destroyee and createe for the pool. That is the minion ids
+        of the minion to destroy or create respectively.
+        
+        The destroyee is the last created minion unless there is only one minion
+        then the destroyee is empty.
+        
+        The createe is the next not on minion in the pool unless all are on then
+        the createe is empty
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            .members = odict of pool members,
+                 values are odicts that map to pool member shares
+            
+        local attributes created by initio
+            .inode is inode node
+            .pool is ref to pool node.
+                Each value is node of pool member
+                Each pool member node has shares
+                    mid, status, overload, loadavg, numcpu
+            .destroyee is ref share holding mid of destroyee
+            .createe is ref share holding mid of createe
+
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(ChangePoolerSalt, self).__init__(**kw)
+        self.members = odict()
+        
+    def postinitio(self):
+        """ initialize members of pool"""
+        for key, node in self.pool.items():
+            self.members[key] = odict()
+            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
+            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))            
+            
+    def action(self, **kw):
+        """ update createe and destroyee for pool"""
+        super(ChangePoolerSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        destroyee = ""
+        count = 0
+        for member in self.members.values():
+            if member['status'].value: #pool member is on
+                count += 1
+                if count > 1: 
+                    destroyee = member['mid'].value
+        #after loop destroyee is mid of last on member in loop if not the first
+        self.destroyee.value = destroyee
+        
+        createe = ""
+        for member in self.members.values():
+            if not member['status'].value: #pool member is on
+                createe = member['mid'].value
+                break 
+        
+        self.createe.value = createe
                 
         return None
 
@@ -385,7 +526,7 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
         self.alives = odict() 
 
     def postinitio(self):
-        """ initialize poolees from pool"""
+        """ initialize members from pool"""
         for key, node in self.pool.items():
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
@@ -509,7 +650,7 @@ class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
         self.mids = odict() 
 
     def postinitio(self):
-        """ initialize poolees from pool"""
+        """ initialize members from pool"""
         for key, node in self.pool.items():
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
@@ -591,7 +732,7 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
         self.mids = odict() 
 
     def postinitio(self):
-        """ initialize poolees from pool"""
+        """ initialize members from pool"""
         for key, node in self.pool.items():
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
@@ -640,6 +781,427 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
                 self.req.stampNow()
                 
         return None
+    
+class CloudRunnerSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Runner Cloud
+        Generic cloud runner:
+        
+        Requires:
+            Unique deed name for 'do'
+            New instance to be created using 'as cloud runner salt'
+            The cloud function 'fun' to be provided in action parms using
+            'to' or 'from' connective for field 'fun'
+            The cloud chaser deed event deque 'event' attributed to be provided
+            in ioinit using 'per' or 'with' connective for effective attribute 'event'
+              
+        Example:
+            do salt cloud runner listimages as runner salt \
+                to fun "list_images" per event "salt.chaser.cloud.listimages.event"
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .event is ref to event share, of associated chaser Deed
+                 value is deque of events subbed from eventer
+            .req is ref to subscription request share, value is deque of subscription requests
+                each request is duple of tag, share
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(CloudRunnerSalt, self).__init__(**kw)
+
+    def postinitio(self):
+        """ initialize """
+        self.event.value = deque()
+            
+    def action(self, fun, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(CloudRunnerSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+            
+        fun = '.'.join(['runner', 'cloud', fun])
+        
+        cmd = dict(fun=fun,
+                   kwarg=dict(provider='techhat-rackspace'),
+                   username='saltwui', password='dissolve', eauth='pam')            
+        
+        result = None
+        try:
+            result = self.client.run(cmd)
+            console.verbose("     Salt command result = {0}\n".format(result))
+        except EauthAuthenticationError as ex:
+            console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
+                      
+        if result and result.startswith('salt/run/'):
+            self.req.value.append((result, self.event))
+            self.req.stampNow()
+                
+        return None
+    
+class ListsizesCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Runner Cloud Listsizes
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .event is ref to event share, of associated chaser Deed
+                 value is deque of events subbed from eventer
+            .req is ref to subscription request share, value is deque of subscription requests
+                each request is duple of tag, share
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(ListsizesCloudRunnerSalt, self).__init__(**kw)
+
+
+    def postinitio(self):
+        """ initialize """
+        pass
+        #self.event.value = deque()
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(ListsizesCloudRunnerSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        cmd = dict(fun="runner.cloud.list_sizes",
+                   kwarg=dict(provider='techhat-rackspace'),
+                   username='saltwui', password='dissolve', eauth='pam')            
+        
+        result = None
+        try:
+            result = self.client.run(cmd)
+            console.verbose("     Salt command result = {0}\n".format(result))
+        except EauthAuthenticationError as ex:
+            console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
+                      
+        if result and result.startswith('salt/run/'):
+            self.req.value.append((result, self.event))
+            self.req.stampNow()
+                
+        return None
+    
+class DestroyCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Runner Cloud destroy
+    
+        Destroys minion in pool given by the destroyee share
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .destroyee is ref to share holding mid of minion in pool to be destroyed
+            .event is ref to event share, of associated chaser Deed
+                 value is deque of events subbed from eventer
+            .req is ref to subscription request share, value is deque of subscription requests
+                each request is duple of tag, share
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(DestroyCloudRunnerSalt, self).__init__(**kw)
+
+
+    def postinitio(self):
+        """ initialize """
+        pass
+        #self.event.value = deque()
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(DestroyCloudRunnerSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        mid = self.destroyee.value
+        
+        if mid: # minionId to destroy
+            cmd = dict(fun="runner.cloud.destroy",
+                       kwarg=dict(names=[mid]),
+                       username='saltwui', password='dissolve', eauth='pam')
+            
+            result = None
+            try:
+                result = self.client.run(cmd)
+                console.verbose("     Salt command result = {0}\n".format(result))
+            except EauthAuthenticationError as ex:
+                console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
+                          
+            if result and result.startswith('salt/run/'):
+                self.req.value.append((result, self.event)) #job events
+                self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
+                self.req.stampNow()
+                
+        return None
+    
+class RunChaserSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Chaser Run Generic
+        
+        Requires:
+            Unique deed name for 'do'
+            New instance to be created using 'as chaser salt'
+            The associated runners are responsible for making the requests to the
+                salt eventer with this deeds event deque()
+              
+        Example:
+            do salt chaser run mychaser as run chaser salt
+            do salt runner myrunner as runner salt with event "salt.chaser.mychaser.event"
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .kind is ref to event kinds recieved share fields are event kinds
+            .ret is ref to ret share, value is odict of ret event from call
+            .event is ref to event share, value is deque of events subbed from eventer
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(RunChaserSalt, self).__init__(**kw)
+
+
+    def postinitio(self):
+        """ initialize """
+        pass
+    
+    def restart(self):
+        """ Restart Deed
+            Reset to False the fields in .kind share
+        """
+        console.profuse("Restarting LapseDeed  {0}\n".format(self.name))
+        for field in self.kind.keys():
+            self.kind[field] = False
+        self.kind.stampNow()    
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(RunChaserSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        while self.event.value: #deque of events is not empty
+            edata = self.event.value.popleft()
+            console.verbose("     {0} got event {1}\n".format(self.name, edata['tag']))
+            data = edata['data']            
+            tag = edata['tag']
+            parts = tag.split('/')
+            if parts[0] == 'salt':
+                if parts[1] == 'run':
+                    jid = parts[2]
+                    kind = parts[3]
+                    self.kind.update([(kind, True)]) #got set status for event
+                    if kind == 'ret':
+                        #if data.get('success'): #only ret events
+                        self.ret.value.update(data['ret'])
+                
+        return None
+    
+    
+class ListsizesCloudChaserSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Chaser Cloud Listsizes
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .kind is ref to event kinds recieved share fields are event kinds
+            .ret is ref to ret share, value is odict of ret event from call
+            .event is ref to event share, value is deque of events subbed from eventer
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(ListsizesCloudChaserSalt, self).__init__(**kw)
+
+
+    def postinitio(self):
+        """ initialize """
+        pass
+    
+    def restart(self):
+        """ Restart Deed
+            Reset to False the fields in .kind share
+        """
+        console.profuse("Restarting LapseDeed  {0}\n".format(self.name))
+        for field in self.kind.keys():
+            self.kind[field] = False
+        self.kind.stampNow()    
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(ListsizesCloudChaserSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        while self.event.value: #deque of events is not empty
+            edata = self.event.value.popleft()
+            console.verbose("     {0} got event {1}\n".format(self.name, edata['tag']))
+            data = edata['data']            
+            tag = edata['tag']
+            parts = tag.split('/')
+            if parts[0] == 'salt':
+                if parts[1] == 'run':
+                    jid = parts[2]
+                    kind = parts[3]
+                    self.kind.update([(kind, True)]) #got set status for event
+                    if kind == 'ret':
+                        #if data.get('success'): #only ret events
+                        self.ret.value.update(data['ret'])
+                
+        return None
+
+class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Chaser Cloud Destroy
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .success if ref to success share, value is True if destroy successful
+            .kind is ref to event kinds recieved share fields are event kinds
+            .ret is ref to ret share, value is odict of ret event from call
+            .event is ref to event share, value is deque of events subbed from eventer
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(DestroyCloudChaserSalt, self).__init__(**kw)
+
+
+    def postinitio(self):
+        """ initialize """
+        pass
+    
+    def restart(self):
+        """ Restart Deed
+            Reset to False the fields in .kind share
+        """
+        console.profuse("Restarting LapseDeed  {0}\n".format(self.name))
+        for field in self.kind.keys():
+            self.kind[field] = False
+        self.kind.stampNow()
+        self.success.value = False
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(DestroyCloudChaserSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        while self.event.value: #deque of events is not empty
+            edata = self.event.value.popleft()
+            console.verbose("     {0} got event {1}\n".format(self.name, edata['tag']))
+            data = edata['data']            
+            tag = edata['tag']
+            parts = tag.split('/')
+            if parts[0] == 'salt':
+                if parts[1] == 'run':
+                    jid = parts[2]
+                    kind = parts[3]
+                    self.kind.update([(kind, True)]) 
+                    if kind == 'ret':
+                        self.ret.value.update(data['ret'])
+                        if data.get('success'): #only ret events
+                            self.success.value = True
+                        
+                elif parts[1] == 'cloud':
+                    mid = parts[2]
+                    kind =  parts[3]
+                    self.kind.update([(kind, True)]) 
+                    
+        return None
+    
     
 
 def Test():

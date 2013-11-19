@@ -456,9 +456,9 @@ class Restarter(Actor):
        if the actor passed in as a parameter has a restart attribute
           it calls the restart method
 
-       Hafscript Builder checks 
-       if deed instance has restart attribute then
-          adds entry action restarter for the deed
+       Builder checks at parse time
+       If deed instance has restart attribute then
+          adds enter restarter action for the deed
     """
 
     def __init__(self,  **kw):

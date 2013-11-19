@@ -108,9 +108,9 @@ def Convert2BoolCoordNum(text):
        ValueError if can't
     """
     #convert to boolean if possible
-    if text.lower() in ['true', 'yes', 'on']:
+    if text.lower() in ['true', 'yes']:
         return (True)
-    if text.lower() in ['false', 'no', 'off']:
+    if text.lower() in ['false', 'no']:
         return (False)
 
     try:
@@ -152,7 +152,8 @@ CommandList = ['load', 'house', 'init',
 
 
 Comparisons = ['==', '<', '<=', '>=', '>', '!='] #reserved tokens
-Connectives = ['to', 'from', 'into', 'by', 'and', 'not',  '+-', 'goto', 'gp', 'in', 'of'] #reserved tokens
+Connectives = ['to', 'from', 'per', 'with', 'as', 'into', 'by', 'and', 'not',
+                '+-', 'go', 'in', 'of', 'on'] #reserved tokens
 Reserved = Connectives + Comparisons #concatenate to get reserved words
 ReservedFrameNames = ['next'] #these frame names have special meaning as goto target
 
@@ -627,15 +628,15 @@ class Builder(object):
 
                     order = OrderValues[order] #convert to order value
 
-                elif connective == 'with':
+                elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
 
-                elif connective == 'per': 
+                elif connective == 'with': 
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        console.terse("     Warning: Do 'per' non-existent share {0} ..."
+                        console.terse("     Warning: Do 'with' non-existent share {0} ..."
                                       " creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     #assumes src share inited before this line parsed
@@ -829,15 +830,15 @@ class Builder(object):
                     txa = tokens[index]
                     index += 1
 
-                elif connective == 'with':
+                elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
 
-                elif connective == 'per':
+                elif connective == 'with':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        console.terse("     Warning: Init 'per' non-existent share {0}"
+                        console.terse("     Warning: Init 'with' non-existent share {0}"
                                       " ... creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     #assumes src share inited before this line parsed
@@ -2456,11 +2457,11 @@ class Builder(object):
                     for field in srcFields:
                         parms[field] = src[field]
                 
-                elif connective == 'with':
+                elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
                     
-                elif connective == 'per':
+                elif connective == 'with':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -2495,6 +2496,7 @@ class Builder(object):
             kinder = deeding.Deed.Names[kind]
             #create new instance as the same type as kinder
             actor = type(kinder)(name=name, store=self.currentStore)
+            actor.ioinit.update(kinder.ioinit) # copy ioinit defaults from kinder
             if init:
                 actor.preinitio(**init)
             actor.initio(**actor.ioinit)

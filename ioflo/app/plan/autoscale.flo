@@ -3,7 +3,7 @@
 house autoscale
 
 init salt.autoscale.pool.m1.mid to value "alpha" 
-init salt.autoscale.pool.m1.status to value on 
+init salt.autoscale.pool.m1.status to value yes
 
 init salt.autoscale.pool.m2.mid to value "ms-0" 
 init salt.autoscale.pool.m3.mid to value "ms-1" 
@@ -13,20 +13,49 @@ init salt.autoscale.pool.m6.mid to value "ms-4"
 
 init salt.autoscale.limit to high 0.9 low 0.8
 
+#init salt.autoscale.status.destroyee to "ioflominion_5"
+#init salt.autoscale.status.createe to "ioflominion_5"
+
 framer eventer be active first start
    frame start
-      do salt eventer job
+      do salt eventer
+      #do salt eventer job
+      #do salt eventer run
+      #do salt eventer cloud
 
 framer overloader be active first start at 1.0
    frame start
       do salt bosser pool numcpu
       do salt bosser pool loadavg
       do salt pooler overload
+      
+framer clouder be active first start at 1.0
+   frame start
+      enter
+         #do salt runner cloud listsizes
+         do salt cloud runner test as cloud runner salt to fun "list_sizes" \
+               per event ".salt.chaser.run.test.event"
+      go next
+   
+   frame stop   
+      #do salt chaser cloud listsizes
+      do salt chaser run test as run chaser salt
+      go start if elapsed >= 10.0
+      
+
+framer destroyer be active first start at 1.0
+   frame start
+      enter
+         do salt pooler change #computes destroyee
+         do salt runner cloud destroy
+      go next
+   
+   frame stop   
+      do salt chaser cloud destroy
+      #go start if elapsed >= 10.0
    
 framer autoscaler be active first startup at 1.0
    frame safety
-      recur
-         print hello world
       do salt bosser pool ping
       go abort if .time >= 60
    
@@ -38,20 +67,20 @@ framer autoscaler be active first startup at 1.0
       frame autoscale in safety
          go abort if not .salt.autoscale.status.healthy
    
-      frame compute in autoscale
-         go scaleup if .salt.autoscale.status.overload >= high in .salt.autoscale.limit
-         go scaledown if .salt.autoscale.status.overload <= low in .salt.autoscale.limit
+         frame compute in autoscale
+            go scaleup if .salt.autoscale.status.overload >= high in .salt.autoscale.limit
+            go scaledown if .salt.autoscale.status.overload <= low in .salt.autoscale.limit
+            
+         frame scaleup in autoscale
+            print SCALE UP HERE
+            go wait if always
+            
+         frame scaledown in autoscale
+            print SCALE DOWN HERE
+            go wait if always
          
-      frame scaleup in autoscale
-         print SCALE UP HERE
-         go wait if always
-         
-      frame scaledown in autoscale
-         print SCALE DOWN HERE
-         go wait if always
-      
-      frame wait in autoscale
-         go compute if elapsed >= 3
+         frame wait in autoscale
+            go compute if elapsed >= 3
       
    frame abort
       bid stop all
@@ -62,6 +91,8 @@ logger logger to ../log/ flush 1
       loggee count salt.autoscale.status.count
       loggee healthy salt.autoscale.status.healthy
       loggee deadCount salt.autoscale.status.deadCount
+      loggee destroyee salt.autoscale.status.destroyee
+      loggee createe salt.autoscale.status.createe
       
    log overload to overload on change
       loggee m1 salt.autoscale.pool.m1.overload
@@ -96,4 +127,5 @@ logger logger to ../log/ flush 1
       loggee m6 salt.autoscale.pool.m6.alive
       
    log event to event on fifo
-      loggee event salt.eventer.job.event
+      loggee event salt.eventer.event
+      

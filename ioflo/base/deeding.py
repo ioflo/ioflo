@@ -69,7 +69,9 @@ class Deed(acting.Actor):
             by saving the init values in .ioinit attribute of the deed.
             
             Each argument name is the name of an io attribute for the Deed
-            "inode" value is a pathname string for the Deed default node
+            
+            The name "inode" is special, its value is a pathname string for
+               the Deed default Store Node
             
             The other argument values are the pathname strings of Deed
             specific io shares or nodes
@@ -83,6 +85,11 @@ class Deed(acting.Actor):
             
             Need to change signatue so can pass in odict as pa or list of tuples
             like the update method for shares
+            
+            Because preinitio is executed at parse time by the builder when deed
+            appears in FloScript, preinitio will override the effective pathname
+            .ipath in .ioinit set by CreateInstances which happens when new house
+            is created in FloScript.
             
         """
         self.ioinit.update(kw)
@@ -323,9 +330,11 @@ class LapseDeed(Deed):
         self.stamp = None
         self.lapse = 0.0 #elapsed time in seconds between updates calculated on update
 
-
     def restart(self):
-        """Restart Deed  """
+        """ Restart Deed
+            Override in subclass
+            This is called by restarter action in enter context
+        """
         console.profuse("Restarting LapseDeed  {0}\n".format(self.name))
 
     def updateLapse(self):

@@ -516,7 +516,6 @@ class Share(object):
                 raise ValueError("Not store %s" % store)
         self.store = store
     
-
     #property owner
     def getOwner(self):
         """getter for  owner property """
@@ -607,7 +606,6 @@ class Share(object):
 
         return self
 
-
     def create(self, *pa, **kwa):
         """Create and update fields if they do not already exist otherwise do nothing
            This allows setting defaults only if they have not already been set 
@@ -695,7 +693,6 @@ class Share(object):
                 setattr(self._unit, k, v)
 
         return self
-
 
     def fetchUnit(self, field, default = None):
         """Retrieve from .unit the value of attribute field or None if it does not exist """
