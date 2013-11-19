@@ -470,6 +470,7 @@ class ChangePoolerSalt(SaltDeed, deeding.LapseDeed):
                     destroyee = member['mid'].value
         #after loop destroyee is mid of last on member in loop if not the first
         self.destroyee.value = destroyee
+        console.terse("     Changed destroyee to '{0}'\n".format(destroyee))
         
         createe = ""
         for member in self.members.values():
@@ -478,7 +479,8 @@ class ChangePoolerSalt(SaltDeed, deeding.LapseDeed):
                 break 
         
         self.createe.value = createe
-                
+        console.terse("     Changed createe to '{0}'\n".format(createe))
+        
         return None
 
 class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
