@@ -29,31 +29,6 @@ framer overloader be active first start at 1.0
       do salt bosser pool numcpu
       do salt bosser pool loadavg
       do salt pooler overload
-      
-framer clouder be active first start at 1.0
-   frame start
-      enter
-         #do salt runner cloud listsizes
-         do salt cloud runner test as cloud runner salt to fun "list_sizes" \
-               per event ".salt.chaser.run.test.event"
-      go next
-   
-   frame stop   
-      #do salt chaser cloud listsizes
-      do salt chaser run test as run chaser salt
-      go start if elapsed >= 10.0
-      
-
-framer destroyer be active first start at 1.0
-   frame start
-      enter
-         do salt pooler change #computes destroyee
-         do salt runner cloud destroy
-      go next
-   
-   frame stop   
-      do salt chaser cloud destroy
-      #go start if elapsed >= 10.0
    
 framer autoscaler be active first startup at 1.0
    frame safety
@@ -78,13 +53,36 @@ framer autoscaler be active first startup at 1.0
             
          frame scaledown in autoscale
             print SCALE DOWN HERE
-            go wait if always
+            aux destroyer
+            go wait if done destroyer
          
          frame wait in autoscale
             go compute if elapsed >= 3
       
    frame abort
       bid stop all
+      
+framer destroyer be aux first start at 1.0
+   frame start
+      enter
+         do salt pooler change #computes destroyee
+      go next if .salt.autoscale.status.destroyee
+      go done
+      
+   frame destroy
+      enter
+         do salt runner cloud destroy
+      go next
+   
+   frame wait
+      print DESTROYING
+      do salt chaser cloud destroy
+      go done if .salt.chaser.cloud.destroy.success
+      go done if elapsed >= 10.0
+      
+   frame done
+      print DESTROYED
+      done
 
 logger logger to ../log/ flush 1
    log autoscale to autoscale on update
