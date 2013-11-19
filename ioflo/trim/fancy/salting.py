@@ -207,7 +207,12 @@ def CreateInstances(store):
     DestroyCloudRunnerSalt(name = 'saltRunnerCloudDestroy', store=store).ioinit.update(
         destroyee='.salt.autoscale.status.destroyee', 
         event=('.salt.chaser.cloud.destroy.event', deque()),
-        req=('.salt.eventer.req', deque(), True),)    
+        req=('.salt.eventer.req', deque(), True),)
+    
+    CreateCloudRunnerSalt(name = 'saltRunnerCloudCreate', store=store).ioinit.update(
+        createe='.salt.autoscale.status.createe', 
+        event=('.salt.chaser.cloud.create.event', deque()),
+        req=('.salt.eventer.req', deque(), True),)       
     
     RunChaserSalt(name = 'runChaserSalt', store=store).ioinit.update(
         kind=('kind', odict(new=False, ret=False), True), 
@@ -230,7 +235,15 @@ def CreateInstances(store):
         success=('success', False, True), 
         kind=('kind', odict(new=False, ret=False), True), 
         ret=('ret', odict(), True),
-        event=('event', deque()), )    
+        event=('event', deque()), )
+    
+    CreateCloudChaserSalt(name = 'saltChaserCloudCreate', store=store).ioinit.update(
+        createe ='.salt.autoscale.status.createe',
+        pool = '.salt.autoscale.pool.',
+        success=('success', False, True), 
+        kind=('kind', odict(new=False, ret=False), True), 
+        ret=('ret', odict(), True),
+        event=('event', deque()), )        
 
 class SaltDeed(deeding.Deed):
     """ Base class for Deeds that interface with Salt
@@ -986,6 +999,76 @@ class DestroyCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
                 
         return None
     
+class CreateCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Runner Cloud destroy
+    
+        Creates minion in pool given by the createe share
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .createe is ref to share holding mid of minion in pool to be created
+            .event is ref to event share, of associated chaser Deed
+                 value is deque of events subbed from eventer
+            .req is ref to subscription request share, value is deque of subscription requests
+                each request is duple of tag, share
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(CreateCloudRunnerSalt, self).__init__(**kw)
+
+
+    def postinitio(self):
+        """ initialize """
+        pass
+        #self.event.value = deque()
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(CreateCloudRunnerSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        mid = self.createe.value
+        
+        if mid: # minionId to create
+            
+            cmd = dict(fun="runner.cloud.profile",
+                       kwarg=dict(prof='rackspace_512',
+                                    names=[mid]),
+                       username='saltwui', password='dissolve', eauth='pam')
+            
+            result = None
+            try:
+                result = self.client.run(cmd)
+                console.verbose("     Salt command result = {0}\n".format(result))
+            except EauthAuthenticationError as ex:
+                console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
+                          
+            if result and result.startswith('salt/run/'):
+                self.req.value.append((result, self.event)) #job events
+                self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
+                self.req.value.append(("salt/minion/{0}/".format(mid), self.event)) # minion events
+                self.req.stampNow()
+                
+        return None
+    
 class RunChaserSalt(SaltDeed, deeding.LapseDeed):
     """ Salt Chaser Run Generic
         
@@ -1206,7 +1289,7 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                         if data.get('success'): #only ret events
                             self.success.value = True
                             self.members[self.mids[self.destroyee.value]]['status'].value = False
-                            console.terse("Disabled '{0}'\n".format(self.destroyee.value))
+                            console.terse("     Disabled '{0}'\n".format(self.destroyee.value))
                         
                 elif parts[1] == 'cloud':
                     mid = parts[2]
@@ -1215,7 +1298,94 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                     
         return None
     
+class CreateCloudChaserSalt(SaltDeed, deeding.LapseDeed):
+    """ Salt Chaser Cloud Destroy
+       
+        inherited attributes
+            .name is actor name string
+            .store is data store ref
+            .ioinit is dict of ioinit data for initio
+            .stamp is time stamp
+            .lapse is time lapse between updates of deed
+            .client is salt client interface
+            
+        local attributes
+            
+        local attributes created by initio
+            .inode is inode node
+            .createe is ref to share with mid of created minion
+            .pool is ref to pool member node
+            .success is ref to success share, value is True if destroy successful
+            .kind is ref to event kinds recieved share fields are event kinds
+            .ret is ref to ret share, value is odict of ret event from call
+            .event is ref to event share, value is deque of events subbed from eventer
+            
+    """
+
+    def __init__(self, **kw):
+        """Initialize instance """
+        #call super class method
+        super(CreateCloudChaserSalt, self).__init__(**kw)
+        self.members = odict()
+        self.mids = odict()
+
+    def postinitio(self):
+        """ initialize """
+        for key, node in self.pool.items():
+            self.members[key] = odict()
+            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
+            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
+            self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
     
+    def restart(self):
+        """ Restart Deed
+            Reset to False the fields in .kind share
+        """
+        console.profuse("Restarting LapseDeed  {0}\n".format(self.name))
+        for field in self.kind.keys():
+            self.kind[field] = False
+        self.kind.stampNow()
+        self.success.value = False
+            
+    def action(self, **kw):
+        """ check for events
+            poll the active pool minions
+            request events for associated jobid
+        """
+        super(CreateCloudChaserSalt, self).action(**kw) #updates .stamp and .lapse here
+
+        #if self.lapse <= 0.0:
+            #pass
+        
+        while self.event.value: #deque of events is not empty
+            edata = self.event.value.popleft()
+            console.verbose("     {0} got event {1}\n".format(self.name, edata['tag']))
+            data = edata['data']            
+            tag = edata['tag']
+            parts = tag.split('/')
+            if parts[0] == 'salt':
+                if parts[1] == 'run':
+                    jid = parts[2]
+                    kind = parts[3]
+                    self.kind.update([(kind, True)]) 
+                    if kind == 'ret':
+                        self.ret.value.update(data['ret'])
+                        if data.get('success'): #only ret events
+                            self.success.value = True
+                            self.members[self.mids[self.createe.value]]['status'].value = True
+                            console.terse("     Enabled '{0}'\n".format(self.createe.value))
+                        
+                elif parts[1] == 'cloud':
+                    mid = parts[2]
+                    kind =  parts[3]
+                    self.kind.update([(kind, True)])
+                
+                elif parts[1] == 'minion':
+                    mid = parts[2]
+                    kind = parts[3]
+                    self.kind.update([(kind, True)])                 
+                    
+        return None
 
 def Test():
     """Module Common self test

@@ -13,8 +13,7 @@ init salt.autoscale.pool.m6.mid to value "ms-4"
 
 init salt.autoscale.limit to high 0.9 low 0.8
 
-#init salt.autoscale.status.destroyee to "ioflominion_5"
-#init salt.autoscale.status.createe to "ioflominion_5"
+
 
 framer eventer be active first start
    frame start
@@ -28,20 +27,6 @@ framer overloader be active first start at 1.0
       do salt bosser pool numcpu
       do salt bosser pool loadavg
       do salt pooler overload
-      
-framer clouder be active first start at 1.0
-   frame start
-      enter
-         #do salt runner cloud listsizes
-         do salt cloud runner test as cloud runner salt to fun "list_sizes" \
-               per event ".salt.chaser.run.test.event"
-      go next
-   
-   frame stop   
-      #do salt chaser cloud listsizes
-      do salt chaser run test as run chaser salt
-      go start if elapsed >= 10.0
-      
    
 framer autoscaler be active first startup at 1.0
    frame safety
@@ -57,12 +42,15 @@ framer autoscaler be active first startup at 1.0
          go abort if not .salt.autoscale.status.healthy
    
          frame compute in autoscale
+            enter
+               do salt pooler change # determines createe and destroyee mids
             go scaleup if .salt.autoscale.status.overload >= high in .salt.autoscale.limit
             go scaledown if .salt.autoscale.status.overload <= low in .salt.autoscale.limit
             
          frame scaleup in autoscale
             print SCALE UP HERE
-            go wait if always
+            aux creator
+            go wait if done creator
             
          frame scaledown in autoscale
             print SCALE DOWN HERE
@@ -70,15 +58,39 @@ framer autoscaler be active first startup at 1.0
             go wait if done destroyer
          
          frame wait in autoscale
-            go compute if elapsed >= 3
+            print WAITING
+            go compute if elapsed >= 20
       
    frame abort
       bid stop all
+
+framer creator be aux first start at 1.0
+   frame start
+      go next if .salt.autoscale.status.createe
+      go done
+      
+   frame create
+      enter
+         do salt runner cloud create
+      go next
+   
+   frame wait
+      print CREATING
+      do salt chaser cloud create
+      go done if .salt.chaser.cloud.create.success
+      go timedout if elapsed >= 600.0
+      
+   frame timedout
+      print TIMED OUT CREATING
+      done
+      
+   frame done
+      print CREATED
+      done
+
       
 framer destroyer be aux first start at 1.0
    frame start
-      enter
-         do salt pooler change #computes destroyee
       go next if .salt.autoscale.status.destroyee
       go done
       
@@ -92,6 +104,10 @@ framer destroyer be aux first start at 1.0
       do salt chaser cloud destroy
       go done if .salt.chaser.cloud.destroy.success
       go done if elapsed >= 10.0
+   
+   frame timedout
+      print TIMED OUT DESTROYING
+      done
       
    frame done
       print DESTROYED
