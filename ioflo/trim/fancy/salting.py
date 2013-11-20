@@ -487,7 +487,7 @@ class ChangePoolerSalt(SaltDeed, deeding.LapseDeed):
         destroyee = ""
         count = 0
         for member in self.members.values():
-            console.terse("Member: {0} is {1}\n".format(member['mid'].value,
+            console.verbose("Member: {0} is {1}\n".format(member['mid'].value,
                                                         member['status'].value))
             if member['status'].value: #pool member is on
                 count += 1
