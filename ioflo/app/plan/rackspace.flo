@@ -56,7 +56,7 @@ framer autoscaler be active first startup at 3.0
          aux destroyer
          go check if done destroyer
          
-      frame check in safety
+      frame health in safety
          set elapsed to 10
          do salt bosser pool ping
          go prep if .salt.autoscale.status.healthy
