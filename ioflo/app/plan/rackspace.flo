@@ -49,18 +49,12 @@ framer autoscaler be active first startup at 3.0
       frame scaleup in safety
          print SCALE UP HERE
          aux creator
-         go check if done creator
+         go prep if done creator
          
       frame scaledown in safety
          print SCALE DOWN HERE
          aux destroyer
-         go check if done destroyer
-         
-      frame health in safety
-         set elapsed to 10
-         do salt bosser pool ping
-         go prep if .salt.autoscale.status.healthy
-         go abort if elapsed >= goal and not .salt.autoscale.status.healthy
+         go prep if done destroyer
          
    frame abort
       bid stop all
