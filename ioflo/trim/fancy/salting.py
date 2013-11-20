@@ -595,7 +595,7 @@ class DisablePoolerSalt(SaltDeed, deeding.LapseDeed):
     def __init__(self, **kw):
         """Initialize instance """
         #call super class method
-        super(EnablePoolerSalt, self).__init__(**kw)
+        super(DisablePoolerSalt, self).__init__(**kw)
         self.members = odict()
         self.mids =  odict()
         
@@ -609,7 +609,7 @@ class DisablePoolerSalt(SaltDeed, deeding.LapseDeed):
             
     def action(self, **kw):
         """ enabled createe"""
-        super(EnablePoolerSalt, self).action(**kw) #updates .stamp and .lapse here
+        super(DisablePoolerSalt, self).action(**kw) #updates .stamp and .lapse here
 
         #if self.lapse <= 0.0:
             #pass
