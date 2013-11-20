@@ -9,9 +9,9 @@ init salt.autoscale.pool.m2.status to value yes
 init salt.autoscale.pool.m3.mid to value "ioflominion_3" 
 init salt.autoscale.pool.m3.status to value yes
 init salt.autoscale.pool.m4.mid to value "ioflominion_4" 
-init salt.autoscale.pool.m4.status to value no
+init salt.autoscale.pool.m4.status to value yes
 init salt.autoscale.pool.m5.mid to value "ioflominion_5" 
-init salt.autoscale.pool.m5.status to value no
+init salt.autoscale.pool.m5.status to value yes
 
 init salt.autoscale.limit to high 0.1  low 0.05
 
@@ -65,7 +65,11 @@ framer autoscaler be active first startup at 1.0
 framer creator be aux first start at 1.0
    frame start
       go next if .salt.autoscale.status.createe
-      go done
+      go quit
+   
+   frame quit
+      print POOL MAX SIZE
+      done
       
    frame create
       print CREATING
@@ -96,6 +100,10 @@ framer destroyer be aux first start at 1.0
    frame start
       go next if .salt.autoscale.status.destroyee
       go done
+      
+   frame quit
+      print POOL MIN SIZE
+      done
       
    frame destroy
       print DESTROYING
