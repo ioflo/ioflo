@@ -21,11 +21,11 @@ framer eventer be active first start
    frame start
       do salt eventer
 
-framer autoscaler be active first startup at 1.0
+framer autoscaler be active first startup at 3.0
    frame safety
       go abort if .time >= 3600
    
-      frame startup in safety # wait 6 seconds to verify all on poolees are healthy
+      frame startup in safety # wait to verify all on poolees are healthy
          set elapsed to 10
          do salt bosser pool ping
          go prep if .salt.autoscale.status.healthy
