@@ -34,15 +34,19 @@ def CreateInstances(store):
 class Deed(acting.Actor):
     """Deed Actor Patron Registry Class for behaviors like arbiters and controls
 
-       deeds are recur actions
-       but building deed from hafscript checks 
-       if deed instance has restart attribute then
-          adds entry action to call restart method of deed
-       TimeLapse deeds have restart method attribute
+        deeds are recur actions
+        but building deed from hafscript checks 
+        if deed instance has restart attribute then
+           adds entry action to call restart method of deed
+        TimeLapse deeds have restart method attribute
 
-       inherited attributes
+        inherited attributes
           .name = unique name for actor instance
           .store = shared data store
+        
+        local attributes
+          ._iois
+          .ioinit
 
     """
     #create Deed specific registry name space
@@ -61,6 +65,7 @@ class Deed(acting.Actor):
 
         super(Deed,self).__init__(**kw)
         
+        self._iois = odict() # attribute names inited with .initio
         self.ioinit = ioinit or odict() #dict with ioinit arguments
         
     def preinitio(self, **kw):
@@ -188,8 +193,12 @@ class Deed(acting.Actor):
         
         for key, val in kw.items():
             if hasattr(self, key):
-                raise ValueError("Trying to init preexisting attribute"
+                if key not in self._iois:
+                    raise ValueError("Trying to init preexisting attribute"
                            "'{0}' in Deed '{1}'".format(key, self.name))
+                else:
+                    console.terse("Warning: Reinitializing ioinit attribute"
+                                  " '{1}' for Deed {1}\n".format(key, self.name))    
                 
             if val == None:
                 continue
@@ -252,7 +261,7 @@ class Deed(acting.Actor):
                 setattr(self, key, self.store.create(ipath).create(ival))
             else:
                 setattr(self, key, self.store.create(ipath).update(ival))
-            
+            self._iois[key] = True
         
         self.postinitio()
         

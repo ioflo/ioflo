@@ -12,12 +12,12 @@ import random
 
 
 
-from ...base.globaling import *
+from ....base.globaling import *
 
-from ...base import aiding
-from ...base import deeding
+from ....base import aiding
+from ....base import deeding
 
-from ...base.consoling import getConsole
+from ....base.consoling import getConsole
 console = getConsole()
 
 

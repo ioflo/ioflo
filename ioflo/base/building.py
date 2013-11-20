@@ -3626,7 +3626,6 @@ class Builder(object):
               root
               framer
               frame
-              main
 
            root:
               path [of root]
@@ -3636,9 +3635,6 @@ class Builder(object):
 
            frame:
               path of frame [name]
-
-           main:
-              path of main [(frame, framer)]
 
         """
         path = tokens[index] 

@@ -117,14 +117,14 @@ from collections import deque
 import salt.client.api
 from salt.exceptions import EauthAuthenticationError
 
-from ...base.odicting import odict
-from ...base.globaling import *
+from ....base.odicting import odict
+from ....base.globaling import *
 
-from ...base import aiding
-from ...base import storing 
-from ...base import deeding
+from ....base import aiding
+from ....base import storing 
+from ....base import deeding
 
-from ...base.consoling import getConsole
+from ....base.consoling import getConsole
 console = getConsole()
 
 

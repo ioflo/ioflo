@@ -828,7 +828,7 @@ class Frame(registering.StoriedRegistry):
             if aux.schedule != AUX:
                 raise excepting.ResolveError("ResolveError: Scheduling context not aux", aux.name, aux.schedule)
 
-            #aux.main  is set upon frame entryCheck so can reuse aux in other frames
+            #aux.main  is set upon frame.enter before aux.enterAll() so can reuse aux in other frames
 
     def resolveFramerLink(self):
         """Resolve framer link
