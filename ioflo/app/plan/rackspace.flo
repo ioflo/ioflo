@@ -2,18 +2,18 @@
 
 house autoscale  
 
-init salt.autoscale.pool.m1.mid to value "ioflominion_1" 
-init salt.autoscale.pool.m1.status to value yes
+#init salt.autoscale.pool.m1.mid to value "ioflominion_1" 
+#init salt.autoscale.pool.m1.status to value yes
 init salt.autoscale.pool.m2.mid to value "ioflominion_2" 
 init salt.autoscale.pool.m2.status to value yes
 init salt.autoscale.pool.m3.mid to value "ioflominion_3" 
 init salt.autoscale.pool.m3.status to value yes
 init salt.autoscale.pool.m4.mid to value "ioflominion_4" 
-init salt.autoscale.pool.m4.status to value yes
+init salt.autoscale.pool.m4.status to value no
 init salt.autoscale.pool.m5.mid to value "ioflominion_5" 
-init salt.autoscale.pool.m5.status to value yes
+init salt.autoscale.pool.m5.status to value no
 
-init salt.autoscale.limit to high 0.2  low 0.1
+init salt.autoscale.limit to high 0.1  low 0.05
 
 
 
@@ -41,7 +41,7 @@ framer autoscaler be active first startup at 1.0
             
             frame prep in compute
                print PREPPING
-               go check if elapsed >= 3
+               go check if elapsed >= 90 #wait a minute for load avg to be stable
          
             frame check in compute
                enter
@@ -52,17 +52,13 @@ framer autoscaler be active first startup at 1.0
          frame scaleup in autoscale
             print SCALE UP HERE
             aux creator
-            go wait if done creator
+            go prep if done creator
             
          frame scaledown in autoscale
             print SCALE DOWN HERE
             aux destroyer
-            go wait if done destroyer
+            go prep if done destroyer
          
-         frame wait in autoscale
-            print WAITING
-            go compute if elapsed >= 20
-      
    frame abort
       bid stop all
 
@@ -125,35 +121,35 @@ logger logger to ../log/ flush 1
       loggee createe salt.autoscale.status.createe
       
    log overload to overload on change
-      loggee m1 salt.autoscale.pool.m1.overload
+#      loggee m1 salt.autoscale.pool.m1.overload
       loggee m2 salt.autoscale.pool.m2.overload
       loggee m3 salt.autoscale.pool.m3.overload
       loggee m4 salt.autoscale.pool.m4.overload
       loggee m5 salt.autoscale.pool.m5.overload
    
    log numcpu to numcpu on change
-      loggee m1 salt.autoscale.pool.m1.numcpu
+#      loggee m1 salt.autoscale.pool.m1.numcpu
       loggee m2 salt.autoscale.pool.m2.numcpu
       loggee m3 salt.autoscale.pool.m3.numcpu
       loggee m4 salt.autoscale.pool.m4.numcpu
       loggee m5 salt.autoscale.pool.m5.numcpu
       
    log loadavg to loadavg on change
-      loggee m1 salt.autoscale.pool.m1.loadavg
+#      loggee m1 salt.autoscale.pool.m1.loadavg
       loggee m2 salt.autoscale.pool.m2.loadavg
       loggee m3 salt.autoscale.pool.m3.loadavg
       loggee m4 salt.autoscale.pool.m4.loadavg
       loggee m5 salt.autoscale.pool.m5.loadavg
       
    log alive to alive on change
-      loggee m1 salt.autoscale.pool.m1.alive
+#      loggee m1 salt.autoscale.pool.m1.alive
       loggee m2 salt.autoscale.pool.m2.alive
       loggee m3 salt.autoscale.pool.m3.alive
       loggee m4 salt.autoscale.pool.m4.alive
       loggee m5 salt.autoscale.pool.m5.alive
       
    log status to status on change
-      loggee m1 salt.autoscale.pool.m1.status
+#      loggee m1 salt.autoscale.pool.m1.status
       loggee m2 salt.autoscale.pool.m2.status
       loggee m3 salt.autoscale.pool.m3.status
       loggee m4 salt.autoscale.pool.m4.status

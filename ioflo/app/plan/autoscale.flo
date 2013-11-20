@@ -39,7 +39,7 @@ framer autoscaler be active first startup at 1.0
             
             frame prep in compute
                print PREPPING
-               go check if elapsed >= 3
+               go check if elapsed >= 90 #wait a minute for load avg to be stable
          
             frame check in compute
                enter
@@ -50,17 +50,13 @@ framer autoscaler be active first startup at 1.0
          frame scaleup in autoscale
             print SCALE UP HERE
             aux creator
-            go wait if done creator
+            go prep if done creator
             
          frame scaledown in autoscale
             print SCALE DOWN HERE
             aux destroyer
-            go wait if done destroyer
+            go prep if done destroyer
          
-         frame wait in autoscale
-            print WAITING
-            go compute if elapsed >= 20
-      
    frame abort
       bid stop all
 
