@@ -15,8 +15,6 @@ init salt.autoscale.pool.m5.status to value no
 
 init salt.autoscale.limit to high 0.1  low 0.05
 
-
-
 framer eventer be active first start
    frame start
       do salt eventer

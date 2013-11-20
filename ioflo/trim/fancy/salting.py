@@ -288,9 +288,11 @@ class EventerSalt(SaltDeed, deeding.SinceDeed):
         local attributes created by initio
             .inode is inode node
             .event is ref to event share, value is deque of events incoming
-            .req is ref to subscription request share, value is deque of subscription requests
+            .req is ref to subscription request share, value is deque of
+                subscription requests
                 each request is duple of tag, share
-            .pub is ref to pub share, with tag fields, value list of publication to subscriber shares
+            .pub is ref to pub share, with tag fields,
+                value list of publication to subscriber shares
                 each pub share value is deque of events put there by Eventer
             .period is ref to period share
             .parm is ref to node.parm share with fields
@@ -312,7 +314,8 @@ class EventerSalt(SaltDeed, deeding.SinceDeed):
         #loop to process sub requests
         while self.req.value: # some requests
             tag, share = self.req.value.popleft()
-            console.verbose("     Eventer '{0}' subreq tag '{1}' share '{2}'\n".format(self.name, tag, share.name))
+            console.verbose("     Eventer '{0}' subreq tag '{1}' "
+                            "share '{2}'\n".format(self.name, tag, share.name))
             if not share: #value not inited to put empty deque()
                 share.value = deque()
             if tag in self.pub.value and self.pub.value[tag] != share:
@@ -390,7 +393,8 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
             self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))            
-            self.members[key]['overload'] = self.store.create('.'.join([node.name, 'overload'])).update(value=0.0)
+            self.members[key]['overload'] = self.store.create('.'.join([node.name, 'overload'])
+                                                              ).update(value=0.0)
             self.members[key]['loadavg'] = self.store.create('.'.join([node.name, 'loadavg']))
             self.members[key]['numcpu'] = self.store.create('.'.join([node.name, 'numcpu']))
 
@@ -403,9 +407,10 @@ class OverloadPoolerSalt(SaltDeed, deeding.LapseDeed):
         
         for member in self.members.values():
             if member['status'].value: #pool member is on
-                if member['loadavg'].value is not None and  member['numcpu'].value is not None:
+                if member['loadavg'].value is not None and member['numcpu'].value is not None:
                     try:
-                        member['overload'].update(value=(member['loadavg'].value / member['numcpu'].value))
+                        member['overload'].update(value=(member['loadavg'].value /
+                                                         member['numcpu'].value))
                         console.verbose("     {0} overload is {1:0.4f}\n".format(
                              member['mid'].value, member['overload'].value))
                     except ZeroDivisionError:
@@ -649,7 +654,8 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             .healthy is ref to share with health status of pool
             .deadCount is ref to share with count of dead members of pool
             .event is ref to event share, value is deque of events subbed from eventer
-            .req is ref to subscription request share, value is deque of subscription requests
+            .req is ref to subscription request share, value is deque
+                of subscription requests
                 each request is duple of tag, share
             .parm is ref to node.parm share
                 timeout is time in seconds whereupon ping has failed
@@ -671,7 +677,8 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
             self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
-            self.members[key]['alive'] = self.store.create('.'.join([node.name, 'alive'])).update(value=None)
+            self.members[key]['alive'] = self.store.create('.'.join([node.name, 'alive'])
+                                                           ).update(value=None)
             self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
             self.alives[key] = None
             
@@ -725,8 +732,8 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
                             if not self.alives[key]: #still dead
                                 member['alive'].update(value=False) #this one dead
                     self.healthy.update(value=False)
-                    console.terse("     Pool healthy is {0} with {1} dead minions\n".format(
-                        self.healthy.value, self.deadCount.value))
+                    console.terse("     Pool healthy is {0} with {1}"
+                        " dead minions\n".format(self.healthy.value, self.deadCount.value))
                     self.cycleStart = None
                            
         if self.cycleStart is None: #start new cycle
@@ -735,7 +742,8 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             for key in self.alives: #mark all as dead.
                 self.alives[key] = False 
             
-            target = ','.join([member['mid'].value for member in self.members.values() if member['status'].value ])
+            target = ','.join([member['mid'].value for member in self.members.values()
+                               if member['status'].value ])
             
             cmd = dict(mode='async', fun='test.ping',
                        tgt=target, expr_form='list',
@@ -795,7 +803,8 @@ class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
             self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
-            self.members[key]['numcpu'] = self.store.create('.'.join([node.name, 'numcpu'])).update(value=None)
+            self.members[key]['numcpu'] = self.store.create('.'.join([node.name, 'numcpu'])
+                                                            ).update(value=None)
             self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
             
             
@@ -817,7 +826,8 @@ class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             if not member['status'].value: #pool member is off
                 member['numcpu'].update(value=None)                    
             
-        target = ','.join([member['mid'].value for member in self.members.values() if member['status'].value ])
+        target = ','.join([member['mid'].value for member in self.members.values()
+                           if member['status'].value ])
         
         cmd = dict(mode='async', fun='grains.get', arg=['num_cpus'], 
                            tgt=target, expr_form='list',
@@ -858,7 +868,8 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             .inode is inode node
             .pool is ref to pool node
             .event is ref to event share, value is deque of events subbed from eventer
-            .req is ref to subscription request share, value is deque of subscription requests
+            .req is ref to subscription request share,
+                value is deque of subscription requests
                 each request is duple of tag, share
             
     """
@@ -877,7 +888,8 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             self.members[key] = odict()
             self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
             self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))
-            self.members[key]['loadavg'] = self.store.create('.'.join([node.name, 'loadavg'])).update(value=None)
+            self.members[key]['loadavg'] = self.store.create('.'.join([node.name, 'loadavg'])
+                                                             ).update(value=None)
             self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
             
     def action(self, **kw):
@@ -901,7 +913,8 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             if not member['status'].value: #pool member is off
                 member['loadavg'].update(value=None)              
             
-        target = ','.join([member['mid'].value for member in self.members.values() if member['status'].value ])
+        target = ','.join([member['mid'].value for member in self.members.values()
+                           if member['status'].value ])
         
         cmd = dict(mode='async', fun='status.loadavg',
                    tgt=target, expr_form='list',
@@ -952,7 +965,8 @@ class CloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             .inode is inode node
             .event is ref to event share, of associated chaser Deed
                  value is deque of events subbed from eventer
-            .req is ref to subscription request share, value is deque of subscription requests
+            .req is ref to subscription request share,
+                value is deque of subscription requests
                 each request is duple of tag, share
             
     """
@@ -1012,7 +1026,8 @@ class ListsizesCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             .inode is inode node
             .event is ref to event share, of associated chaser Deed
                  value is deque of events subbed from eventer
-            .req is ref to subscription request share, value is deque of subscription requests
+            .req is ref to subscription request share,
+                value is deque of subscription requests
                 each request is duple of tag, share
             
     """
@@ -1075,7 +1090,8 @@ class DestroyCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             .destroyee is ref to share holding mid of minion in pool to be destroyed
             .event is ref to event share, of associated chaser Deed
                  value is deque of events subbed from eventer
-            .req is ref to subscription request share, value is deque of subscription requests
+            .req is ref to subscription request share,
+                value is deque of subscription requests
                 each request is duple of tag, share
             
     """
@@ -1142,7 +1158,8 @@ class CreateCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             .createe is ref to share holding mid of minion in pool to be created
             .event is ref to event share, of associated chaser Deed
                  value is deque of events subbed from eventer
-            .req is ref to subscription request share, value is deque of subscription requests
+            .req is ref to subscription request share,
+                value is deque of subscription requests
                 each request is duple of tag, share
             
     """
