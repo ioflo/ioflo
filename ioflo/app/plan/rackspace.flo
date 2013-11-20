@@ -41,7 +41,7 @@ framer autoscaler be active first startup at 1.0
             
             frame prep in compute
                print PREPPING
-               go check if elapsed >= 90 #wait a minute for load avg to be stable
+               go check if elapsed >= 30 #wait a minute for load avg to be stable
          
             frame check in compute
                enter

@@ -487,6 +487,8 @@ class ChangePoolerSalt(SaltDeed, deeding.LapseDeed):
         destroyee = ""
         count = 0
         for member in self.members.values():
+            console.terse("Member: {0} is {1}\n".format(member['mid'].value,
+                                                        member['status'].value))
             if member['status'].value: #pool member is on
                 count += 1
                 if count > 1: 
@@ -557,7 +559,7 @@ class EnablePoolerSalt(SaltDeed, deeding.LapseDeed):
 
         #if self.lapse <= 0.0:
             #pass
-        if self.createe:
+        if self.createe.value:
             self.members[self.mids[self.createe.value]]['status'].value = True
             console.terse("     Enabled '{0}'\n".format(self.createe.value))            
             
@@ -613,7 +615,7 @@ class DisablePoolerSalt(SaltDeed, deeding.LapseDeed):
 
         #if self.lapse <= 0.0:
             #pass
-        if self.destroyee:
+        if self.destroyee.value:
             self.members[self.mids[self.destroyee.value]]['status'].value = False
             console.terse("     Disabled '{0}'\n".format(self.destroyee.value))            
             
@@ -1404,7 +1406,8 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                 if parts[1] == 'run':
                     jid = parts[2]
                     kind = parts[3]
-                    self.kind.update([(kind, True)]) 
+                    self.kind.update([(kind, True)])
+                    console.terse("     Event Run {0}\n".format(kind))
                     if kind == 'ret':
                         self.ret.value.update(data['ret'])
                         if data.get('success'): #only ret events
@@ -1415,7 +1418,8 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                 elif parts[1] == 'cloud':
                     mid = parts[2]
                     kind =  parts[3]
-                    self.kind.update([(kind, True)]) 
+                    self.kind.update([(kind, True)])
+                    console.terse("     Event Cloud {0}\n".format(kind))
                     
         return None
     
@@ -1488,7 +1492,8 @@ class CreateCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                 if parts[1] == 'run':
                     jid = parts[2]
                     kind = parts[3]
-                    self.kind.update([(kind, True)]) 
+                    self.kind.update([(kind, True)])
+                    console.terse("     Event Run {0}\n".format(kind))
                     if kind == 'ret':
                         self.ret.value.update(data['ret'])
                         if data.get('success'): #only ret events
@@ -1500,11 +1505,13 @@ class CreateCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                     mid = parts[2]
                     kind =  parts[3]
                     self.kind.update([(kind, True)])
+                    console.terse("     Event Cloud {0}\n".format(kind))
                 
                 elif parts[1] == 'minion':
                     mid = parts[2]
                     kind = parts[3]
-                    self.kind.update([(kind, True)])                 
+                    self.kind.update([(kind, True)])
+                    console.terse("     Event Minion {0}\n".format(kind))
                     
         return None
 
