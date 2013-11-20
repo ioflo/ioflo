@@ -75,8 +75,13 @@ framer creator be aux first start at 1.0
    
    frame wait
       do salt chaser cloud create
-      go done if .salt.chaser.cloud.create.success
+      go delay if .salt.chaser.cloud.create.success
       go timedout if elapsed >= 600.0
+      
+   frame delay
+      exit
+         do salt pooler enable
+      go done if elapsed >= 10.0
       
    frame timedout
       print TIMED OUT CREATING
