@@ -597,7 +597,7 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
                 if (self.stamp - self.cycleStart) > self.parm.data.timeout:
                     # cycle completed 
                     self.deadCount.update(value=deadCount)
-                    for key, member in self.members.values():
+                    for key, member in self.members.items():
                         if member['status'].value: #pool member is on
                             if not self.alives[key]: #still dead
                                 member['alive'].update(value=False) #this one dead
