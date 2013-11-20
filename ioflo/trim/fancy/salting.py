@@ -1498,8 +1498,8 @@ class CreateCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                         self.ret.value.update(data['ret'])
                         if data.get('success'): #only ret events
                             self.success.value = True
-                            #self.members[self.mids[self.createe.value]]['status'].value = True
-                            #console.terse("     Enabled '{0}'\n".format(self.createe.value))
+                            self.members[self.mids[self.createe.value]]['status'].value = True
+                            console.terse("     Enabled '{0}'\n".format(self.createe.value))
                         
                 elif parts[1] == 'cloud':
                     mid = parts[2]

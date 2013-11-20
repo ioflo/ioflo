@@ -9,9 +9,9 @@ init salt.autoscale.pool.m2.status to value yes
 init salt.autoscale.pool.m3.mid to value "ioflominion_3" 
 init salt.autoscale.pool.m3.status to value yes
 init salt.autoscale.pool.m4.mid to value "ioflominion_4" 
-init salt.autoscale.pool.m4.status to value yes
+init salt.autoscale.pool.m4.status to value no
 init salt.autoscale.pool.m5.mid to value "ioflominion_5" 
-init salt.autoscale.pool.m5.status to value yes
+init salt.autoscale.pool.m5.status to value no
 
 init salt.autoscale.limit to high 0.1  low 0.05
 
@@ -23,48 +23,51 @@ framer eventer be active first start
 
 framer autoscaler be active first startup at 1.0
    frame safety
-      do salt bosser pool ping
       go abort if .time >= 3600
    
       frame startup in safety # wait 6 seconds to verify all on poolees are healthy
-         set elapsed to 6
+         set elapsed to 10
+         do salt bosser pool ping
          go prep if .salt.autoscale.status.healthy
          go abort if elapsed >= goal and not .salt.autoscale.status.healthy
-      
-      frame autoscale in safety
-         go abort if not .salt.autoscale.status.healthy
    
-         frame compute in autoscale
-            do salt bosser pool numcpu
-            do salt bosser pool loadavg
-            do salt pooler overload
-            
-            frame prep in compute
-               print PREPPING
-               go check if elapsed >= 30 #wait a minute for load avg to be stable
+      frame compute in safety
+         do salt bosser pool numcpu
+         do salt bosser pool loadavg
+         do salt pooler overload
          
-            frame check in compute
-               enter
-                  do salt pooler change # determines createe and destroyee mids
-               go scaleup if .salt.autoscale.status.overload >= high in .salt.autoscale.limit
-               go scaledown if .salt.autoscale.status.overload <= low in .salt.autoscale.limit
-            
-         frame scaleup in autoscale
-            print SCALE UP HERE
-            aux creator
-            go prep if done creator
-            
-         frame scaledown in autoscale
-            print SCALE DOWN HERE
-            aux destroyer
-            go prep if done destroyer
+         frame prep in compute
+            print PREPPING
+            go check if elapsed >= 30 #wait a minute for load avg to be stable
+      
+         frame check in compute
+            enter
+               do salt pooler change # determines createe and destroyee mids
+            go scaleup if .salt.autoscale.status.overload >= high in .salt.autoscale.limit
+            go scaledown if .salt.autoscale.status.overload <= low in .salt.autoscale.limit
+         
+      frame scaleup in safety
+         print SCALE UP HERE
+         aux creator
+         go check if done creator
+         
+      frame scaledown in safety
+         print SCALE DOWN HERE
+         aux destroyer
+         go check if done destroyer
+         
+      frame check in safety
+         set elapsed to 10
+         do salt bosser pool ping
+         go prep if .salt.autoscale.status.healthy
+         go abort if elapsed >= goal and not .salt.autoscale.status.healthy
          
    frame abort
       bid stop all
 
 framer creator be aux first start at 1.0
    frame start
-      go next if .salt.autoscale.status.createe
+      go create if .salt.autoscale.status.createe
       go quit
    
    frame quit
@@ -79,13 +82,8 @@ framer creator be aux first start at 1.0
    
    frame wait
       do salt chaser cloud create
-      go delay if .salt.chaser.cloud.create.success
+      go done if .salt.chaser.cloud.create.success
       go timedout if elapsed >= 600.0
-      
-   frame delay
-      exit
-         do salt pooler enable
-      go done if elapsed >= 10.0
       
    frame timedout
       print TIMED OUT CREATING
@@ -98,8 +96,8 @@ framer creator be aux first start at 1.0
       
 framer destroyer be aux first start at 1.0
    frame start
-      go next if .salt.autoscale.status.destroyee
-      go done
+      go destroy if .salt.autoscale.status.destroyee
+      go quit
       
    frame quit
       print POOL MIN SIZE
@@ -114,7 +112,7 @@ framer destroyer be aux first start at 1.0
    frame wait
       do salt chaser cloud destroy
       go done if .salt.chaser.cloud.destroy.success
-      go done if elapsed >= 10.0
+      go timedout if elapsed >= 10.0
    
    frame timedout
       print TIMED OUT DESTROYING
