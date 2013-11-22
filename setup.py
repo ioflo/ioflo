@@ -30,6 +30,6 @@ setup(
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL'],
         'ioflo': [],},
-    install_requires = ['argparse', 'importlib', ],
+    install_requires = [],
     extras_require = {}, )
     
