@@ -178,14 +178,6 @@ def CreateInstances(store):
         destroyee = ('.salt.autoscale.status.destroyee', "", True),
         createe = ('.salt.autoscale.status.createe', "", True),)
     
-    EnablePoolerSalt(name = 'saltPoolerEnable', store=store).ioinit.update(
-        pool = '.salt.autoscale.pool.',
-        createe = '.salt.autoscale.status.createe',)
-    
-    DisablePoolerSalt(name = 'saltPoolerDisable', store=store).ioinit.update(
-        pool = '.salt.autoscale.pool.',
-        destroyee = '.salt.autoscale.status.destroyee',)      
-    
     PingPoolBosserSalt(name = 'saltBosserPoolPing', store=store).ioinit.update(
         pool='.salt.autoscale.pool.',
         healthy = ('.salt.autoscale.status.healthy', None, True),
@@ -513,119 +505,6 @@ class ChangePoolerSalt(SaltDeed, deeding.LapseDeed):
         
         return None
     
-class EnablePoolerSalt(SaltDeed, deeding.LapseDeed):
-    """ Salt Pooler Enable
-        Enables the createe for the pool. This is so there can be delay from when
-        it is created to when it is enabled as part of the pool so the minion can
-        come up completely.
-        
-       
-        inherited attributes
-            .name is actor name string
-            .store is data store ref
-            .ioinit is dict of ioinit data for initio
-            .stamp is time stamp
-            .lapse is time lapse between updates of deed
-            .client is salt client interface
-            
-        local attributes
-            .members = odict of pool members,
-                 values are odicts that map to pool member shares
-            .mids = odict map mid to pool member
-            
-        local attributes created by initio
-            .inode is inode node
-            .pool is ref to pool node.
-                Each value is node of pool member
-                Each pool member node has shares
-                    mid, status, overload, loadavg, numcpu
-            .createe is ref share holding mid of createe
-
-    """
-
-    def __init__(self, **kw):
-        """Initialize instance """
-        #call super class method
-        super(EnablePoolerSalt, self).__init__(**kw)
-        self.members = odict()
-        self.mids =  odict()
-        
-    def postinitio(self):
-        """ initialize members of pool"""
-        for key, node in self.pool.items():
-            self.members[key] = odict()
-            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
-            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))            
-            self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
-            
-    def action(self, **kw):
-        """ enabled createe"""
-        super(EnablePoolerSalt, self).action(**kw) #updates .stamp and .lapse here
-
-        #if self.lapse <= 0.0:
-            #pass
-        if self.createe.value:
-            self.members[self.mids[self.createe.value]]['status'].value = True
-            console.terse("     Enabled '{0}'\n".format(self.createe.value))            
-            
-        return None
-    
-class DisablePoolerSalt(SaltDeed, deeding.LapseDeed):
-    """ Salt Pooler Enable
-        Disables the destroyee for the pool. This is so there can be delay from when
-        it is destoyed to when it is disabled so can change state based on successful
-        Destroy.
-        
-        inherited attributes
-            .name is actor name string
-            .store is data store ref
-            .ioinit is dict of ioinit data for initio
-            .stamp is time stamp
-            .lapse is time lapse between updates of deed
-            .client is salt client interface
-            
-        local attributes
-            .members = odict of pool members,
-                 values are odicts that map to pool member shares
-            .mids = odict map mid to pool member
-            
-        local attributes created by initio
-            .inode is inode node
-            .pool is ref to pool node.
-                Each value is node of pool member
-                Each pool member node has shares
-                    mid, status, overload, loadavg, numcpu
-            .destroyee is ref share holding mid of destroyee
-
-    """
-
-    def __init__(self, **kw):
-        """Initialize instance """
-        #call super class method
-        super(DisablePoolerSalt, self).__init__(**kw)
-        self.members = odict()
-        self.mids =  odict()
-        
-    def postinitio(self):
-        """ initialize members of pool"""
-        for key, node in self.pool.items():
-            self.members[key] = odict()
-            self.members[key]['mid'] = self.store.create('.'.join([node.name, 'mid']))
-            self.members[key]['status'] = self.store.create('.'.join([node.name, 'status']))            
-            self.mids[self.members[key]['mid'].value] = key #assumes mid already inited elsewhere
-            
-    def action(self, **kw):
-        """ enabled createe"""
-        super(DisablePoolerSalt, self).action(**kw) #updates .stamp and .lapse here
-
-        #if self.lapse <= 0.0:
-            #pass
-        if self.destroyee.value:
-            self.members[self.mids[self.destroyee.value]]['status'].value = False
-            console.terse("     Disabled '{0}'\n".format(self.destroyee.value))            
-            
-        return None
-
 class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
     """ Salt Bosser Pool Ping
         Deed to determine if any of the 'on' minions in pool are down

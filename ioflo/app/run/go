@@ -3,69 +3,62 @@
    runs ioflo plan from command line shell
 
 """
-#imports
-import exceptions
-import pdb
-import cProfile
-import pstats
-import sys
-import os
-import getopt
-import string
-import types
-import time
-import struct
-
+import argparse
 
 if __name__ == "__main__":
+    """ Processes command line arguments and then runs ioflo
 
-    sys.stderr.write("go arguments:\n")
-    sys.stderr.write(str(sys.argv) + "\n") #joins list items with space separator
+        Invoke with '-h' command line option to get usage string
+    """
+    d = "Runs ioflo. "
+    d += "Example: python go -f filename -p period -v level -r -h -b 'mybehaviors.py'\n"
+    p = argparse.ArgumentParser(description = d)
+    p.add_argument('-v','--verbose',
+            action='store', 
+            default='2',
+            choices=['0', '1', '2', '3', '4'],
+            help="Verbosity level.")
+    p.add_argument('-p','--period',
+            action = 'store',
+            default='0.125',
+            help = "Period per skedder run in seconds.")
+    p.add_argument('-r','--realtime',
+            action='store_const',
+            const=True, 
+            default = False,
+            help = "Run skedder at realtime.")
+    p.add_argument('-n','--name',
+            action='store', 
+            default = 'Skedder',
+            help = "Skedder name.")    
+    p.add_argument('-f','--filename',
+            action = 'store',
+            default = '../plan/box1.flo',
+            help = "File path to FloScript file.")
+    p.add_argument('-b','--behavior',
+            action = 'store',
+            default = '',
+            help = "File path to external behavior package.")
+    p.add_argument('-U','--username',
+            action = 'store',
+            default = '',
+            help = "Username.")
+    p.add_argument('-P','--password',
+            action = 'store',
+            default = '',
+            help = "Password.")
+    args = p.parse_args()
+    
+    # absolute import since command line
+    from ioflo.app.run import Run
 
-    filename = '../plan/box1.flo'
-    period = 0.125
-    verbose = 2
-    real = False
-
-    usage = "python go -f filename -p period -v level -r -h\n"
-
-
-    try:
-        (opts, pargs) = getopt.getopt(sys.argv[1:], "hrv:f:p:") #format 
-    except getopt.GetoptError, e:
-        sys.stderr.write("Error processin %s" % str(sys.argv)) #joins list items with space separator
-        sys.stderr.write("Usage: %s" % usage) #joins list items with space separator
-
-        sys.exit(2)
-
-
-    sys.stderr.write("go options parsed:\n")
-    sys.stderr.write(str(opts) + "\n") #joins list items with space separator
-
-    help = False
-
-    for x in opts:
-        if x[0] == '-f':  
-            filename = x[1]
-        if x[0] == '-p':
-            period = float(x[1])
-        if x[0] == '-v':
-            verbose = int(x[1])
-        if x[0] == '-r':
-            real = True
-        if x[0] == '-h':
-            sys.stderr.write(usage)
-            help = True
-
-    if not help:
-        sys.stderr.write("fileName = %s, period = %0.3f verbose = %d real = %s \n" %\
-                             (filename, period, verbose, real))
-
-        print sys.path
-
-        # absolute import since command line
-        from ioflo.app.run import Run
-
-        Run(fileName = filename, period = period, 
-            verbose = verbose, real = real)
-
+    Run(name=args.name,
+        filename = args.filename,
+        period = float(args.period), 
+        verbose = int(args.verbose),
+        realtime = args.realtime,
+        behavior=args.behavior,
+        username=args.username,
+        password=args.password, )
+    
+    

@@ -84,13 +84,17 @@ class Skedder(object):
 
     """
 
-    def __init__(  self, name="Skedder",
+    def __init__(  self,
+                   name="Skedder",
                    period=0.125,
                    stamp=0.0, 
                    real=False,
                    houses=None,
                    filePath='',
-                   mode=None, 
+                   mode=None,
+                   behavior='',
+                   username='',
+                   password='', 
                    metaData=None):
         """Initialize Skedder instance.
            parameters:
@@ -100,6 +104,10 @@ class Skedder(object):
            real = time mode real time True or simulated time False
            houses = list of houses
            filePath = filePath to build file
+           mode = parsing mode
+           behavior = pathname to package with external behavior modules
+           username = username
+           password = password
            metaData = list of triples of (name, path, data) where
                         name = name string, path = path string, data = odict
 
@@ -114,6 +122,9 @@ class Skedder(object):
         self.house = houses or []
         self.filePath = filePath
         self.mode = mode or []
+        self.behavior = behavior
+        self.username = username
+        self.password = password
         if metaData:
             self.metaData = metaData
         else:
@@ -126,6 +137,9 @@ class Skedder(object):
                 ("real", "meta.real", odict(value=self.real)),
                 ("filepath", "meta.filepath", odict(value=self.filePath)),
                 ("mode", "meta.mode", odict(value=self.mode)), #applied mode logging only
+                ("behavior", "meta.behavior", odict(value=self.behavior)), 
+                ("credentials", "meta.credentials",
+                     odict([('username', self.username), ('password', self.password)])), 
             ] 
 
         self.ready = deque() #deque of taskers in run order
@@ -159,7 +173,10 @@ class Skedder(object):
         if metaData: 
             self.metaData = metaData
 
-        b = building.Builder(fileName = self.filePath, mode=self.mode, metaData = self.metaData)
+        b = building.Builder(fileName = self.filePath,
+                             mode=self.mode,
+                             metaData = self.metaData,
+                             behavior=self.behavior)
 
         if not b.build():
             return False

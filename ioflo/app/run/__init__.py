@@ -4,28 +4,29 @@
 from ...base.globaling import *
 from ...base.consoling import getConsole, Console
 
-def Run( fileName = None,
-         period = 0.2,
-         real = False, 
-         verbose = 0,
-         profiling = False):
-    """ Run once"""
-
+def Run(    name="Skedder", 
+            filename="../plan/box1.flo",
+            period=0.2,
+            realtime=False, 
+            verbose=0,
+            behavior="",
+            username="",
+            password="", 
+            profiling = False):
+    """ Run Skedder"""
     console = getConsole(verbosity=Console.Wordage[verbose])
-
-    from ...base import skedding
-
-    if not fileName:
-        fileName = "../plan/box1.flo"
-
-
     console.terse( "Building ...")
-    skedder = skedding.Skedder(name = "TestSkedder",
-                               period = period,
-                               real = real, 
-                               filePath = fileName)
+    
+    from ...base import skedding
+    skedder = skedding.Skedder(name=name,
+                               period=period,
+                               real=realtime, 
+                               filePath=filename,
+                               behavior=behavior,
+                               username=username,
+                               password=password, )
     if skedder.build():
-        console.terse( "\n\nStarting mission from file {0}...\n".format(fileName))
+        console.terse( "\n\nStarting mission from file {0}...\n".format(filename))
         if not profiling:
             skedder.run()
         else:

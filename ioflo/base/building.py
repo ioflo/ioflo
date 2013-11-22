@@ -7,6 +7,7 @@ from __future__ import with_statement
 
 import time
 import re
+import importlib
 
 from collections import deque
 from itertools import izip
@@ -162,13 +163,14 @@ class Builder(object):
     """
 
     """
-    def __init__(self, fileName='', mode=None, metaData=None):
+    def __init__(self, fileName='', mode=None, metaData=None, behavior=''):
         """
 
         """
         self.fileName = fileName #initial name of file to start building from
         self.mode = mode or []
         self.metaData = metaData or {}
+        self.behavior = behavior
         self.files = [] #list of open file objects, appended to by load commands
         self.counts = [] #list of linectr s for open file objects
 
@@ -187,7 +189,7 @@ class Builder(object):
         
 
 
-    def build(self, fileName='', mode=None, metaData=None):
+    def build(self, fileName='', mode=None, metaData=None, behavior=''):
         """
            Allows building from multiple files. Essentially files list is stack of files
            fileName is name of first file. Load commands in any files push (append) file onto files
@@ -202,6 +204,11 @@ class Builder(object):
             self.mode = mode
         if metaData:
             self.metaData = metaData
+        if behavior:
+            self.behavior = behavior
+            
+        if self.behavior: #import exterior behavior package/modules
+            pass
 
         housing.House.Clear() #clear house registry
         housing.ClearRegistries() #clear all the other registries
