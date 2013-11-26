@@ -578,7 +578,7 @@ class PingPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             edata = self.event.value.popleft()
             console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
-            if data.get('success'): #only ret events
+            if data.get('success') and data.get("retcode") == 0: #only valid ret events
                 self.members[self.mids[data['id']]]['alive'].update(value=data['return'])
                 self.alives[self.mids[data['id']]] = True
                 
@@ -698,7 +698,7 @@ class NumcpuPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             edata = self.event.value.popleft()
             console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
-            if data.get('success'): #only ret events
+            if data.get('success') and data.get("retcode") == 0: #only valid ret events
                 self.members[self.mids[data['id']]]['numcpu'].update(value=data['return'])
         
         for member in self.members.values(): # clear stale numcpu
@@ -785,7 +785,7 @@ class LoadavgPoolBosserSalt(SaltDeed, deeding.LapseDeed):
             edata = self.event.value.popleft()
             console.verbose("     Bosser {0} got event {1}\n".format(self.name, edata['tag']))
             data = edata['data']
-            if data.get('success'): #only ret events
+            if data.get('success') and data.get("retcode") == 0: #only valid ret events
                 self.members[self.mids[data['id']]]['loadavg'].update(value=data['return']['1-min'])
         
         for member in self.members.values(): # clear stale loadavg
@@ -882,9 +882,13 @@ class CloudRunnerSalt(SaltDeed, deeding.LapseDeed):
         except EauthAuthenticationError as ex:
             console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
                       
-        if result and result.startswith('salt/run/'):
-            self.req.value.append((result, self.event))
-            self.req.stampNow()
+        #if result and result.startswith('salt/run/'):
+            #self.req.value.append((result, self.event))
+            #self.req.stampNow()
+        
+        if result:
+            self.req.value.append((result.tag, self.event))
+            self.req.stampNow()        
                 
         return None
     
@@ -943,9 +947,13 @@ class ListsizesCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
         except EauthAuthenticationError as ex:
             console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
                       
-        if result and result.startswith('salt/run/'):
-            self.req.value.append((result, self.event))
-            self.req.stampNow()
+        #if result and result.startswith('salt/run/'):
+            #self.req.value.append((result, self.event))
+            #self.req.stampNow()
+        
+        if result:
+             self.req.value.append((result.tag, self.event))
+             self.req.stampNow()          
                 
         return None
     
@@ -1010,10 +1018,15 @@ class DestroyCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             except EauthAuthenticationError as ex:
                 console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
                           
-            if result and result.startswith('salt/run/'):
-                self.req.value.append((result, self.event)) #job events
+            #if result and result.startswith('salt/run/'):
+                #self.req.value.append((result, self.event)) #job events
+                #self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
+                #self.req.stampNow()
+                
+            if result:
+                self.req.value.append((result.tag, self.event))
                 self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
-                self.req.stampNow()
+                self.req.stampNow()              
                 
         return None
     
@@ -1080,11 +1093,17 @@ class CreateCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             except EauthAuthenticationError as ex:
                 console.terse("Eauth failure for salt command {0} with {1}\n".format(cmd, ex))
                           
-            if result and result.startswith('salt/run/'):
-                self.req.value.append((result, self.event)) #job events
+            #if result and result.startswith('salt/run/'):
+                #self.req.value.append((result, self.event)) #job events
+                #self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
+                #self.req.value.append(("salt/minion/{0}/".format(mid), self.event)) # minion events
+                #self.req.stampNow()
+                
+            if result:
+                self.req.value.append((result.tag, self.event))
                 self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
                 self.req.value.append(("salt/minion/{0}/".format(mid), self.event)) # minion events
-                self.req.stampNow()
+                self.req.stampNow()                      
                 
         return None
     
@@ -1161,7 +1180,8 @@ class RunChaserSalt(SaltDeed, deeding.LapseDeed):
                     self.kind.update([(kind, True)]) #got set status for event
                     if kind == 'ret':
                         #if data.get('success'): #only ret events
-                        self.ret.value.update(data['ret'])
+                        #self.ret.value.update(data['ret'])
+                        self.ret.value.update(data['return'])
                 
         return None
     
@@ -1229,7 +1249,8 @@ class ListsizesCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                     self.kind.update([(kind, True)]) #got set status for event
                     if kind == 'ret':
                         #if data.get('success'): #only ret events
-                        self.ret.value.update(data['ret'])
+                        #self.ret.value.update(data['ret'])
+                        self.ret.value.update(data['return'])
                 
         return None
 
@@ -1305,7 +1326,8 @@ class DestroyCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                     self.kind.update([(kind, True)])
                     console.terse("     Event Run {0}\n".format(kind))
                     if kind == 'ret':
-                        self.ret.value.update(data['ret'])
+                        #self.ret.value.update(data['ret'])
+                        self.ret.value.update(data['return'])
                         if data.get('success'): #only ret events
                             self.success.value = True
                             self.members[self.mids[self.destroyee.value]]['status'].value = False
@@ -1391,7 +1413,8 @@ class CreateCloudChaserSalt(SaltDeed, deeding.LapseDeed):
                     self.kind.update([(kind, True)])
                     console.terse("     Event Run {0}\n".format(kind))
                     if kind == 'ret':
-                        self.ret.value.update(data['ret'])
+                        #self.ret.value.update(data['ret'])
+                        self.ret.value.update(data['return'])
                         if data.get('success'): #only ret events
                             self.success.value = True
                             self.members[self.mids[self.createe.value]]['status'].value = True
