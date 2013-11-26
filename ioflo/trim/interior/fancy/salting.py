@@ -887,7 +887,7 @@ class CloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             #self.req.stampNow()
         
         if result:
-            self.req.value.append((result.tag, self.event))
+            self.req.value.append((result['tag'], self.event))
             self.req.stampNow()        
                 
         return None
@@ -952,7 +952,7 @@ class ListsizesCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
             #self.req.stampNow()
         
         if result:
-             self.req.value.append((result.tag, self.event))
+             self.req.value.append((result['tag'], self.event))
              self.req.stampNow()          
                 
         return None
@@ -1024,7 +1024,7 @@ class DestroyCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
                 #self.req.stampNow()
                 
             if result:
-                self.req.value.append((result.tag, self.event))
+                self.req.value.append((result['tag'], self.event))
                 self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
                 self.req.stampNow()              
                 
@@ -1100,7 +1100,7 @@ class CreateCloudRunnerSalt(SaltDeed, deeding.LapseDeed):
                 #self.req.stampNow()
                 
             if result:
-                self.req.value.append((result.tag, self.event))
+                self.req.value.append((result['tag'], self.event))
                 self.req.value.append(("salt/cloud/{0}/".format(mid), self.event)) # cloud events
                 self.req.value.append(("salt/minion/{0}/".format(mid), self.event)) # minion events
                 self.req.stampNow()                      
