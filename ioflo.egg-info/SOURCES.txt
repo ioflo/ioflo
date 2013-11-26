@@ -3,7 +3,6 @@ ioflo/__init__.py
 ioflo.egg-info/PKG-INFO
 ioflo.egg-info/SOURCES.txt
 ioflo.egg-info/dependency_links.txt
-ioflo.egg-info/requires.txt
 ioflo.egg-info/top_level.txt
 ioflo/app/__init__.py
 ioflo/app/run/__init__.py

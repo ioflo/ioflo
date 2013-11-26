@@ -165,7 +165,7 @@ class Interrupter(Actor):
 
 
     """
-    __slots__ = ('_interruptive')
+    __slots__ = ('_interruptive', )
     
     def __init__(self,**kw ):
         """Initialization method for instance. """
@@ -278,7 +278,7 @@ class Suspender(Interrupter):
           frames
 
        Instance Attributes
-          ._activative = flag to indicate that the Suspender has been _activative
+          ._activative = flag which indicates this actor's action returns conditional aux
 
        Parameters
             needs = list of Act objects that are exit needs for this trans
@@ -322,7 +322,6 @@ class Suspender(Interrupter):
                 human, framer.human, framer.elapsed)
             console.terse(msg)
 
-            #self._activative = True
             aux.main = main  #assign aux's main to this frame
             aux.enterAll() #starts at aux.first frame
             aux.recur()

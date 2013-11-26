@@ -53,16 +53,7 @@ class BoxPositionDetector(deeding.Deed):
         """
         #call super class method
         super(BoxPositionDetector,self).__init__(**kw)  
-
-    
-    def preinitio(self,  **kw):
-        """ Parse-time re-initio
-            This just prints warning for now since not yet supported by this class.
-            
-        """
-        console.terse("     Warning: Parse time init not supported on this deed"
-                      " '{0}'\n".format(self.name))
-        return self    
+ 
             
     def initio(self, group, output, input, parms = None, **kw):
         """ Override since uses legacy interface

@@ -23,7 +23,7 @@ console = getConsole()
 class Node(odict):
     """ Special odict with name property to hold the pathname to the node
     """
-    __slots__ = ['_name'] # attribute supporting name property
+    __slots__ = ('_name', ) # attribute supporting name property
     
     
     def __init__(self, *pa, **kwa):

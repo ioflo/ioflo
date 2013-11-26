@@ -17,7 +17,7 @@ class Registry(object):
     """Class that ensures every instance has a unique name
        uses class variable Counter and  Names dictionary
     """
-    __slots__ = ('name')
+    __slots__ = ('name', )
     
     #for base class to have distinct name space shadow these by defining in sub class def
     Counter = 0  
@@ -80,7 +80,7 @@ class Registry(object):
 class StoriedRegistry(Registry):
     """Adds store attribute to Registry instances
     """
-    __slots__ = ('store')
+    __slots__ = ('store', )
     
     def __init__(self, store=None, **kw):
         """Initializer method for instance.

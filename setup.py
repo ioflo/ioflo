@@ -29,7 +29,8 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL'],
-        'ioflo': [],},
+        'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
+                  'app/plan/*.txt', 'app/plan/*/*.txt',],},
     install_requires = [],
     extras_require = {}, )
     

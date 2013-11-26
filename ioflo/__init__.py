@@ -3,7 +3,7 @@
 """
 #print "\nPackage at%s" % __path__[0]
 
-__version__ = "0.7.4"
+__version__ = "0.7.5"
 __author__ = "Samuel M. Smith"
 __license__ =  "MIT"
 
@@ -12,9 +12,7 @@ from .base.consoling import getConsole
 
 console = getConsole()
 
-_version = "0.6.4"
-
-console.profuse("{0} version {1}\n".format(__path__[0], _version))
+console.profuse("{0} version {1}\n".format(__path__[0], __version__))
 
 __all__ = ['base', 'trim']
 

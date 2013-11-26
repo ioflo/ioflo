@@ -32,7 +32,7 @@ def CreateInstances(store):
 #Class definitions
 
 class Deed(acting.Actor):
-    """Deed Actor Patron Registry Class for behaviors like arbiters and controls
+    """Deed Actor run by 'do' command
 
         deeds are recur actions
         but building deed from hafscript checks 
@@ -52,6 +52,8 @@ class Deed(acting.Actor):
     #create Deed specific registry name space
     Counter = 0  
     Names = {}
+    
+    __slots__ = ('ioinit', '_iois',)
 
     def __init__(self, ioinit=None, **kw):
         """ Initialize super
@@ -65,18 +67,20 @@ class Deed(acting.Actor):
 
         super(Deed,self).__init__(**kw)
         
-        self._iois = odict() # attribute names inited with .initio
-        self.ioinit = ioinit or odict() #dict with ioinit arguments
+        self.ioinit = ioinit or odict() #dict with default ioinit arguments
+        self._iois = odict() # attribute names inited with .initio if any
+
         
     def preinitio(self, **kw):
         """ Parse time Reinit
             Enables initializing instance at parse time from FloScript options
-            by saving the init values in .ioinit attribute of the deed.
+            The default init values in .ioinit are used to preload an odict
+            which is updated/overwritted with **kw and returned.
             
             Each argument name is the name of an io attribute for the Deed
             
             The name "inode" is special, its value is a pathname string for
-               the Deed default Store Node
+               the instance node for relative addressed io shares
             
             The other argument values are the pathname strings of Deed
             specific io shares or nodes
@@ -92,13 +96,13 @@ class Deed(acting.Actor):
             like the update method for shares
             
             Because preinitio is executed at parse time by the builder when deed
-            appears in FloScript, preinitio will override the effective pathname
-            .ipath in .ioinit set by CreateInstances which happens when new house
-            is created in FloScript.
+            appears in FloScript, preinitio will override the default values
+            set in .ioint (if any) when its updated in CreateInstances.
             
         """
-        self.ioinit.update(kw)
-        return self
+        ioinit = odict(self.ioinit)
+        ioinit.update(kw)
+        return ioinit
     
     def initio(self, inode="", **kw):
         """ Intialize and hookup ioflo shares from node pathname inode and kw arguments.
@@ -189,16 +193,19 @@ class Deed(acting.Actor):
         """
         if not inode:
             inode = nameToPath(self.name)
-        self.inode = self.store.fetchNode(inode) # None if not exist
+        
+        _parametric = hasattr(self, "_parametric")
+        iois = odict()
         
         for key, val in kw.items():
-            if hasattr(self, key):
-                if key not in self._iois:
-                    raise ValueError("Trying to init preexisting attribute"
-                           "'{0}' in Deed '{1}'".format(key, self.name))
-                else:
-                    console.terse("Warning: Reinitializing ioinit attribute"
-                                  " '{1}' for Deed {1}\n".format(key, self.name))    
+            if not _parametric: #iois are attributes
+                if hasattr(self, key):
+                    if key not in self._iois:
+                        raise ValueError("Trying to init preexisting attribute"
+                               "'{0}' in Deed '{1}'".format(key, self.name))
+                    else:
+                        console.terse("Warning: Reinitializing ioinit attribute"
+                                      " '{1}' for Deed {1}\n".format(key, self.name))    
                 
             if val == None:
                 continue
@@ -257,19 +264,60 @@ class Deed(acting.Actor):
             else:
                 ipath = '.'.join(inode, key)
             
+            ioi = self.store.create(ipath)
             if not iown:
-                setattr(self, key, self.store.create(ipath).create(ival))
+                ioi.create(ival)
             else:
-                setattr(self, key, self.store.create(ipath).update(ival))
-            self._iois[key] = True
+                ioi.update(ival)           
+            
+            if _parametric:
+                iois[key] = ioi
+            else:    
+                self._iois[key] = ioi
+            
+        ioi = self.store.fetchNode(inode) # None if not exist
+        if _parametric:
+            iois['inode'] = ioi
+        else:
+            self.inode = ioi
         
         self.postinitio()
         
-        return self #allow chaining
+        return iois # if non-empty then treat as parametric
+    
     
     def postinitio(self):
         """ Base method to be overriden in sub classes. Perform post initio setup"""
         pass
+    
+class ParamDeed(Deed):
+    """ParamDeed Deed has the attribute ._parametric defined that indicates that
+       its initio is to result in keyword parameters to its action method and
+       not as instance attributes.
+       
+       Generic Super Class 
+       Should be subclassed
+
+       inherited attributes
+          .name = unique name for actor instance
+          .store = shared data store
+          .ioinit = dict of ioinit data for initio
+
+       local attributes
+          ._parametric = None. Presence acts as flag to change initio behavior
+
+    """
+    __slots__ = ('_parametric', )
+    
+    def __init__(self, **kw):
+        """Initialize Instance """
+        if 'preface' not in kw:
+            kw['preface'] = 'ParamDeed'
+
+        #call super class method
+        super(ParamDeed,self).__init__( **kw)  
+
+        self._parametric = None
 
 class SinceDeed(Deed):
     """SinceDeed Deed Actor Patron Registry Class
@@ -287,7 +335,7 @@ class SinceDeed(Deed):
           .stamp = current time of deed evaluation in seconds
 
     """
-    __slots__ = ('stamp')
+    __slots__ = ('stamp', )
     
     def __init__(self, **kw):
         """Initialize Instance """

@@ -70,12 +70,12 @@ frame slave3 #so complete
    print slave3
    done
 
-server server one as server to ../log/ rx :55551 with stuff 5 
+server server one as server to ../log/ rx :55551 per stuff 5 
 server server two as server to ../log/ \
    rx :55552 \
-   from value in .meta.name # trailing comment
+   with value in .meta.name # trailing comment
 server server to ../log/ # trailing comment
 
-tasker tasker one as tasker  with stuff 5
-tasker tasker two as tasker  from value in .meta.name
+tasker tasker one as tasker  per stuff 5
+tasker tasker two as tasker  with value in .meta.name
 tasker tasker 

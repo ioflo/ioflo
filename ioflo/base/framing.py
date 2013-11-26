@@ -1067,7 +1067,7 @@ class Frame(registering.StoriedRegistry):
 
               When the act.actor is of Interruptor (sub)class indicated by having
                  the attribute _interruptive the the action returns truthy
-                 return then preact execution is aborte as per a sucessful
+                 return then preact execution is aborted as per a sucessful
                  transition or conditional aux
 
            called by self.framer.segue()

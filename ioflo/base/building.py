@@ -43,6 +43,7 @@ from .. import trim
 from .consoling import getConsole
 console = getConsole()
 
+from ..trim import exterior
 
 def Convert2Num(text):
     """converts text to python type in order
@@ -207,8 +208,9 @@ class Builder(object):
         if behavior:
             self.behavior = behavior
             
-        if self.behavior: #import exterior behavior package/modules
-            pass
+        if self.behavior: #import behavior package/module  
+            mod = importlib.import_module(self.behavior)
+            exterior._InstanceModules.append(mod) # add to trim.exterior._InstanceModules
 
         housing.House.Clear() #clear house registry
         housing.ClearRegistries() #clear all the other registries
@@ -548,7 +550,7 @@ class Builder(object):
            tasker has to have name so can  ask stop
 
            tasker name [modifier ...] [as kind [modifier ...]][at period] [be scheduled]
-              [in order][with [field] value] [from field [field ...] in share]
+              [in order][per [field] value] [with field [field ...] in share]
 
            scheduled: (active, inactive, slave)
 
@@ -723,8 +725,8 @@ class Builder(object):
            server has to have name so can  ask stop
 
            server name [part ...] [as kind [part ...]] [at period] [be scheduled]
-           [rx shost:sport] [tx dhost:dport] [in order] [to prefix] [with data]
-           [from source]
+           [rx shost:sport] [tx dhost:dport] [in order] [to prefix] [per data]
+           [with source]
 
            scheduled: (active, inactive, slave)
 
@@ -2414,8 +2416,8 @@ class Builder(object):
 
         try:
             parts = []
-            parms = {}
-            init = {}
+            parms = odict()
+            init = odict()
             kind = None
             connective = None
             
@@ -2504,9 +2506,8 @@ class Builder(object):
             #create new instance as the same type as kinder
             actor = type(kinder)(name=name, store=self.currentStore)
             actor.ioinit.update(kinder.ioinit) # copy ioinit defaults from kinder
-            if init:
-                actor.preinitio(**init)
-            actor.initio(**actor.ioinit)
+            init = actor.preinitio(**init) # copy and update defaults with init
+            iois = actor.initio(**init) # empty if not ._parametric
 
         else: # Use an existing instance
             if name not in deeding.Deed.Names: #instance not exist
@@ -2516,10 +2517,18 @@ class Builder(object):
             
             actor = deeding.Deed.Names[name] #fetch existing instance
             kind = actor.__class__.__name__
-            if init:
-                actor.preinitio(**init)
-            actor.initio(**actor.ioinit)
-
+            init = actor.preinitio(**init) # copy and update defaults with init
+            iois = actor.initio(**init) # empty if not ._parametric
+        
+        if iois:
+            for key in iois.keys():
+                if key in parms:
+                    msg = ("ParseError: Building command '%s' for Deed '%s'."
+                           " Parm and Init with same key '%s'." %\
+                                        (command, name, key))
+                    raise excepting.ParseError(msg, tokens, index)
+            parms.update(iois)
+            
         act = acting.Act(actor = actor, parms = parms)
 
         if hasattr(actor, 'restart'): #some deeds need to be restarted on frame entry
