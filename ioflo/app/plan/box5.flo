@@ -34,7 +34,7 @@ frame gpsfix
    go leg if done gps
    exit
       inc boxer.heading from boxer.turn
-      inc boxer.leg by 1.0
+      inc boxer.leg with 1.0
 
 frame abort
    set depth to 0.0

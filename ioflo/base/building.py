@@ -152,12 +152,12 @@ CommandList = ['load', 'house', 'init',
                'use', 'flo', 'give', 'take' ]
 
 
-
-Comparisons = ['==', '<', '<=', '>=', '>', '!='] #reserved tokens
-Connectives = ['to', 'from', 'per', 'with', 'as', 'into', 'by', 'and', 'not',
-                '+-', 'go', 'in', 'of', 'on'] #reserved tokens
+#reserved tokens
+Comparisons = ['==', '<', '<=', '>=', '>', '!='] 
+Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'as', 'at', 'in', 'of', 'on',
+               'if', 'be', 'into', 'and', 'not', '+-', ] 
 Reserved = Connectives + Comparisons #concatenate to get reserved words
-ReservedFrameNames = ['next'] #these frame names have special meaning as goto target
+ReservedFrameNames = ['next',  'prev'] #these frame names have special meaning as goto target
 
 
 class Builder(object):
@@ -488,7 +488,7 @@ class Builder(object):
             connective = tokens[index]
             index += 1
 
-            if connective == 'to':
+            if connective in ['to', 'with']:
                 if destinationFields: #fields not allowed so error
                     msg = "ParseError: Building command '%s'. Unexpected fields '%s in' clause " %\
                         (command, destinationFields)
@@ -502,7 +502,7 @@ class Builder(object):
                 destination.update(data)
                 console.profuse("     Inited share {0} to data = {1}\n".format(destination.name, data))
 
-            elif connective == 'from':
+            elif connective in ['by', 'from']:
                 sourceFields, index = self.parseFields(tokens, index)
                 sourcePath, index = self.parsePath(tokens, index)
 
@@ -549,8 +549,8 @@ class Builder(object):
         """create tasker in current house
            tasker has to have name so can  ask stop
 
-           tasker name [modifier ...] [as kind [modifier ...]][at period] [be scheduled]
-              [in order][per [field] value] [with field [field ...] in share]
+           tasker name [part ...] [as kind [part ...]][at period] [be scheduled]
+              [in order][per [field] value] [for field [field ...] in share]
 
            scheduled: (active, inactive, slave)
 
@@ -587,7 +587,7 @@ class Builder(object):
             index +=1         
 
             while index < len(tokens): # name parts end when connective
-                if tokens[index] in ['as', 'at', 'be', 'in', 'with', 'per']: # end of parts
+                if tokens[index] in ['as', 'at', 'be', 'in', 'per', 'for']: # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -601,7 +601,7 @@ class Builder(object):
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'at', 'be', 'in', 'with', 'per']: # end of parts
+                        if tokens[index] in ['as', 'at', 'be', 'in', 'per', 'for']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
@@ -641,11 +641,11 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
 
-                elif connective == 'with': 
+                elif connective == 'for': 
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        console.terse("     Warning: Do 'with' non-existent share {0} ..."
+                        console.terse("     Warning: Do 'for' non-existent share {0} ..."
                                       " creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     #assumes src share inited before this line parsed
@@ -726,7 +726,7 @@ class Builder(object):
 
            server name [part ...] [as kind [part ...]] [at period] [be scheduled]
            [rx shost:sport] [tx dhost:dport] [in order] [to prefix] [per data]
-           [with source]
+           [for source]
 
            scheduled: (active, inactive, slave)
 
@@ -777,7 +777,7 @@ class Builder(object):
             index +=1         
 
             while index < len(tokens): # name parts end when connective
-                if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'with', 'per']: # end of parts
+                if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'per', 'for']: # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -791,7 +791,7 @@ class Builder(object):
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'with', 'per']: # end of parts
+                        if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'per', 'for']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
@@ -843,7 +843,7 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
 
-                elif connective == 'with':
+                elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -2007,9 +2007,7 @@ class Builder(object):
             connective = tokens[index]
             index += 1
 
-            if connective == 'by':
-                #print "index = %s" % index
-
+            if connective in ['to', 'with']:
                 data, index = self.parseDirect(tokens, index)
                 dataFields = data.keys()
 
@@ -2028,12 +2026,14 @@ class Builder(object):
 
                 act = self.makeDirectInc(dst, dstData)
 
-            elif connective == 'from':
+            elif connective in ['by', 'from']:
                 srcFields, index = self.parseFields(tokens, index)
                 srcPath, index = self.parsePath(tokens, index)
                 if self.currentStore.fetchShare(srcPath) is None:
-                    print "     Warning: Inc from non-existent share %s ... creating anyway" %\
-                          (srcPath)
+                     msg = ("     Warning: Inc from non-existent share {0}"
+                            " ... creating anyway\n".format(srcPath))
+                     console.terse(msg)
+                     
                 src = self.currentStore.create(srcPath)
 
                 srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
@@ -2194,7 +2194,7 @@ class Builder(object):
                 connective = tokens[index]
                 index += 1
 
-                if connective == 'to': #data direct  
+                if connective in ['to', 'with']: #data direct  
                     data, index = self.parseDirect(tokens, index)
                     dataFields = data.keys()
 
@@ -2206,7 +2206,7 @@ class Builder(object):
 
                     act = self.makeDirectGoal(dst, dstData)
 
-                elif connective == 'from': #source indirect
+                elif connective in ['by', 'from']: #source indirect
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
 
@@ -2402,19 +2402,38 @@ class Builder(object):
         return True      
 
     def buildDo(self, command, tokens, index):
-        """do genre kind name
+        """ do name [part ...] [as kind [part ...]] [pa [as kind] {(to, with) data]
+                   [(by, from) source] [per data] [for source]
+                   
+            do [[name] [part ...]] as kind [part ...] [pa [as kind] {(to, with) data]
+                   [(by, from) source] [per data] [for source]
+            
+            deed: 
+                name [part ...]
+            
+            kind: 
+                name [part ...]
+            
+            data:
+                direct
+            
+            source:
+                [(value, fields) in] indirect
 
-           do controller pid depth   --> controllerPIDDepth
-           do arbiter switch heading  --> arbiterSwitchHeading
 
-           do controller pid depth with foobar 1
-           do controller pid depth from value in .max.depth
+
+            do controller pid depth   --> controllerPIDDepth
+            do arbiter switch heading  --> arbiterSwitchHeading
+
+            do controller pid depth with foobar 1
+            do controller pid depth from value in .max.depth
 
 
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
         try:
+            name = ""
             parts = []
             parms = odict()
             init = odict()
@@ -2425,14 +2444,15 @@ class Builder(object):
             index +=1
 
             while index < len(tokens): 
-                if tokens[index] in ['as', 'to', 'from', 'with', 'per']: # end of parts
+                if tokens[index] in ['as', 'to', 'with', 'by', 'from', 'per', 'for']: # end of parts
                     #connective = tokens[index]
                     #index += 1 #eat token
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
             
-            name = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+            if parts:
+                name = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
             
             while index < len(tokens): #options 
                 connective = tokens[index]
@@ -2441,7 +2461,7 @@ class Builder(object):
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'to', 'from', 'with', 'per']: # end of parts
+                        if tokens[index] in ['as', 'to', 'with', 'by', 'from', 'per', 'for']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
@@ -2451,11 +2471,11 @@ class Builder(object):
                         msg = "ParseError: Building command '%s'. Missing kind for connective 'as'" % (command)
                         raise excepting.ParseError(msg, tokens, index)                                     
             
-                elif connective == 'to':
+                elif connective in ['to', 'with']:
                     data, index = self.parseDirect(tokens, index)
                     parms.update(data)
     
-                elif connective == 'from':
+                elif connective in ['by', 'from']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -2470,7 +2490,7 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
                     
-                elif connective == 'with':
+                elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -2492,7 +2512,7 @@ class Builder(object):
             return False
         
         if kind: # Create new instance from kind class with name
-            if name in deeding.Deed.Names:
+            if name and name in deeding.Deed.Names:
                 msg = "ParseError: Building command '%s'. Deed named %s of kind %s already exists" % \
                     (command, name, kind)
                 raise excepting.ParseError(msg, tokens, index)
@@ -2503,13 +2523,19 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)
 
             kinder = deeding.Deed.Names[kind]
-            #create new instance as the same type as kinder
-            actor = type(kinder)(name=name, store=self.currentStore)
+            #create new instance as the same type as kinder if name empty then
+            # a unique name will be provided
+            actor = type(kinder)(name=name, store=self.currentStore) 
             actor.ioinit.update(kinder.ioinit) # copy ioinit defaults from kinder
             init = actor.preinitio(**init) # copy and update defaults with init
             iois = actor.initio(**init) # empty if not ._parametric
 
         else: # Use an existing instance
+            if not name:
+                msg = "ParseError: Building command '%s'. Missing name for Deed." %\
+                                    (command)
+                raise excepting.ParseError(msg, tokens, index)
+                            
             if name not in deeding.Deed.Names: #instance not exist
                 msg = "ParseError: Building command '%s'. No Deed named %s" %\
                     (command, name)

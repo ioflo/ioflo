@@ -73,9 +73,9 @@ frame slave3 #so complete
 server server one as server to ../log/ rx :55551 per stuff 5 
 server server two as server to ../log/ \
    rx :55552 \
-   with value in .meta.name # trailing comment
+   for value in .meta.name # trailing comment
 server server to ../log/ # trailing comment
 
-tasker tasker one as tasker  per stuff 5
-tasker tasker two as tasker  with value in .meta.name
+tasker tasker one as tasker per stuff 5
+tasker tasker two as tasker for value in .meta.name
 tasker tasker 

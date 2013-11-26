@@ -274,11 +274,13 @@ class Deed(acting.Actor):
                 iois[key] = ioi
             else:    
                 self._iois[key] = ioi
+                setattr(self, key, ioi)
             
         ioi = self.store.fetchNode(inode) # None if not exist
         if _parametric:
             iois['inode'] = ioi
         else:
+            self._iois['inode'] = ioi
             self.inode = ioi
         
         self.postinitio()

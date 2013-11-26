@@ -16,7 +16,7 @@ frame leg in setup
    go me if done myaux  #forced exit entry 
    go finish if .leg >= .nlegs
    exit
-      inc .leg by 1
+      inc .leg with 1
 
 frame finish
    bid stop uuvlogger

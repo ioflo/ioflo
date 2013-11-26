@@ -27,7 +27,7 @@ frame shallow in depthmax
 
 frame leg in shallow
    set elapsed to 60.0
-   set heading from boxer.heading
+   set heading by boxer.heading
    set depth to 15.0
    set speed to 2.5
    go gpsfix if elapsed >= goal 
@@ -37,12 +37,12 @@ frame gpsfix
    aux gps
    go leg if done gps
    exit
-      inc boxer.heading from boxer.turn
-      inc boxer.leg by 1.0
+      inc boxer.heading by boxer.turn
+      inc boxer.leg with 1.0
 
 frame abort
-   set depth to 0.0
-   set speed to 2.5
+   set depth with 0.0
+   set speed with 2.5
    go mission_stop if depth == 0.0 +- 0.25 
 
 frame mission_stop  
