@@ -25,6 +25,11 @@ def parseArgs():
             const=True, 
             default=False,
             help="Run skedder at realtime.")
+    p.add_argument('-V','--version',
+            action='store_const',
+            const=True, 
+            default=False,
+            help="Prints out version of ioflo.")    
     p.add_argument('-n','--name',
             action='store', 
             default='Skedder',

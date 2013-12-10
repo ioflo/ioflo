@@ -12,12 +12,16 @@ ioflo -v concise -r -n autoscale -p 0.0625 -f autoscale.flo -b autoscaling
        
     
 """
-
+import sys
 import ioflo.app.run
 
 def main():
     """ Main entry point for ioflo CLI"""
     args = ioflo.app.run.parseArgs()
+    
+    if args.version:
+        print "ioflo version {0}".format(ioflo.__version__)
+        sys.exit(0)
     
     ioflo.app.run.run(  name=args.name,
                         filename = args.filename,

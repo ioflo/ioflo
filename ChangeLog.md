@@ -1,6 +1,17 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+20131210
+----------
+
+
+Made executable for ioflo called ioflo that is installed as a script 
+   that can be run from the command line using setup.py
+   default setup.py installs this to
+   /Library/Frameworks/Python.framework/Versions/2.7/bin/ioflo
+   
+   
 
 ------------
 20131125
