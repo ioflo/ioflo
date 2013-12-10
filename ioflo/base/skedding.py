@@ -92,7 +92,7 @@ class Skedder(object):
                    houses=None,
                    filePath='',
                    mode=None,
-                   behavior='',
+                   behaviors='',
                    username='',
                    password='', 
                    metaData=None):
@@ -105,7 +105,7 @@ class Skedder(object):
            houses = list of houses
            filePath = filePath to build file
            mode = parsing mode
-           behavior = pathname to package with external behavior modules
+           behaviors = list of pathnames to packages with external behavior modules
            username = username
            password = password
            metaData = list of triples of (name, path, data) where
@@ -122,7 +122,7 @@ class Skedder(object):
         self.house = houses or []
         self.filePath = filePath
         self.mode = mode or []
-        self.behavior = behavior
+        self.behaviors = behaviors or []
         self.username = username
         self.password = password
         if metaData:
@@ -137,7 +137,7 @@ class Skedder(object):
                 ("real", "meta.real", odict(value=self.real)),
                 ("filepath", "meta.filepath", odict(value=self.filePath)),
                 ("mode", "meta.mode", odict(value=self.mode)), #applied mode logging only
-                ("behavior", "meta.behavior", odict(value=self.behavior)), 
+                ("behaviors", "meta.behaviors", odict(value=self.behaviors)), 
                 ("credentials", "meta.credentials",
                      odict([('username', self.username), ('password', self.password)])), 
             ] 
@@ -176,7 +176,7 @@ class Skedder(object):
         b = building.Builder(fileName = self.filePath,
                              mode=self.mode,
                              metaData = self.metaData,
-                             behavior=self.behavior)
+                             behaviors=self.behaviors)
 
         if not b.build():
             return False

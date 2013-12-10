@@ -164,14 +164,14 @@ class Builder(object):
     """
 
     """
-    def __init__(self, fileName='', mode=None, metaData=None, behavior=''):
+    def __init__(self, fileName='', mode=None, metaData=None, behaviors=None):
         """
 
         """
         self.fileName = fileName #initial name of file to start building from
         self.mode = mode or []
         self.metaData = metaData or {}
-        self.behavior = behavior
+        self.behaviors = behaviors or []
         self.files = [] #list of open file objects, appended to by load commands
         self.counts = [] #list of linectr s for open file objects
 
@@ -190,7 +190,7 @@ class Builder(object):
         
 
 
-    def build(self, fileName='', mode=None, metaData=None, behavior=''):
+    def build(self, fileName='', mode=None, metaData=None, behaviors=None):
         """
            Allows building from multiple files. Essentially files list is stack of files
            fileName is name of first file. Load commands in any files push (append) file onto files
@@ -205,12 +205,13 @@ class Builder(object):
             self.mode = mode
         if metaData:
             self.metaData = metaData
-        if behavior:
-            self.behavior = behavior
+        if behaviors:
+            self.behaviors = behaviors
             
-        if self.behavior: #import behavior package/module  
-            mod = importlib.import_module(self.behavior)
-            exterior._InstanceModules.append(mod) # add to trim.exterior._InstanceModules
+        if self.behaviors: #import behavior package/module
+            for behavior in self.behaviors:
+                mod = importlib.import_module(behavior)
+                exterior._InstanceModules.append(mod) # add to trim.exterior._InstanceModules
 
         housing.House.Clear() #clear house registry
         housing.ClearRegistries() #clear all the other registries

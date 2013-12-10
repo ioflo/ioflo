@@ -3,7 +3,7 @@
 """
 #print "\nPackage at%s" % __path__[0]
 
-__version__ = "0.7.6"
+__version__ = "0.7.7"
 __author__ = "Samuel M. Smith"
 __license__ =  "MIT"
 

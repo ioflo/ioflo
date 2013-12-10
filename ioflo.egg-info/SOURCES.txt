@@ -5,6 +5,15 @@ ioflo.egg-info/SOURCES.txt
 ioflo.egg-info/dependency_links.txt
 ioflo.egg-info/top_level.txt
 ioflo/app/__init__.py
+ioflo/app/plan/box1.flo
+ioflo/app/plan/box2.flo
+ioflo/app/plan/box3.flo
+ioflo/app/plan/box4.flo
+ioflo/app/plan/box5.flo
+ioflo/app/plan/box6.flo
+ioflo/app/plan/counter1.flo
+ioflo/app/plan/gps.flo
+ioflo/app/plan/meta.flo
 ioflo/app/run/__init__.py
 ioflo/app/test/__init__.py
 ioflo/base/__init__.py
@@ -44,7 +53,6 @@ ioflo/trim/exterior/__init__.py
 ioflo/trim/interior/__init__.py
 ioflo/trim/interior/fancy/__init__.py
 ioflo/trim/interior/fancy/salting.py
-ioflo/trim/interior/fancy/saltingOld.py
 ioflo/trim/interior/fancy/test/__init__.py
 ioflo/trim/interior/plain/__init__.py
 ioflo/trim/interior/plain/controlling.py
