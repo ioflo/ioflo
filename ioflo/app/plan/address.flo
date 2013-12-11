@@ -1,0 +1,41 @@
+#example mission address.flo
+
+house box1
+
+framer vehiclesim be active first vehicle_run
+
+frame vehicle_run
+   do simulator motion uuv
+
+framer mission be active first mission_start
+
+frame mission_start
+   set elapsed to 20.0
+   set heading to 0.0
+   set depth to 5.0
+   set speed to 2.5
+   
+   put true into stuff of framer
+   put true into stuff of frame
+   set test of framer to true
+   set test of frame to true
+   put true into junk of frame of root
+   put true into junk of frame autopilot_run of framer autopilot
+   
+   
+   go next if test of framer and test of frame
+   go next if elapsed >= goal
+
+frame mission_stop  
+   bid stop vehiclesim
+   bid stop autopilot
+   bid stop me
+
+framer autopilot be active first autopilot_run
+
+frame autopilot_run
+   do controller pid speed
+   do controller pid heading
+   do controller pid depth
+   do controller pid pitch
+   

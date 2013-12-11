@@ -54,10 +54,12 @@ frame autopilot_run
    do controller pid pitch
 
 
-logger logger to ../log/
+logger logger to ../ioflo/app/log/
 log state  on update 
 loggee position state.position heading state.heading depth state.depth speed state.speed
 
 log goal on update
 loggee heading goal.heading depth goal.depth speed goal.speed
 
+log frame on update
+loggee active framer.mission.state.active human framer.mission.state.human

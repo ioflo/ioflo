@@ -67,7 +67,7 @@ frame shallow2 #so complete
    let me if depth <= .limit.depth.cruise # dumb beact
    done
    
-logger logger to ../log/
+logger logger to ../ioflo/app/log/
 log state   on update
 loggee position state.position heading state.heading depth state.depth speed state.speed
 

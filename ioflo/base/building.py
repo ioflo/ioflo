@@ -293,10 +293,10 @@ class Builder(object):
                     console.terse("Ordering taskable taskers for house {0}\n".format(house.name))
                     house.orderTaskables()
 
-                    console.terse("Resolving links for house %s".format(house.name))
+                    console.terse("Resolving links for house {0}\n".format(house.name))
                     house.resolveLinks()
 
-                    console.terse("Tracing outlines for house {0}".format(house.name))
+                    console.terse("Tracing outlines for house {0}\n".format(house.name))
                     house.traceOutlines() #traces the outlines in each frame
 
                     if console._verbosity >= console.Wordage.concise:
@@ -308,7 +308,7 @@ class Builder(object):
 
                         #show hierarchy of each house's store
                         console.concise( "\nData Store for {0}\n".format(house.name))
-                        house.store.expose() 
+                        house.store.expose(values=(console._verbosity >= console.Wordage.verbose)) 
 
                 return True
 
@@ -3691,6 +3691,7 @@ class Builder(object):
             #check for optional relation clause
             #if 'of relation' clause then allows override of relative  variant
             #but still relative but using dotpath instead of path
+            #so overrides any implied variants
             relation, index = self.parseRelation(tokens, index) 
 
             path = relation + path #absolute path starts with '.'
@@ -3761,7 +3762,7 @@ class Builder(object):
                 if relation == 'root':
                     relation = '' #nothing gets prepended for root relative
 
-            if relation in ['framer', 'frame']: #may be optional name for framer or frame
+            if relation in ['framer']: #may be optional name for framer
                 name = '' #default name is empty
                 if index < len(tokens): #more tokens to check for optional name
                     name = tokens[index]
@@ -3776,12 +3777,42 @@ class Builder(object):
                         name = ''
 
                 if not name: #no name given so substitute default
-                    if relation == 'framer':
-                        name = self.currentFramer.name
-                    else: # relation == 'frame':
-                        name = self.currentFrame.name
-
+                    name = self.currentFramer.name
+                
                 relation += '.' + name  #append name
+            
+            if relation in ['frame']: #may be optional name of frame
+                name = '' #default name is empty
+                if index < len(tokens): #more tokens to check for optional name
+                    name = tokens[index]
+                    if name not in Reserved: #name given
+                        index += 1 #eat token
+
+                        if not REO_IdentPub.match(name): #check if valid name
+                            msg = "ParseError: Invalid relation %s name '%s'" %\
+                                (relation, name)
+                            raise excepting.ParseError(msg, tokens, index)
+                    else:
+                        name = ''
+
+                if not name: #no name given so substitute default
+                    name = self.currentFrame.name
+                
+                relation += '.' + name  #append name
+                
+                # parse optional of framer relation
+                framerRelation, index = self.parseRelation(tokens, index)
+                
+                if framerRelation and '.frame.' in framerRelation: # another of frame
+                    msg = "ParseError: Invalid relation '%s' following frame relation" %\
+                                                    (framerRelation)
+                    raise excepting.ParseError(msg, tokens, index)                    
+                
+                if framerRelation:
+                    relation = framerRelation + '.' + relation
+                    
+                else: #use default framer
+                    relation = ('framer.' + self.currentFramer.name + '.' + relation)
 
         return (relation, index)
 

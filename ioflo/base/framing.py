@@ -51,7 +51,10 @@ class Framer(tasking.Tasker):
           .first = first frame (default frame to start at)
           .active = active frame
           .actives = active outline list of frames
+          .activeShr = share where .active name is stored for logging
+          
           .human = human readable version of active outline
+          .humanShr = share where .human is stored for logging
 
           .frameNames = frame name registry , name space of frame names
           .frameCounter = frame name registry counter 
@@ -86,8 +89,15 @@ class Framer(tasking.Tasker):
         self.first = None #default starting frame
         self.active = None #active frame
         self.actives = [] #list of frames  in active outline in framework
+        path = 'framer.' + self.name + '.state.active'
+        self.activeShr = self.store.create(path)
+        self.activeShr.update(value = self.active.name if self.active else "")
+        
         self.human = '' #human readable version of actives outline
-
+        path = 'framer.' + self.name + '.state.human'
+        self.humanShr = self.store.create(path)
+        self.humanShr.update(value = self.human)        
+        
         self.frameNames = {} #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
 
@@ -196,6 +206,7 @@ class Framer(tasking.Tasker):
         """
         self.actives = actives
         self.human = human
+        self.humanShr.update(value=self.human)
 
     def activate(self, active):
         """make parm active the active starting point for framework.
@@ -204,6 +215,7 @@ class Framer(tasking.Tasker):
            generates outline. does not change default = first
         """
         self.active = active
+        self.activeShr.update(value=self.active.name)
         self.reactivate()
 
     def reactivate(self):
@@ -624,7 +636,7 @@ class Frame(registering.StoriedRegistry):
           .next = next frame used by builder for transitions to next
 
           .beacts = before entry action (need) acts or entry checks
-          .preacts = precur action acts (prior to transition recurrent actions)
+          .preacts = precur action acts (pre transition recurrent actions and transitions)
           #.transacts = trans action acts
           .enacts = enter action acts
           .renacts = renter action acts
@@ -658,8 +670,7 @@ class Frame(registering.StoriedRegistry):
         self.next = None #next frame used by builder for transitions to next
 
         self.beacts = [] #list of enter need acts callables that return True or False
-        self.preacts = [] #list of prior trans recurring acts  callables upon pre recurrence
-        #self.transacts = [] #list of transact callables that return None or far frame if trans needs
+        self.preacts = [] #list of pre-recurring acts  callables upon pre recurrence
         self.enacts = [] #list of enter acts callables upon entry
         self.renacts = [] #list of re-enter acts callables upon re-entry
         self.reacts = [] #list of recurring acts  callables upon recurrence
@@ -1055,7 +1066,7 @@ class Frame(registering.StoriedRegistry):
 
 
     def precur(self): 
-        """Calls preacts (prior to recu) pre-recurring acts for self
+        """Calls preacts pre-recurring acts for self
            Preacts are used for:
               1) Setting up conditions for transitions and conditional auxes 
               2) Interrupting the frame flow such as

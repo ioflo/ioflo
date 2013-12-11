@@ -53,7 +53,7 @@ frame autopilot_run
    do controller pid depth from value in .max.depth
    do controller pid pitch
    
-logger logger to ../log/
+logger logger to ../ioflo/app/log/
 log state  on update
 loggee position state.position heading state.heading depth state.depth speed state.speed
 

@@ -302,26 +302,30 @@ class Store(registering.Registry):
 
         return self.addNode(name=name)   
 
-    def expose(self):
+    def expose(self, values=False):
         """   """
         print "Store name = %s, stamp = %s" % (self.name, self.stamp)
         print "Nodes & Shares:"
-        Store.ShowNode(self.shares, indent = 0)
+        Store.ShowNode(self.shares, indent = 0, values=values)
 
 
     @staticmethod
-    def ShowNode(node, indent = 0):
+    def ShowNode(node, indent = 0, values=False):
         if isinstance(node, dict):
             for key, value in node.items():
                 for i in range(indent):
                     print "  ",
                 print ".%s " % key
-                Store.ShowNode(value, indent = indent + 1)
+                Store.ShowNode(value, indent = indent + 1, values=values)
         else:
             for i in range(indent):
                 print "  ",
-            for key in node.keys():
-                print "%s " % key,
+            if values:
+                for key, val in node.items():
+                    print "%s=%s " % (key, val) ,                
+            else:
+                for key in node.keys():
+                    print "%s " % key,
             print
 
 class Share(object):

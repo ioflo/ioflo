@@ -1,10 +1,37 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+20131211
+----------
+
+Frame relative is now stored relative to the frame's framer
+    .framer.framername.frame.name....
+    not
+    .frame.name....
+
+    when using frame relative addressing the framer.name is now prepended so 
+    frame relative is always also framer relative
+    since frame names are unique per framer not per store
+
+
+Added framer.activeShr and framer.humanShr to store the active frame.name and human
+   for the framer so can be logged.
+   framer.name.state.active
+   framer.name.state.human
+   
+
+When verbosity is >= 3 "verbose" print out of data share at start of mission 
+   now includes the initial values not just the fields so can see what the 
+   initial values ended up being
+
+
 ---------
 20131210
 ----------
 
+Updated version to 0.7.8
 
 Made executable for ioflo called ioflo that is installed as a script 
    that can be run from the command line using setup.py
