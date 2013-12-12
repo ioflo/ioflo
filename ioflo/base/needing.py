@@ -31,16 +31,12 @@ def CreateInstances(store):
        must be function so can recreate after clear registry
        globals good for module self tests
     """
-    #global specialNeeds, simpleNeeds
-
-
-    #specialNeeds = ['done', 'always', 'status']
-    #simpleNeeds = ['elapsed', 'repeat']
-
     #special needs
     needDone = DoneNeed(name = 'needDone', store = store)
     needAlways = AlwaysNeed(name = 'needAlways', store = store)
     needStatus = StatusNeed(name = 'needStatus', store = store)
+    needUpdate = UpdateNeed(name = 'needUpdate', store = store)
+    needChange = ChangeNeed(name = 'needChange', store = store)
 
     #dynamic need types
     needBoolean = BooleanNeed(name = 'needBoolean', store = store)
@@ -317,6 +313,116 @@ class IndirectNeed(Need):
         result = self.Check(state[stateField], comparison, goal[goalField], tolerance)
         console.profuse("Need Indirect, if {0}[{1}] {2} {3}[{4}] +- %s: = {5}\n".format(
             state.name, stateField, comparison, goal, goalField, tolerance, result))     
+
+        return result
+    
+class MarkerNeed(Need):
+    """ MarkerNeed is base class for needs that insert markers on resolvelinks
+        inherited attributes:
+            .name = unique name for action instance
+            .store = shared data store
+        parms:
+            frame
+            marker
+    
+    """
+    def __init__(self, **kw):
+        """Initialization method for instance."""
+        super(MarkerNeed, self).__init__(**kw)
+    
+    def resolveLinks(self, frame, marker, **kw):
+        """Resolves frame framename link and then
+           inserts marker as first enact in the resolved frame
+           
+           If appropriate resolved link(s) are passed back to container act to
+           update the act's parms
+        """
+        parms = dict(frame=frame)
+    
+        if not isinstance(frame, framing.Frame): # must be pathname
+            if frame not in framing.Frame.Names: 
+                raise excepting.ResolveError("ResolveError: Bad need update frame link", frame, self.name)
+            frame = framing.Frame.Names[frame] #replace frame name with frame
+            parms['frame'] = frame
+            
+        if marker not in frame.enacts:
+            frame.insertEnact(marker)
+            console.profuse("     Added {0} {1} with {2} in {3}\n".format(
+                'enact',
+                marker.actor.name,
+                marker.parms['share'].name,
+                marker.parms['name']))
+                
+        return parms #return items are updated in original act parms
+    
+class UpdateNeed(MarkerNeed):
+    """ UpdateNeed Need
+
+        inherited attributes:
+            .name = unique name for action instance
+            .store = shared data store
+
+        parameters:
+            frame       only used in resolvelinks
+            marker      only used in resolvelinks
+            share
+            name
+    """
+    def __init__(self, **kw):
+        """Initialization method for instance."""
+        super(UpdateNeed, self).__init__(**kw) 
+
+    def action(self, share, name, **kw):
+        """ Check if share updated while in frame/mark denoted by name key if any
+            Default is False
+        """
+        result = False
+        mark = share.marks.get(name) #get mark from mark frame name key
+        if mark and mark.stamp != None:
+            result = share.stamp >= mark.stamp #equals so catch updates on enter
+        
+        console.profuse("Need Share {0} update in Frame {1} = {2}\n".format(
+            share.name, name, result)) 
+
+        return result
+
+class ChangeNeed(MarkerNeed):
+    """ChangeNeed Need
+       inherited attributes:
+            .name = unique name for action instance
+            .store = shared data store
+
+       parameters:
+            frame    only used in resolvelinks
+            marker   only used in resolvelinks
+            share
+            name
+    """
+    def __init__(self, **kw):
+        """Initialization method for instance."""
+        super(ChangeNeed, self).__init__(**kw) 
+
+    def action(self, share, name, **kw):
+        """ Check if share data changed while in frame/mark denoted by name key if any
+            Default is False
+        """
+        result = False
+        mark = share.marks.get(name) #get mark from mark frame name key
+        if mark and mark.data != None:
+            for field, value in share.items():
+                try:
+                    if getattr(mark.data, field) != value:
+                        result = True
+                        
+                except AttributeError as ex: # new attribute so changed
+                    result = True
+                
+                if result: #stop checking on first change
+                    break
+                         
+        
+        console.profuse("Need Share {0} change in Frame {1} = {2}\n".format(
+            share.name, name, result)) 
 
         return result
 

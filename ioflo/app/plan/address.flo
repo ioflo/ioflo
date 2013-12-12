@@ -1,6 +1,6 @@
 #example mission address.flo
 
-house box1
+house address
 
 framer vehiclesim be active first vehicle_run
 

@@ -24,13 +24,13 @@ def CreateInstances(store):
     """Create action instances
        must be function so can recreate after clear registry
     """
-    #global restarter, deactivator, printer
-
     transiter = Transiter(name = 'transiter', store = store)
     suspender = Suspender(name = 'suspender', store = store)
     deactivator = Deactivator(name = 'deactivator', store = store)
     restarter = Restarter(name = 'restarter', store = store)
     printer = Printer(name = 'printer', store = store)
+    markerUpdate = UpdateMarker(name = 'markerUpdate', store = store)
+    markerChange = ChangeMarker(name = 'markerChange', store = store)
 
 #Class definitions
 
@@ -516,6 +516,94 @@ class Printer(Actor):
     def expose(self):
         """   """
         console.terse("Printer {0}\n".format(self.name))
+        
+class UpdateMarker(Actor):
+    """ UpdateMarker Class 
+
+        UpdateMarker is a special actor that acts on a share to mark the update by
+            saving a copy of the last stamp
+       
+        UpdateMarker works with UpdateNeed which does the comparison against the marked stamp.
+       
+        Builder at parse time when it encounters an UpdateNeed,
+        creates the mark in the share and creates the appropriate UpdateMarker 
+    """
+
+    def __init__(self,  **kw):
+        """Initialization method for instance.
+
+           inherited instance attributes:
+           .name
+           .store
+        """
+        if 'preface' not in kw:
+            kw['preface'] = 'UpdateMarker'
+
+        super(UpdateMarker,self).__init__(**kw)  
+
+
+    def action(self, share, name, **kw):
+        """ Update mark in share
+            Where share is reference to share and name is frame name key of mark in
+                share.marks odict
+            Updates mark.stamp
+            
+            only one mark per frame per share is needed 
+        """
+        console.profuse("{0} mark {1} in {2} on {3}\n".format(
+            self.name, share.name, name, 'update' ))
+
+        mark = share.marks.get(name)
+        if mark:
+            mark.stamp = self.store.stamp #stamp when marker runs
+
+    def expose(self):
+        """   """
+        console.terse("UpdateMarker {0}\n".format(self.name))
+        
+class ChangeMarker(Actor):
+    """ ChangeMarker Class 
+
+        ChangeMarker is a special actor that acts on a share to mark save a copy
+        of the data in the mark for the share.
+       
+        ChangeMarker works with ChangeNeed which does the comparison with the mark
+       
+        Builder at parse time when it encounters a ChangeNeed,
+        creates the mark in the share and creates the appropriate marker 
+    """
+
+    def __init__(self,  **kw):
+        """Initialization method for instance.
+
+           inherited instance attributes:
+           .name
+           .store
+        """
+        if 'preface' not in kw:
+            kw['preface'] = 'ChangeMarker'
+
+        super(ChangeMarker,self).__init__(**kw)  
+
+
+    def action(self, share, name, **kw):
+        """ Update mark in share
+            Where share is reference to share and name is frame name key of mark in
+                share.marks odict
+            Updates mark.data
+            
+            only one mark per frame per share is needed 
+        """
+        console.profuse("{0} mark {1} in {2} on {3}\n".format(
+            self.name, share.name, name, 'change' ))
+
+        mark = share.marks.get(name)
+        if mark:
+            mark.data = storing.Data(share.items())
+
+    def expose(self):
+        """   """
+        console.terse("ChangeMarker {0}\n".format(self.name))
 
 
 def Test():

@@ -328,6 +328,27 @@ class Store(registering.Registry):
                     print "%s " % key,
             print
 
+class Mark(object):
+    """ Supports the UpdateNeed, ChangeNeed and Marker Actor
+        UpdateNeed checks if associated share is update while in associated frame
+        ChangeNeed checks if associated share data is changed while in associated frame
+        
+        
+        stamp = last stamp of associated share
+        data = copy of data of associated share
+        
+    """
+    __slots__ = ('stamp', 'data',) 
+    
+    
+    def __init__(self, *pa, **kwa):
+        """ Initialize instance. """
+        super(Mark,self).__init__(*pa, **kwa)
+        
+        self.stamp = None
+        self.data = None
+    
+
 class Share(object):
     """Shared item in data store
 
@@ -425,6 +446,8 @@ class Share(object):
             self.changUnit(**unit)
         if owner is not None:
             self.owner = owner
+        
+        self.marks = odict() #odict of marks
 
 
     #make share look like a dictionary for .data record fields

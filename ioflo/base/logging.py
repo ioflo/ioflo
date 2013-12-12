@@ -398,7 +398,7 @@ class Log(registering.StoriedRegistry):
         #build last copies for if changed
         self.lasts.clear()
         for tag, loggee in self.loggees.items():
-            self.lasts[tag] = storing.Data(loggee.items())  #make copy of logee data
+            self.lasts[tag] = storing.Data(loggee.items())  #make copy of loggee data
 
         if self.stamp is None: #never logged so log headers
             self.file.write(self.header)

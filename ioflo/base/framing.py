@@ -136,7 +136,7 @@ class Framer(tasking.Tasker):
         """update store value of the elapsed time of framer in  current outline
 
         """
-        console.profuse("Updating {0} from {1:0.4f} to {2:0.4f}\n".format(
+        console.profuse("     Updating {0} from {1:0.4f} to {2:0.4f}\n".format(
             self.elapsedShr.name, self.elapsedShr.value, self.elapsed))
         self.elapsedShr.update(value = self.elapsed)
 
@@ -159,7 +159,7 @@ class Framer(tasking.Tasker):
         """update store value of the recurred count of framer in  current outline
 
         """
-        console.profuse("Updating {0} from {1:0.4f} to {2:0.4f}\n".format(
+        console.profuse("     Updating {0} from {1:d} to {2:d}\n".format(
             self.recurredShr.name, self.recurredShr.value, self.recurred))
         self.recurredShr.update(value = self.recurred)
 
@@ -1017,7 +1017,7 @@ class Frame(registering.StoriedRegistry):
             if not aux.checkStart(): #performs entry checks
                 return False
 
-        console.profuse("    True all {0}".format(self.name))
+        console.profuse("    True all {0}\n".format(self.name))
 
         return True #since no failues return True
 
@@ -1118,6 +1118,10 @@ class Frame(registering.StoriedRegistry):
     def addEnact(self, act):
         """         """
         self.enacts.append(act)
+    
+    def insertEnact(self, act, index=0):
+        """         """
+        self.enacts.insert(index, act)    
 
     def addRenact(self, act):
         """         """

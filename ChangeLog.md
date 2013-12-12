@@ -2,9 +2,64 @@
 CHANGE LOG
 -------------------
 
+
+-----------
+20131212
+-----------
+
+Added Marking (watch)capability to enable  
+   "if update share" 
+   and 
+   "if change share" 
+   capability
+   
+   Added to Share class .marks attribute which is odict of marks by frame
+       values are mark objects with attributes that support last data and last stamp
+       for share and rules for how to handle .rule see log for example.
+       
+       .marks keys are framenames 
+       
+       The framenames will also be given to the associated
+         actions via a parm to resolve to frame references upon resolvelinks
+       
+       .marks[frame].data = last copy of data like log does
+       .marks[frame].stamp = last stamp
+       
+   Add new Need class. 
+   Add new Marker Actor class
+    
+   When encounter Need syntax for mark the following happens
+      Adds Mark to .marks of appropriate type to Share
+      Inserts marker enter action actor at front of enter actions list for the
+            associated frame
+      Checks to see if marker of same type for same share already exists so not
+            duplicated
+      Marker just saves the stamp or data to .mark of share
+      Adds MarkNeed to seque
+            MarkNeed evaluates mark for share when Need runs
+            Frame is framename that get resolved to frame reference so can insert
+            marker. if not current frame.
+       
+   New syntax
+    
+      go frame if update [in frame] sharepath
+      go frame if change [in frame] sharepath
+   
+
 ---------
 20131211
 ----------
+
+Changed so frame relative is always framer relative as well so can now specify 
+   which framer so can modify frame relative in a different
+   framer. So two of clauses may appear.
+   
+       put true into stuff of frame small of framer big
+       
+       resolves to
+       
+       .framer.big.frame.small
+       
 
 Frame relative is now stored relative to the frame's framer
     .framer.framername.frame.name....

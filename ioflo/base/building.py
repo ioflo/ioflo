@@ -3026,6 +3026,8 @@ class Builder(object):
               always
               done tasker 
               status tasker is (readied, started, running, stopped, aborted)
+              update [in frame] share
+              change [in frame] share
               elapsed comparison goal [+- tolerance]
               recurred comparison goal [+- tolerance]
               state [comparison goal [+- tolerance]]  
@@ -3056,7 +3058,7 @@ class Builder(object):
             index += 1 #eat token
             kind = tokens[index] #get a new kind
 
-        if kind in ['always', 'done', 'status']: #special needs
+        if kind in ['always', 'done', 'status', 'update', 'change']: #special needs
             index += 1 #eat token
             method = 'make' + kind.capitalize() + 'Need'
             if not hasattr(self, method):
@@ -3182,6 +3184,75 @@ class Builder(object):
         act = acting.Act(actor = actor, parms = parms)
 
         return (act, index)
+    
+    def makeUpdateNeed(self, kind, tokens, index):
+        """ Need to check if share updated in frame
+
+            method must be wrapped in appropriate try excepts
+            
+            Syntax:
+                if update [in frame] sharepath
+    
+        """
+        return (self.makeMarkerNeed(kind, tokens, index))
+    
+    def makeChangeNeed(self, kind, tokens, index):
+        """ Need to check if share updated in frame
+
+            method must be wrapped in appropriate try excepts
+            
+            Syntax:
+                if change [in frame] sharepath
+    
+        """
+        return (self.makeMarkerNeed(kind, tokens, index))     
+    
+    def makeMarkerNeed(self, kind, tokens, index):
+        """ Support method to make either UpdateNeed or ChangeNeed
+            as determined by kind
+        """
+        name = "" #frame name
+        frame = None
+        
+        connective = tokens[index]
+        if connective == 'in': #optional in frame clause
+            index += 1 #eat token
+            name = tokens[index] #need to resolve
+            index += 1 #eat token
+        
+        if not name: #default to current frame
+            name = self.currentFrame.name
+            frame = self.currentFrame
+        else:
+            frame = name #resolve frame later in resolve links
+
+        sharePath, index = self.parseIndirect(tokens, index, variant = '')
+        share = self.currentStore.create(sharePath)
+        if not share.marks.get(name):
+            share.marks[name] = storing.Mark()
+            
+        #create Marker
+        actorName = 'marker' + kind.capitalize()
+        parms = {}
+        parms['share'] = share
+        parms['name'] = name
+        markerAct = acting.Act(actor = acting.Actor.Names[actorName], parms = parms)
+        
+        actorName = 'need' + kind.capitalize()
+        if actorName not in needing.Need.Names:
+            msg = "ParseError: Need '%s' can't find actor named '%s'" %\
+                (kind, actorName)
+            raise excepting.ParseError(msg, tokens, index)
+
+        actor = needing.Need.Names[actorName]
+        parms = {}
+        parms['share'] = share
+        parms['name'] = name
+        parms['frame'] = frame  #resolved in resolvelinks
+        parms['marker'] = markerAct # inserted in frame.enacts in resolvelinks
+        act = acting.Act(actor = actor, parms = parms)
+
+        return (act, index)    
 
     def makeImplicitDirectFramerNeed(self, name, comparison, goal, tolerance):
         """Make implicit need, ie the need is not parsed but implied by the command

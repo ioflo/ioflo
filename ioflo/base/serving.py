@@ -111,7 +111,7 @@ class Server(tasking.Tasker):
             self.path = os.path.abspath(self.path) #convert to proper absolute path
             os.makedirs(self.path)
 
-        except OSERROR, ex1:
+        except OSError, ex1:
             print "Error: creating server log directory %s \n" % (ex1)
             return False
 
