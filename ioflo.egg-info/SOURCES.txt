@@ -6,6 +6,7 @@ ioflo.egg-info/dependency_links.txt
 ioflo.egg-info/top_level.txt
 ioflo/app/__init__.py
 ioflo/app/run.py
+ioflo/app/plan/address.flo
 ioflo/app/plan/box1.flo
 ioflo/app/plan/box2.flo
 ioflo/app/plan/box3.flo
@@ -14,8 +15,10 @@ ioflo/app/plan/box5.flo
 ioflo/app/plan/box6.flo
 ioflo/app/plan/counter1.flo
 ioflo/app/plan/gps.flo
+ioflo/app/plan/marker.flo
 ioflo/app/plan/meta.flo
 ioflo/app/test/__init__.py
+ioflo/app/test/example.py
 ioflo/base/__init__.py
 ioflo/base/acting.py
 ioflo/base/aiding.py

@@ -7,4 +7,6 @@
 dist/*/*
 dist
 dist/
-*.egg-info
+ioflo.egg-info
+ioflo.egg-info/*
+
