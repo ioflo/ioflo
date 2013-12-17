@@ -8,7 +8,7 @@ Example uses:
 Importing
 =========
 
-from schevo.lib import optimize
+import optimize
 
 
 Module optimization
@@ -47,13 +47,6 @@ def foo():
 foo = optimize._make_constants(foo)
 """
 
-
-# Determine whether or not to optimize based on environment variable.
-#import os
-#if os.environ.get('SCHEVO_OPTIMIZE', '1') == '1':
-#    OPTIMIZE = True
-#else:
-#    OPTIMIZE = False
 
 OPTIMIZE = True
 from types import FunctionType, ClassType
