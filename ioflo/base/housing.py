@@ -181,7 +181,41 @@ class House(registering.StoriedRegistry):
             self.name, ' '.join([tasker.name for tasker in self.auxes])))
 
         console.terse("Framers in House {0}:\n     {0}\n".format(
-            self.name, ' '.join([tasker.name for tasker in self.framers])))      
+            self.name, ' '.join([tasker.name for tasker in self.framers])))
+        
+    def cloneFramer(self, framer, name=""):
+        """ Create a clone of framer framer with name name as aux framer and return
+            If name not given then create unique name
+            
+            If there is a problem cloning then raise CloneError
+        
+        """
+        if name and not REO_IdentPub.match(name):
+            msg = "CloneError: Invalid framer name '{0}'.".format(name)
+            raise excepting.CloneError(msg)  
+        
+        self.assignRegistries()
+        
+        if name in framing.Framer.Names:
+            msg = "CloneError: Framer '{0}' already exhists.".format(name)
+            raise excepting.CloneError(msg)
+        
+        console.profuse("     Cloning framer named {0}\n".format(clone.name))            
+        clone = framing.Framer(name=name, store=self.store, period=0.0)
+        clone.schedule = AUX
+        
+        clone.clone(framer) # copies contents of framer and resolves links
+        
+        self.taskers.append(clone)
+        self.framers.append(clone)
+        self.auxes.append(clone)
+        
+        console.profuse("     Cloned framer {0} to house {1}\n".format(
+            clone.name, self.name))
+        
+        
+        
+        return clone        
 
 def Test():
     """Module Common self test

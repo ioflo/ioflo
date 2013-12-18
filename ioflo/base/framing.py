@@ -100,7 +100,25 @@ class Framer(tasking.Tasker):
         
         self.frameNames = {} #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
-
+        
+    def clone(self, framer):
+        """ Clone framer onto self by copying frames from framer.
+            Also resolves links
+            Assumes self is fresh instance
+        
+        """
+        self.assignFrameRegistry()
+        self.first = framer.first.name # resolve later
+         
+        for frame in framer.frameNames.values():
+            clone = framing.Frame(name = frame.name,
+                                    store = self.store, 
+                                    framer = self)
+            console.profuse("     Cloning frame {0}\n".format(clone.name))              
+            clone.clone(frame)
+        
+        self.resolveLinks()                         
+    
     def assignFrameRegistry(self):
         """Point Frame class name registry dict and counter to .frameNames
            and .frameCounter.
@@ -109,7 +127,6 @@ class Framer(tasking.Tasker):
         """
         Frame.Names = self.frameNames
         Frame.Counter = self.frameCounter
-
 
     def restartTimer(self):
         """reset the start time and elapsed time of framer for changed outline
@@ -373,7 +390,7 @@ class Framer(tasking.Tasker):
         rexits.reverse()
         for frame in rexits:
             frame.rexit()
-
+    
     def showHierarchy(self):
         """Prints out Framework Hierachy for this framer
         """
@@ -637,7 +654,6 @@ class Frame(registering.StoriedRegistry):
 
           .beacts = before entry action (need) acts or entry checks
           .preacts = precur action acts (pre transition recurrent actions and transitions)
-          #.transacts = trans action acts
           .enacts = enter action acts
           .renacts = renter action acts
           .reacts = recur action acts
@@ -645,7 +661,6 @@ class Frame(registering.StoriedRegistry):
           .rexacts = rexit action acts
 
           .auxes = auxiliary framers
-          .specs = specs for auxilary framers
 
     """
     Counter = 0  
@@ -678,8 +693,39 @@ class Frame(registering.StoriedRegistry):
         self.rexacts = [] #list of re-exit acts callables upon re-exit
 
         self.auxes = [] #list of auxilary framers for this frame
-        self.specs = {} #dictionary of parameters for auxilary framers
-
+        
+    def clone(self, frame):
+        """ Clone frame onto self by copying links, acts, and auxes.
+            Assumes that self is a fresh instance
+            Framer 
+        
+        """
+        if frame.over:
+            self.over = frame.over.name # resolve later
+        for under in frame.unders:
+            self.unders.append(under.name) # resolve later
+        
+        for act in frame.beacts:
+            self.addBeact(act) 
+        for act in frame.preacts:
+            self.addPreact(act)
+        for act in frame.enacts:
+            self.addEnact(act)
+        for act in frame.renacts:
+            self.addRenact(act)
+        for act in frame.reacts:
+            self.addReact(act)
+        for act in frame.exacts:
+            self.addExact(act):
+        for act in frame.rexacts:
+            self.addRexact(act)
+        
+        for aux in self.auxes: # cloned frames of cloned framers should not have auxes
+            msg = "CloneError: Frame {0} has aux {1} forbidden.".format(
+                self.name,  aux.name)
+            raise excepting.CloneError(msg)            
+        
+            
     def expose(self):
         """Prints out instance variables.
 
@@ -691,7 +737,6 @@ class Frame(registering.StoriedRegistry):
 
         print "name = %s, framer = %s, over = %s, under = %s" % \
               (self.name, framername, self.over, self.under)
-
 
     def getUnder(self):
         """getter for under property
