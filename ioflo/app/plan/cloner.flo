@@ -1,0 +1,40 @@
+#example mission marker.flo
+# shows use of if update and if change syntax
+
+house cloner
+
+
+framer mission be active first start
+
+frame start
+   print start
+   go next
+
+frame clone
+   print clone
+   enter
+      do clone framer to framer "clonee" name "cloned1" frame "run_clone"
+   go next 
+   go abort if recurred >= 2
+   
+frame run_clone
+   recur
+       print run_clone
+   go next if recurred >= 4
+
+frame abort 
+   bid stop all
+   
+framer clonee be aux first clone1
+
+frame clone1
+   print clone1
+   go next 
+   
+frame clone2
+   print clone2
+   go next
+
+frame clone3
+   done
+

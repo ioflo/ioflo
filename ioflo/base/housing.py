@@ -200,8 +200,8 @@ class House(registering.StoriedRegistry):
             msg = "CloneError: Framer '{0}' already exhists.".format(name)
             raise excepting.CloneError(msg)
         
-        console.profuse("     Cloning framer named {0}\n".format(clone.name))            
         clone = framing.Framer(name=name, store=self.store, period=0.0)
+        console.profuse("     Cloning framer {0} to {1}\n".format(framer.name, clone.name))
         clone.schedule = AUX
         
         clone.clone(framer) # copies contents of framer and resolves links
@@ -212,8 +212,6 @@ class House(registering.StoriedRegistry):
         
         console.profuse("     Cloned framer {0} to house {1}\n".format(
             clone.name, self.name))
-        
-        
         
         return clone        
 

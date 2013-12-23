@@ -76,7 +76,7 @@ class ResolveError(Exception):
     """
     def __init__(self, message = None, name = None, value = None):
         self.message = message #description of error
-        self.name = name #link name
+        self.name = name #link name or description
         self.value = value #component action, framer, frame etc
 
         self.args = (message, name, value)
@@ -100,7 +100,7 @@ class CloneError(Exception):
 
 
     def __str__(self):
-        return ("%s.\n" & % (self.message) )
+        return ("%s.\n" % (self.message, ))
 
 
 def Test():

@@ -53,6 +53,15 @@ class Fiat(acting.Actor):
 
         super(Fiat,self).__init__(**kw)
 
+    def revertLinks(self, tasker, **kw):
+        """ Reverts links to name in support of framer cloning """
+        parms = {}
+        
+        if isinstance(tasker, tasking.Tasker):
+            parms['tasker'] = tasker.name # revert to name     
+        
+        return parms
+           
     def resolveLinks(self, tasker, **kw):
         """Resolves value (tasker) link that is passed in as parm
            resolved link is passed back to act to store in parms
@@ -62,14 +71,11 @@ class Fiat(acting.Actor):
         if not isinstance(tasker, tasking.Tasker): #name
             if tasker not in tasking.Tasker.Names: 
                 raise excepting.ResolveError("ResolveError: Bad fiat tasker link name", tasker, '')
-            tasker = tasking.Tasker.Names[tasker]
+            parms['tasker'] = tasker = tasking.Tasker.Names[tasker] #replace name with valid link
 
         if tasker.schedule != SLAVE : # only allowed on slave taskers
             msg = "ResolveError: Bad tell tasker, not slave"
             raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
-
-
-        parms['tasker'] = tasker #replace name with valid link
 
         return parms
 

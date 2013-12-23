@@ -92,9 +92,6 @@ class Deed(acting.Actor):
             This allows dynamic initialization of Deed instances at FloScript
             parse time not python module load time.
             
-            Need to change signatue so can pass in odict as pa or list of tuples
-            like the update method for shares
-            
             Because preinitio is executed at parse time by the builder when deed
             appears in FloScript, preinitio will override the default values
             set in .ioint (if any) when its updated in CreateInstances.
@@ -287,7 +284,6 @@ class Deed(acting.Actor):
         
         return iois # if non-empty then treat as parametric
     
-    
     def postinitio(self):
         """ Base method to be overriden in sub classes. Perform post initio setup"""
         pass
@@ -417,12 +413,10 @@ class LapseDeed(Deed):
         console.profuse("Actioning LapseDeed  {0}\n".format(self.name))
         self.updateLapse()
 
-
     def expose(self):
         """     """
         print "Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse)
-
-
+        
 def Test():
     """Module Common self test
 

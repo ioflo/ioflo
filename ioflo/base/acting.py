@@ -65,6 +65,14 @@ class Act(object):
         console.terse("Act Actor {0} Parms {1}\n".format(self.actor, self.parms))
         if self.actor:
             self.actor.expose()
+            
+    def revertLinks(self, *pa, **kwa):
+        """ Revert any links in associated parms for actors
+            Should be overridden if use arguments
+        """
+        parms = self.actor.revertLinks(**self.parms)
+        for key, value in parms.items():
+            self.parms[key] = value    
 
     def resolveLinks(self, *pa, **kwa):
         """Resolve any links in associated parms for actors
@@ -141,10 +149,16 @@ class Actor(registering.StoriedRegistry):
     def expose(self):
         """Show Actor."""
         console.terse("Actor {0}".format(self.name))
+        
+    def revertLinks(self, **kw):
+        """ Reverts any links in parms for Actor
+            should be overridden by sub class
+        """
+        return {} #empty parms    
     
     def resolveLinks(self, **kw):
-        """Resolves any links in parms for Actor
-           should be overridden by sub class
+        """ Resolves any links in parms for Actor
+            should be overridden by sub class
         """
         return {} #empty parms
 
@@ -236,15 +250,40 @@ class Transiter(Interrupter):
         framer.activate(active = far)
         return far
 
-
     def expose(self):
         """      """
         console.terse("Transiter {0}\n".format(self.name))
-
+    
+    def revertLinks(self, needs, near, far, human, **kw):
+        """ Revert any links to string names to force reresolve of links.
+            This provides support for cloning framers. This assumes that the
+            Frame.Names registry is updated to that of the cloned framer so that
+            The reresolve will be to Frame of same name but different instance
+            in the cloned Framer's Frames.Names registry.
+        """
+        parms = {}
+        
+        if isinstance(near, framing.Frame):
+            parms['near'] = near.name # revert to name
+        
+        if isinstance(far, framing.Frame):
+            parms['far'] = far.name # revert to name
+        
+        for act in needs:
+            act.revertLinks()
+        
+        return parms
+        
     def resolveLinks(self, needs, near, far, human, **kw):
         """Resolve any links in far and in associated parms for actors"""
 
         parms = {}
+        
+        if not isinstance(near, framing.Frame):
+            if near not in framing.Frame.Names:
+                raise excepting.ResolveError("ResolveError: Bad near link",
+                                            human, near)
+            parms['near'] = near = framing.Frame.Names[near] #replace name with valid link        
 
         if not isinstance(far, framing.Frame):
             if far == 'next':
@@ -263,7 +302,7 @@ class Transiter(Interrupter):
                 raise excepting.ResolveError("ResolveError: Bad far link",
                                              near.name + " " + human, far)
 
-        parms['far'] = far #replace name with valid link
+            parms['far'] = far #replace name with valid link
 
         for act in needs:
             act.resolveLinks()
@@ -356,23 +395,44 @@ class Suspender(Interrupter):
 
         aux.exitAll() # also sets .done = True
         aux.main = None
+    
+    def revertLinks(self, needs, main, aux, human, **kw):
+        """ Revert any links to string names to force reresolve of links.
+            This provides support for cloning framers. This assumes that the
+            Frame.Names registry is updated to that of the cloned framer so that
+            The reresolve will be to Frame of same name but different instance
+            in the cloned Framer's Frames.Names registry.
+        """
+        parms = {}
+        
+        if isinstance(main, framing.Frame):
+            parms['main'] = main.name # revert to name
+        
+        if isinstance(aux, framing.Framer):
+            parms['aux'] = aux.name # revert to name
+        
+        for act in needs:
+            act.revertLinks()
+        
+        return parms
 
     def resolveLinks(self, needs, main, aux, human, **kw):
         """Resolve any links aux and in associated parms for actors"""
 
         parms = {}
+        
+        if not isinstance(main, framing.Frame):
+            if main not in framing.Frame.Names:
+                raise excepting.ResolveError("ResolveError: Bad main link", human, main)
+            parms['main'] = main = framing.Frame.Names[main] #replace name with valid link                    
 
         if not isinstance(aux, framing.Framer):
-            if aux in framing.Framer.Names:
-                aux = framing.Framer.Names[aux]
-
-            else:
-                raise excepting.ResolveError("ResolveError: Bad far link",
-                                             near.name + " " + human, far)
-
-        parms['aux'] = aux #replace name with valid link
-
-        console.terse("    Resolved aux as {0}".format(aux.name))
+            if aux not in framing.Framer.Names:
+                raise excepting.ResolveError("ResolveError: Bad aux link",
+                                                main.name + " " + human, aux)                
+                
+            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
+            console.terse("    Resolved aux as {0} in {1}".format(aux.name, main.name))
 
         if aux.schedule != AUX:
             raise excepting.ResolveError("ResolveError: Bad aux link not scheduled as AUX",
@@ -390,7 +450,7 @@ class Deactivator(Actor):
        Deactivator is a special actor that acts on an Act
 
        In the Deactivator's action method, 
-          IF the act passed in as a parameter has a activate attribute THEN
+          IF the act passed in as a parameter has an _activate attribute THEN
                        it calls the deactivate method
        This is to ensure the outline in cond aux is exited cleanly when the aux
           is preempted by higher level transition.
@@ -416,30 +476,39 @@ class Deactivator(Actor):
         """
         #console.profuse("{0} action {1} for {2}\n".format(self.name, actor.name, aux.name))
 
-        if hasattr(actor, '_activative') and not  aux.done:
+        if hasattr(actor, '_activative') and not aux.done:
             console.profuse("{0} deactivate {1} for {2}\n".format(self.name, actor.name, aux.name))
             return actor.deactivate(aux)
 
     def expose(self):
         """   """
         console.terse("Deactivator {0}\n".format(self.name))
-
+        
+    def revertLinks(self, actor, aux, **kw):
+        """ Revert any links to string names to force reresolve of links.
+            This provides support for cloning framers. This assumes that the
+            Frame.Names registry is updated to that of the cloned framer so that
+            The reresolve will be to Frame of same name but different instance
+            in the cloned Framer's Frames.Names registry.
+        """
+        parms = {}
+        
+        if isinstance(aux, framing.Framer):
+            parms['aux'] = aux.name # revert to name
+        
+        return parms
+              
     def resolveLinks(self, actor, aux, **kw):
         """Resolve any links aux and in associated parms for actors"""
 
         parms = {}
 
         if not isinstance(aux, framing.Framer):
-            if aux in framing.Framer.Names:
-                aux = framing.Framer.Names[aux]
-
-            else:
+            if aux not in framing.Framer.Names:
                 raise excepting.ResolveError("ResolveError: Bad far link",
-                                             near.name + " " + human, far)
-
-        parms['aux'] = aux #replace name with valid link
-
-        console.terse("    Resolved aux as {0}".format(aux.name))
+                                                             near.name + " " + human, far)                
+            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
+            console.terse("    Resolved aux as {0}".format(aux.name))
 
         if aux.schedule != AUX:
             msg = "ResolveError: Bad deactivator aux link not scheduled as AUX"

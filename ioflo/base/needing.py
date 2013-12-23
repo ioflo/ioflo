@@ -278,7 +278,7 @@ class DirectNeed(Need):
         """Check if state[field] comparison to goal +- tolerance is True"""
 
         result = self.Check(state[stateField], comparison, goal, tolerance)
-        console.profuse("Need Direct, if {0}[{1}] {2} {3} +- %s: = {4}\n".format(
+        console.profuse("Need Direct, if {0}[{1}] {2} {3} +- {4}: = {5}\n".format(
             state.name, stateField, comparison, goal, tolerance, result))     
 
         return result

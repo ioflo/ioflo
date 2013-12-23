@@ -17,47 +17,77 @@ from . import tasking
 from .consoling import getConsole
 console = getConsole()
 
+#utility functions
+def resolveFramer(framer, who=''):
+    """ Returns resolved framer instance from framer
+        framer may be name of framer or instance
+        who is optinal name of object owning the link such as framer or frame
+        Framer.Names registry must be setup
+    """
+    if not isinstance(framer, Framer): # not instance so name
+        if framer not in Framer.Names: 
+            raise excepting.ResolveError("ResolveError: Bad framer link name", framer, who)
+        framer = Framer.Names[framer]
+
+    return framer
+
+ResolveFramer = resolveFramer
+
+def resolveFrame(frame, who=''):
+    """ Returns resolved frame instance from frame
+            frame may be name of frame or instance
+    
+            Frame.Names registry must be setup
+        """    
+    if not isinstance(frame, Frame): # not instance so name
+        if frame not in Frame.Names: 
+            raise excepting.ResolveError("ResolveError: Bad frame link name", frame, who)
+        frame = Frame.Names[frame] #replace frame name with frame
+    
+    return frame
+
+ResolveFrame = resolveFrame
 
 #Class definitions
 
 class Framer(tasking.Tasker):
-    """Framer Task Patron Registry Class for running hierarchical action framework
+    """ Framer Task Patron Registry Class for running hierarchical action framework
 
-       inherited instance attributes
-          .name = unique name for machine
-          .store = data store
-
-          .period = desired time in seconds between runs must be non negative, zero means asap
-          .stamp = time of last outline change beginning time to compute elapsed time
-          .status = operational status of tasker
-          .desire = desired control asked by this or other taskers
-          .done = tasker completion state True or False
-          .schedule = scheduling context of this Task for Skedder
-          .runner = generator to run tasker
+        inherited instance attributes
+            .name = unique name for machine
+            .store = data store
+  
+            .period = desired time in seconds between runs must be non negative, zero means asap
+            .stamp = time of last outline change beginning time to compute elapsed time
+            .status = operational status of tasker
+            .desire = desired control asked by this or other taskers
+            .done = tasker completion state True or False
+            .schedule = scheduling context of this Task for Skedder
+            .runner = generator to run tasker
 
        instance attributes
-          .main = main frame when this framer is an auxiliary
-          .done = auxiliary completion state True or False when an auxiliary
-          .elapsed = elapsed time from outline change
-          .elapsedShr = share where .elapsed is stored for logging and need checks
-
-          .recurred = number of completed recurrences of the current outline
-                   recurred is zeroed upon entry
-                   during first iteration recurred is 0 
-                   during second iteration (before trans evaluated) recurred is 1
-                   so a trans check on recurred == 2 means its already iterated twice
-          .recurredShr = share where recurred is stored for logging and need checks
-
-          .first = first frame (default frame to start at)
-          .active = active frame
-          .actives = active outline list of frames
-          .activeShr = share where .active name is stored for logging
-          
-          .human = human readable version of active outline
-          .humanShr = share where .human is stored for logging
-
-          .frameNames = frame name registry , name space of frame names
-          .frameCounter = frame name registry counter 
+            .main = main frame when this framer is an auxiliary
+            .done = auxiliary completion state True or False when an auxiliary
+            .elapsed = elapsed time from outline change
+            .elapsedShr = share where .elapsed is stored for logging and need checks
+  
+            .recurred = number of completed recurrences of the current outline
+                     recurred is zeroed upon entry
+                     during first iteration recurred is 0 
+                     during second iteration (before trans evaluated) recurred is 1
+                     so a trans check on recurred == 2 means its already iterated twice
+            .recurredShr = share where recurred is stored for logging and need checks
+  
+            .first = first frame (default frame to start at)
+            .active = active frame
+            .actives = active outline list of frames
+            .activeShr = share where .active name is stored for logging
+  
+            .human = human readable version of active outline
+            .humanShr = share where .human is stored for logging
+  
+            .frameNames = frame name registry , name space of frame names
+            .frameCounter = frame name registry counter 
     """
     #Counter = 0  
     #Names = {}
@@ -92,33 +122,35 @@ class Framer(tasking.Tasker):
         path = 'framer.' + self.name + '.state.active'
         self.activeShr = self.store.create(path)
         self.activeShr.update(value = self.active.name if self.active else "")
-        
+
         self.human = '' #human readable version of actives outline
         path = 'framer.' + self.name + '.state.human'
         self.humanShr = self.store.create(path)
         self.humanShr.update(value = self.human)        
-        
+
         self.frameNames = {} #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
-        
+
     def clone(self, framer):
         """ Clone framer onto self by copying frames from framer.
             Also resolves links
             Assumes self is fresh instance
-        
+
         """
         self.assignFrameRegistry()
         self.first = framer.first.name # resolve later
-         
+
         for frame in framer.frameNames.values():
-            clone = framing.Frame(name = frame.name,
-                                    store = self.store, 
-                                    framer = self)
+            clone = Frame(  name = frame.name,
+                            store = self.store, 
+                            framer = self)
             console.profuse("     Cloning frame {0}\n".format(clone.name))              
             clone.clone(frame)
         
-        self.resolveLinks()                         
-    
+        self.revertLinks()
+        self.resolveLinks()
+        self.traceOutlines()
+
     def assignFrameRegistry(self):
         """Point Frame class name registry dict and counter to .frameNames
            and .frameCounter.
@@ -180,6 +212,19 @@ class Framer(tasking.Tasker):
             self.recurredShr.name, self.recurredShr.value, self.recurred))
         self.recurredShr.update(value = self.recurred)
 
+    def revertLinks(self):
+        """ Revert links to name strings in support of framer cloning
+            This can be done prior to cloning a framer so the clone already
+            has the links reverted.
+        """
+        print "Reverting links for framer %s" % (self.name)
+        
+        # Revert first frame link
+        if isinstance(self.first, Frame):
+            self.first = self.first.name        
+        
+        for frame in Frame.Names.values(): #all frames in this framer's name space
+            frame.revertLinks()
 
     def resolveLinks(self):
         """Convert all the name strings for links to references to instance
@@ -204,7 +249,7 @@ class Framer(tasking.Tasker):
 
 
     def traceOutlines(self):
-        """Trace and assign outlines for each frame in framework
+        """Trace and assign outlines for each frame in framer
         """
         print "Tracing outlines for framer %s" % (self.name)
 
@@ -257,11 +302,10 @@ class Framer(tasking.Tasker):
         return self.checkEnter(self.first.outline)
 
     def checkEnter(self, enters = []):
-        """checks entryNeeds for frames in enters list
+        """checks beacts for frames in enters list
            return on first failure do not keep testing
            assumes enters outline in top down order
-
-
+           
         """
         console.profuse("{0}Check enters of {1} Framer {2}\n".format(
             '    ' if self.schedule == AUX or self.schedule == SLAVE else '',
@@ -390,7 +434,7 @@ class Framer(tasking.Tasker):
         rexits.reverse()
         for frame in rexits:
             frame.rexit()
-    
+
     def showHierarchy(self):
         """Prints out Framework Hierachy for this framer
         """
@@ -635,32 +679,32 @@ class Framer(tasking.Tasker):
 
 
 class Frame(registering.StoriedRegistry):
-    """Frame Class for hierarchical action framework object
+    """ Frame Class for hierarchical action framework object
 
-       inherited instance attributes
-          .name = unique name for frame
-          .store = data store
+        inherited instance attributes
+            .name = unique name for frame
+            .store = data store
 
-       instance attributes
-          .framer = link to framer that executes this frame
-          .over = link to frame immediately above this one in hierarchy
-          .under = property link to primary frame immediately below this one in hierarchy 
-          .unders = list of all frames immediately below this one
-          .outline = list of frames in outline for this frame top down order 
-          .head = list of frames from top down to self
-          .human = string of names of frames in outline top down '>' separated
-          .headHuman = string of names of frames in head top down '>' separated
-          .next = next frame used by builder for transitions to next
-
-          .beacts = before entry action (need) acts or entry checks
-          .preacts = precur action acts (pre transition recurrent actions and transitions)
-          .enacts = enter action acts
-          .renacts = renter action acts
-          .reacts = recur action acts
-          .exacts = exit action acts
-          .rexacts = rexit action acts
-
-          .auxes = auxiliary framers
+        instance attributes
+            .framer = link to framer that executes this frame
+            .over = link to frame immediately above this one in hierarchy
+            .under = property link to primary frame immediately below this one in hierarchy 
+            .unders = list of all frames immediately below this one
+            .outline = list of frames in outline for this frame top down order 
+            .head = list of frames from top down to self
+            .human = string of names of frames in outline top down '>' separated
+            .headHuman = string of names of frames in head top down '>' separated
+            .next = next frame used by builder for transitions to next
+  
+            .beacts = before entry action (need) acts or entry checks
+            .preacts = precur action acts (pre transition recurrent actions and transitions)
+            .enacts = enter action acts
+            .renacts = renter action acts
+            .reacts = recur action acts
+            .exacts = exit action acts
+            .rexacts = rexit action acts
+  
+            .auxes = auxiliary framers
 
     """
     Counter = 0  
@@ -693,18 +737,22 @@ class Frame(registering.StoriedRegistry):
         self.rexacts = [] #list of re-exit acts callables upon re-exit
 
         self.auxes = [] #list of auxilary framers for this frame
-        
+
     def clone(self, frame):
         """ Clone frame onto self by copying links, acts, and auxes.
             Assumes that self is a fresh instance
             Framer 
-        
+
         """
-        if frame.over:
-            self.over = frame.over.name # resolve later
-        for under in frame.unders:
-            self.unders.append(under.name) # resolve later
+        # self.framer should be already set to new framer before we clone
         
+        if frame.over:
+            self.over = frame.over
+        for under in frame.unders:
+            self.unders.append(under) 
+        if frame.next:
+            self.next = frame.next
+
         for act in frame.beacts:
             self.addBeact(act) 
         for act in frame.preacts:
@@ -716,16 +764,15 @@ class Frame(registering.StoriedRegistry):
         for act in frame.reacts:
             self.addReact(act)
         for act in frame.exacts:
-            self.addExact(act):
+            self.addExact(act)
         for act in frame.rexacts:
             self.addRexact(act)
-        
+
         for aux in self.auxes: # cloned frames of cloned framers should not have auxes
             msg = "CloneError: Frame {0} has aux {1} forbidden.".format(
                 self.name,  aux.name)
-            raise excepting.CloneError(msg)            
-        
-            
+            raise excepting.CloneError(msg)
+
     def expose(self):
         """Prints out instance variables.
 
@@ -817,7 +864,7 @@ class Frame(registering.StoriedRegistry):
                 self.next = next
 
     def resolveOverLinks(self):
-        """Starting with self climb over links resolving the links as needed along the way
+        """Starting with self.over climb over links resolving the links as needed along the way
 
         """
         over = self.over
@@ -851,11 +898,15 @@ class Frame(registering.StoriedRegistry):
 
             under = over
             over = over.over #rise one level
+            
+    def revertUnderLinks(self):
+        """ Revert under links in support of framer cloning """
+        for i, under in enumerate(self.unders):
+            if isinstance(under, Frame):
+                self.unders[i] = self.unders[i].name
 
     def resolveUnderLinks(self):
-        """Resolve under links
-
-        """
+        """ Resolve under links """
         for i, under in enumerate(self.unders):
             if not isinstance(under, Frame):
                 try:
@@ -867,11 +918,8 @@ class Frame(registering.StoriedRegistry):
         #with right most removed
         #or at least check for duplicates and flag error
 
-
     def resolveAuxLinks(self):
-        """Resolve aux links
-
-        """
+        """ Resolve aux links """
         for i, aux in enumerate(self.auxes):
             if not isinstance(aux, Framer): # link is name not object
                 if aux not in Framer.Names:
@@ -887,10 +935,7 @@ class Frame(registering.StoriedRegistry):
             #aux.main  is set upon frame.enter before aux.enterAll() so can reuse aux in other frames
 
     def resolveFramerLink(self):
-        """Resolve framer link
-
-        """
-
+        """Resolve framer link """
         if self.framer:
             if not isinstance(self.framer, Framer):
                 if self.framer not in Framer.Names:
@@ -899,15 +944,53 @@ class Frame(registering.StoriedRegistry):
                 if not isinstance(framer, Framer):  #maker sure framer not tasker since tasker framer share registry
                     raise excepting.ResolveError("ResolveError: Bad framer name, tasker not framer", self.name, framer.name)
                 self.framer = framer #replace link name with link
+    
+    def revertLinks(self):
+        """ Revert links to name strings in support of framer cloning """
+        
+        console.profuse("Reverting links for frame {0} in framer {1}\n".format(
+            self.name, self.framer.name))
 
+        # framer link should be correct before cloning
+        
+        if isinstance(self.next, Frame):
+            self.next = self.next.name
+        
+        if isinstance(self.over, Frame):
+            self.over = self.over.name
 
+        self.revertUnderLinks()
+
+        for act in self.beacts:
+            act.revertLinks()
+
+        for act in self.enacts:
+            act.resolveLinks()
+
+        for act in self.reacts:
+            act.revertLinks()
+
+        for act in self.preacts:
+            act.revertLinks()
+
+        for act in self.exacts:
+            act.revertLinks()
+
+        for act in self.rexacts:
+            act.revertLinks()
+
+        for act in self.renacts:
+            act.revertLinks()
+
+        # don't revert aux links need to clone the auxex instead
 
     def resolveLinks(self):
         """Resolve links where links are instance name strings assigned during building
            need to be converted to object references using instance name registry
 
         """
-        console.profuse("Resolving links for frame {0}\n".format(self.name))
+        console.profuse("Resolving links for frame {0} in framer {1}\n".format(
+            self.name, self.framer.name))
 
         self.resolveFramerLink()
 
@@ -1044,7 +1127,7 @@ class Frame(registering.StoriedRegistry):
         return human 
 
     def checkEnter(self):
-        """Check Entry Needs for self  and auxes
+        """Check beacts for self and auxes
         """
         console.profuse("    Check enter into {0}\n".format(self.name))
 
@@ -1059,7 +1142,7 @@ class Frame(registering.StoriedRegistry):
                 console.profuse("    False aux {0}.main in use".format(aux.name))
                 return False
 
-            if not aux.checkStart(): #performs entry checks
+            if not aux.checkStart(): #performs entry checks beacts
                 return False
 
         console.profuse("    True all {0}\n".format(self.name))
@@ -1163,7 +1246,7 @@ class Frame(registering.StoriedRegistry):
     def addEnact(self, act):
         """         """
         self.enacts.append(act)
-    
+
     def insertEnact(self, act, index=0):
         """         """
         self.enacts.insert(index, act)    
@@ -1337,4 +1420,3 @@ def Test():
 
 if __name__ == "__main__":
     Test()
-

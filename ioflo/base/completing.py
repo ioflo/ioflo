@@ -48,7 +48,17 @@ class Complete(acting.Actor):
         if 'preface' not in kw:
             kw['preface'] = 'Complete'
 
-        super(Complete,self).__init__(**kw)  
+        super(Complete,self).__init__(**kw)
+        
+    def revertLinks(self, framer, **kw):
+        """ Reverts links to name in support of framer cloning """
+        parms = {}
+        
+        if isinstance(framer, framing.Framer):
+            parms['framer'] = framer.name # revert to name     
+        
+        return parms
+           
 
     def resolveLinks(self, framer, **kw):
         """Resolves value (framer) link that is passed in as parm
@@ -56,13 +66,10 @@ class Complete(acting.Actor):
            since framer may not be current framer at build time
         """
         parms = {}
-        if not isinstance(framer, framing.Framer): #so name of framer
-            if framer not in framing.Framer.Names: 
-                raise excepting.ResolveError("ResolveError: Bad done framer link name", framer, '')
-            framer = framing.Framer.Names[framer]
-
-        if not isinstance(framer, framing.Framer): #maker sure framer not other tasker
-            raise excepting.ResolveError("ResolveError: Bad done framer name not for framer", framer, '')
+        parms['framer'] = framer = framing.resolveFramer(framer, who=self.name)
+        
+        #if not isinstance(framer, framing.Framer): #maker sure framer not other tasker
+            #raise excepting.ResolveError("ResolveError: Bad done framer name not for framer", framer, '')
 
         #if not framer.schedule in [AUX, SLAVE]: #maker sure framer is auxliary or slave
             #raise excepting.ResolveError("ResolveError: Bad done framer, framer not auxiliary or slave", framer, '')
