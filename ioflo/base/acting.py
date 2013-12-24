@@ -7,6 +7,7 @@ import time
 import struct
 from collections import deque
 import inspect
+import copy
 
 from .globaling import *
 
@@ -59,28 +60,48 @@ class Act(object):
         """
         return (self.actor(**self.parms))
 
-
     def expose(self):
         """Show Actor and parms"""
         console.terse("Act Actor {0} Parms {1}\n".format(self.actor, self.parms))
         if self.actor:
             self.actor.expose()
             
+    def rerefShares(self, oldPrefix, newPrefix):
+        """ Changes any parms that are share refs whose path starts with oldPrefix
+            To new ref whose path starts with newPrefix.
+            The rest of the path stays the same.
+            Create new share if needed.
+            Deep copy the contents of the share.
+            This is to support framer cloning so typically the path prefixes
+            are framer relative paths.
+        """
+        parms = {}
+        for key, val in self.parms.items():
+            if isinstance(val, storing.Share):
+                if val.path.startswith(oldPath):
+                    newPath = val.path.replace(oldPrefix, newPrefix, 1)
+                    newShare = self.actor.store.create(newPath)
+                    stuff = {}
+                    for k, v in val.items():
+                        stuff[k] = copy.deepcopy(v)
+                    newShare.create(stuff)
+                    parms[key] = newShare                    
+
+        self.parms.update(parms)      
+            
     def revertLinks(self, *pa, **kwa):
         """ Revert any links in associated parms for actors
             Should be overridden if use arguments
         """
         parms = self.actor.revertLinks(**self.parms)
-        for key, value in parms.items():
-            self.parms[key] = value    
+        self.parms.update(parms) 
 
     def resolveLinks(self, *pa, **kwa):
         """Resolve any links in associated parms for actors
            Should be overridden if use arguments
         """
         parms = self.actor.resolveLinks(**self.parms)
-        for key, value in parms.items():
-            self.parms[key] = value
+        self.parms.update(parms) 
 
 class Nact(Act):
     """lightweight container class for action references and parameters
@@ -149,7 +170,7 @@ class Actor(registering.StoriedRegistry):
     def expose(self):
         """Show Actor."""
         console.terse("Actor {0}".format(self.name))
-        
+    
     def revertLinks(self, **kw):
         """ Reverts any links in parms for Actor
             should be overridden by sub class
