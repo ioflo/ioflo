@@ -177,10 +177,10 @@ class House(registering.StoriedRegistry):
         console.terse("Slaves in House {0}:\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.slaves])))
 
-        console.terse("Auxes in House {0}:\n     {0}\n".format(
+        console.terse("Auxes in House {0}:\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.auxes])))
 
-        console.terse("Framers in House {0}:\n     {0}\n".format(
+        console.terse("Framers in House {0}:\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.framers])))
         
     def cloneFramer(self, framer, name=""):
