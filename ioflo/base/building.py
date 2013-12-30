@@ -2440,9 +2440,6 @@ class Builder(object):
             init = odict()
             kind = None
             connective = None
-            
-            parts.append(tokens[index])
-            index +=1
 
             while index < len(tokens): 
                 if tokens[index] in ['as', 'to', 'with', 'by', 'from', 'per', 'for']: # end of parts
