@@ -8,6 +8,7 @@ import time
 import struct
 from collections import deque,  Mapping
 import inspect
+import copy
 
 from .globaling import *
 from .odicting import odict
@@ -85,6 +86,9 @@ class Deed(acting.Actor):
             The other argument values are the pathname strings of Deed
             specific io shares or nodes
             
+            This provides support for the 'per' and 'for' connectives in the do
+            command
+            
             The inital values of the shares must be performed somewhere else
             either in the .postinitio method of the Deed or by a FloScript command
             such as init or put
@@ -120,22 +124,25 @@ class Deed(acting.Actor):
             
             The init behavior of the other arguments is based on the form of the argument value.
             
-            There are the following 3 forms:
+            There are the following 3 forms for val:
             
             1- string
-               ipath  pathnamestring
+               ipath = pathnamestring
             
-            2- tuple of values
-            
-               (ipath, ival, iown)
-            
-            2- dict of key: values
+            2- dict of key: values (mapping)
             
                 {
                     ipath: "pathnamestring",
                     ival: initial value,
                     iown: truthy,
                 }
+            
+            2- tuple or list of values (non mapping non string iterable)
+            
+               (ipath, ival, iown) or [ipath, ival, iown]
+               ipath = pathnamestring
+               ival = initial value
+               iown = truthy
             
             
             In all cases, three init values are produced, these are:
@@ -147,7 +154,7 @@ class Deed(acting.Actor):
                ipath, ival, iown
             
             If argument 'inode' provided:
-               inode is assigned the item value which is a pathname string
+               inode is assigned the item's value which is a pathname string
             Else
                inode is derived from the Deed instance name
             
@@ -155,14 +162,36 @@ class Deed(acting.Actor):
             
             For each kw item (key, val)
                 key is the name of the associated instance attribute.
+                Extract ipath, ival, iown from val
                 
-                If ival not provided do not initialize share leave as is
+                Shares are initialized with mappings passed into share.create or
+                share.update. So to assign ival to share.value pass into share.create
+                or share.update a mapping of the form {'value': ival} whereas
+                passing in an empty mapping does nothing.
                 
-                If ival provided and is not a non-empty Mapping Then
-                   assign ival as value of share
-                   # This means there is no way to init a share.value to a non empty mapping
+                If ival not provided
+                     set ival to empty mapping which when passed to share.create
+                     will not change share.value
+                
+                Else ival provided
+                
+                    If ival is an empty Mapping Then
+                        assign a shallow copy of ival to share.value by passing
+                        in {value: ival (copy)} to share.create 
                    
-                Otherwise each item in ival is assigned as a field, value in the share 
+                    Else If ival is a non-string iterable and not a mapping
+                        assign a shallow copy of ival to share.value by passing
+                        in {value: ival (copy)} to share.create 
+                   
+                    Else If ival is a non-empty Mapping Then
+                        Each item in ival is assigned as a field, value pair in the share
+                        by passing ival directly into share.create
+                        This means there is no way to init a share.value to a non empty mapping
+                        It is possible to init a share.value to an empty mapping see below
+                    
+                    Else
+                        assign ival to share.value by by passing
+                        in {value: ival} to share.create 
 
                 Create share with pathname given by ipath
                     If ipath is provided
@@ -220,10 +249,17 @@ class Deed(acting.Actor):
                     ival = odict() # effectively will not change share
                 else:
                     ival = val['ival']
-                
-                if not (ival and isinstance(ival, Mapping)): #not non-empty mapping
-                    ival = odict(value=ival)
-                #else: #ival = ival
+                    
+                    if isinstance(ival, Mapping):
+                        if not ival: #empty mapping
+                            ival = odict(value=copy.copy(ival)) #make copy so each instance unique
+                        # otherwise don't change since ival is non-empty mapping
+                        
+                    elif isinstance(ival, NonStringIterable): # not mapping and NonStringIterable
+                        ival = odict(value=copy.copy(ival))
+                    
+                    else: 
+                        ival = odict(value=ival)                    
             
             elif isinstance(val, NonStringIterable): # non dict non string iterable
                 length = len(val)
@@ -241,13 +277,20 @@ class Deed(acting.Actor):
                     ival = odict() # effectively will not change share
                 else:
                     ival = val[1]
-                    if not (ival and isinstance(ival, Mapping)): #not non-empty mapping
+                    if isinstance(ival, Mapping):
+                        if not ival: #empty mapping
+                            ival = odict(value=copy.copy(ival)) #make copy so each instance unique
+                        # otherwise don't change since ival is non-empty mapping
+                        
+                    elif isinstance(ival, NonStringIterable): # not mapping and NonStringIterable
+                        ival = odict(value=copy.copy(ival))
+                    
+                    else: 
                         ival = odict(value=ival)
-                    #else:  #ival = ival
             
             else:
                 raise ValueError("Bad init kw arg '{0}'with Value '{1}'".format(key, val))
-                
+            
             
             if ipath:
                 if not ipath.startswith('.'): # full path is inode joined to ipath
