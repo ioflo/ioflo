@@ -197,7 +197,7 @@ class House(registering.StoriedRegistry):
         self.assignRegistries()
         
         if name in framing.Framer.Names:
-            msg = "CloneError: Framer '{0}' already exhists.".format(name)
+            msg = "CloneError: Framer '{0}' already exists.".format(name)
             raise excepting.CloneError(msg)
         
         clone = framing.Framer(name=name, store=self.store, period=0.0)
