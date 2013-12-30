@@ -21,11 +21,13 @@ def CreateInstances(store):
         
         init protocol:  inode  and (ipath, ival, iown)
     """
-    CloneFramer(name='cloneFramer', store=store).ioinit.update()
+    ClonerFramer(name='clonerFramer', store=store).ioinit.update(
+        suffix=('suffix', 0, True))
     
-    CloneFramer(name='framerClone', store=store).ioinit.update()
+    ClonerFramer(name='framerCloner', store=store).ioinit.update(
+        suffix=('suffix', 0, True))
     
-class CloneFramer(deeding.ParamDeed):
+class ClonerFramer(deeding.ParamDeed):
     """ CloneDeed creates a new aux framer as clone of given framer and adds
         it to the auxes of a given frame. Default is current frame.
         
@@ -42,13 +44,13 @@ class CloneFramer(deeding.ParamDeed):
     def __init__(self, **kw):
         """Initialize Instance """
         if 'preface' not in kw:
-            kw['preface'] = 'CloneFramer'
+            kw['preface'] = 'ClonerFramer'
 
         #call super class method
-        super(CloneFramer,self).__init__(**kw)
+        super(ClonerFramer,self).__init__(**kw)
     
-    def revertLinks(self, framer, name, frame, **kw):
-        """ Reverts links to name in support of framer cloning """
+    def revertLinks(self, framer, frame, **kw):
+        """ Reverts links to framer and frame in support of framer cloning """
         parms = {}
         
         if isinstance(framer, framing.Framer):
@@ -59,7 +61,7 @@ class CloneFramer(deeding.ParamDeed):
         
         return parms
            
-    def resolveLinks(self, framer, name, frame, **kw):
+    def resolveLinks(self, framer, frame, **kw):
         """ Resolves value (tasker) link that is passed in as parm
             resolved link is passed back to act to store in parms
             since framer may not be current framer at build time
@@ -67,19 +69,22 @@ class CloneFramer(deeding.ParamDeed):
         parms = {}
         parms['framer'] = framing.resolveFramer(framer, who=self.name)
         parms['frame'] = framing.resolveFrame(frame, who=self.name)
-
+        
         return parms
         
-    def action(self, framer, name, frame, **kw):
+    def action(self, framer, frame, name='', suffix=None, **kw):
         """ Clone framer onto new aux framer named name and assign to frame frame
-            
+            If name is empty then create name from framer.name + suffix counter
         """
+        if not name and suffix:
+            name = "{0}{1:d}".format(framer.name, suffix.value)
+            suffix.value += 1
+        
+        # if name is empty then a unique name will be created by the registry
         clone = self.store.house.cloneFramer(framer, name)
         frame.addAux(clone)
         
         return None    
-
-
 
 def Test():
     """Module Common self test
