@@ -7,7 +7,7 @@ import copy
 from collections import deque
 from itertools import izip
 
-
+from .odicting import odict
 from .globaling import *
 from . import excepting
 from . import registering
@@ -148,16 +148,17 @@ class Framer(tasking.Tasker):
         clone = Framer(name=name, store=self.store, period=0.0)
         console.profuse("     Cloning framer {0} to {1}\n".format(self.name, clone.name))
         clone.schedule = AUX
-        
         clone.first = self.first.name # resolve later
         clone.assignFrameRegistry()
-        for frame in self.frameNames.values():
-            frame.clone(framer=clone) #creates cloned frames in cloned framer registry
         
-        clone.revertLinks() # revert links to frames and framers to name strings
+        cloneds = odict([(self.name, clone.name)])
+        for frame in self.frameNames.values():
+            frame.clone(framer=clone, cloneds=cloneds) #creates cloned frames in cloned framer registry
+        
+        #clone.rerefShares(oldPath="", newPath="") 
         clone.resolveLinks() # resolve links in new
         clone.traceOutlines()
-        #clone.rerefShares(oldPath="", newPath="") 
+
         return clone
 
     def assignFrameRegistry(self):
@@ -229,20 +230,6 @@ class Framer(tasking.Tasker):
         
         for frame in Frame.Names.values(): #all frames in this framer's name space
             frame.rerefShares(oldPath, newPath)    
-
-    def revertLinks(self):
-        """ Revert links to name strings in support of framer cloning
-            This can be done prior to cloning a framer so the clone already
-            has the links reverted.
-        """
-        print "Reverting links for framer %s" % (self.name)
-        
-        # Revert first frame link
-        if isinstance(self.first, Frame):
-            self.first = self.first.name        
-        
-        for frame in Frame.Names.values(): #all frames in this framer's name space
-            frame.revertLinks()
 
     def resolveLinks(self):
         """Convert all the name strings for links to references to instance
@@ -756,45 +743,63 @@ class Frame(registering.StoriedRegistry):
 
         self.auxes = [] #list of auxilary framers for this frame
 
-    def clone(self, framer):
-        """ Return clone of self by creating new frame and by copying links, acts,
-            and auxes
-            Assumes that the Frame Registry is pointing to a clone of this Frame's
-            Framer so all new Frames will be in the cloned registry.
+    def clone(self, framer, cloneds):
+        """ Return clone of self by creating new frame in framer and by 
+            frame links, acts, and auxes
+            cloneds is dict with items each key is name of orignal framer and value
+                 is name of new framer clone
+            
+            Assumes that the Frame Registry is pointing to framer which is a clone
+            of this Frame's Framer so all new Frames will be in the cloned registry.
 
         """
         clone = Frame(  name=self.name,
                         store=self.store, 
                         framer=framer)
         console.profuse("     Cloning frame {0} into framer {1}\n".format(
-                               clone.name, framer.name))              
+                               clone.name, framer.name))
         
         if self.over:
-            clone.over = self.over
-        for under in self.unders:
-            clone.unders.append(under) 
+            if isinstance(self.over, Frame):
+                clone.over = self.over.name            
+            else:
+                clone.over = self.over 
         if self.next:
-            clone.next = self.next
-
-        for act in self.beacts:
-            clone.addBeact(act.clone()) 
-        for act in self.preacts:
-            clone.addPreact(act.clone())
-        for act in self.enacts:
-            clone.addEnact(act.clone())
-        for act in self.renacts:
-            clone.addRenact(act.clone())
-        for act in self.reacts:
-            clone.addReact(act.clone())
-        for act in self.exacts:
-            clone.addExact(act.clone())
-        for act in self.rexacts:
-            clone.addRexact(act.clone())
-
+            if isinstance(self.next, Frame):
+                clone.next = self.next.name            
+            else:
+                clone.next = self.next
+        
+        for under in self.unders:
+            if isinstance(under, Frame):
+                clone.unders.append(under.name)
+            else:
+                clone.unders.append(under)
+                
         for aux in self.auxes: # cloned frames of cloned framers should not have auxes
             msg = "CloneError: Frame {0} has aux {1} forbidden.".format(
                 self.name,  aux.name)
             raise excepting.CloneError(msg)
+        
+        # to fix this we need to first poplulate cloneds with all the cloned auxes
+        # and then we can clone the acts so that the parms get updated correctly
+
+        for act in self.beacts:
+            clone.addBeact(act.clone(cloneds)) 
+        for act in self.preacts:
+            clone.addPreact(act.clone(cloneds))
+        for act in self.enacts:
+            clone.addEnact(act.clone(cloneds))
+        for act in self.renacts:
+            clone.addRenact(act.clone(cloneds))
+        for act in self.reacts:
+            clone.addReact(act.clone(cloneds))
+        for act in self.exacts:
+            clone.addExact(act.clone(cloneds))
+        for act in self.rexacts:
+            clone.addRexact(act.clone(cloneds))
+
+        
         return clone
 
     def expose(self):
@@ -832,7 +837,6 @@ class Frame(registering.StoriedRegistry):
 
     under = property(fget = getUnder, fset = setUnder, doc = "Primary under frame")
 
-
     def detach(self):
         """detach self from .over. Fix under links in .over
 
@@ -841,7 +845,6 @@ class Frame(registering.StoriedRegistry):
             while (self in self.over.unders): #In case multiple copies remove all
                 self.over.unders.remove(self)
             self.over = None
-
 
     def attach(self, over):
         """attaches self to over frame if attaching would not create loop
@@ -872,7 +875,6 @@ class Frame(registering.StoriedRegistry):
             else:
                 frame = frame.over #keep going up outline
         return False #no loop
-
 
     def resolveNextLink(self):
         """Resolve next link
@@ -923,12 +925,6 @@ class Frame(registering.StoriedRegistry):
             under = over
             over = over.over #rise one level
             
-    def revertUnderLinks(self):
-        """ Revert under links in support of framer cloning """
-        for i, under in enumerate(self.unders):
-            if isinstance(under, Frame):
-                self.unders[i] = self.unders[i].name
-
     def resolveUnderLinks(self):
         """ Resolve under links """
         for i, under in enumerate(self.unders):
@@ -968,54 +964,7 @@ class Frame(registering.StoriedRegistry):
                 if not isinstance(framer, Framer):  #maker sure framer not tasker since tasker framer share registry
                     raise excepting.ResolveError("ResolveError: Bad framer name, tasker not framer", self.name, framer.name)
                 self.framer = framer #replace link name with link
-    
-    def rerefShares(self, oldPath, newPath):
-        """ Reref shares from oldPath to newPath in support of framer cloning.
-            This is meant for framer relative address shares in the cloned framer
-        """
-        print "Rerefing shares for frame %s from %s to %s" % (self.name, oldPath, newPath)
         
-            
-    
-    def revertLinks(self):
-        """ Revert links to name strings in support of framer cloning """
-        
-        console.profuse("Reverting links for frame {0} in framer {1}\n".format(
-            self.name, self.framer.name))
-
-        # framer link should be correct before cloning
-        
-        if isinstance(self.next, Frame):
-            self.next = self.next.name
-        
-        if isinstance(self.over, Frame):
-            self.over = self.over.name
-
-        self.revertUnderLinks()
-
-        for act in self.beacts:
-            act.revertLinks()
-
-        for act in self.enacts:
-            act.revertLinks()
-
-        for act in self.reacts:
-            act.revertLinks()
-
-        for act in self.preacts:
-            act.revertLinks()
-
-        for act in self.exacts:
-            act.revertLinks()
-
-        for act in self.rexacts:
-            act.revertLinks()
-
-        for act in self.renacts:
-            act.revertLinks()
-
-        # don't revert aux links need to clone the auxes instead
-
     def resolveLinks(self):
         """Resolve links where links are instance name strings assigned during building
            need to be converted to object references using instance name registry

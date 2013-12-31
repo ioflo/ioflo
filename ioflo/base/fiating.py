@@ -53,12 +53,25 @@ class Fiat(acting.Actor):
 
         super(Fiat,self).__init__(**kw)
 
-    def revertLinks(self, tasker, **kw):
-        """ Reverts links to name in support of framer cloning """
-        parms = {}
+    def cloneParms(self, parms, cloneds, tasker, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any parms that are acts, in this case the needs with clones.
+        """
+        parms = super(Fiat,self).cloneParms(parms, cloneds, **kw)
+        
+        tasker = parms.get('tasker')
         
         if isinstance(tasker, tasking.Tasker):
-            parms['tasker'] = tasker.name # revert to name     
+            if tasker.name in cloneds:
+                parms['tasker'] = cloneds[tasker.name]
+            else:
+                parms['tasker'] = tasker.name # revert to name
+        elif tasker: # assume namestring
+            if tasker in cloneds:
+                parms['tasker'] = cloneds[tasker]            
         
         return parms
            

@@ -49,13 +49,27 @@ class ClonerFramer(deeding.ParamDeed):
         #call super class method
         super(ClonerFramer,self).__init__(**kw)
     
-    def revertLinks(self, framer, frame, **kw):
-        """ Reverts links to framer and frame in support of framer cloning """
-        parms = {}
+    def cloneParms(self, parms, cloneds, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any parms that are acts, in this case the needs with clones.
+        """
+        parms = super(ClonerFramer,self).cloneParms(parms, cloneds, **kw)
+        
+        framer = parms.get('framer')
+        frame = parms.get('frame')
         
         if isinstance(framer, framing.Framer):
-            parms['framer'] = framer.name # revert to name
-            
+            if framer.name in cloneds:
+                parms['framer'] = cloneds[framer.name]
+            else:
+                parms['framer'] = framer.name # revert to name
+        elif framer: # assume namestring
+            if framer in cloneds:
+                parms['framer'] = cloneds[framer]
+
         if isinstance(frame, framing.Frame):
             parms['frame'] = frame.name # revert to name        
         

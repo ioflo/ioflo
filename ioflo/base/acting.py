@@ -66,39 +66,23 @@ class Act(object):
         if self.actor:
             self.actor.expose()
             
-    def clone(self):
-        """ Return clone of self in support of framer cloning"""
-        return Act(actor=self.actor.clone(), parms=copy.copy(self.parms))
-            
-    def rerefShares(self, oldPrefix, newPrefix):
-        """ Changes any parms that are share refs whose path starts with oldPrefix
-            To new ref whose path starts with newPrefix.
-            The rest of the path stays the same.
-            Create new share if needed.
-            Deep copy the contents of the share.
-            This is to support framer cloning so typically the path prefixes
-            are framer relative paths.
+    def clone(self, cloneds):
+        """ Return clone of self in support of framer cloning
+            cloneds is dict whose items keys are original framer names
+            and values are the cloned framer names
         """
-        parms = {}
-        for key, val in self.parms.items():
-            if isinstance(val, storing.Share):
-                if val.path.startswith(oldPath):
-                    newPath = val.path.replace(oldPrefix, newPrefix, 1)
-                    newShare = self.actor.store.create(newPath)
-                    stuff = {}
-                    for k, v in val.items():
-                        stuff[k] = copy.deepcopy(v)
-                    newShare.create(stuff)
-                    parms[key] = newShare                    
-
-        self.parms.update(parms)      
+        clone = Act(actor=self.actor.clone(), parms=copy.copy(self.parms))
+        clone.cloneParms(cloneds)
+        return clone
+    
+    def cloneParms(self, cloneds):
+        """ Fixup parms in actor for framer cloning.
+            cloneds is dict whose items keys are original framer names
+            and values are the cloned framer names
             
-    def revertLinks(self, *pa, **kwa):
-        """ Revert any links in associated parms for actors
-            Should be overridden if use arguments
         """
-        parms = self.actor.revertLinks(**self.parms)
-        self.parms.update(parms) 
+        parms = self.actor.cloneParms(parms=self.parms, cloneds=cloneds)
+        self.parms.update(parms)
 
     def resolveLinks(self, *pa, **kwa):
         """Resolve any links in associated parms for actors
@@ -182,12 +166,45 @@ class Actor(registering.StoriedRegistry):
             copy of instance
         """
         return self
-    
-    def revertLinks(self, **kw):
-        """ Reverts any links in parms for Actor
-            should be overridden by sub class
+       
+    def cloneParms(self, parms, cloneds, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any parms that are acts, in this case the needs with clones.
         """
-        return {} #empty parms    
+        parms = self.rerefShares(parms, cloneds)
+        return parms
+    
+    def rerefShares(self, parms, cloneds):
+        """ Returns parms fixed up for framer cloning.
+            cloneds is dict with items each key is name of original cloned framer
+                and value is names of the new clone
+            Generates oldPrefix and newPrefix from the original and new framer names
+            Replaces refs to shares whose path starts with oldPrefix
+                    with refs to new shares whose path starts with newPrefix.
+            The rest of the path stays the same.
+            Create new share if needed.
+            Deep copy the contents of the share.
+            This is to support framer cloning so typically the path prefixes
+            are framer relative paths.
+        """
+        for key, val in parms.items():
+            if isinstance(val, storing.Share):
+                for oldName, newName in cloneds.items():
+                    oldPrefix = "framer.{0}.".format(oldName)
+                    newPrefix = "framer.{0}.".format(newName)                
+                    if val.name.startswith(oldPrefix):
+                        newPath = val.name.replace(oldPrefix, newPrefix, 1)
+                        newShare = self.store.create(newPath)
+                        stuff = {}
+                        for k, v in val.items():
+                            stuff[k] = copy.deepcopy(v)
+                        newShare.create(stuff)
+                        parms[key] = newShare                    
+
+        return parms
     
     def resolveLinks(self, **kw):
         """ Resolves any links in parms for Actor
@@ -286,26 +303,33 @@ class Transiter(Interrupter):
     def expose(self):
         """      """
         console.terse("Transiter {0}\n".format(self.name))
-    
-    def revertLinks(self, needs, near, far, human, **kw):
-        """ Revert any links to string names to force reresolve of links.
-            This provides support for cloning framers. This assumes that the
-            Frame.Names registry is updated to that of the cloned framer so that
-            The reresolve will be to Frame of same name but different instance
-            in the cloned Framer's Frames.Names registry.
+        
+    def cloneParms(self, parms, cloneds, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any parms that are acts, in this case the needs with clones.
         """
-        parms = {}
+        parms = super(Transiter,self).cloneParms(parms, cloneds, **kw)
+        
+        needs = parms.get('needs')
+        near = parms.get('near')
+        far =  parms.get('far')
+
+        if needs:
+            clones = []
+            for act in needs:
+                clones.append(act.clone())
+            parms['needs'] = clones
         
         if isinstance(near, framing.Frame):
             parms['near'] = near.name # revert to name
         
         if isinstance(far, framing.Frame):
-            parms['far'] = far.name # revert to name
+            parms['far'] = far.name # revert to name        
         
-        for act in needs:
-            act.revertLinks()
-        
-        return parms
+        return parms    
         
     def resolveLinks(self, needs, near, far, human, **kw):
         """Resolve any links in far and in associated parms for actors"""
@@ -428,24 +452,37 @@ class Suspender(Interrupter):
 
         aux.exitAll() # also sets .done = True
         aux.main = None
-    
-    def revertLinks(self, needs, main, aux, human, **kw):
-        """ Revert any links to string names to force reresolve of links.
-            This provides support for cloning framers. This assumes that the
-            Frame.Names registry is updated to that of the cloned framer so that
-            The reresolve will be to Frame of same name but different instance
-            in the cloned Framer's Frames.Names registry.
+
+    def cloneParms(self, parms, cloneds, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any parms that are acts, in this case the needs with clones.
         """
-        parms = {}
+        parms = super(Suspender,self).cloneParms(parms, cloneds, **kw)
+        
+        needs = parms.get('needs')
+        main = parms.get('main')
+        aux = parms.get('aux')
+        
+        if needs:
+            clones = []
+            for act in needs:
+                clones.append(act.clone())
+            parms['needs'] = clones
         
         if isinstance(main, framing.Frame):
             parms['main'] = main.name # revert to name
-        
+               
         if isinstance(aux, framing.Framer):
-            parms['aux'] = aux.name # revert to name
-        
-        for act in needs:
-            act.revertLinks()
+            if aux.name in cloneds:
+                parms['aux'] = cloneds[aux.name]
+            else:
+                parms['aux'] = aux.name # revert to name
+        elif aux: # assume namestring
+            if aux in cloneds:
+                parms['aux'] = cloneds[aux]
         
         return parms
 
@@ -517,18 +554,30 @@ class Deactivator(Actor):
         """   """
         console.terse("Deactivator {0}\n".format(self.name))
         
-    def revertLinks(self, actor, aux, **kw):
-        """ Revert any links to string names to force reresolve of links.
-            This provides support for cloning framers. This assumes that the
-            Frame.Names registry is updated to that of the cloned framer so that
-            The reresolve will be to Frame of same name but different instance
-            in the cloned Framer's Frames.Names registry.
+    def cloneParms(self, parms, cloneds, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any parms that are acts, in this case the needs with clones.
         """
-        parms = {}
+        parms = super(Deactivator,self).cloneParms(parms, cloneds, **kw)
+        
+        actor = parms.get('actor')
+        aux = parms.get('aux')
         
         if isinstance(aux, framing.Framer):
             parms['aux'] = aux.name # revert to name
         
+        if isinstance(aux, framing.Framer):
+            if aux.name in cloneds:
+                parms['aux'] = cloneds[aux.name]
+            else:
+                parms['aux'] = aux.name # revert to name
+        elif aux: # assume namestring
+            if aux in cloneds:
+                parms['aux'] = cloneds[aux]        
+
         return parms
               
     def resolveLinks(self, actor, aux, **kw):

@@ -366,6 +366,17 @@ class Share(object):
         itervalues()
         keys()
         values()
+        
+        instance attributes:
+            .name = holds unique store path entry name of share '.' notation
+            .store = data store holding share
+            .stamp = time stamp of this share
+         
+            ._owner used by owner property
+            ._data used by data property and also by private accessor methods
+            ._truth used by truth property
+            ._unit used by unit property
+   
 
         properties are used so that time stamps etc are updated properly for logging
  
@@ -378,23 +389,7 @@ class Share(object):
                 truth should not be updated unless value/data is, they are coupled
                 thus log if changed on truth also uses last value
             .unit property hold units for fields
-           
- 
-        inherited instance attributes: 
-            .name = holds unique store path entry name of share '.' notation
-            .store = data store holding share
- 
-        instance attributes:
-            .stamp = time stamp of this share
-         
-            ._owner used by owner property
-            ._data used by data property and also by private accessor methods
-            ._truth used by truth property
-            ._unit used by unit property
-   
-
-
-          
+            
 
     """
     def __init__(self, name = '',store = None, 

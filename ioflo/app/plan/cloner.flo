@@ -20,7 +20,8 @@ frame clone
    
 frame run_clone
    recur
-       print run_clone
+      print run_clone
+   
    go next if recurred >= 4
    
 frame clone_again
