@@ -130,26 +130,35 @@ class Framer(tasking.Tasker):
 
         self.frameNames = {} #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
-
-    def clone(self, framer):
-        """ Clone framer onto self by copying frames from framer.
-            Also resolves links
-            Assumes self is fresh instance
-
+    
+    def clone(self, name=""):
+        """ Return clone of self with given name
+            If name empty framer register will assign a unique one
+            Assumes that Framer Registry as been assigned to self.store.house
+            
         """
-        self.assignFrameRegistry()
-        self.first = framer.first.name # resolve later
-
-        for frame in framer.frameNames.values():
-            clone = Frame(  name = frame.name,
-                            store = self.store, 
-                            framer = self)
-            console.profuse("     Cloning frame {0}\n".format(clone.name))              
-            clone.clone(frame)
+        if name and not REO_IdentPub.match(name):
+            msg = "CloneError: Invalid framer name '{0}'.".format(name)
+            raise excepting.CloneError(msg)  
         
-        self.revertLinks()
-        self.resolveLinks()
-        self.traceOutlines()
+        if name in Framer.Names:
+            msg = "CloneError: Framer '{0}' already exists.".format(name)
+            raise excepting.CloneError(msg)
+                
+        clone = Framer(name=name, store=self.store, period=0.0)
+        console.profuse("     Cloning framer {0} to {1}\n".format(self.name, clone.name))
+        clone.schedule = AUX
+        
+        clone.first = self.first.name # resolve later
+        clone.assignFrameRegistry()
+        for frame in self.frameNames.values():
+            frame.clone(framer=clone) #creates cloned frames in cloned framer registry
+        
+        clone.revertLinks() # revert links to frames and framers to name strings
+        clone.resolveLinks() # resolve links in new
+        clone.traceOutlines()
+        #clone.rerefShares(oldPath="", newPath="") 
+        return clone
 
     def assignFrameRegistry(self):
         """Point Frame class name registry dict and counter to .frameNames
@@ -211,6 +220,15 @@ class Framer(tasking.Tasker):
         console.profuse("     Updating {0} from {1:d} to {2:d}\n".format(
             self.recurredShr.name, self.recurredShr.value, self.recurred))
         self.recurredShr.update(value = self.recurred)
+
+    def rerefShares(self, oldPath, newPath):
+        """ Reref shares from oldPath to newPath in support of framer cloning.
+            This is meant for framer relative address shares in the cloned framer
+        """
+        print "Rerefing shares for framer %s from %s to %s" % (self.name, oldPath, newPath)
+        
+        for frame in Frame.Names.values(): #all frames in this framer's name space
+            frame.rerefShares(oldPath, newPath)    
 
     def revertLinks(self):
         """ Revert links to name strings in support of framer cloning
@@ -738,40 +756,46 @@ class Frame(registering.StoriedRegistry):
 
         self.auxes = [] #list of auxilary framers for this frame
 
-    def clone(self, frame):
-        """ Clone frame onto self by copying links, acts, and auxes.
-            Assumes that self is a fresh instance
-            Framer 
+    def clone(self, framer):
+        """ Return clone of self by creating new frame and by copying links, acts,
+            and auxes
+            Assumes that the Frame Registry is pointing to a clone of this Frame's
+            Framer so all new Frames will be in the cloned registry.
 
         """
-        # self.framer should be already set to new framer before we clone
+        clone = Frame(  name=self.name,
+                        store=self.store, 
+                        framer=framer)
+        console.profuse("     Cloning frame {0} into framer {1}\n".format(
+                               clone.name, framer.name))              
         
-        if frame.over:
-            self.over = frame.over
-        for under in frame.unders:
-            self.unders.append(under) 
-        if frame.next:
-            self.next = frame.next
+        if self.over:
+            clone.over = self.over
+        for under in self.unders:
+            clone.unders.append(under) 
+        if self.next:
+            clone.next = self.next
 
-        for act in frame.beacts:
-            self.addBeact(act) 
-        for act in frame.preacts:
-            self.addPreact(act)
-        for act in frame.enacts:
-            self.addEnact(act)
-        for act in frame.renacts:
-            self.addRenact(act)
-        for act in frame.reacts:
-            self.addReact(act)
-        for act in frame.exacts:
-            self.addExact(act)
-        for act in frame.rexacts:
-            self.addRexact(act)
+        for act in self.beacts:
+            clone.addBeact(act.clone()) 
+        for act in self.preacts:
+            clone.addPreact(act.clone())
+        for act in self.enacts:
+            clone.addEnact(act.clone())
+        for act in self.renacts:
+            clone.addRenact(act.clone())
+        for act in self.reacts:
+            clone.addReact(act.clone())
+        for act in self.exacts:
+            clone.addExact(act.clone())
+        for act in self.rexacts:
+            clone.addRexact(act.clone())
 
         for aux in self.auxes: # cloned frames of cloned framers should not have auxes
             msg = "CloneError: Frame {0} has aux {1} forbidden.".format(
                 self.name,  aux.name)
             raise excepting.CloneError(msg)
+        return clone
 
     def expose(self):
         """Prints out instance variables.
@@ -945,6 +969,14 @@ class Frame(registering.StoriedRegistry):
                     raise excepting.ResolveError("ResolveError: Bad framer name, tasker not framer", self.name, framer.name)
                 self.framer = framer #replace link name with link
     
+    def rerefShares(self, oldPath, newPath):
+        """ Reref shares from oldPath to newPath in support of framer cloning.
+            This is meant for framer relative address shares in the cloned framer
+        """
+        print "Rerefing shares for frame %s from %s to %s" % (self.name, oldPath, newPath)
+        
+            
+    
     def revertLinks(self):
         """ Revert links to name strings in support of framer cloning """
         
@@ -965,7 +997,7 @@ class Frame(registering.StoriedRegistry):
             act.revertLinks()
 
         for act in self.enacts:
-            act.resolveLinks()
+            act.revertLinks()
 
         for act in self.reacts:
             act.revertLinks()
@@ -982,7 +1014,7 @@ class Frame(registering.StoriedRegistry):
         for act in self.renacts:
             act.revertLinks()
 
-        # don't revert aux links need to clone the auxex instead
+        # don't revert aux links need to clone the auxes instead
 
     def resolveLinks(self):
         """Resolve links where links are instance name strings assigned during building
@@ -1009,7 +1041,6 @@ class Frame(registering.StoriedRegistry):
 
         for act in self.preacts:
             act.resolveLinks()
-            #act.resolveLinks(frame = self) #pass in frame
 
         for act in self.exacts:
             act.resolveLinks()

@@ -43,10 +43,16 @@ framer cloned be aux first clone1
 
 frame clone1
    print clone1
+   put 0 into counter of framer
+   inc accumulator of framer with 1
+   put true into test of frame
+   put true into .test
    go next 
    
 frame clone2
    print clone2
+   inc counter of framer with 1
+   inc accumulator of framer with 1
    go next
 
 frame clone3

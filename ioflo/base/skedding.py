@@ -305,6 +305,11 @@ class Skedder(object):
                     print "       Tasker '%s' generator already exited" % tasker.name
 
                 #tasker.runner.close() #kill generator
+        
+        for house in self.houses:
+            #show store hierarchy
+            console.concise( "\nData Store for {0}\n".format(house.name))
+            house.store.expose(values=(console._verbosity >= console.Wordage.verbose))             
 
 
 

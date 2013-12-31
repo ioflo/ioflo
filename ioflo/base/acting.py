@@ -66,6 +66,10 @@ class Act(object):
         if self.actor:
             self.actor.expose()
             
+    def clone(self):
+        """ Return clone of self in support of framer cloning"""
+        return Act(actor=self.actor.clone(), parms=copy.copy(self.parms))
+            
     def rerefShares(self, oldPrefix, newPrefix):
         """ Changes any parms that are share refs whose path starts with oldPrefix
             To new ref whose path starts with newPrefix.
@@ -170,6 +174,14 @@ class Actor(registering.StoriedRegistry):
     def expose(self):
         """Show Actor."""
         console.terse("Actor {0}".format(self.name))
+        
+    def clone(self):
+        """ Clone self in support of framer cloning.
+            Actors that are fully parametrized work as singletons so just return
+            self. Non fully parametrized actor classes need to override to make
+            copy of instance
+        """
+        return self
     
     def revertLinks(self, **kw):
         """ Reverts any links in parms for Actor

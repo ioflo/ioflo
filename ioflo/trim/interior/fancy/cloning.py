@@ -22,10 +22,10 @@ def CreateInstances(store):
         init protocol:  inode  and (ipath, ival, iown)
     """
     ClonerFramer(name='clonerFramer', store=store).ioinit.update(
-        suffix=('suffix', 0, True))
+        index=('index', 0, True))
     
     ClonerFramer(name='framerCloner', store=store).ioinit.update(
-        suffix=('suffix', 0, True))
+        index=('index', 0, True))
     
 class ClonerFramer(deeding.ParamDeed):
     """ CloneDeed creates a new aux framer as clone of given framer and adds
@@ -72,13 +72,13 @@ class ClonerFramer(deeding.ParamDeed):
         
         return parms
         
-    def action(self, framer, frame, name='', suffix=None, **kw):
+    def action(self, framer, frame, name='', index=None, **kw):
         """ Clone framer onto new aux framer named name and assign to frame frame
             If name is empty then create name from framer.name + suffix counter
         """
-        if not name and suffix:
-            name = "{0}{1:d}".format(framer.name, suffix.value)
-            suffix.value += 1
+        if not name and index:
+            name = "{0}_{1:d}".format(framer.name, index.value)
+            index.value += 1
         
         # if name is empty then a unique name will be created by the registry
         clone = self.store.house.cloneFramer(framer, name)
