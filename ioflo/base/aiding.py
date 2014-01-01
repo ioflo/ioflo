@@ -484,7 +484,7 @@ just = Just #alias
 from abc import ABCMeta,  abstractmethod
 class NonStringIterable:
     """ Check for iterable that is not a string
-        Works in python 2.6 to 3.x with isinstance(x,NonStringIterable)
+        Works in python 2.6 to 3.x with isinstance(x, NonStringIterable)
         
     """
     __metaclass__ = ABCMeta

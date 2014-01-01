@@ -3,9 +3,14 @@ CHANGE LOG
 -------------------
 
 -----------
-20131230
+20140102
 ---------
-Support for framer cloning
+Support for framer cloning with parametric deeds
+
+Support for frame and framer relative inodes in deeds in with relinitio
+
+Still need to support clone aux framers in cloned framer
+
 
 
 

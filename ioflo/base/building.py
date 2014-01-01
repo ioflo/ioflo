@@ -2526,6 +2526,9 @@ class Builder(object):
             actor = type(kinder)(name=name, store=self.currentStore) 
             actor.ioinit.update(kinder.ioinit) # copy ioinit defaults from kinder
             init = actor.preinitio(**init) # copy and update defaults with init
+            init['inode'] = actor.relinitio( self.currentFramer,
+                                             self.currentFrame,
+                                             init.get('inode', ''))
             iois = actor.initio(**init) # empty if not ._parametric
 
         else: # Use an existing instance
@@ -2542,6 +2545,9 @@ class Builder(object):
             actor = deeding.Deed.Names[name] #fetch existing instance
             kind = actor.__class__.__name__
             init = actor.preinitio(**init) # copy and update defaults with init
+            init['inode'] = actor.relinitio( self.currentFramer,
+                                             self.currentFrame,
+                                             init.get('inode', ''))
             iois = actor.initio(**init) # empty if not ._parametric
         
         if iois:

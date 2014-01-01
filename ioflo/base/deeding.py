@@ -71,7 +71,6 @@ class Deed(acting.Actor):
         self.ioinit = ioinit or odict() #dict with default ioinit arguments
         self._iois = odict() # attribute names inited with .initio if any
 
-        
     def preinitio(self, **kw):
         """ Parse time Reinit
             Enables initializing instance at parse time from FloScript options
@@ -105,20 +104,104 @@ class Deed(acting.Actor):
         ioinit.update(kw)
         return ioinit
     
-    def initio(self, inode="", **kw):
+    def relinitio(self, framer, frame, inode=""):
+        """ Return realtive inode ipath if inode's irel is given
+            with frame or framer relative path string
+            This is called by the builder to enable frame or framer relative inodes
+            
+            There are the following 3 formats for the value of the inode argument:
+            
+            1- string
+               ipath = pathnamestring
+            
+            2- dict of key: values (mapping)
+            
+                {
+                    ipath: "pathnamestring",
+                    irel: relativity, "frame" or "framer" 
+                }
+            
+            2- tuple or list of values (non mapping non string iterable)
+            
+               (ipath, irel) or [ipath, irel]
+               ipath = pathnamestring
+               irel = relativity,  "frame" or "framer" 
+            
+            
+            In all cases, two init values are produced, these are:
+                ipath, irel
+            
+            When specifying inode in the associated ioinit dict the value of irel is
+            either "frame" or "framer". This method will subsitute correspondingly
+            the full relative prefix for the associated Frame or Framer and return it.
+            
+            For inode, the ipath value is the pathname string of the share node
+                where shares associated with the Deed instance may be placed.
+                
+            If the inode ipath is empty then the default value for ipath
+              will be created from the instance name where uppercase letters
+              indicate intermediate nodes.
+              
+            When irel in ioinit is "frame" then the full inode ipath will be frame relative
+                (The frame in the framer where the Deed appears) and the passed
+                in value of irel will be  "framer.framername.frame.framername"
+            
+            When irel in ioinit is "framer" the the full inode ipath will be framer relative
+                 (the framer where the Deed appears)  and the passed in value of irel
+                 will be "framer.framername"
+                     
+                
+            Examples:
+                If the inode argument is ("test.detail", 'frame')
+                Then the inode ipath would be "framer.framername.frame.framename.test.detail"
+                     
+                If the inode argument is "" and the Deed instance is named 'thingGoneWrong' 
+                Then the inode ipath would be "thing.gone.wrong".
+            
+                If the inode argument value is ("", "framer")
+                Then the inode ipath would be  "framer.framername.thing.gone.wrong"
+            
+        """
+        if isinstance(inode, basestring):
+            ipath = inode
+            irel = None
+            
+        elif isinstance(inode, Mapping): # dictionary
+            ipath = inode.get('ipath')
+            irel = inode.get('irel')                
+        
+        elif isinstance(inode, NonStringIterable): # non dict and non string iterable
+            ipath, irel = just(2, inode)
+                
+        else:
+            raise ValueError("Bad inode arg '{0}'".format(inode))
+        
+        if not ipath:
+            inode = nameToPath(self.name)
+        
+        if irel:
+            if irel == "frame":
+                ipath = '.'.join(['framer', framer.name, 'frame', frame.name, ipath.lstrip('.')])
+            elif irel == "framer":
+                ipath = '.'.join(['framer', framer.name, ipath.lstrip('.')])
+            else:
+                raise ValueError("Bad irel in inode arg '{0}'".format(inode))
+        
+        return ipath
+            
+    def initio(self, inode, **kw):
         """ Intialize and hookup ioflo shares from node pathname inode and kw arguments.
             This implements a generic Deed interface protocol for associating the
             io data flow shares to the Deed.
             
-            The 'inode' argument is a pathname string of the share node for the instance
-            where associated shares may be placed. If inode is empty then the default
-            value for inode will be created from the instance name where uppercase
-            letters indicate intermediate nodes.
+            inode is the computed pathname string of the share node where shares associated
+            with the Deed instance may be placed for use by the other kw arguments.
+            inode is computed by relinitio to allow for frame and framer relative inodes
             
-            For example an Deed instance named 'thingGoneWrong' would have a default
-            inode of "thing.gone.wrong".
+            For the syntax of specifying inode in the ioinit dict see the docstring
+            for relinitio
             
-            The values of other items in the **kw argument may be either strings,
+            The values of the items in the **kw argument may be either strings,
             non-string iterables such as list or tuple, or named iterables such as
             namedtuple or dicts.
             
@@ -153,12 +236,6 @@ class Deed(acting.Actor):
             The following rules are applied when given the values of
                ipath, ival, iown
             
-            If argument 'inode' provided:
-               inode is assigned the item's value which is a pathname string
-            Else
-               inode is derived from the Deed instance name
-            
-            Assign .inode attribute with value of inode node
             
             For each kw item (key, val)
                 key is the name of the associated instance attribute.
@@ -217,8 +294,8 @@ class Deed(acting.Actor):
                 
 
         """
-        if not inode:
-            inode = nameToPath(self.name)
+        if not isinstance(inode, basestring):
+            raise ValueError("Nonstring inode arg '{0}'".format(inode))           
         
         _parametric = hasattr(self, "_parametric")
         iois = odict()
@@ -295,20 +372,17 @@ class Deed(acting.Actor):
             if ipath:
                 if not ipath.startswith('.'): # full path is inode joined to ipath
                     ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
-                
-                if ipath.endswith('.'): #init a node not share not in iflos or oflos
-                    ipath = ipath.rstrip('.') # remove trailing dot
-                    setattr(self, key, self.store.createNode(ipath))
-                    continue
-                    
             else:
-                ipath = '.'.join(inode, key)
+                ipath = '.'.join(inode.rstrip('.'), key)
             
-            ioi = self.store.create(ipath)
-            if not iown:
-                ioi.create(ival)
+            if ipath.endswith('.'): #init a node not share ignore ival
+                ioi = self.store.createNode(ipath.rstrip('.'))
             else:
-                ioi.update(ival)           
+                ioi = self.store.create(ipath)
+                if not iown:
+                    ioi.create(ival)
+                else:
+                    ioi.update(ival)           
             
             if _parametric:
                 iois[key] = ioi
