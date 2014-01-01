@@ -66,22 +66,22 @@ class Act(object):
         if self.actor:
             self.actor.expose()
             
-    def clone(self, cloneds):
+    def clone(self, clones):
         """ Return clone of self in support of framer cloning
-            cloneds is dict whose items keys are original framer names
-            and values are the cloned framer names
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
         """
         clone = Act(actor=self.actor.clone(), parms=copy.copy(self.parms))
-        clone.cloneParms(cloneds)
+        clone.cloneParms(clones)
         return clone
     
-    def cloneParms(self, cloneds):
+    def cloneParms(self, clones):
         """ Fixup parms in actor for framer cloning.
-            cloneds is dict whose items keys are original framer names
-            and values are the cloned framer names
+            clones is dict whose items keys are original framer names
+            and values are are duples of (original,clone) framer references
             
         """
-        parms = self.actor.cloneParms(parms=self.parms, cloneds=cloneds)
+        parms = self.actor.cloneParms(parms=self.parms, clones=clones)
         self.parms.update(parms)
 
     def resolveLinks(self, *pa, **kwa):
@@ -167,20 +167,24 @@ class Actor(registering.StoriedRegistry):
         """
         return self
        
-    def cloneParms(self, parms, cloneds, **kw):
-        """ Returns parms fixed up for framing cloning. This includes:
+    def cloneParms(self, parms, clones, **kw):
+        """ Returns parms fixed up for framer cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts, in this case the needs with clones.
+            
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
         """
-        parms = self.rerefShares(parms, cloneds)
+        parms = self.rerefShares(parms, clones)
         return parms
     
-    def rerefShares(self, parms, cloneds):
+    def rerefShares(self, parms, clones):
         """ Returns parms fixed up for framer cloning.
-            cloneds is dict with items each key is name of original cloned framer
-                and value is names of the new clone
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
+            
             Generates oldPrefix and newPrefix from the original and new framer names
             Replaces refs to shares whose path starts with oldPrefix
                     with refs to new shares whose path starts with newPrefix.
@@ -192,9 +196,9 @@ class Actor(registering.StoriedRegistry):
         """
         for key, val in parms.items():
             if isinstance(val, storing.Share):
-                for oldName, newName in cloneds.items():
-                    oldPrefix = "framer.{0}.".format(oldName)
-                    newPrefix = "framer.{0}.".format(newName)                
+                for original, clone in clones.values():
+                    oldPrefix = "framer.{0}.".format(original.name)
+                    newPrefix = "framer.{0}.".format(clone.name)                
                     if val.name.startswith(oldPrefix):
                         newPath = val.name.replace(oldPrefix, newPrefix, 1)
                         newShare = self.store.create(newPath)
@@ -304,24 +308,27 @@ class Transiter(Interrupter):
         """      """
         console.terse("Transiter {0}\n".format(self.name))
         
-    def cloneParms(self, parms, cloneds, **kw):
+    def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts, in this case the needs with clones.
+            
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
         """
-        parms = super(Transiter,self).cloneParms(parms, cloneds, **kw)
+        parms = super(Transiter,self).cloneParms(parms, clones, **kw)
         
         needs = parms.get('needs')
         near = parms.get('near')
         far =  parms.get('far')
 
         if needs:
-            clones = []
+            needClones = []
             for act in needs:
-                clones.append(act.clone())
-            parms['needs'] = clones
+                needClones.append(act.clone())
+            parms['needs'] = needClones
         
         if isinstance(near, framing.Frame):
             parms['near'] = near.name # revert to name
@@ -453,36 +460,39 @@ class Suspender(Interrupter):
         aux.exitAll() # also sets .done = True
         aux.main = None
 
-    def cloneParms(self, parms, cloneds, **kw):
+    def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from cloneds
+            Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts, in this case the needs with clones.
+            
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
         """
-        parms = super(Suspender,self).cloneParms(parms, cloneds, **kw)
+        parms = super(Suspender,self).cloneParms(parms, clones, **kw)
         
         needs = parms.get('needs')
         main = parms.get('main')
         aux = parms.get('aux')
         
         if needs:
-            clones = []
+            needClones = []
             for act in needs:
-                clones.append(act.clone())
-            parms['needs'] = clones
+                needClones.append(act.clone())
+            parms['needs'] = needClones
         
         if isinstance(main, framing.Frame):
             parms['main'] = main.name # revert to name
                
         if isinstance(aux, framing.Framer):
-            if aux.name in cloneds:
-                parms['aux'] = cloneds[aux.name]
+            if aux.name in clones:
+                parms['aux'] = clones[aux.name][1].name #change to clone name
             else:
                 parms['aux'] = aux.name # revert to name
         elif aux: # assume namestring
-            if aux in cloneds:
-                parms['aux'] = cloneds[aux]
+            if aux in clones:
+                parms['aux'] = clones[aux][1].name # change to clone name
         
         return parms
 
@@ -554,14 +564,17 @@ class Deactivator(Actor):
         """   """
         console.terse("Deactivator {0}\n".format(self.name))
         
-    def cloneParms(self, parms, cloneds, **kw):
+    def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from cloneds
-            Replacing any parms that are acts, in this case the needs with clones.
+            Replacing any cloned framer links with the cloned name strings from clones
+            Replacing any parms that are acts with clones.
+            
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
         """
-        parms = super(Deactivator,self).cloneParms(parms, cloneds, **kw)
+        parms = super(Deactivator,self).cloneParms(parms, clones, **kw)
         
         actor = parms.get('actor')
         aux = parms.get('aux')
@@ -570,13 +583,13 @@ class Deactivator(Actor):
             parms['aux'] = aux.name # revert to name
         
         if isinstance(aux, framing.Framer):
-            if aux.name in cloneds:
-                parms['aux'] = cloneds[aux.name]
+            if aux.name in clones:
+                parms['aux'] = clones[aux.name][1].name
             else:
                 parms['aux'] = aux.name # revert to name
         elif aux: # assume namestring
-            if aux in cloneds:
-                parms['aux'] = cloneds[aux]        
+            if aux in clones:
+                parms['aux'] = clones[aux][1].name        
 
         return parms
               

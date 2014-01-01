@@ -131,7 +131,7 @@ class Framer(tasking.Tasker):
         self.frameNames = {} #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
     
-    def clone(self, index):
+    def clone(self, index, clones):
         """ Return clone of self with name derived from index
             Assumes that Framer Registry as been assigned to self.store.house
             
@@ -150,17 +150,23 @@ class Framer(tasking.Tasker):
         console.profuse("     Cloning framer {0} to {1}\n".format(self.name, clone.name))
         clone.schedule = AUX
         clone.first = self.first.name # resolve later
-        clone.assignFrameRegistry()
+        clones[self.name] = (self, clone)
         
-        cloneds = odict([(self.name, clone.name)])
         for frame in self.frameNames.values():
-            frame.clone(framer=clone, cloneds=cloneds) #creates cloned frames in cloned framer registry
-        
-        clone.resolveLinks() # resolve links in new
-        clone.traceOutlines()
+            for aux in frame.auxes:
+                aux.clone(index, clones) # changes clones in place
 
         return clone
 
+    def cloneFrames(self, clone, clones):
+        """ Return clone of self with name derived from index
+            Assumes that Framer Registry as been assigned to self.store.house
+            
+        """
+        clone.assignFrameRegistry()
+        for frame in self.frameNames.values():
+            frame.clone(framer=clone, clones=clones) #creates cloned frames in cloned framer registry
+        
     def assignFrameRegistry(self):
         """Point Frame class name registry dict and counter to .frameNames
            and .frameCounter.
@@ -734,11 +740,11 @@ class Frame(registering.StoriedRegistry):
 
         self.auxes = [] #list of auxilary framers for this frame
 
-    def clone(self, framer, cloneds):
+    def clone(self, framer, clones):
         """ Return clone of self by creating new frame in framer and by 
             frame links, acts, and auxes
-            cloneds is dict with items each key is name of orignal framer and value
-                 is name of new framer clone
+            clones is dict with items each key is name of orignal framer and value
+                 is duple of (original, clone) framer references
             
             Assumes that the Frame Registry is pointing to framer which is a clone
             of this Frame's Framer so all new Frames will be in the cloned registry.
@@ -767,28 +773,28 @@ class Frame(registering.StoriedRegistry):
             else:
                 clone.unders.append(under)
                 
-        for aux in self.auxes: # cloned frames of cloned framers should not have auxes
-            msg = "CloneError: Frame {0} has aux {1} forbidden.".format(
-                self.name,  aux.name)
-            raise excepting.CloneError(msg)
-        
-        # to fix this we need to first poplulate cloneds with all the cloned auxes
-        # and then we can clone the acts so that the parms get updated correctly
-
+        for i, aux in enumerate(self.auxes): #replace each aux with its clone name
+            if isinstance(aux, Framer):
+                if aux.name in clones:
+                    self.auxes[i] = clones[aux.name][1].name                
+            else: # assume namestring
+                if aux in clones:
+                    self.auxes[i] = clones[aux][1].name
+            
         for act in self.beacts:
-            clone.addBeact(act.clone(cloneds)) 
+            clone.addBeact(act.clone(clones)) 
         for act in self.preacts:
-            clone.addPreact(act.clone(cloneds))
+            clone.addPreact(act.clone(clones))
         for act in self.enacts:
-            clone.addEnact(act.clone(cloneds))
+            clone.addEnact(act.clone(clones))
         for act in self.renacts:
-            clone.addRenact(act.clone(cloneds))
+            clone.addRenact(act.clone(clones))
         for act in self.reacts:
-            clone.addReact(act.clone(cloneds))
+            clone.addReact(act.clone(clones))
         for act in self.exacts:
-            clone.addExact(act.clone(cloneds))
+            clone.addExact(act.clone(clones))
         for act in self.rexacts:
-            clone.addRexact(act.clone(cloneds))
+            clone.addRexact(act.clone(clones))
 
         
         return clone

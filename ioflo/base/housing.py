@@ -188,17 +188,21 @@ class House(registering.StoriedRegistry):
                 as aux framer and return
         """
         self.assignRegistries()
-
+        clones = odict() # key original.name : (original, clone)
+        clonee = framer.clone(index=index, clones=clones) #changes clones in place
+            
+        for original, clone in clones.values(): #values are tuples
+            original.cloneFrames(clone, clones)
+            clone.resolveLinks() # resolve links in clone
+            clone.traceOutlines()  # traceoutlines in clone          
+            self.taskers.append(clone)
+            self.framers.append(clone)
+            self.auxes.append(clone)
         
-        clone = framer.clone(index=index)
-        self.taskers.append(clone)
-        self.framers.append(clone)
-        self.auxes.append(clone)
+            console.profuse("     Cloned framer {0} to house {1}\n".format(
+                clone.name, self.name))
         
-        console.profuse("     Cloned framer {0} to house {1}\n".format(
-            clone.name, self.name))
-        
-        return clone        
+        return clonee # return primary clone of framer        
 
 def Test():
     """Module Common self test
