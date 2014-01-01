@@ -131,12 +131,13 @@ class Framer(tasking.Tasker):
         self.frameNames = {} #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
     
-    def clone(self, name=""):
-        """ Return clone of self with given name
-            If name empty framer register will assign a unique one
+    def clone(self, index):
+        """ Return clone of self with name derived from index
             Assumes that Framer Registry as been assigned to self.store.house
             
         """
+        name = "{0}_{1:d}".format(self.name, index)
+        
         if name and not REO_IdentPub.match(name):
             msg = "CloneError: Invalid framer name '{0}'.".format(name)
             raise excepting.CloneError(msg)  
@@ -155,7 +156,6 @@ class Framer(tasking.Tasker):
         for frame in self.frameNames.values():
             frame.clone(framer=clone, cloneds=cloneds) #creates cloned frames in cloned framer registry
         
-        #clone.rerefShares(oldPath="", newPath="") 
         clone.resolveLinks() # resolve links in new
         clone.traceOutlines()
 
@@ -221,15 +221,6 @@ class Framer(tasking.Tasker):
         console.profuse("     Updating {0} from {1:d} to {2:d}\n".format(
             self.recurredShr.name, self.recurredShr.value, self.recurred))
         self.recurredShr.update(value = self.recurred)
-
-    def rerefShares(self, oldPath, newPath):
-        """ Reref shares from oldPath to newPath in support of framer cloning.
-            This is meant for framer relative address shares in the cloned framer
-        """
-        print "Rerefing shares for framer %s from %s to %s" % (self.name, oldPath, newPath)
-        
-        for frame in Frame.Names.values(): #all frames in this framer's name space
-            frame.rerefShares(oldPath, newPath)    
 
     def resolveLinks(self):
         """Convert all the name strings for links to references to instance

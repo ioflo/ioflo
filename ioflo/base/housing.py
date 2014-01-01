@@ -183,15 +183,14 @@ class House(registering.StoriedRegistry):
         console.terse("Framers in House {0}:\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.framers])))
         
-    def cloneFramer(self, framer, name=""):
-        """ Create a clone of framer framer with name name as aux framer and return
-            If name empty then Framer Registry will create unique name
-            
-            If there is a problem cloning then raise CloneError
-        
+    def cloneFramer(self, framer, index):
+        """ Create a clone of framer framer with name generated from index
+                as aux framer and return
         """
         self.assignRegistries()
-        clone = framer.clone(name=name)
+
+        
+        clone = framer.clone(index=index)
         self.taskers.append(clone)
         self.framers.append(clone)
         self.auxes.append(clone)

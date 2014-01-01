@@ -86,17 +86,13 @@ class ClonerFramer(deeding.ParamDeed):
         
         return parms
         
-    def action(self, framer, frame, name='', index=None, **kw):
-        """ Clone framer onto new aux framer named name and assign to frame frame
-            If name is empty then create name from framer.name + suffix counter
+    def action(self, framer, frame, index=None, **kw):
+        """ Clone framer onto new aux framer and assign to frame frame
+            The index is used to compute the new cloned framer name
         """
-        if not name and index:
-            name = "{0}_{1:d}".format(framer.name, index.value)
-            index.value += 1
-        
-        # if name is empty then a unique name will be created by the registry
-        clone = self.store.house.cloneFramer(framer, name)
+        clone = self.store.house.cloneFramer(framer, index.value)
         frame.addAux(clone)
+        index.value += 1
         
         return None    
 
