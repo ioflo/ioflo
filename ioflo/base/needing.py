@@ -322,36 +322,79 @@ class MarkerNeed(Need):
             .name = unique name for action instance
             .store = shared data store
         parms:
-            frame
-            marker
+            share
+            name
+            frame       only used in resolvelinks
+            marker      only used in resolvelinks
     
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
         super(MarkerNeed, self).__init__(**kw)
+        
+    def cloneParms(self, parms, clones, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from clones
+            Replacing any parms that are acts with clones.
+            
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
+        """
+        parms = super(MarkerNeed,self).cloneParms(parms, clones, **kw)
+        
+        share = parms.get('share')
+        name = parms.get('name')
+        frame = parms.get('frame')
+        marker = parms.get('marker')
+            
+        if isinstance(frame, framing.Frame):
+            parms['frame'] = frame.name # revert to name 
+
+        return parms    
     
-    def resolveLinks(self, frame, marker, **kw):
+    def resolveLinks(self, share, name, frame, marker, **kw):
         """Resolves frame framename link and then
            inserts marker as first enact in the resolved frame
            
            If appropriate resolved link(s) are passed back to container act to
            update the act's parms
         """
-        parms = dict(frame=frame)
+        parms = dict()
+        
+        if not share.marks.get(name):
+            share.marks[name] = storing.Mark()        
     
         if not isinstance(frame, framing.Frame): # must be pathname
             if frame not in framing.Frame.Names: 
                 raise excepting.ResolveError("ResolveError: Bad need update frame link", frame, self.name)
-            frame = framing.Frame.Names[frame] #replace frame name with frame
-            parms['frame'] = frame
+            parms['frame'] = frame = framing.Frame.Names[frame] #replace frame name with frame
+        
+        if not isinstance(marker, acting.Marker): #marker is name of actor
+            if marker not in acting.Actor.Names:
+                raise excepting.ResolveError("ResolveError: Bad need marker link", marker, self.name)
+            parms['marker'] = marker = acting.Actor.Names[marker]
+        
+        
+        found = False
+        for enact in frame.enacts:
+            if (enact.actor is marker and
+                    enact.parms['share'] is share and
+                    enact.parms['name'] == name):
+                found = True
+                break
             
-        if marker not in frame.enacts:
-            frame.insertEnact(marker)
+        if not found:
+            markerParms = dict(share=share, name=name)
+            markerAct = acting.Act(marker, parms=markerParms)
+            
+            frame.insertEnact(markerAct)
             console.profuse("     Added {0} {1} with {2} in {3}\n".format(
                 'enact',
-                marker.actor.name,
-                marker.parms['share'].name,
-                marker.parms['name']))
+                markerAct.actor.name,
+                markerAct.parms['share'].name,
+                markerAct.parms['name']))   
                 
         return parms #return items are updated in original act parms
     
@@ -363,10 +406,10 @@ class UpdateNeed(MarkerNeed):
             .store = shared data store
 
         parameters:
-            frame       only used in resolvelinks
-            marker      only used in resolvelinks
             share
             name
+            frame       only used in resolvelinks
+            marker      only used in resolvelinks
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
@@ -393,10 +436,10 @@ class ChangeNeed(MarkerNeed):
             .store = shared data store
 
        parameters:
-            frame    only used in resolvelinks
-            marker   only used in resolvelinks
             share
             name
+            frame       only used in resolvelinks
+            marker      only used in resolvelinks
     """
     def __init__(self, **kw):
         """Initialization method for instance."""

@@ -8,7 +8,7 @@ framer vehiclesim be active first vehicle_run
 frame vehicle_run
    do simulator motion uuv
 
-framer mission be active first update1
+framer mission be active first change1
 
 frame start
    set elapsed to 2.0
@@ -18,29 +18,29 @@ frame start
 
    go abort if elapsed >= goal
 
-frame update1 in start
-   go next if update .state.heading
-   
 frame change1 in start
-   go next if change .state.depth
-
-frame change2 in start
    put 6 into .marked.changed
    go next if change .marked.changed
 
-frame update2 in start
-   go next if update .marked.updated
-   go next if recurred >= 3
-
-frame update3 in start
+frame update1 in start
    put true into .marked.updated
    go next if update .marked.updated
    
+frame update2 in start
+   go next if update .state.heading
+   
+frame change2 in start
+   go next if change .state.depth
+   
+frame update3 in start
+   go next if update in update3 .state.heading
+
 frame update4 in start
-   go next if update in update4 .state.heading
+   go next if update in start .state.heading
 
 frame update5 in start
-   go next if update in start .state.heading
+   go next if update .marked.updated
+   go next if recurred >= 3
 
 frame abort 
    bid stop vehiclesim

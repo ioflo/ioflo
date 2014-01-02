@@ -681,7 +681,35 @@ class Printer(Actor):
         """   """
         console.terse("Printer {0}\n".format(self.name))
         
-class UpdateMarker(Actor):
+class Marker(Actor):
+    """ Base class that sets up mark in provided share reference"""
+    
+    def cloneParms(self, parms, clones, **kw):
+        """ Returns parms fixed up for framing cloning. This includes:
+            Reverting any Frame links to name strings,
+            Reverting non cloned Framer links into name strings
+            Replacing any cloned framer links with the cloned name strings from clones
+            Replacing any parms that are acts with clones.
+            
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
+        """
+        parms = super(Marker,self).cloneParms(parms, clones, **kw)
+        
+        share = parms.get('share')
+        name = parms.get('name')
+        
+        #don't need to do anything yet since rerefShares will reref
+
+        return parms    
+    
+    def resolveLinks(self, share, name, **kw):
+        """Resolves share and adds mark in share"""
+        parms = {}
+            
+        return parms    
+        
+class UpdateMarker(Marker):
     """ UpdateMarker Class 
 
         UpdateMarker is a special actor that acts on a share to mark the update by
@@ -725,7 +753,7 @@ class UpdateMarker(Actor):
         """   """
         console.terse("UpdateMarker {0}\n".format(self.name))
         
-class ChangeMarker(Actor):
+class ChangeMarker(Marker):
     """ ChangeMarker Class 
 
         ChangeMarker is a special actor that acts on a share to mark save a copy

@@ -3231,15 +3231,11 @@ class Builder(object):
 
         sharePath, index = self.parseIndirect(tokens, index, variant = '')
         share = self.currentStore.create(sharePath)
-        if not share.marks.get(name):
-            share.marks[name] = storing.Mark()
+        #if not share.marks.get(name):
+            #share.marks[name] = storing.Mark()
             
-        #create Marker
-        actorName = 'marker' + kind.capitalize()
-        parms = {}
-        parms['share'] = share
-        parms['name'] = name
-        markerAct = acting.Act(actor = acting.Actor.Names[actorName], parms = parms)
+        # assign marker type actual marker Act created in need's resolveLinks
+        marker = 'marker' + kind.capitalize() 
         
         actorName = 'need' + kind.capitalize()
         if actorName not in needing.Need.Names:
@@ -3252,7 +3248,7 @@ class Builder(object):
         parms['share'] = share
         parms['name'] = name
         parms['frame'] = frame  #resolved in resolvelinks
-        parms['marker'] = markerAct # inserted in frame.enacts in resolvelinks
+        parms['marker'] = marker # resolved in resolvelinks
         act = acting.Act(actor = actor, parms = parms)
 
         return (act, index)    

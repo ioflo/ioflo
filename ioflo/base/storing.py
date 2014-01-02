@@ -220,7 +220,7 @@ class Store(registering.Registry):
         node[tail] = share
         share.changeStore(self)
 
-        console.profuse("     Added share {0} to {1}\n".format(share.name, self.name))
+        console.profuse("     Added share {0} to store {1}\n".format(share.name, self.name))
 
         return share
     
