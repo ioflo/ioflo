@@ -3,7 +3,7 @@ CHANGE LOG
 -------------------
 
 -----------
-20140102
+20140103
 ---------
 Support for framer cloning with parametric deeds
 
@@ -13,6 +13,8 @@ Basic support for cloning auxes of clones
 
 Support for markerNeed cloning
 Support for doneNeed, statusNeed cloning
+Support for bid cloning
+Support for fiat (ready start stop abort) cloning
 
 
 
