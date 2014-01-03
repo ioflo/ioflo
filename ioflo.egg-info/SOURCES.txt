@@ -13,6 +13,7 @@ ioflo/app/plan/box3.flo
 ioflo/app/plan/box4.flo
 ioflo/app/plan/box5.flo
 ioflo/app/plan/box6.flo
+ioflo/app/plan/cloner.flo
 ioflo/app/plan/counter1.flo
 ioflo/app/plan/gps.flo
 ioflo/app/plan/marker.flo
@@ -55,6 +56,7 @@ ioflo/trim/__init__.py
 ioflo/trim/exterior/__init__.py
 ioflo/trim/interior/__init__.py
 ioflo/trim/interior/fancy/__init__.py
+ioflo/trim/interior/fancy/cloning.py
 ioflo/trim/interior/fancy/salting.py
 ioflo/trim/interior/fancy/test/__init__.py
 ioflo/trim/interior/plain/__init__.py
