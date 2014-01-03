@@ -11,6 +11,9 @@ Support for frame and framer relative inodes in deeds in with relinitio
 
 Basic support for cloning auxes of clones
 
+Support for markerNeed cloning
+Support for doneNeed, statusNeed cloning
+
 
 
 

@@ -53,7 +53,7 @@ class Fiat(acting.Actor):
 
         super(Fiat,self).__init__(**kw)
 
-    def cloneParms(self, parms, clones, tasker, **kw):
+    def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
