@@ -25,13 +25,13 @@ console = getConsole()
 
 class fifo(deque):  #new-style class to add put get methods
     """ Extends deque to support more convenient FIFO queue access
-       
+
        for any python sequence to determin if it is empty just use "if s:"
-       
+
        local methods
        .put inserts non-None item at tail, back (right side) of deque
        .get retrieves item from head, front, (left side) of deque, None if empty
-       
+
 
        inherited methods:
        .append()  = add to right side of deque
@@ -153,6 +153,119 @@ class Timer(object):
 
         return self.restart(start = self.start, duration = duration)
 
+class SerialNB(object):
+    """ Class to manage non blocking reads from serial port.
+
+        Opens non blocking read file descriptor on serial port
+        Use instance method close to close file descriptor
+        Use instance methods get & put to read & write to serial device
+        Needs os module
+    """
+
+    def __init__(self):
+        """Initialization method for instance.
+
+        """
+        self.fd = None #serial port device file descriptor, must be opened first
+
+    def open(self, device = '', speed = None, canonical = True):
+        """ Opens fd on serial port in non blocking mode.
+
+            device is the serial device path name or 
+            if '' then use os.ctermid() which
+            returns path name of console usually '/dev/tty'
+ 
+            canonical sets the mode for the port. Canonical means no characters
+            available until a newline
+ 
+            os.O_NONBLOCK makes non blocking io
+            os.O_RDWR allows both read and write.
+            os.O_NOCTTY don't make this the controlling terminal of the process
+            O_NOCTTY is only for cross platform portability BSD never makes it the
+            controlling terminal
+ 
+            Don't use print at same time since it will mess up non blocking reads.
+ 
+            Default is canonical mode so no characters available until newline
+            need to add code to enable  non canonical mode
+ 
+            It appears that canonical mode is default only applies to the console. 
+            For other serial devices the characters are available immediately so
+            have to explicitly set termios to canonical mode
+        """
+        if not device:
+            device = os.ctermid() #default to console
+
+        self.fd = os.open(device,os.O_NONBLOCK | os.O_RDWR | os.O_NOCTTY)
+
+        system = platform.system()
+
+        if (system == 'Darwin') or (system == 'Linux'): #use termios to set values
+
+            iflag, oflag, cflag, lflag, ispeed, ospeed, cc = range(7)
+
+            settings = termios.tcgetattr(self.fd)
+            #print settings
+
+            #ignore carriage returns on input
+            settings[iflag] = (settings[iflag] | (termios.IGNCR)) #ignore cr
+
+            settings[lflag] = (settings[lflag] & ~(termios.ECHO)) #no echo
+
+                #8N1 8bit word no parity one stop bit nohardware handshake ctsrts
+            #to set size have to mask out(clear) CSIZE bits and or in size
+            settings[cflag] = ((settings[cflag] & ~termios.CSIZE) | termios.CS8)
+            # no parity clear PARENB
+            settings[cflag] = (settings[cflag] & ~termios.PARENB) 
+            #one stop bit clear CSTOPB
+            settings[cflag] = (settings[cflag] & ~termios.CSTOPB) 
+            #no hardware handshake clear crtscts
+            settings[cflag] = (settings[cflag] & ~termios.CRTSCTS) 
+
+            if canonical:
+                settings[lflag] = (settings[lflag] | termios.ICANON)
+            else:
+                settings[lflag] = (settings[lflag] &  ~(termios.ICANON))
+
+            if speed: #in linux the speed flag does not equal value
+                speedattr = "B%d" % speed #convert numeric speed to attribute name string
+                speed = getattr(termios, speedattr)
+                settings[ispeed] = speed
+                settings[ospeed] = speed
+
+            termios.tcsetattr(self.fd, termios.TCSANOW, settings)
+            #print settings
+
+    def close(self):
+        """Closes fd. 
+
+        """
+        if self.fd:
+            os.close(self.fd)
+
+    def get(self,bs = 80):
+        """Gets nonblocking characters from serial device up to bs characters 
+           including newline.
+
+           Returns empty string if no characters available else returns all available.
+           In canonical mode no chars are available until newline is entered.
+        """
+        line = ''
+        try:
+            line = os.read(self.fd, bs)  #if no chars available generates exception
+        except OSError, ex1:  #ex1 is the target instance of the exception            
+            if ex1.errno == errno.EAGAIN: #BSD 35, Linux 11
+                pass #No characters available
+            else:
+                raise #re raise exception ex1
+
+        return line
+
+    def put(self, data = '\n'):
+        """Writes data string to serial device.
+
+        """
+        os.write(self.fd, data)
 
 class ConsoleNB(object):
     """Class to manage non blocking reads from console.
@@ -394,7 +507,7 @@ class SocketNB(object):
 def NameToPath(name):
     """ Converts camel case name into share path where uppercase letters denote
         nodes in path
-        
+
         Assumes Name is of the correct format to be Identifier.
     """
     pathParts = []
@@ -405,7 +518,7 @@ def NameToPath(name):
             pathParts.append(c.lower())
         else:
             pathParts.append(c)
-        
+
     path = ''.join(pathParts)
     return path
 
@@ -418,25 +531,25 @@ def Repack(n, seq):
         generator and any remaining elements are returned in a tuple as the
         last element of the generator
         None is substituted for missing elements when len(seq) < n
-        
+
         Example:
-        
+
         x = (1, 2, 3, 4)
         tuple(Repack(3, x))
         (1, 2, (3, 4))
-        
+
         x = (1, 2, 3)
         tuple(Repack(3, x))
         (1, 2, (3,))
-        
+
         x = (1, 2)
         tuple(Repack(3, x))
         (1, 2, ())
-        
+
         x = (1, )
         tuple(Repack(3, x))
         (1, None, ())
-        
+
         x = ()
         tuple(Repack(3, x))
         (None, None, ())
@@ -448,15 +561,15 @@ def Repack(n, seq):
     yield tuple(it)
 
 repack = Repack #alias
-    
+
 
 def Just(n, seq):
     """ Returns a generator of just the first n elements of seq and substitutes
         None for any missing elements. This guarantees that a generator of exactly
         n elements is returned. This is to enable unpacking into n varaibles
-    
+
         Example:
-        
+
         x = (1, 2, 3, 4)
         tuple(Just(3, x))
         (1, 2, 3)
@@ -472,12 +585,12 @@ def Just(n, seq):
         x = ()
         tuple(Just(3, x))
         (None, None, None)
-        
+
     """
     it = iter(seq)
     for _i in range(n):
         yield next(it, None)
-        
+
 just = Just #alias
 
 
@@ -485,7 +598,7 @@ from abc import ABCMeta,  abstractmethod
 class NonStringIterable:
     """ Check for iterable that is not a string
         Works in python 2.6 to 3.x with isinstance(x, NonStringIterable)
-        
+
     """
     __metaclass__ = ABCMeta
 

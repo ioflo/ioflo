@@ -2,9 +2,20 @@
 CHANGE LOG
 -------------------
 
+---------
+201401
+------------
+
+
+
+
+
 -----------
 20140103
 ---------
+Version v0.8.0
+
+
 Support for framer cloning with parametric deeds
 
 Support for frame and framer relative inodes in deeds in with relinitio
