@@ -69,14 +69,13 @@ EXIT = 4
 RENTER = 5
 REXIT = 6
 BENTER = 7
-PREAUX = 8
 
 ActionContextValues = { 'native': NATIVE , 'enter':  ENTER, 'recur': RECUR,
                         'precur': PRECUR, 'exit': EXIT, 'renter': RENTER, 'rexit': REXIT,
-                        'benter': BENTER, 'preaux': PREAUX}
+                        'benter': BENTER}
 ActionContextNames = { NATIVE : 'native', ENTER : 'enter', RECUR : 'recur', 
                        PRECUR : 'precur', EXIT : 'exit', RENTER : 'renter', REXIT : 'rexit',
-                       BENTER : 'benter', PREAUX : 'preaux'}
+                       BENTER : 'benter'}
 
 
 #Precompile re match objects

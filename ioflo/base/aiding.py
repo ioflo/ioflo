@@ -191,7 +191,7 @@ class SerialNB(object):
  
             It appears that canonical mode is default only applies to the console. 
             For other serial devices the characters are available immediately so
-            have to explicitly set termios to canonical mode
+            have to explicitly set termios to canonical mode.
         """
         if not device:
             device = os.ctermid() #default to console
@@ -466,20 +466,12 @@ class SocketNB(object):
                 self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
 
             return (data,sa)
-        except socket.error, ex1: #ex1 is a socket.error instance
-            try:
-                errno = ex1.args[0] # if args is not sequence get TypeError
-                #ignore resource unavailable error for non blocking, means empty
-                if errno == 35: #Resource temporarily unavailable on os x
-                    return ('',None) #receive has nothing empty string for data
-                elif errno == 11: #Resource temporarily unavailable on debian
-                    return ('',None) #receive has nothing empty string for data
-                else:
-                    raise #re raise exception ex1
-            except TypeError, ex2:  #catch args[0] mismatch above
-                #ignore type error and re raise original exception ex1
-                raise ex1
-
+        except socket.error, ex1: # 2.6 socket.error is subclass of IOError
+            if ex1.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+                return ('',None) #receive has nothing empty string for data
+            else:
+                raise #re raise exception ex1            
+            
     def send(self,data, da):
         """Perform non blocking send on  socket. 
 

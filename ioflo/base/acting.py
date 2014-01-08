@@ -39,30 +39,38 @@ class Act(object):
     """lightweight container class for action references and parameters
 
     """
-    __slots__ = ('actor', 'parms')
+    __slots__ = ('actor', 'parms', 'frame', 'context', 'act')
 
-    def __init__(self, actor=None, parms=None, **kw ):
-        """Initialization method for instance.
+    def __init__(self, actor=None, parms=None, frame=None, context=None, act=None, **kw ):
+        """ Initialization method for instance.
 
-           attributes
-           .actor = Actor instance callable , call performs instances method action
-           .parms = dictionary of keyword arguments for .act
+            attributes
+                .actor = Actor instance callable , call performs instances method action
+                .parms = dictionary of keyword arguments for .act
+                .frame = Frame reference to frame holding act
+                .context = Action execution context name string
+                .act = Act reference if act in embedded in another act such as Need
 
         """
         super(Act,self).__init__(**kw)
 
         self.actor = actor #callable instance performs action
         self.parms = parms or {}
+        self.frame = frame
+        self.context = context
+        self.act = act
+        
+        if not self.parms.get('_act'):
+            self.parms['_act'] = self
 
     def __call__(self): #make Act instance callable as function
-        """Define act as callable object
-
-        """
+        """ Define act as callable object """
         return (self.actor(**self.parms))
 
     def expose(self):
-        """Show Actor and parms"""
-        console.terse("Act Actor {0} Parms {1}\n".format(self.actor, self.parms))
+        """ Show attributes"""
+        cconsole.terse("Act Actor {0} Parms {1} in Frame {2} Context {3} SuperAct {4}\n".format(
+                    self.actor, self.parms, self.frame, self.context, self.act))
         if self.actor:
             self.actor.expose()
             
@@ -85,24 +93,29 @@ class Act(object):
         self.parms.update(parms)
 
     def resolveLinks(self, *pa, **kwa):
-        """Resolve any links in associated parms for actors
-           Should be overridden if use arguments
-        """
+        """ Resolve .frame attribute and any links in associated parms for .actor"""
+        if self.act: # sub act such as need of anothe act .act
+            self.frame = self.act.frame
+            self.context = self.act.context
+        self.frame = framing.resolveFrame(self.frame, who=self)
+        
         parms = self.actor.resolveLinks(**self.parms)
         self.parms.update(parms) 
 
 class Nact(Act):
-    """lightweight container class for action references and parameters
-       Negating Act used for actor needs to give Not Need
+    """ Negating Act used for actor needs to give Not Need
     """
-    __slots__ = ('actor', 'parms')
+    __slots__ = ('actor', 'parms', 'frame', 'context', 'act')
 
     def __init__(self, **kw ):
-        """Initialization method for instance.
+        """ Initialization method for instance.
 
-           Inherited attributes
-              .actor = Actor instance callable , call performs instances method action
-              .parms = dictionary of keyword arguments for .act
+            Inherited attributes
+                .actor = Actor instance callable , call performs instances method action
+                .parms = dictionary of keyword arguments for .act
+                .frame = Frame reference to frame holding act
+                .context = Action execution context name string
+                .act = Act reference if act in embedded in another act such as Need
 
         """
         super(Nact,self).__init__(**kw)
@@ -116,8 +129,9 @@ class Nact(Act):
 
 
     def expose(self):
-        """Show Actor and Parms"""
-        console.terse("Nact Actor {0} Parms {1}\n".format(self.actor, self.parms))
+        """ Show attributes """
+        console.terse("Nact Actor {0} Parms {1} in Frame {2} Context {3} SuperAct {4}\n".format(
+                    self.actor, self.parms, self.frame, self.context, self.act))
         if self.actor:
             self.actor.expose()
 
@@ -338,7 +352,7 @@ class Transiter(Interrupter):
         
         return parms    
         
-    def resolveLinks(self, needs, near, far, human, **kw):
+    def resolveLinks(self, _act, needs, near, far, human, **kw):
         """Resolve any links in far and in associated parms for actors"""
 
         parms = {}
@@ -369,6 +383,7 @@ class Transiter(Interrupter):
             parms['far'] = far #replace name with valid link
 
         for act in needs:
+            act.act = _act
             act.resolveLinks()
 
         return parms
@@ -496,7 +511,7 @@ class Suspender(Interrupter):
         
         return parms
 
-    def resolveLinks(self, needs, main, aux, human, **kw):
+    def resolveLinks(self, _act, needs, main, aux, human, **kw):
         """Resolve any links aux and in associated parms for actors"""
 
         parms = {}
@@ -519,6 +534,7 @@ class Suspender(Interrupter):
                                          main.name + " " + human, aux)
 
         for act in needs:
+            act.act = _act
             act.resolveLinks()
 
         return parms

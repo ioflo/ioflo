@@ -6,9 +6,19 @@ CHANGE LOG
 201401
 ------------
 
+Added .frame, .context, .act (action execution) attributes to each Act instance. 
+Added _act key parms of each act whose value is self act
+These will better support more elegant framer cloning
 
+Added SerialNB class to aiding.py which uses and use termios configuriation
+   of the serialport
 
-
+Refactored aiding.SocketNB receive function to use errno 
+    import errno
+    errno.EAGAIN is correct for the appropriate platform 35 on darwin and 11 on Linux
+    also in python2.6 socket.error is a subclass of IOError which has .errno attribute
+    so use that instead of first element of tuple and get rid of typeerror exception
+   
 
 -----------
 20140103

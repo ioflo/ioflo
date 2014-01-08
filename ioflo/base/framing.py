@@ -1219,38 +1219,50 @@ class Frame(registering.StoriedRegistry):
     def addBeact(self, act):
         """        """
         self.beacts.append(act)
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[BENTER]
 
     def addEnact(self, act):
         """         """
         self.enacts.append(act)
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[ENTER]        
 
     def insertEnact(self, act, index=0):
         """         """
-        self.enacts.insert(index, act)    
+        self.enacts.insert(index, act)
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[ENTER]         
 
     def addRenact(self, act):
         """         """
         self.renacts.append(act)
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[RENTER]         
 
     def addReact(self, act):
         """         """
         self.reacts.append(act)
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[RECUR]         
 
     def addPreact(self, act):
         """         """
         self.preacts.append(act)
-
-    def addTransact(self, act):
-        """         """
-        self.transacts.append(act)
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[PRECUR]         
 
     def addExact(self, act):
         """         """
         self.exacts.append(act)
-
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[EXIT]         
+        
     def addRexact(self, act):
         """         """
         self.rexacts.append(act)
+        act.frame = self.name #resolve later
+        act.context = ActionContextNames[REXIT]         
 
     def addAux(self, aux):
         """         """
@@ -1346,7 +1358,7 @@ def TestFrame():
         a = Act(action = need, act = need.checkDepth, parms = dict(depth = 4.0))
         t.needs.append(a)
         t.far = f5
-        f2.transacts.append(t)
+        f2.preacts.append(t)
 
         a = Act(action = deed, act = deed.doDepth, parms = dict(depth = 1.0))
         f2.preacts.append(a)
@@ -1355,7 +1367,7 @@ def TestFrame():
         a = Act(action = need, act = need.checkDepth, parms = dict(depth = 1.5))
         t.needs.append(a)
         t.far = f4
-        f5.transacts.append(t)
+        f5.preacts.append(t)
 
         #setup auxiliary framework
         f6 = Frame()
