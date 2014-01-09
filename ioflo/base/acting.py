@@ -39,29 +39,31 @@ class Act(object):
     """lightweight container class for action references and parameters
 
     """
-    __slots__ = ('actor', 'parms', 'frame', 'context', 'act')
+    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'iois')
 
-    def __init__(self, actor=None, parms=None, frame=None, context=None, act=None, **kw ):
+    def __init__(self, actor=None, parms=None, frame=None, context=None,
+                     act=None, iois=None, **kw ):
         """ Initialization method for instance.
 
             attributes
                 .actor = Actor instance callable , call performs instances method action
                 .parms = dictionary of keyword arguments for .act
                 .frame = Frame reference to frame holding act
-                .context = Action execution context name string
+                .context = Action execution context name string set when added to frame
                 .act = Act reference if act in embedded in another act such as Need
+                .iois = dictionary of share initializers of parms with same key
 
         """
-        super(Act,self).__init__(**kw)
+        super(Act,self).__init__()
 
         self.actor = actor #callable instance performs action
         self.parms = parms or {}
         self.frame = frame
         self.context = context
         self.act = act
+        self.iois = iois
         
-        if not self.parms.get('_act'):
-            self.parms['_act'] = self
+        self.parms['_act'] = self
 
     def __call__(self): #make Act instance callable as function
         """ Define act as callable object """
@@ -94,18 +96,29 @@ class Act(object):
 
     def resolveLinks(self, *pa, **kwa):
         """ Resolve .frame attribute and any links in associated parms for .actor"""
-        if self.act: # sub act such as need of anothe act .act
+        if self.act: # sub act such as need of another act .act
             self.frame = self.act.frame
             self.context = self.act.context
         self.frame = framing.resolveFrame(self.frame, who=self)
         
+        if self.iois:
+            for key, init in self.iois.items():
+                if key in self.parms:
+                    raise excepting.ResolveError("ResolveError: Parm and Init with same key", key, act)
+                
+                self.parms[key] = storing.resolvePath(  store=self.actor.store,
+                                                        ipath=init['ipath'],
+                                                        ival=init.get('ival'), 
+                                                        iown=init.get('iown'),
+                                                        act=self)
+                
         parms = self.actor.resolveLinks(**self.parms)
         self.parms.update(parms) 
 
 class Nact(Act):
     """ Negating Act used for actor needs to give Not Need
     """
-    __slots__ = ('actor', 'parms', 'frame', 'context', 'act')
+    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'iois')
 
     def __init__(self, **kw ):
         """ Initialization method for instance.
@@ -116,6 +129,7 @@ class Nact(Act):
                 .frame = Frame reference to frame holding act
                 .context = Action execution context name string
                 .act = Act reference if act in embedded in another act such as Need
+                .iois = dictionary of share initializers of parms with same key
 
         """
         super(Nact,self).__init__(**kw)

@@ -497,8 +497,8 @@ class SocketNB(object):
 #Utility Functions
 
 def NameToPath(name):
-    """ Converts camel case name into share path where uppercase letters denote
-        nodes in path
+    """ Converts camel case name into full node path where uppercase letters denote
+        intermediate nodes in path. Node path ends in dot '.'
 
         Assumes Name is of the correct format to be Identifier.
     """
@@ -510,7 +510,7 @@ def NameToPath(name):
             pathParts.append(c.lower())
         else:
             pathParts.append(c)
-
+    pathParts.append('.')
     path = ''.join(pathParts)
     return path
 

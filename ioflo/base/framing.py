@@ -17,37 +17,6 @@ from . import tasking
 from .consoling import getConsole
 console = getConsole()
 
-#utility functions
-def resolveFramer(framer, who=''):
-    """ Returns resolved framer instance from framer
-        framer may be name of framer or instance
-        who is optinal name of object owning the link such as framer or frame
-        Framer.Names registry must be setup
-    """
-    if not isinstance(framer, Framer): # not instance so name
-        if framer not in Framer.Names: 
-            raise excepting.ResolveError("ResolveError: Bad framer link name", framer, who)
-        framer = Framer.Names[framer]
-
-    return framer
-
-ResolveFramer = resolveFramer
-
-def resolveFrame(frame, who=''):
-    """ Returns resolved frame instance from frame
-            frame may be name of frame or instance
-    
-            Frame.Names registry must be setup
-        """    
-    if not isinstance(frame, Frame): # not instance so name
-        if frame not in Frame.Names: 
-            raise excepting.ResolveError("ResolveError: Bad frame link name", frame, who)
-        frame = Frame.Names[frame] #replace frame name with frame
-    
-    return frame
-
-ResolveFrame = resolveFrame
-
 #Class definitions
 
 class Framer(tasking.Tasker):
@@ -1292,7 +1261,37 @@ class Frame(registering.StoriedRegistry):
 
         return True #needed since builder uses it
 
+    
+#utility functions
+def resolveFramer(framer, who=''):
+    """ Returns resolved framer instance from framer
+        framer may be name of framer or instance
+        who is optinal name of object owning the link such as framer or frame
+        Framer.Names registry must be setup
+    """
+    if not isinstance(framer, Framer): # not instance so name
+        if framer not in Framer.Names: 
+            raise excepting.ResolveError("ResolveError: Bad framer link name", framer, who)
+        framer = Framer.Names[framer]
 
+    return framer
+
+ResolveFramer = resolveFramer
+
+def resolveFrame(frame, who=''):
+    """ Returns resolved frame instance from frame
+            frame may be name of frame or instance
+    
+            Frame.Names registry must be setup
+        """    
+    if not isinstance(frame, Frame): # not instance so name
+        if frame not in Frame.Names: 
+            raise excepting.ResolveError("ResolveError: Bad frame link name", frame, who)
+        frame = Frame.Names[frame] #replace frame name with frame
+    
+    return frame
+
+ResolveFrame = resolveFrame
 
 def TestFrame():
     """Module Common self test

@@ -2525,11 +2525,6 @@ class Builder(object):
             # a unique name will be provided
             actor = type(kinder)(name=name, store=self.currentStore) 
             actor.ioinit.update(kinder.ioinit) # copy ioinit defaults from kinder
-            init = actor.preinitio(**init) # copy and update defaults with init
-            init['inode'] = actor.relinitio( self.currentFramer,
-                                             self.currentFrame,
-                                             init.get('inode', ''))
-            iois = actor.initio(**init) # empty if not ._parametric
 
         else: # Use an existing instance
             if not name:
@@ -2544,22 +2539,11 @@ class Builder(object):
             
             actor = deeding.Deed.Names[name] #fetch existing instance
             kind = actor.__class__.__name__
-            init = actor.preinitio(**init) # copy and update defaults with init
-            init['inode'] = actor.relinitio( self.currentFramer,
-                                             self.currentFrame,
-                                             init.get('inode', ''))
-            iois = actor.initio(**init) # empty if not ._parametric
         
-        if iois:
-            for key in iois.keys():
-                if key in parms:
-                    msg = ("ParseError: Building command '%s' for Deed '%s'."
-                           " Parm and Init with same key '%s'." %\
-                                        (command, name, key))
-                    raise excepting.ParseError(msg, tokens, index)
-            parms.update(iois)
-            
-        act = acting.Act(actor = actor, parms = parms)
+        init = actor.preinitio(**init) # copy and update defaults with init
+        iois = actor.initio(**init) # empty if not ._parametric
+        actor.postinitio()        
+        act = acting.Act(actor = actor, parms = parms, iois=iois)
 
         if hasattr(actor, 'restart'): #some deeds need to be restarted on frame entry
             #create restarter actor to restart actor 

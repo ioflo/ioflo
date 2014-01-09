@@ -806,6 +806,90 @@ class Data(object):
 
 optimize.bind_all(Data)
 
+def resolvePath(store, ipath, ival=None, iown=None, act=None):
+    """ Returns resolved Share or Node instance from path
+        path may be path name of share or node
+        or reference toShare or Node instance
+        
+        store is reference to current Store
+        act is reference to associated act needed
+        
+        If path is a pathname string and resolves to a Share and init is not None
+        Then init is used to initialize the share values. Init should be a dict of
+            fields and values
+            If own is True then .update(init) is used
+            Otherwise .create(init) is used
+            
+        Assumes when applicable that the following have already bene resolved:
+           act.frame
+           act.frame.framer 
+           act.frame.framer.main
+           act.frame.framer.main.framer
+        
+        This is for resolving pathname strings into share and node references
+        at resolve or run time.
+        
+        It allows for substitution of frame, framer, main frame,
+        or main framer relative names. So that lexically relative pathnames can
+        be dynamically resolved in support of framer cloning.
+        It assumes that any implied variants have been reconciled.
+        
+        When path is a string (not a Node or Share reference) the following syntax
+        is used:
+        
+        A leading '.' dot indicates that the path name is fully reconciled and no
+        contextual substitutions are to be applied.
+        
+        Otherwise make subsitutions in pathname strings that begin with 'framer.' and
+        have the special framer and/or frame names of 'me' or 'main'.
+        
+        'me' indicates substitute the current framer or frame name respectively.
+        'main' indicates substitute the current frame's main framer or main frame
+        name respectively.
+    """    
+    if not (isinstance(ipath, Share) or isinstance(ipath, Node)): # must be pathname
+        if not ipath.startswith('.'): # not reconciled so do relative substitutions
+            parts = ipath.split('.')
+            if parts[0] == 'framer':  #  relative addressing
+                if not act:
+                    raise excepting.ResolveError("ResolveError: Missing act context"
+                            " to resolve relative pathname.", ipath, act)
+                if not act.frame:
+                    raise excepting.ResolveError("ResolveError: Missing frame context"
+                        " to resolve relative pathname.", ipath, act)                
+                if parts[1] == 'me': # current framer
+                    parts[1] = act.frame.framer.name
+                elif parts[1] == 'main': # current main framer
+                    if not act.frame.framer.main:
+                        raise excepting.ResolveError("ResolveError: Missing main frame"
+                            " context to resolve relative pathname.", ipath, act)
+                    parts[1] = act.frame.framer.main.framer.name
+                
+                if parts[2] == 'frame':
+                    if parts[3] == 'me':
+                        parts[3] = act.frame.name
+                    elif parts[3] == 'main':
+                        if not act.frame.framer.main:
+                            raise excepting.ResolveError("ResolveError: Missing main frame"
+                                " context to resolve relative pathname.", ipath, act)
+                        parts[3] = act.frame.framer.main.name
+            
+            ipath = '.'.join(parts)
+        
+        if ipath.endswith('.'): # Node not Share
+            ipath = store.createNode(ipath.rstrip('.'))
+        else: # Share
+            ipath = store.create(ipath)
+            if ival != None:
+                if iown:
+                    ipath.update(ival)
+                else:
+                    ipath.create(ival)
+                
+    return ipath
+
+ResolvePath = resolvePath # alias
+
 
 def Test():
     """Module self test """
