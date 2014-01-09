@@ -293,33 +293,45 @@ class Deed(acting.Actor):
             else:
                 ipath = '.'.join(inode.rstrip('.'), key)    
             
+            ioi = odict(ipath=ipath, ival=ival, iown=iown)
             if _parametric: # act resolveLinks will resolve share/node ref and init
-                iois[key] = odict(ipath=ipath, ival=ival, iown=iown)
-            else:
-                if ipath.endswith('.'): #init a node not share ignore ival
-                    ioi = self.store.createNode(ipath.rstrip('.'))
-                else:
-                    ioi = self.store.create(ipath)
-                    if not iown:
-                        ioi.create(ival)
-                    else:
-                        ioi.update(ival)                       
+                iois[key] = ioi
+            else:           
                 self._iois[key] = ioi
-                setattr(self, key, ioi)
-            
        
+        ioi = odict(ipath=inode)
         if _parametric: # act resolveLinks will resolve node ref
-            iois['inode'] = odict(ipath=inode)
+            iois['inode'] = ioi
         else:
-            ioi = self.store.fetchNode(inode) # None if not exist
             self._iois['inode'] = ioi
-            self.inode = ioi
         
-        return iois # if non-empty then treat as parametric
+        return iois # non-empty when parametric
     
     def postinitio(self):
         """ Base method to be overriden in sub classes. Perform post initio setup"""
         pass
+    
+    def resolveLinks(self, _act, **kwa):
+        """ Resolves paths and links using _act from parms
+            Uses Actor resolveLinks to resolve paths in act.iois
+            Resolves paths for ._iois 
+            Then calls and calls .postinitio
+            
+            Returns any updated parms
+        """
+        parms = {}
+        parms.update(super(Deed,self).resolveLinks(_act, **kwa))
+                     
+        if self._iois:
+            for key, ioi in self._iois.items():
+                setattr(self, key, storing.resolvePath(  store=self.store,
+                                                        ipath=ioi['ipath'],
+                                                        ival=ioi.get('ival'), 
+                                                        iown=ioi.get('iown'),
+                                                        act=_act))
+        self.postinitio()
+        
+        return parms
     
 class ParamDeed(Deed):
     """ParamDeed Deed has the attribute ._parametric defined that indicates that

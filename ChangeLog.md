@@ -6,6 +6,10 @@ CHANGE LOG
 20140108
 ------------
 
+Refactored how deed iois and ._iois are resolved. This now happens in resolveLinks
+not in the builder. So now any parametric deed can be safely cloned if using relative
+addressing for ioi and any as kind deed if using relative addressing.
+
 Added support for resolving share refs at resolve time with storing.resolvePath
 This supports framer/frame relative main framer/frame relative and actor relative
 when using "me" and "main" for names.
@@ -14,10 +18,11 @@ Example
    framer.me.frame.me
    framer.name.frame.me
    framer.me.frame.name
-   framer.me.frame.me.actor.me
-   
    framer.main
    framer.main.frame.main
+   framer.me.actor.me
+   framer.main.actor.me
+   framer.me.frame.me.actor.me
    framer.main.frame.main.actor.me
 
 Added .frame, .context, .act (action execution) attributes to each Act instance. 

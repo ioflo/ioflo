@@ -42,7 +42,7 @@ class Act(object):
     __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'iois')
 
     def __init__(self, actor=None, parms=None, frame=None, context=None,
-                     act=None, iois=None, **kw ):
+                     act=None, iois=None, **kwa ):
         """ Initialization method for instance.
 
             attributes
@@ -101,17 +101,6 @@ class Act(object):
             self.context = self.act.context
         self.frame = framing.resolveFrame(self.frame, who=self)
         
-        if self.iois:
-            for key, init in self.iois.items():
-                if key in self.parms:
-                    raise excepting.ResolveError("ResolveError: Parm and Init with same key", key, act)
-                
-                self.parms[key] = storing.resolvePath(  store=self.actor.store,
-                                                        ipath=init['ipath'],
-                                                        ival=init.get('ival'), 
-                                                        iown=init.get('iown'),
-                                                        act=self)
-                
         parms = self.actor.resolveLinks(**self.parms)
         self.parms.update(parms) 
 
@@ -120,7 +109,7 @@ class Nact(Act):
     """
     __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'iois')
 
-    def __init__(self, **kw ):
+    def __init__(self, **kwa ):
         """ Initialization method for instance.
 
             Inherited attributes
@@ -132,7 +121,7 @@ class Nact(Act):
                 .iois = dictionary of share initializers of parms with same key
 
         """
-        super(Nact,self).__init__(**kw)
+        super(Nact,self).__init__(**kwa)
 
 
     def __call__(self): #make Act instance callable as function
@@ -158,7 +147,7 @@ class Actor(registering.StoriedRegistry):
     Counter = 0  
     Names = {}
 
-    def __init__(self, name = 'actor', **kw ):
+    def __init__(self, name = 'actor', **kwa ):
         """Initialization method for instance.
 
            inherited attributes
@@ -166,20 +155,20 @@ class Actor(registering.StoriedRegistry):
               .store = shared data store
 
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Actor'
+        if 'preface' not in kwa:
+            kwa['preface'] = 'Actor'
 
-        super(Actor,self).__init__(name = name, **kw)
+        super(Actor,self).__init__(name = name, **kwa)
     
-    def __call__(self, **kw):
+    def __call__(self, **kwa):
         """run .action
 
         """
-        return self.action(**kw)
+        return self.action(**kwa)
     
-    def action(self, **kw):
+    def action(self, **kwa):
         """Action called by Actor. Should override in subclass."""
-        console.profuse("Actioning {0} with {1}\n".format(self.name, str(kw)))
+        console.profuse("Actioning {0} with {1}\n".format(self.name, str(kwa)))
 
         pass
     
@@ -195,7 +184,7 @@ class Actor(registering.StoriedRegistry):
         """
         return self
        
-    def cloneParms(self, parms, clones, **kw):
+    def cloneParms(self, parms, clones, **kwa):
         """ Returns parms fixed up for framer cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
@@ -236,13 +225,25 @@ class Actor(registering.StoriedRegistry):
                         newShare.create(stuff)
                         parms[key] = newShare                    
 
-        return parms
+        return parms      
     
-    def resolveLinks(self, **kw):
+    def resolveLinks(self, _act, **kwa):
         """ Resolves any links in parms for Actor
             should be overridden by sub class
         """
-        return {} #empty parms
+        parms =  {}
+
+        if _act.iois:
+            for key, ioi in _act.iois.items():
+                if key in kwa:
+                    raise excepting.ResolveError("ResolveError: Parm and Ioi with same key", key, _act)
+                
+                parms[key] = storing.resolvePath(   store=self.store,
+                                                    ipath=ioi['ipath'],
+                                                    ival=ioi.get('ival'), 
+                                                    iown=ioi.get('iown'),
+                                                    act=_act)
+        return parms
 
 
 class Interrupter(Actor):

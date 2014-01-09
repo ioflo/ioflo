@@ -41,15 +41,15 @@ class ClonerFramer(deeding.ParamDeed):
             ._parametric is flag for initio to not create attributes
 
     """
-    def __init__(self, **kw):
+    def __init__(self, **kwa):
         """Initialize Instance """
-        if 'preface' not in kw:
-            kw['preface'] = 'ClonerFramer'
+        if 'preface' not in kwa:
+            kwa['preface'] = 'ClonerFramer'
 
         #call super class method
-        super(ClonerFramer,self).__init__(**kw)
+        super(ClonerFramer,self).__init__(**kwa)
     
-    def cloneParms(self, parms, clones, **kw):
+    def cloneParms(self, parms, clones, **kwa):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
@@ -59,7 +59,7 @@ class ClonerFramer(deeding.ParamDeed):
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
-        parms = super(ClonerFramer,self).cloneParms(parms, clones, **kw)
+        parms = super(ClonerFramer,self).cloneParms(parms, clones, **kwa)
         
         framer = parms.get('framer')
         frame = parms.get('frame')
@@ -78,18 +78,20 @@ class ClonerFramer(deeding.ParamDeed):
         
         return parms
            
-    def resolveLinks(self, framer, frame, **kw):
+    def resolveLinks(self, _act, framer, frame, **kwa):
         """ Resolves value (tasker) link that is passed in as parm
             resolved link is passed back to act to store in parms
             since framer may not be current framer at build time
         """
         parms = {}
+        parms.update(super(ClonerFramer,self).resolveLinks(_act, **kwa))
+        
         parms['framer'] = framing.resolveFramer(framer, who=self.name)
         parms['frame'] = framing.resolveFrame(frame, who=self.name)
         
         return parms
         
-    def action(self, framer, frame, index=None, **kw):
+    def action(self, framer, frame, index=None, **kwa):
         """ Clone framer onto new aux framer and assign to frame frame
             The index is used to compute the new cloned framer name
         """

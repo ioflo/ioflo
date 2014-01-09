@@ -2542,7 +2542,7 @@ class Builder(object):
         
         init = actor.preinitio(**init) # copy and update defaults with init
         iois = actor.initio(**init) # empty if not ._parametric
-        actor.postinitio()        
+        #actor.postinitio()   # now called in resolveLinks     
         act = acting.Act(actor = actor, parms = parms, iois=iois)
 
         if hasattr(actor, 'restart'): #some deeds need to be restarted on frame entry

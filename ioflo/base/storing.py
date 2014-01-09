@@ -867,17 +867,21 @@ def resolvePath(store, ipath, ival=None, iown=None, act=None):
                             " context to resolve relative pathname.", ipath, act)
                     parts[1] = act.frame.framer.main.framer.name
                 
-                if parts[2] == 'frame':
-                    if parts[3] == 'me':
-                        parts[3] = act.frame.name
-                    elif parts[3] == 'main':
-                        if not act.frame.framer.main:
-                            raise excepting.ResolveError("ResolveError: Missing main frame"
-                                " context to resolve relative pathname.", ipath, act)
-                        parts[3] = act.frame.framer.main.name
-                    if (len(parts) >= 5 ) and parts[4] == 'actor':
-                        if parts[5] == 'me': # slice insert multiple parts
-                            parts[5:6] = nameToPath(act.actor.name).rstrip('.').split('.')
+                if (len(parts) >= 3):
+                    if parts[2] == 'frame':
+                        if parts[3] == 'me':
+                            parts[3] = act.frame.name
+                        elif parts[3] == 'main':
+                            if not act.frame.framer.main:
+                                raise excepting.ResolveError("ResolveError: Missing main frame"
+                                    " context to resolve relative pathname.", ipath, act)
+                            parts[3] = act.frame.framer.main.name
+                        if (len(parts) >= 5 ) and parts[4] == 'actor':
+                            if parts[5] == 'me': # slice insert multiple parts
+                                parts[5:6] = nameToPath(act.actor.name).rstrip('.').split('.')
+                    elif parts[2] == 'actor':
+                        if parts[3] == 'me': # slice insert multiple parts
+                            parts[3:4] = nameToPath(act.actor.name).rstrip('.').split('.')                        
             
             ipath = '.'.join(parts)
         
