@@ -16,6 +16,8 @@ from .odicting import odict
 from . import excepting
 from . import registering
 
+from .aiding import nameToPath
+
 from .consoling import getConsole
 console = getConsole()
 
@@ -873,6 +875,9 @@ def resolvePath(store, ipath, ival=None, iown=None, act=None):
                             raise excepting.ResolveError("ResolveError: Missing main frame"
                                 " context to resolve relative pathname.", ipath, act)
                         parts[3] = act.frame.framer.main.name
+                    if (len(parts) >= 5 ) and parts[4] == 'actor':
+                        if parts[5] == 'me': # slice insert multiple parts
+                            parts[5:6] = nameToPath(act.actor.name).rstrip('.').split('.')
             
             ipath = '.'.join(parts)
         

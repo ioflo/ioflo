@@ -3,8 +3,22 @@ CHANGE LOG
 -------------------
 
 ---------
-201401
+20140108
 ------------
+
+Added support for resolving share refs at resolve time with storing.resolvePath
+This supports framer/frame relative main framer/frame relative and actor relative
+when using "me" and "main" for names.
+Example
+   framer.me
+   framer.me.frame.me
+   framer.name.frame.me
+   framer.me.frame.name
+   framer.me.frame.me.actor.me
+   
+   framer.main
+   framer.main.frame.main
+   framer.main.frame.main.actor.me
 
 Added .frame, .context, .act (action execution) attributes to each Act instance. 
 Added _act key parms of each act whose value is self act
