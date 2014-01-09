@@ -24,6 +24,9 @@ Example
    framer.main.actor.me
    framer.me.frame.me.actor.me
    framer.main.frame.main.actor.me
+if actor name is 'me'  then use current actor's camel case name converted to path
+Since acts have ref to actor, actor is always available in acts resolve links.
+
 
 Added .frame, .context, .act (action execution) attributes to each Act instance. 
 Added _act key parms of each act whose value is self act
