@@ -6,6 +6,12 @@ CHANGE LOG
 20140108
 ------------
 
+
+Added limited support for quoted field names in some commands
+
+Removed salting.py ioflo distro to its own distro as it has hard dependency on SaltStack
+
+
 Refactored how deed iois and ._iois are resolved. This now happens in resolveLinks
 not in the builder. So now any parametric deed can be safely cloned if using relative
 addressing for ioi and any as kind deed if using relative addressing.
