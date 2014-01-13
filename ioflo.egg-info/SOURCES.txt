@@ -57,7 +57,6 @@ ioflo/trim/exterior/__init__.py
 ioflo/trim/interior/__init__.py
 ioflo/trim/interior/fancy/__init__.py
 ioflo/trim/interior/fancy/cloning.py
-ioflo/trim/interior/fancy/salting.py
 ioflo/trim/interior/fancy/test/__init__.py
 ioflo/trim/interior/plain/__init__.py
 ioflo/trim/interior/plain/controlling.py

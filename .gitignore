@@ -10,5 +10,6 @@ dist/
 ioflo.egg-info
 ioflo.egg-info/*
 ioflo.egg-info/*.*
+ioflo.egg-info*
 
 
