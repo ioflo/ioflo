@@ -1174,7 +1174,7 @@ class Builder(object):
 
                 if tag in self.currentLog.loggees:
                     print "Error building %s. Loggee %s already exists in Log %s. index = %d tokens = %s" %\
-                          (command, name, self.currentLog.name, index, tokens)
+                          (command, tag, self.currentLog.name, index, tokens)
                     return False
 
                 self.currentLog.addLoggee(tag = tag, loggee = share)
@@ -3484,9 +3484,12 @@ class Builder(object):
 
         #parse rest if any
         while index < len(tokens): #must be in pairs unless first is ending token
-            field = tokens[index]
+            field = tokens[index]       
             if field in Reserved: #ending token so break
                 break
+            
+            if REO_Quoted.match(field): # field is double quoted string
+                field = field.strip('"')              
 
             index += 1 #eat token
             value = tokens[index] 
@@ -3608,7 +3611,11 @@ class Builder(object):
             msg = "ParseError: Field = 'value' with multiple fields = '%s'" % (fields)
             raise excepting.ParseError(msg, tokens, index)
 
-        for field in fields:
+        for i, field in enumerate(fields):
+            if REO_Quoted.match(field): # field is double quoted string
+                field = field.strip('"')
+                fields.insert(i, field )  #strip off quotes
+                
             if not REO_IdentPub.match(field):
                 msg = "ParseError: Invalid format of field '%s'" % (field)
                 raise excepting.ParseError(msg, tokens, index)
@@ -3657,6 +3664,8 @@ class Builder(object):
                 break
 
             index += 1 #eat token
+            if REO_Quoted.match(field): # field is double quoted string
+                field = field.strip('"')               
             fields.append(field)
 
         if not found: #no fields clause

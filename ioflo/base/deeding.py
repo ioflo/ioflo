@@ -108,10 +108,6 @@ class Deed(acting.Actor):
             
             inode is the computed pathname string of the share node where shares associated
             with the Deed instance may be placed for use by the other kw arguments.
-            inode is computed by relinitio to allow for frame and framer relative inodes
-            
-            For the syntax of specifying inode in the ioinit dict see the docstring
-            for relinitio
             
             The values of the items in the **kw argument may be either strings,
             non-string iterables such as list or tuple, or named iterables such as
