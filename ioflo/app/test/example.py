@@ -22,13 +22,14 @@ def getPlanFiles(planDirPath=PLAN_DIR_PATH):
         root, ext = os.path.splitext(fname)
         if ext != '.flo' or root.startswith('__'):
             continue
+
         planFiles.append(os.path.abspath(os.path.join(planDirPath, fname)))
     return planFiles
 
 def main():
     """ Run example scripts"""
     plans = getPlanFiles()
-    for plan in plans:
+    for plan in plans:      
         name, ext = os.path.splitext(os.path.basename(plan))
         ioflo.app.run.run(  name=name,
                             filename=plan,

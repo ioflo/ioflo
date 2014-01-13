@@ -49,15 +49,6 @@ class Poke(acting.Actor):
     Counter = 0  
     Names = {}
 
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Poke'
-
-        super(Poke,self).__init__(**kw)  
-
     def action(self, share, data, **kw):
         """Put data into share """
         console.profuse("Put {0} into {1}\n".format( data, share.name))
@@ -69,25 +60,12 @@ class DirectPoke(Poke):
     """Direct Poke Class to put direct data values into destination share
 
     """
-
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-              .name = unique name for action instance
-              .store = shared data store
-
-           parameters:
+    def action(self, data, destination, **kw):
+        """ Put data into share
+            parameters:
               data = data to copy from
               destination = share to copy to
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Poke'
-
-        super(DirectPoke,self).__init__(**kw)  
-
-    def action(self, data, destination, **kw):
-        """Put data into share """
         console.profuse("Put {0} into {1}\n".format( data, destination.name))
 
         destination.update(data)
@@ -98,32 +76,20 @@ class IndirectPoke(Poke):
        based on source and destination field lists
 
     """
-
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-              .name = unique name for action instance
-              .store = shared data store
-
-           parameters:
-
-              source = share to copy from
-              sourceFields = list of fields to copy from
-              destination = share to copy to
-              destinationFields = list of fields to copy to
-
-        """
-        super(IndirectPoke, self).__init__(**kw)  
-
     def action(self, source, sourceFields, destination, destinationFields, **kw): 
-        """copy sourceFields in source to destinationFields in destination
+        """ Copy sourceFields in source to destinationFields in destination
 
-           copy fields in order according to field lists
+            copy fields in order according to field lists
               field list order is significant 
                  a field of same name in source and destination will
                  not be copied to each other unless appear in same place 
                  in both field lists
+                 
+            parameters:
+                source = share to copy from
+                sourceFields = list of fields to copy from
+                destination = share to copy to
+                destinationFields = list of fields to copy to
 
         """
         console.profuse("Copy {0} in {1} into {2} in {3}\n".format(
@@ -144,28 +110,15 @@ class DirectInc(Poke):
     """Direct Poke Class to put direct data values into destination share
 
     """
-
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-              .name = unique name for action instance
-              .store = shared data store
-
-           parameters:
-              destination = share to increment
-              data = dict of field values to increment by
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Poke'
-
-        super(DirectInc,self).__init__(**kw)  
-
     def action(self, destination, data, **kw):
-        """Increment destinationFields in destination by values in data
+        """ Increment destinationFields in destination by values in data
 
-           if only one field then single increment
-           if multiple fields then vector increment
+            if only one field then single increment
+            if multiple fields then vector increment
+           
+            parameters:
+                destination = share to increment
+                data = dict of field values to increment by
         """
         try:
             dstData = odict()
@@ -185,26 +138,13 @@ class IndirectInc(Poke):
        based on source and destination field lists
 
     """
-
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-              .name = unique name for action instance
-              .store = shared data store
-
-           parameters:
-
-              destination = share to increment
-              destinationField = field in share to increment
-              source = share with value to increment by
-              sourceField = field in share with value to increment by
-
-        """
-        super(IndirectInc, self).__init__(**kw)  
-
     def action(self, destination, destinationFields, source, sourceFields, **kw): 
-        """Increment destinationFields in destination by sourceFields in source
+        """ Increment destinationFields in destination by sourceFields in source
+            parameters:
+                destination = share to increment
+                destinationField = field in share to increment
+                source = share with value to increment by
+                sourceField = field in share with value to increment by
 
         """
         try:

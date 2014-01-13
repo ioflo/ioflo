@@ -2,10 +2,20 @@
 CHANGE LOG
 -------------------
 
----------
-20140108
-------------
+--------
+20140113
+--------
 
+Added default preface to be .__class__.__name__ to Register init  so that any
+   Registered subclass gets friendly appropriate name without having to have u
+   unique .__init__ method just for the preface.
+   removed all superfluous __init__ methods
+   
+
+---------
+20140112
+------------
+v0.8.2
 
 Added limited support for quoted field names in some commands
 

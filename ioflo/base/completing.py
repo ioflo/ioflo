@@ -41,15 +41,6 @@ class Complete(acting.Actor):
     Counter = 0  
     Names = {}
 
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Complete'
-
-        super(Complete,self).__init__(**kw)
-        
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
@@ -99,13 +90,6 @@ class DoneComplete(Complete):
     """DoneComplete Complete
 
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        super(DoneComplete,self).__init__(**kw)       
-
-
     def action(self, framer = None, **kw):
         """set done state to True for aux or slave framer
 

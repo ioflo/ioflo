@@ -23,7 +23,7 @@ class Registry(object):
     Counter = 0  
     Names = {}
 
-    def __init__(self, name = '', preface = 'Registry', **kw):
+    def __init__(self, name = '', preface = '', **kw):
         """Initializer method for instance.
 
            instance attributes
@@ -31,6 +31,9 @@ class Registry(object):
 
         """
         self.__class__.Counter += 1 #increment class Counter variable
+        
+        if not preface:
+            preface = self.__class__.__name__ #use class name of instance as preface
 
         if not isinstance(name,str): #name must be string
             raise excepting.ParameterError("Expected str instance", "name", name)

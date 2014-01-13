@@ -83,10 +83,6 @@ class ArbiterDeed(deeding.Deed):
            .store
 
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Arbiter'
-
-        #call super class method
         super(ArbiterDeed,self).__init__(**kw)  
 
         #create it if it does not already exist
@@ -180,14 +176,6 @@ class SwitchArbiter(ArbiterDeed):
 
 
     """
-    def __init__(self, **kw):
-        """Initialize instance
-
-        """
-        #call super class method
-        super(SwitchArbiter,self).__init__(**kw)  
-
-
     def update(self,stamp = None):
         """update switch arbiter algorithm
            simply switch selected input to output
@@ -221,14 +209,6 @@ class PriorityArbiter(ArbiterDeed):
 
 
     """
-    def __init__(self, **kw):
-        """Initialize instance
-
-        """
-        #call super class method
-        super(PriorityArbiter,self).__init__(**kw)  
-
-
     def update(self,stamp = None):
         """update priority arbiter algorithm
 
@@ -276,14 +256,6 @@ class TrustedArbiter(ArbiterDeed):
 
 
     """
-    def __init__(self, **kw):
-        """Initialize instance
-
-        """
-        #call super class method
-        super(TrustedArbiter,self).__init__(**kw)  
-
-
     def update(self,stamp = None):
         """update trusted arbiter algorithm
 
@@ -337,14 +309,6 @@ class WeightedArbiter(ArbiterDeed):
 
 
     """
-    def __init__(self, **kw):
-        """Initialize instance
-
-        """
-        #call super class method
-        super(WeightedArbiter,self).__init__(**kw)  
-
-
     def update(self,stamp = None):
         """update weighted arbiter algorithm
 

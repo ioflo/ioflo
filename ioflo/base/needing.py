@@ -51,20 +51,6 @@ class Need(acting.Actor):
     Counter = 0  
     Names = {}
 
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-              .name = unique name for action instance
-              .store = shared data store
-
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Need'
-
-        super(Need,self).__init__(**kw)  
-
-
     def expose(self):
         """
 
@@ -112,13 +98,6 @@ class AlwaysNeed(Need):
        parameters:
 
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        super(AlwaysNeed, self).__init__(**kw) 
-
-
     def action(self, **kw):
         """Always return true"""
 
@@ -139,13 +118,6 @@ class DoneNeed(Need):
        parameters:
           tasker
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        super(DoneNeed, self).__init__(**kw) 
-
-
     def action(self, tasker, **kw):
         """Check if  tasker done 
 
@@ -210,13 +182,6 @@ class StatusNeed(Need):
           tasker
           status
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        super(StatusNeed, self).__init__(**kw) 
-
-
     def action(self, tasker, status, **kw):
         """Check if  tasker done """
 
@@ -271,25 +236,13 @@ class BooleanNeed(Need):
 
        if state
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-
-              .name = unique name for action instance
-              .store = shared data store
-
-           parameters:
+    def action(self, state, stateField, **kw):
+        """ Check if state[stateField] evaluates to True
+            parameters:
               state = share of state
               stateField = field key
 
-
-
         """
-        super(BooleanNeed,self).__init__(**kw)  
-
-    def action(self, state, stateField, **kw):
-        """Check if state[stateField] evaluates to True"""
 
         if state[stateField]:
             result = True
@@ -306,26 +259,17 @@ class DirectNeed(Need):
 
        if state comparison goal [+- tolerance]
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-
-              .name = unique name for action instance
-              .store = shared data store
-
-           parameters:
-              state = share of state
-              stateField = field key
-              comparison
-              goal
-              tolerance
-
-        """
-        super(DirectNeed,self).__init__(**kw)  
 
     def action(self, state, stateField, comparison, goal, tolerance, **kw):
-        """Check if state[field] comparison to goal +- tolerance is True"""
+        """ Check if state[field] comparison to goal +- tolerance is True
+            parameters:
+                state = share of state
+                stateField = field key
+                comparison
+                goal
+                tolerance
+
+        """
 
         result = self.Check(state[stateField], comparison, goal, tolerance)
         console.profuse("Need Direct, if {0}[{1}] {2} {3} +- {4}: = {5}\n".format(
@@ -338,27 +282,17 @@ class IndirectNeed(Need):
 
        if state comparison goal [+- tolerance]
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-           inherited attributes:
-
-              .name = unique name for action instance
-              .store = shared data store
-
-           parameters:
+    def action(self, state, stateField, comparison, goal, goalField, tolerance, **kw):
+        """ Check if state[field] comparison to goal[goalField] +- tolerance is True
+                       parameters:
               state = share of state
               stateField = field key
               comparison
               goal
               goalField
               tolerance
-
+        
         """
-        super(IndirectNeed,self).__init__(**kw)  
-
-    def action(self, state, stateField, comparison, goal, goalField, tolerance, **kw):
-        """Check if state[field] comparison to goal[goalField] +- tolerance is True"""
 
         result = self.Check(state[stateField], comparison, goal[goalField], tolerance)
         console.profuse("Need Indirect, if {0}[{1}] {2} {3}[{4}] +- %s: = {5}\n".format(
@@ -378,10 +312,6 @@ class MarkerNeed(Need):
             marker      only used in resolvelinks
     
     """
-    def __init__(self, **kw):
-        """Initialization method for instance."""
-        super(MarkerNeed, self).__init__(**kw)
-        
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
@@ -461,10 +391,6 @@ class UpdateNeed(MarkerNeed):
             frame       only used in resolvelinks
             marker      only used in resolvelinks
     """
-    def __init__(self, **kw):
-        """Initialization method for instance."""
-        super(UpdateNeed, self).__init__(**kw) 
-
     def action(self, share, name, **kw):
         """ Check if share updated while in frame/mark denoted by name key if any
             Default is False
@@ -491,10 +417,6 @@ class ChangeNeed(MarkerNeed):
             frame       only used in resolvelinks
             marker      only used in resolvelinks
     """
-    def __init__(self, **kw):
-        """Initialization method for instance."""
-        super(ChangeNeed, self).__init__(**kw) 
-
     def action(self, share, name, **kw):
         """ Check if share data changed while in frame/mark denoted by name key if any
             Default is False

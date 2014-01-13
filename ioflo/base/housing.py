@@ -106,10 +106,6 @@ class House(registering.StoriedRegistry):
 
     def __init__(self, **kw):
         """Initialize instance. """
-
-        if 'preface' not in kw:
-            kw['preface'] = 'House'
-
         super(House,self).__init__(**kw)
 
         self.taskers = [] #all taskers, framers servers loggers etc needed for resolving links

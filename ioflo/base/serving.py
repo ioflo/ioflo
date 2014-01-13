@@ -64,9 +64,6 @@ class Server(tasking.Tasker):
            .logFile = log file
 
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'ServerTask'
-
         super(Server,self).__init__(**kw) 
 
         #create socket server

@@ -46,9 +46,6 @@ class Monitor(tasking.Tasker):
            .server = non blocking udp socket server object
            .dha = destination address (host, port)
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Monitor'
-
         super(Monitor,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
 
 

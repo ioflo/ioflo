@@ -77,10 +77,6 @@ class Store(registering.Registry):
            *pa and **kwa allow multiple inheritance
 
         """
-
-        if 'preface' not in kwa:
-            kwa['preface'] = 'Store'
-
         super(Store,self).__init__(**kwa)
 
         try: #stamp must be a number or None

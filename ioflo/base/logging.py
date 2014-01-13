@@ -63,9 +63,6 @@ class Logger(tasking.Tasker):
               prefix = prefix used to create log directory
 
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Logger'
-
         super(Logger,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
 
         self.logs = [] #list of logs

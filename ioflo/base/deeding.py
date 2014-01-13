@@ -63,9 +63,6 @@ class Deed(acting.Actor):
                 name
                 store
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Deed'
-
         super(Deed,self).__init__(**kw)
         
         self.ioinit = ioinit or odict() #dict with default ioinit arguments
@@ -350,10 +347,6 @@ class ParamDeed(Deed):
     
     def __init__(self, **kw):
         """Initialize Instance """
-        if 'preface' not in kw:
-            kw['preface'] = 'ParamDeed'
-
-        #call super class method
         super(ParamDeed,self).__init__( **kw)  
 
         self._parametric = None
@@ -378,10 +371,6 @@ class SinceDeed(Deed):
     
     def __init__(self, **kw):
         """Initialize Instance """
-        if 'preface' not in kw:
-            kw['preface'] = 'SinceDeed'
-
-        #call super class method
         super(SinceDeed,self).__init__( **kw)  
 
         self.stamp = None
@@ -417,10 +406,6 @@ class LapseDeed(Deed):
     
     def __init__(self, **kw):
         """Initialize Instance """
-        if 'preface' not in kw:
-            kw['preface'] = 'SimulatorDeed'
-
-        #call super class method
         super(LapseDeed,self).__init__( **kw)  
 
         self.stamp = None

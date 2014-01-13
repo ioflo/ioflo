@@ -44,15 +44,6 @@ class Fiat(acting.Actor):
     Counter = 0  
     Names = {}
 
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Fiat'
-
-        super(Fiat,self).__init__(**kw)
-
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,

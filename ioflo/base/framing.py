@@ -66,9 +66,6 @@ class Framer(tasking.Tasker):
 
 
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Framer'
-
         super(Framer,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
 
         self.main = None  #when aux framer, frame that is running this aux

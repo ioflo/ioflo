@@ -44,14 +44,7 @@ class Want(acting.Actor):
     """
     Counter = 0  
     Names = {}
-
-    def __init__(self, **kw):
-        """Initialization method for instance. """
-        if 'preface' not in kw:
-            kw['preface'] = 'Fiat'
-
-        super(Want,self).__init__(**kw)
-
+    
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
@@ -118,10 +111,6 @@ class StartWant(Want):
        bid start all
        bid stort me #won't do anything
     """
-    def __init__(self, **kw):
-        """Initialization method for instance.  """
-        super(StartWant,self).__init__(**kw)       
-
     def action(self, taskers, **kw):
         """start taskers  """
         for tasker in taskers:
@@ -136,10 +125,6 @@ class StopWant(Want):
        bid stop all
        bid stop me 
     """
-    def __init__(self, **kw):
-        """Initialization method for instance. """
-        super(StopWant,self).__init__(**kw)       
-
     def action(self, taskers, **kw):
         """stop taskers """
 
@@ -155,10 +140,6 @@ class RunWant(Want):
        bid run all
        bid run me #won't do anything
     """
-    def __init__(self, **kw):
-        """Initialization method for instance. """
-        super(RunWant,self).__init__(**kw)       
-
     def action(self, taskers, **kw):
         """run taskers """
         for tasker in taskers:

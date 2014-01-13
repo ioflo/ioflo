@@ -40,25 +40,10 @@ class Trait(acting.Actor):
     Counter = 0  
     Names = {}
 
-    def __init__(self, **kw):
-        """Initialization method for instance.
-
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Trait'
-
-        super(Trait,self).__init__(**kw)  
-
-
-
 class DepthTrait(Trait):
     """DepthTrait Trait
 
     """
-    def __init__(self, **kw):
-        """Initialization method for instance."""
-
-        super(DepthTrait,self).__init__(**kw)        
 
     def action(self, value = 0.0, **kw):
         """Use depth """

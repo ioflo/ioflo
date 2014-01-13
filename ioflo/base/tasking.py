@@ -48,9 +48,6 @@ class Tasker(registering.StoriedRegistry):
 
 
         """
-        if 'preface' not in kw:
-            kw['preface'] = 'Task'
-
         super(Tasker,self).__init__(**kw)
 
         self.period = float(abs(period)) #desired time between runs, 0.0 means asap

@@ -147,17 +147,23 @@ class Actor(registering.StoriedRegistry):
     Counter = 0  
     Names = {}
 
-    def __init__(self, name = 'actor', **kwa ):
-        """Initialization method for instance.
+    def __init__(self, name = '', **kwa ):
+        """ Initialization method for instance.
 
-           inherited attributes
-              .name = unique name for actor instance
-              .store = shared data store
+            inherited attributes
+                .name = unique name for actor instance
+                .store = shared data store
+              
+            The registry class will supply unique name when name is empty by using
+            the .__class__.__name__ as the default preface to the name.
+            To use a different default preface add this to the .__init__ method
+            before the super call
+            
+            if 'preface' not in kw:
+                kw['preface'] = 'MyDefaultPreface'
+
 
         """
-        if 'preface' not in kwa:
-            kwa['preface'] = 'Actor'
-
         super(Actor,self).__init__(name = name, **kwa)
     
     def __call__(self, **kwa):
@@ -266,10 +272,6 @@ class Interrupter(Actor):
     
     def __init__(self,**kw ):
         """Initialization method for instance. """
-
-        if 'preface' not in kw:
-            kw['preface'] = 'Interrupter'
-
         super(Interrupter,self).__init__(**kw)
 
         self._interruptive = None
@@ -285,15 +287,6 @@ class Transiter(Interrupter):
             human = text version of transition
 
     """
-
-    def __init__(self,**kw ):
-        """Initialization method for instance. """
-
-        if 'preface' not in kw:
-            kw['preface'] = 'Transiter'
-
-        super(Transiter,self).__init__(**kw)
-
     def action(self, needs, near, far, human, **kw):
         """Action called by Actor  """
 
@@ -424,10 +417,6 @@ class Suspender(Interrupter):
     
     def __init__(self,**kw ):
         """Initialization method for instance. """
-
-        if 'preface' not in kw:
-            kw['preface'] = 'Suspender'
-
         super(Suspender,self).__init__(**kw)
         self._activative = None
 
@@ -568,20 +557,6 @@ class Deactivator(Actor):
 
        Builder adds a deactivator for each Suspender preact
     """
-
-    def __init__(self,  **kw):
-        """Initialization method for instance.
-
-           inherited instance attributes:
-           .name
-           .store
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Deactivator'
-
-        super(Deactivator,self).__init__(**kw)  
-
-
     def action(self, actor, aux, **kw):
         """Action called by Actor
         """
@@ -654,20 +629,6 @@ class Restarter(Actor):
        If deed instance has restart attribute then
           adds enter restarter action for the deed
     """
-
-    def __init__(self,  **kw):
-        """Initialization method for instance.
-
-           inherited instance attributes:
-           .name
-           .store
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Restarter'
-
-        super(Restarter,self).__init__(**kw)  
-
-
     def action(self, actor, **kw):
         """Action called by Actor
         """
@@ -688,20 +649,6 @@ class Printer(Actor):
        Printer is a special actor that just prints to console its message 
 
     """
-
-    def __init__(self,  **kw):
-        """Initialization method for instance.
-
-           inherited instance attributes:
-           .name
-           .store
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Printer'
-
-        super(Printer,self).__init__(**kw)  
-
-
     def action(self, message, **kw):
         """Action called by Actor
         """
@@ -751,20 +698,6 @@ class UpdateMarker(Marker):
         Builder at parse time when it encounters an UpdateNeed,
         creates the mark in the share and creates the appropriate UpdateMarker 
     """
-
-    def __init__(self,  **kw):
-        """Initialization method for instance.
-
-           inherited instance attributes:
-           .name
-           .store
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'UpdateMarker'
-
-        super(UpdateMarker,self).__init__(**kw)  
-
-
     def action(self, share, name, **kw):
         """ Update mark in share
             Where share is reference to share and name is frame name key of mark in
@@ -795,20 +728,6 @@ class ChangeMarker(Marker):
         Builder at parse time when it encounters a ChangeNeed,
         creates the mark in the share and creates the appropriate marker 
     """
-
-    def __init__(self,  **kw):
-        """Initialization method for instance.
-
-           inherited instance attributes:
-           .name
-           .store
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'ChangeMarker'
-
-        super(ChangeMarker,self).__init__(**kw)  
-
-
     def action(self, share, name, **kw):
         """ Update mark in share
             Where share is reference to share and name is frame name key of mark in
@@ -828,48 +747,3 @@ class ChangeMarker(Marker):
         """   """
         console.terse("ChangeMarker {0}\n".format(self.name))
 
-
-def Test():
-    """Module Common self test
-
-    """
-
-    import framing
-
-    store = storing.Store()
-
-    actor = Actor(store = store)
-    actor()
-
-    depthNeed = DepthNeed(name = 'checkDepth', store = store)
-    depthNeed(depth = 1.0)
-
-    depthGoal = DepthGoal(name = 'setDepth', store = store)
-    depthGoal(depth = 2.0)
-
-    depthDeed = DepthDeed(name = 'doDepth', store = store)
-    depthDeed(depth = 3.0)
-
-    depthTrait = DepthTrait(name = 'useDepth', store = store)
-    depthTrait(depth = 4.0)
-
-    depthSpec = DepthSpec(name = 'optDepth', store = store)
-    depthSpec(depth = 5.0)
-
-    fr = framing.Framer(store = store)
-    f = framing.Frame(store = store)
-    fr.startFrame = f
-
-    startFiat = StartFiat(name = 'tellStart', store = store)
-    startFiat(framer = fr)
-
-    startWant = StartWant(name = 'askStart', store = store)
-    startWant(framer = fr)
-
-    poke = Poke(name = 'put', store = store)
-    poke(name = 'autopilot.depth', value = dict(depth = 5))
-
-
-
-if __name__ == "__main__":
-    test()
