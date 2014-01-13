@@ -8,8 +8,9 @@ dist/*/*
 dist
 dist/
 ioflo.egg-info
+ioflo.egg-info/
 ioflo.egg-info/*
 ioflo.egg-info/*.*
 ioflo.egg-info*
-
+ioflo.egg-info/PKG-INFO
 

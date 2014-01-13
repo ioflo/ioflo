@@ -1379,7 +1379,6 @@ def Blend3(d = 0.0, u = 1.0, s = 0.05):
 
     return b
 
-
 def PackByte(format = '8',fields = [0x0000]):
     """Packs fields sequence into one byte using format string.
 
@@ -1430,6 +1429,8 @@ def PackByte(format = '8',fields = [0x0000]):
     console.profuse("Packed byte = {0:#x}\n".format(byte))
 
     return byte
+
+packByte = PackByte # alias
 
 def UnpackByte(format = '11111111', byte = 0x00, boolean = True):
     """unpacks source byte into tuple of bit fields given by format string.
@@ -1482,6 +1483,8 @@ def UnpackByte(format = '11111111', byte = 0x00, boolean = True):
 
     return tuple(fields) #convert to tuple
 
+unpackByte = UnpackByte # alias
+
 def Hexize(s = ''):
     """Converts string s into hex format
        Where each char (byte) in string s is expanded into the 2 charater hex 
@@ -1492,6 +1495,8 @@ def Hexize(s = ''):
     for i in range(len(s)):
         h += ("%02x" % ord(s[i]))
     return h
+
+hexize = Hexize # alias
 
 def Binize(h = ''):
     """Converts string h from hex format into the binary equivalent string by
@@ -1516,10 +1521,10 @@ def Binize(h = ''):
 
     return p
 
-# convert a decimal (denary, base 10) integer to a binary string (base 2)
+binize = Binize # alias
 
 def Denary2BinaryStr(n, l = 8):
-    '''convert denary integer n to binary string bs, left pad to length l'''
+    """ Convert denary integer n to binary string bs, left pad to length l"""
     bs = ''
     if n < 0:  raise ValueError, "must be a positive integer"
     if n == 0: return '0'
@@ -1528,10 +1533,13 @@ def Denary2BinaryStr(n, l = 8):
         n = n >> 1
     return bs.rjust(l,'0')
 
+denary2BinaryStr = Denary2BinaryStr # alias
+
 def Dec2BinStr(n, count=24):
-    """returns the binary formated string of integer n, using count number of digits"""
+    """ returns the binary formated string of integer n, using count number of digits"""
     return "".join([str((n >> y) & 1) for y in range(count-1, -1, -1)])
 
+dec2BinStr = Dec2BinStr # alias
 
 def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
     """prints elements of string s in hex notation.
@@ -1559,7 +1567,6 @@ def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
     else:
         line = chunk * chunks
 
-
     cc = 0
     ps = ''
     for i in range(len(s)):
@@ -1578,6 +1585,7 @@ def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
 
     return ps
 
+printHex = PrintHex # alias
 
 def PrintDecimal(s):
     """prints elements of string s in decimal notation.
@@ -1589,16 +1597,13 @@ def PrintDecimal(s):
     ps = ps[0:-1] #strip trailing .
     print ps
 
-
-#should also do faster table lookup version CRC16Fast
+printDecimal = PrintDecimal # alias
 
 def CRC16(inpkt):
     """Generates 16 bit crc compatible with ANSI 709.1 and 852
 
        needs struct module
     """
-
-
     poly = 0x1021  # Generator Polynomial
     crc = 0xffff        
     for element in inpkt :
@@ -1620,6 +1625,46 @@ def CRC16(inpkt):
             i += 1
     crc = crc ^ 0xffff
     return struct.pack("!H",crc )
+
+crc16 = CRC16 # alias
+
+def CRC64(inpkt) :
+    """ Generates 64 bit crc of inpkt binary packed string inpkt
+       returns two 32 bit numbers for top and bottom of 64 bit crc
+    """
+    polytop = 0x42f0e1eb
+    polybot = 0xa9ea3693
+    crctop  = 0xffffffff
+    crcbot  = 0xffffffff
+    for element in inpkt :
+        i = 0
+        byte = ord(element)
+        while i < 8 :
+            topbit = 0x0
+            if (crctop & 0x80000000):
+                topbit = 0x01        
+            databit = 0x0   
+            if (byte & 0x80):
+                databit = 0x01
+            crctop = crctop << 1
+            crctop = crctop & 0xffffffff
+            botbit = 0x0
+            if (crcbot & 0x80000000):
+                botbit = 0x01  
+            crctop = crctop | botbit
+            crcbot = crcbot << 1
+            crcbot = crcbot & 0xffffffff        
+            if (topbit != databit):
+                crctop = crctop ^ polytop
+                crcbot = crcbot ^ polybot
+            byte = byte << 1
+            byte = byte & 0x00ff
+            i += 1
+    crctop = crctop ^ 0xffffffff
+    crcbot = crcbot ^ 0xffffffff
+    return [crctop,crcbot]
+
+crc64 = CRC64 # alias
 
 def Ocfn(filename, openMode = 'r+'):
     """Atomically open or create file from filename.
@@ -1665,8 +1710,7 @@ def Dump(it = None, file = ""):
     p.dump(it)
     f.close()
 
-
-
+ocfn = Ocfn # alias
 
 # These test should be redone with assert statements so that can get a boolean
 # result that the test passed
@@ -1722,9 +1766,6 @@ def TestBlend0(u = .25, s = .75, steps = 10):
         d = x * ss
         b = Blend0(d,u,s)
         print d, b
-
-
-
 
 def Test():
     """Module self test
