@@ -2,9 +2,16 @@
 CHANGE LOG
 -------------------
 
+
+
+
 --------
-20140113
+20140115
 --------
+
+postinitio on Deeds not gets passed in **parms so ParamDeeds can do init on parms
+
+Added console log message when skeddar fails to build
 
 Added default preface to be .__class__.__name__ to Register init  so that any
    Registered subclass gets friendly appropriate name without having to have u
