@@ -300,8 +300,10 @@ class Deed(acting.Actor):
         
         return iois # non-empty when parametric
     
-    def postinitio(self):
-        """ Base method to be overriden in sub classes. Perform post initio setup"""
+    def postinitio(self, **kwa):
+        """ Base method to be overriden in sub classes. Perform post initio setup
+            kwa usually parms
+        """
         pass
     
     def resolveLinks(self, _act, **kwa):
@@ -322,7 +324,7 @@ class Deed(acting.Actor):
                                                         ival=ioi.get('ival'), 
                                                         iown=ioi.get('iown'),
                                                         act=_act))
-        self.postinitio()
+        self.postinitio(**parms)
         
         return parms
     

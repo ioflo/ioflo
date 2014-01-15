@@ -74,7 +74,8 @@ def run(    name="Skedder",
             profiling = False):
     """ Run Skedder"""
     console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbose])
-    console.terse( "Building ...")
+    console.terse( "\n----------------------\n")
+    console.terse( "Building ...\n")
     
     skedder = skedding.Skedder(name=name,
                                period=period,
@@ -96,8 +97,12 @@ def run(    name="Skedder",
             p.sort_stats('time').print_stats()
             p.print_callers()
             p.print_callees()
+    else:
+        console.terse( "\n\n**********************************\n")
+        console.terse( "Failure building mission from file:\n{0}\n".format(filename))
+        console.terse( "************************************\n\n")
 
-
+    console.terse( "\n----------------------\n")
     return skedder
 
 Run = run # alias for backwards compat
