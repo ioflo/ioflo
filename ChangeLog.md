@@ -1,6 +1,10 @@
 ------------------
 CHANGE LOG
 -------------------
+-------------
+20140116
+------------
+
 
 
 
@@ -8,6 +12,7 @@ CHANGE LOG
 --------
 20140115
 --------
+v0.8.4
 
 postinitio on Deeds not gets passed in **parms so ParamDeeds can do init on parms
 

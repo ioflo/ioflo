@@ -425,6 +425,9 @@ class SocketNB(object):
         except socket.error, e:
             console.terse("socket.error = {0}\n".format(e))
             return False
+        
+        self.ha = self.ss.getsockname() #get resolved ha after bind
+        self.host, self.port = self.ha
 
         if self.log:
             if not self.openLogs():
