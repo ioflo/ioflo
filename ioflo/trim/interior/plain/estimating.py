@@ -28,7 +28,7 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    NLFPositionEstimator(name = 'estimatorPositionNlf', store = store).ioinit.update(
+    NLFPositionEstimator(name = 'estimatorPositionNlf', store = store).ioinits.update(
                         group = 'estimator.position.nlf', 
                         position = 'nlf.position', 
                         drPosition = 'dr.position', drBias = 'dr.bias',

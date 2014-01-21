@@ -12,9 +12,8 @@ import os
 import ioflo.app.run
 
 PLAN_DIR_PATH = os.path.join(
-                                 os.path.dirname(
-                                     os.path.dirname(os.path.abspath(__file__)))
-                                 , 'plan')
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    , 'plan')
 
 def getPlanFiles(planDirPath=PLAN_DIR_PATH):
     planFiles = []

@@ -25,7 +25,7 @@ class MetaRegister(type):
         if rname in cls.Registry:
             msg = "Entry '{0}' already exists in registry".format(rname)
             raise excepting.RegisterError(msg)
-        cls.Registry[rname] = (cls, odict(), getattr(cls, 'Iois', odict()) )
+        cls.Registry[rname] = (cls, odict(), getattr(cls, 'ioinits', odict()) )
 
 class MetaSolo(MetaRegister):
     """ Metaclass that only allows singleton instances of its classes

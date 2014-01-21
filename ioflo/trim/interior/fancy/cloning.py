@@ -21,10 +21,10 @@ def CreateInstances(store):
         
         init protocol:  inode  and (ipath, ival, iown)
     """
-    ClonerFramer(name='clonerFramer', store=store).ioinit.update(
+    ClonerFramer(name='clonerFramer', store=store).ioinits.update(
         index=('index', 0, True))
     
-    ClonerFramer(name='framerCloner', store=store).ioinit.update(
+    ClonerFramer(name='framerCloner', store=store).ioinits.update(
         index=('index', 0, True))
     
 class ClonerFramer(deeding.ParamDeed):
@@ -37,7 +37,7 @@ class ClonerFramer(deeding.ParamDeed):
         inherited attributes
             .name is actor name string
             .store is data store ref
-            .ioinit is dict of ioinit data for initio
+            .ioinits is dict of io init data for initio
             ._parametric is flag for initio to not create attributes
 
     """

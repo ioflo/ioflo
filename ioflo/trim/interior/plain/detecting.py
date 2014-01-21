@@ -26,7 +26,7 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    BoxPositionDetector(name = 'detectorPositionBox', store = store).ioinit.update(
+    BoxPositionDetector(name = 'detectorPositionBox', store = store).ioinits.update(
                         group = 'detector.position.box',
                         output = 'box', input = 'state.position',
                         parms = dict(track = 0.0, north = 0.0, east = 0.0,

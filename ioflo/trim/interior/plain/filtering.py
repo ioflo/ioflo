@@ -25,32 +25,32 @@ def CreateInstances(store):
        must be function so can recreate after clear registry
     """
 
-    HeadingSensorFilter(name = 'filterSensorHeading', store = store).ioinit.update(
+    HeadingSensorFilter(name = 'filterSensorHeading', store = store).ioinits.update(
         group = 'filter.sensor.heading', 
         output = 'heading.output',
         input = 'compass', 
         scenario = 'scenario.magnetic',
         parms = dict(phase = 0.0, amp = 0.0))
 
-    WindowedFilter(name = 'filterSensorSalinity', store = store).ioinit.update(
+    WindowedFilter(name = 'filterSensorSalinity', store = store).ioinits.update(
         group = 'filter.sensor.salinity', output = 'state.salinity',
         input = 'ctd', field = 'salinity', depth = 'state.depth',
         parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
                      layer = 40.0, tolerance = 5.0))
 
-    WindowedFilter(name = 'filterSensorSalinitysim', store = store).ioinit.update(
+    WindowedFilter(name = 'filterSensorSalinitysim', store = store).ioinits.update(
         group = 'filter.sensor.salinitysim', output = 'state.salinity',
         input = 'ctdsim', field = 'salinity', depth = 'state.depth',
         parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
                      layer = 40.0, tolerance = 5.0))
 
-    WindowedFilter(name = 'filterSensorTemperature', store = store).ioinit.update(
+    WindowedFilter(name = 'filterSensorTemperature', store = store).ioinits.update(
         group = 'filter.sensor.temperature', output = 'state.temperature',
         input = 'ctd', field = 'temperature', depth = 'state.depth',
         parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
                      layer = 40.0, tolerance = 5.0))
 
-    MinCTDFilter(name = 'filterMinTemperature', store = store).ioinit.update(
+    MinCTDFilter(name = 'filterMinTemperature', store = store).ioinits.update(
         group = 'filter.min.temperature', outputs = 'state.mintemps',
         output = 'state.mintemp',
         input = 'ctd', field = 'temperature', 

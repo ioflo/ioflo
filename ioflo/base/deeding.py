@@ -47,16 +47,16 @@ class Deed(acting.Actor):
         
         local attributes
           ._iois
-          .ioinit
+          .ioinits
 
     """
     #create Deed specific registry name space
     Counter = 0  
     Names = {}
     
-    __slots__ = ('ioinit', '_iois',)
+    __slots__ = ('ioinits', '_iois',)
 
-    def __init__(self, ioinit=None, **kw):
+    def __init__(self, ioinits=None, **kw):
         """ Initialize super
             super init arguments
                 preface
@@ -65,13 +65,13 @@ class Deed(acting.Actor):
         """
         super(Deed,self).__init__(**kw)
         
-        self.ioinit = ioinit or odict() #dict with default ioinit arguments
+        self.ioinits = ioinits or odict() #dict with default ioinits arguments
         self._iois = odict() # attribute names inited with .initio if any
 
     def preinitio(self, **kw):
         """ Parse time Reinit
             Enables initializing instance at parse time from FloScript options
-            The default init values in .ioinit are used to preload an odict
+            The default init values in .ioinits are used to preload an odict
             which is updated/overwritted with **kw and returned.
             
             Each argument name is the name of an io attribute for the Deed
@@ -91,12 +91,12 @@ class Deed(acting.Actor):
             
             Because preinitio is executed at parse time by the builder when deed
             appears in FloScript, preinitio will override the default values
-            set in .ioinit (if any) when its updated in CreateInstances.
+            set in .ioinits (if any) when its updated in CreateInstances.
             
         """
-        ioinit = odict(self.ioinit)
-        ioinit.update(kw)
-        return ioinit
+        ioinits = odict(self.ioinits)
+        ioinits.update(kw)
+        return ioinits
                 
     def initio(self, inode='', **kw):
         """ Intialize and hookup ioflo shares from node pathname inode and kw arguments.
@@ -218,7 +218,7 @@ class Deed(acting.Actor):
                         raise ValueError("Trying to init non init attribute"
                                "'{0}' in Deed '{1}'".format(key, self.name))
                     else:
-                        console.terse("Warning: Reinitializing ioinit attribute"
+                        console.terse("Warning: Reinitializing iois attribute"
                                       " '{1}' for Deed {1}\n".format(key, self.name))    
                 
             if val == None:
@@ -339,7 +339,7 @@ class ParamDeed(Deed):
        inherited attributes
           .name = unique name for actor instance
           .store = shared data store
-          .ioinit = dict of ioinit data for initio
+          .ioinits = dict of io init data for initio
 
        local attributes
           ._parametric = None. Presence acts as flag to change initio behavior
@@ -363,7 +363,7 @@ class SinceDeed(Deed):
        inherited attributes
           .name = unique name for actor instance
           .store = shared data store
-          .ioinit = dict of ioinit data for initio
+          .ioinits = dict of io init data for initio
 
        local attributes
           .stamp = current time of deed evaluation in seconds
@@ -395,7 +395,7 @@ class LapseDeed(Deed):
        inherited attributes
           .name = unique name for actor instance
           .store = shared data store
-          .ioinit = dict of ioinit data for initio
+          .ioinits = dict of io init data for initio
 
        local attributes
           .stamp =  current time deed evaluation in seconds

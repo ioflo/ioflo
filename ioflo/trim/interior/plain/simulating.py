@@ -27,7 +27,7 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    UUVMotionSimulator(name = 'simulatorMotionUuv', store = store).ioinit.update(
+    UUVMotionSimulator(name = 'simulatorMotionUuv', store = store).ioinits.update(
         group = 'simulator.motion.uuv',
         speed = 'state.speed', speedRate = 'state.speedRate',
         velocity = 'state.velocity',
@@ -42,7 +42,7 @@ def CreateInstances(store):
         parms = dict(rpmLimit = 1200.0, sternLimit = 20.0, rudderLimit = 20.0, 
                      gs = 0.0022, gpr = -0.4, gpp = 0.0, gdb = -0.1, ghr = -0.4))
 
-    USVMotionSimulator(name = 'simulatorMotionUsv', store = store).ioinit.update( 
+    USVMotionSimulator(name = 'simulatorMotionUsv', store = store).ioinits.update( 
         group = 'simulator.motion.usv',
         speed = 'state.speed', speedRate = 'state.speedRate',
         velocity = 'state.velocity',
@@ -54,7 +54,7 @@ def CreateInstances(store):
         parms = dict(rpmLimit = 3000.0,  rudderLimit = 20.0, 
                      gs = 0.0025,  ghr = -0.25))
 
-    GPSSensorSimulator(name = 'simulatorSensorGps', store = store).ioinit.update(
+    GPSSensorSimulator(name = 'simulatorSensorGps', store = store).ioinits.update(
         group = 'simulator.sensor.gps',
         positionOut = 'gps.position', velocityOut = 'gps.velocity',
         error = 'gps.error',
@@ -64,7 +64,7 @@ def CreateInstances(store):
         parms = dict(noiseBand = 5.0,  noiseJitter = 2.5, 
                      noiseVelocity = 0.1))
 
-    DVLSensorSimulator(name = 'simulatorSensorDvl', store = store).ioinit.update(
+    DVLSensorSimulator(name = 'simulatorSensorDvl', store = store).ioinits.update(
         group = 'simulator.sensor.dvl',
         velocity = 'dvl.velocity', currentOut = 'dvl.current',
         altitude = 'dvl.altitude',
@@ -74,14 +74,14 @@ def CreateInstances(store):
         scenario = 'scenario.dvl',
         parms = dict(velSigma = 0.01, bias = 0.1, altSigma = 0.01))
 
-    CompassSensorSimulator(name = 'simulatorSensorCompass', store = store).ioinit.update(
+    CompassSensorSimulator(name = 'simulatorSensorCompass', store = store).ioinits.update(
         group = 'simulator.sensor.compass',
         output = 'compass', 
         input = 'state.heading', depth = 'state.depth',
         scenario = 'scenario.magnetic',
         parms = dict(phase = 24.0, amp = 1.0, sigma = 0.1))
 
-    LinearSalinitySimulator(name = 'simulatorSalinityLinear', store = store).ioinit.update(
+    LinearSalinitySimulator(name = 'simulatorSalinityLinear', store = store).ioinits.update(
         group = 'simulator.salinity.linear', 
         output = 'ctdsim', depth = 'state.depth',
         input = 'state.position',
@@ -89,7 +89,7 @@ def CreateInstances(store):
                      middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                      layer = 20.0, shift = 2.0))
 
-    SinusoidSalinitySimulator(name = 'simulatorSalinitySinusoid', store = store).ioinit.update(
+    SinusoidSalinitySimulator(name = 'simulatorSalinitySinusoid', store = store).ioinits.update(
         group = 'simulator.salinity.sinusoid', 
         output = 'ctdsim',
         input = 'state.position', depth = 'state.depth',
@@ -97,7 +97,7 @@ def CreateInstances(store):
                      middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                      layer = 20.0, shift = 2.0))
 
-    GradientSimulator(name = 'simulatorGradientTemperature', store = store).ioinit.update(
+    GradientSimulator(name = 'simulatorGradientTemperature', store = store).ioinits.update(
         group = 'simulator.gradient.temperature', 
         output = 'ctdsim', field = 'temperature', 
         position = 'state.position', depth = 'state.depth',
@@ -105,7 +105,7 @@ def CreateInstances(store):
                      middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                      layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
 
-    GradientSimulator(name = 'simulatorGradientSalinity', store = store).ioinit.update(
+    GradientSimulator(name = 'simulatorGradientSalinity', store = store).ioinits.update(
         group = 'simulator.gradient.salinity', 
         output = 'ctdsim', field = 'salinity', 
         position = 'state.position', depth = 'state.depth',

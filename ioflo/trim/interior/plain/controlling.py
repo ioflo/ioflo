@@ -27,14 +27,14 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    PIDController(name = 'controllerPidSpeed', store = store).ioinit.update(
+    PIDController(name = 'controllerPidSpeed', store = store).ioinits.update(
             group = 'controller.pid.speed', output = 'goal.rpm',
             input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
             parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
                          ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
                          esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0))
 
-    PIDController(name = 'controllerPidHeading', store = store).ioinit.update(
+    PIDController(name = 'controllerPidHeading', store = store).ioinits.update(
             group = 'controller.pid.heading', output = 'goal.rudder', 
             input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
             parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
@@ -42,14 +42,14 @@ def CreateInstances(store):
                          esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
 
 
-    PIDController(name = 'controllerPidDepth', store = store).ioinit.update(
+    PIDController(name = 'controllerPidDepth', store = store).ioinits.update(
             group = 'controller.pid.depth', output = 'goal.pitch',
             input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
             parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
                          ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
                          esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0))
 
-    PIDController(name = 'controllerPidPitch', store = store).ioinit.update(
+    PIDController(name = 'controllerPidPitch', store = store).ioinits.update(
             group = 'controller.pid.pitch', output = 'goal.stern',
             input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
             parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
