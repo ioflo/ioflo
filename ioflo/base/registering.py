@@ -18,14 +18,26 @@ console = getConsole()
 class MetaRegister(type):
     """ Metaclass that registers all subclasses """
     def __init__(cls, name, bases, attrs):
+        """ Create if needed and register cls into Registry under reverse of name """
         super(MetaRegister, cls).__init__(name, bases, attrs)
         if not hasattr(cls, 'Registry'):
             cls.Registry = odict()
         rname = reverseCamel(name)
+        cls.__register__(rname, ioinits=getattr(cls, 'ioinits', None))
+    
+    def __register__(cls, rname, ioinits=None, inits=None):
+        """ Register cls under rname with ioinits and inits
+        
+            Usage:  A.__register__(rname, ioinits, inits)
+        """
+        console.terse( "Register class '{0}' under '{1}' per {2} with {3} ".format(
+            cls.__name__, rname, ioinits, inits))
         if rname in cls.Registry:
-            msg = "Entry '{0}' already exists in registry".format(rname)
+            msg = "Entry '{0}' already exists in registry of {1}".format(rname, cls)
             raise excepting.RegisterError(msg)
-        cls.Registry[rname] = (cls, odict(), getattr(cls, 'ioinits', odict()) )
+        cls.Registry[rname] = (cls, ioinits, inits)
+        return cls
+        
 
 class MetaSolo(MetaRegister):
     """ Metaclass that only allows singleton instances of its classes
@@ -36,7 +48,6 @@ class MetaSolo(MetaRegister):
             cls.Instance = super(MetaSolo, cls).__call__(*pa, **kwa)
         return cls.Instance
         
-
 class Registry(object):
     """Class that ensures every instance has a unique name
        uses class variable Counter and  Names dictionary
