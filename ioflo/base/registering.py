@@ -7,11 +7,35 @@ import random
 
 
 from .globaling import *
+from .odicting import odict
 
 from . import excepting
+from .aiding import reverseCamel
 
 from .consoling import getConsole
 console = getConsole()
+
+class MetaRegister(type):
+    """ Metaclass that registers all subclasses """
+    def __init__(cls, name, bases, attrs):
+        super(MetaRegister, cls).__init__(name, bases, attrs)
+        if not hasattr(cls, 'Registry'):
+            cls.Registry = odict()
+        rname = reverseCamel(name)
+        if rname in cls.Registry:
+            msg = "Entry '{0}' already exists in registry".format(rname)
+            raise excepting.RegisterError(msg)
+        cls.Registry[rname] = (cls, odict(), getattr(cls, 'Iois', odict()) )
+
+class MetaSolo(MetaRegister):
+    """ Metaclass that only allows singleton instances of its classes
+        Since subtype of MetaRegister also has registry of subclasses
+    """
+    def __call__(cls, *pa, **kwa):
+        if not hasattr(cls, 'Instance'):
+            cls.Instance = super(MetaSolo, cls).__call__(*pa, **kwa)
+        return cls.Instance
+        
 
 class Registry(object):
     """Class that ensures every instance has a unique name

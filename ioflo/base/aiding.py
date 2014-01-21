@@ -499,6 +499,31 @@ class SocketNB(object):
 
 #Utility Functions
 
+def ReverseCamel(name, lower=True):
+    """ Returns camel case reverse of name.
+        case change boundaries are the sections which are reversed.
+        If lower is True then the initial letter in the reversed name is lower case
+
+        Assumes name is of the correct format to be Python Identifier.
+    """
+    index = 0
+    parts = [[]]
+    letters = list(name) # list of the letters in the name
+    for c in letters:
+        if c.isupper(): #new part
+            parts.append([])
+            index += 1
+        parts[index].append(c.lower())
+    parts.reverse()
+    parts = ["".join(part) for part in  parts]
+    if lower: #camel case with initial lower
+        name = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]])
+    else: #camel case with initial upper
+        name = "".join([part.capitalize() for part in parts])
+    return name
+
+reverseCamel = ReverseCamel
+
 def NameToPath(name):
     """ Converts camel case name into full node path where uppercase letters denote
         intermediate nodes in path. Node path ends in dot '.'

@@ -2437,7 +2437,7 @@ class Builder(object):
             name = ""
             parts = []
             parms = odict()
-            init = odict()
+            ioinit = odict()
             kind = None
             connective = None
 
@@ -2486,7 +2486,7 @@ class Builder(object):
                 
                 elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
-                    init.update(data)
+                    ioinit.update(data)
                     
                 elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
@@ -2497,7 +2497,7 @@ class Builder(object):
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
-                        init[field] = src[field]                
+                        ioinit[field] = src[field]                
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2540,8 +2540,8 @@ class Builder(object):
             actor = deeding.Deed.Names[name] #fetch existing instance
             kind = actor.__class__.__name__
         
-        init = actor.preinitio(**init) # copy and update defaults with init
-        iois = actor.initio(**init) # empty if not ._parametric
+        ioinit = actor.preinitio(**ioinit) # copy and update defaults with init
+        iois = actor.initio(**ioinit) # empty if not ._parametric
         act = acting.Act(actor = actor, parms = parms, iois=iois)
 
         if hasattr(actor, 'restart'): #some deeds need to be restarted on frame entry

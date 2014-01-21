@@ -90,7 +90,7 @@ class CloneError(Exception):
     """Used to indicate cloning error
 
        usage:
-       msg = "CloneError: Framer '%s' already exists." % (name)
+       msg = "CloneError: Framer '%s' already exists" % (name)
        raise excepting.CloneError(msg)
     """
     def __init__(self, message = None):
@@ -101,6 +101,20 @@ class CloneError(Exception):
 
     def __str__(self):
         return ("%s.\n" % (self.message, ))
+    
+class RegisterError(Exception):
+    """Used to indicate error in Registry
+
+       usage:
+       msg = "Entry '{0}' already exists in registry".format(rname)
+       raise excepting.RegisterError(msg)
+    """
+    def __init__(self, message = None):
+        self.message = message #description of error
+        self.args = (message)
+
+    def __str__(self):
+        return ("{0}: {0}.\n".format(self.__class__.__name__, self.message))
 
 
 def Test():
