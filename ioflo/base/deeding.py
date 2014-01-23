@@ -136,7 +136,7 @@ class LapseDeed(Deed):
         # if self.act is enact then need to insert restartAct before it so it runs first
         found = False
         for i, enact in enumerate(self.act.frame.enacts):
-            if enact is self:
+            if enact is self.act:
                 found = True
                 self.act.frame.insertEnact(restartAct, i)
                 break
