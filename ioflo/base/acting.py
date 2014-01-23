@@ -10,6 +10,7 @@ import inspect
 import copy
 
 from .globaling import *
+from .odicting import odict
 
 from . import aiding
 from . import excepting
@@ -36,34 +37,31 @@ def CreateInstances(store):
 #Class definitions
 
 class Act(object):
-    """lightweight container class for action references and parameters
+    """ Container class for actor resolve time initialization and runtime operation """
+    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'inits', 'ioinits')
 
-    """
-    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'iois')
-
-    def __init__(self, actor=None, parms=None, frame=None, context=None,
-                     act=None, iois=None, **kwa ):
+    def __init__(self, frame=None, context=None, act=None,
+                       actor=None, parms=None, inits=None, ioinits=None, **kwa ):
         """ Initialization method for instance.
 
             attributes
-                .actor = Actor instance callable , call performs instances method action
-                .parms = dictionary of keyword arguments for .act
-                .frame = Frame reference to frame holding act
-                .context = Action execution context name string set when added to frame
-                .act = Act reference if act in embedded in another act such as Need
-                .iois = dictionary of share initializers of parms with same key
-
+                .frame = ref to Frame holding this Act
+                .context = name string of actioning context set when added to frame
+                .act = ref to super Act if self is embedded in another Act such as Need
+                .actor = ref to Actor class or instance, call performs instances method action
+                .parms = dictionary of keyword arguments for Actor instance call
+                .inits = dictionary of arguments to Actor.__init__()
+                .ioinits = dictionary of arguments to Actor.initio()
         """
         super(Act,self).__init__()
 
-        self.actor = actor #callable instance performs action
-        self.parms = parms or {}
         self.frame = frame
         self.context = context
         self.act = act
-        self.iois = iois
-        
-        self.parms['_act'] = self
+        self.actor = actor #callable instance performs action
+        self.parms = parms or odict()       
+        self.inits = inits or odict()
+        self.ioinits = ioinits or odict()
 
     def __call__(self): #make Act instance callable as function
         """ Define act as callable object """
@@ -71,10 +69,26 @@ class Act(object):
 
     def expose(self):
         """ Show attributes"""
-        cconsole.terse("Act Actor {0} Parms {1} in Frame {2} Context {3} SuperAct {4}\n".format(
+        console.terse("Act Actor {0} Parms {1} in Frame {2} Context {3} SuperAct {4}\n".format(
                     self.actor, self.parms, self.frame, self.context, self.act))
         if self.actor:
             self.actor.expose()
+    
+    def resolve(self, *pa, **kwa):
+        """ Resolve .frame attribute and .actor. Cause .actor to resolve its parms """
+        if self.act: # this is sub act of another act self.act so get super act context
+            self.frame = self.act.frame
+            self.context = self.act.context
+        self.frame = framing.resolveFrame(self.frame, who=self)
+        
+        if issubclass(self.actor, Actor): # class so convert to instance
+            self.inits['store'] = self.frame.store
+            self.inits['act'] = self
+            self.actor = self.actor(**self.inits) #create instance
+            
+        parms = self.actor.resolve(**self.parms)
+        self.parms.update(parms)
+        self.actor.postinitio(**self.parms)    
             
     def clone(self, clones):
         """ Return clone of self in support of framer cloning
@@ -102,34 +116,22 @@ class Act(object):
         self.frame = framing.resolveFrame(self.frame, who=self)
         
         parms = self.actor.resolveLinks(**self.parms)
-        self.parms.update(parms) 
-
+        self.parms.update(parms)
+    
 class Nact(Act):
     """ Negating Act used for actor needs to give Not Need
     """
-    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'iois')
+    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'inits', 'ioinits')
 
     def __init__(self, **kwa ):
-        """ Initialization method for instance.
-
-            Inherited attributes
-                .actor = Actor instance callable , call performs instances method action
-                .parms = dictionary of keyword arguments for .act
-                .frame = Frame reference to frame holding act
-                .context = Action execution context name string
-                .act = Act reference if act in embedded in another act such as Need
-                .iois = dictionary of share initializers of parms with same key
-
-        """
+        """ Initialization method for instance. """
         super(Nact,self).__init__(**kwa)
-
 
     def __call__(self): #make Act instance callable as function
         """Define act as callable object
            Negate the output
         """
         return not (self.actor(**self.parms))
-
 
     def expose(self):
         """ Show attributes """
@@ -138,50 +140,315 @@ class Nact(Act):
         if self.actor:
             self.actor.expose()
 
-
-class Actor(registering.StoriedRegistry):
-    """Actor Patron Registry Class 
-       for executing actions
-       via its action method 
+class Actor(object): # registering.StoriedRegistry
+    """ Actor Base Class
+        Has Actor specific Registry of classes
     """
-    Counter = 0  
-    Names = {}
-
-    def __init__(self, name = '', **kwa ):
+    __metaclass__ = registering.RegisterType
+    Registry = odict() # Actor Registery
+    ioinits = odict() # class defaults
+    __slots__ = ('name', 'store', 'act')
+    
+    def __init__(self, name='', store=None, act=None, **kwa ):
         """ Initialization method for instance.
 
-            inherited attributes
-                .name = unique name for actor instance
-                .store = shared data store
-              
-            The registry class will supply unique name when name is empty by using
-            the .__class__.__name__ as the default preface to the name.
-            To use a different default preface add this to the .__init__ method
-            before the super call
-            
-            if 'preface' not in kw:
-                kw['preface'] = 'MyDefaultPreface'
-
-
+            Instance attributes
+                .name = name string for Actor variant in class Registry
+                .store = reference to shared data Store
+                .act = reference to containing Act
         """
-        super(Actor,self).__init__(name = name, **kwa)
-    
+        self.name = name
+        if store is not None: 
+            if  not isinstance(store, storing.Store):
+                raise ValueError("Not store %s" % store)
+            self.store = store               
+        
     def __call__(self, **kwa):
-        """run .action
-
-        """
+        """ run .action  """
         return self.action(**kwa)
     
     def action(self, **kwa):
         """Action called by Actor. Should override in subclass."""
         console.profuse("Actioning {0} with {1}\n".format(self.name, str(kwa)))
-
         pass
     
     def expose(self):
         """Show Actor."""
-        console.terse("Actor {0}".format(self.name))
+        console.terse("Actor {0}".format(self.name))    
+    
+    def resolve(self, **kwa):
+        """ Return updated parms from conversion of .act.ioints into iois and
+            resolution into share refs if any. 
+            Extend in subclass to resolve specific kwa items that are links or
+            share refs and update parms
+        """
+        parms = odict()
+        iois = self.initio(**self.act.ioinits)
+        for key, ioi in iois.items(): # resolve iois if any and update parms 
+            if key in kwa:
+                msg = "ResolveError: Parm and Ioi with same name"
+                raise excepting.ResolveError(msg, key, self)
+            parms[key] = self.resolvePath(  ipath=ioi['ipath'],
+                                            ival=ioi.get('ival'), 
+                                            iown=ioi.get('iown'))
+        return parms    
+    
+    def initio(self, inode='', **kwa):
+        """ Intialize and hookup ioflo shares from node pathname inode and kwa arguments.
+            This implements a generic Actor interface protocol for associating the
+            io data flow shares to the Actor.
+            
+            inode is the computed pathname string of the default share node
+            where shares associated with the Actor instance may be placed when
+            relative addressing is used.
+            
+            The values of the items in the **kwa argument may be either strings or
+            mappings
+            
+            For each key,val in **kwa.items() there are the following 2 forms for val:
+            
+            1- string:
+               ipath = pathnamestring
+            2- dict of items (mapping) of form:
+                {
+                    ipath: "pathnamestring", (optional)
+                    ival: initial value, (optional)
+                    iown: truthy, (optional)
+                }
+            
+            In either case, three init values are produced, these are:
+                ipath, ival, iown,
+            Missing init values from ipath, ival, iown will be assigned a
+            default value as per the rules below:
+
+            For each kwa item (key, val)
+                key is the name of the associated instance attribute or action parm.
+                Extract ipath, ival, iown from val
+                
+                Shares are initialized with mappings passed into share.create or
+                share.update. So to assign ival to share.value pass into share.create
+                or share.update a mapping of the form {'value': ival} whereas
+                passing in an empty mapping does nothing.
+                
+                If ipath not provided
+                    ipath is the default path inode.key
+                Else ipath is provided
+                    If ipath starts with dot "." Then absolute path
+                    Else ipath does not start with dot "." Then relative path from inode
+                        
+                    If ipath ends with dot Then the path is to a node not share
+                            node ref is created and remaining init values are ignored 
+
+                
+                If ival not provided
+                     set ival to empty mapping which when passed to share.create
+                     will not change share.value
+                Else ival provided
+                    If ival is an empty Mapping Then
+                        assign a shallow copy of ival to share.value by passing
+                        in {value: ival (copy)} to share.create/.update
+                    Else If ival is a non-string iterable and not a mapping
+                        assign a shallow copy of ival to share.value by passing
+                        in {value: ival (copy)} to share.create/.update 
+                    Else If ival is a non-empty Mapping Then
+                        Each item in ival is assigned as a field, value pair in the share
+                        by passing ival directly into share.create or share.update
+                        This means there is no way to init a share.value to a non empty mapping
+                        It is possible to init a share.value to an empty mapping see below
+                    Else
+                        assign ival to share.value by by passing
+                        in {value: ival} to share.create or share.update
+
+                Create share with pathname given by ipath
+
+                If iown Then
+                    init share with ival value using update 
+                Else
+                    init share with ival value using create ((change if not exist))
+                
+                If Solo then return iois dictionary of shares
+                Else
+                     Assign attribute name of key and value is share
+                
+        """
+        if not isinstance(inode, basestring):
+            raise ValueError("Nonstring inode arg '{0}'".format(inode))
         
+        if not inode:
+            inode = aiding.nameToPath(self.name)
+        
+        if not inode.endswith('.'):
+            inode = "{0}.".format(inode)        
+        
+        iois = odict()
+        
+        for key, val in kwa.items():
+            if val == None:
+                continue
+            
+            if isinstance(val, basestring):
+                ipath = val
+                iown = None
+                ival = odict() # effectively will not change share
+            elif isinstance(val, Mapping): # dictionary
+                ipath = val.get('ipath')
+                iown = val.get('iown')
+                
+                if not 'ival' in val:
+                    ival = odict() # effectively will not change share
+                else:
+                    ival = val['ival']
+                    if isinstance(ival, Mapping):
+                        if not ival: #empty mapping
+                            ival = odict(value=copy.copy(ival)) #make copy so each instance unique
+                        # otherwise don't change since ival is non-empty mapping
+                    elif isinstance(ival, NonStringIterable): # not mapping and NonStringIterable
+                        ival = odict(value=copy.copy(ival))
+                    else: 
+                        ival = odict(value=ival)                    
+            else:
+                raise ValueError("Bad init kw arg '{0}'with Value '{1}'".format(key, val))
+            
+            if ipath:
+                if not ipath.startswith('.'): # full path is inode joined to ipath
+                    ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
+            else:
+                ipath = '.'.join(inode.rstrip('.'), key)    
+            
+            ioi = odict(ipath=ipath, ival=ival, iown=iown)
+            
+            if _parametric: # act resolveLinks will resolve share/node ref and init
+                iois[key] = ioi
+            else:           
+                self._iois[key] = ioi
+       
+        ioi = odict(ipath=inode)
+        if _parametric: # act resolveLinks will resolve node ref
+            iois['inode'] = ioi
+        else:
+            self._iois['inode'] = ioi
+        
+        return iois # non-empty when _parametric
+    
+    def postinitio(self, **kwa):
+        """ Base method to be overriden in sub classes. Perform post initio setup
+            after all parms and ioi parms or attributes have been created
+            kwa usually parms
+        """
+        pass    
+    
+    def resolvePath(self, ipath, ival=None, iown=None):
+        """ Returns resolved Share or Node instance from ipath
+            ipath may be path name of share or node
+            or reference to Share or Node instance
+
+            This method resolves pathname strings into share and node references
+            at resolve time.
+            
+            It allows for substitution into ipath of
+            frame, framer, main frame, or main framer relative names.
+            So that lexically relative pathnames can
+            be dynamically resolved in support of framer cloning.
+            It assumes that any implied variants have been reconciled.
+            
+            When ipath is a string:  (not a Node or Share reference)
+                the following syntax is used:
+            
+                If the path name starts with a leading '.' dot then path name is
+                fully reconciled and no contextual substitutions are to be applied.
+            
+                Otherwise make subsitutions in pathname strings that begin
+                with 'framer.' and have the special framer and/or frame names
+                of 'me' or 'main'.
+            
+                'me' indicates substitute the current framer or frame name respectively.
+                
+                'main' indicates substitute the current frame's main framer or main frame
+                name respectively.
+            
+            When  ipath is a pathname string that resolves to a Share and ival is not None
+            Then ival is used to initialize the share values.
+                ival should be a dict of fields and values
+                
+                If own is True then .update(ival) is used
+                Otherwise .create(ival) is used
+            
+            Requires that
+               self.name is not empty
+               self.store exist
+               self.act exist
+               
+               The following have already been resolved:
+               self.act.frame
+               self.act.frame.framer 
+               self.act.frame.framer.main
+               self.act.frame.framer.main.framer
+            
+        """    
+        if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
+            if not ipath.startswith('.'): # not reconciled so do relative substitutions
+                parts = ipath.split('.')
+                if parts[0] == 'framer':  #  relative addressing
+                    if not self.act:
+                        raise excepting.ResolveError("ResolveError: Missing act context"
+                                " to resolve relative pathname.", ipath, self)
+                    if not self.act.frame:
+                        raise excepting.ResolveError("ResolveError: Missing frame context"
+                            " to resolve relative pathname.", ipath, self.act)
+                    if not self.act.frame.framer:
+                        raise excepting.ResolveError("ResolveError: Missing framer context"
+                            " to resolve relative pathname.", ipath, self.act.frame)
+                    
+                    if parts[1] == 'me': # current framer
+                        parts[1] = self.act.frame.framer.name
+                    elif parts[1] == 'main': # current main framer
+                        if not self.act.frame.framer.main:
+                            raise excepting.ResolveError("ResolveError: Missing main frame"
+                                " context to resolve relative pathname.", ipath,
+                                self.act.frame.framer)
+                        parts[1] = self.act.frame.framer.main.framer.name
+                    
+                    if (len(parts) >= 3):
+                        if parts[2] == 'frame':
+                            if parts[3] == 'me':
+                                parts[3] = self.frame.name
+                            elif parts[3] == 'main':
+                                if not self.act.frame.framer.main:
+                                    raise excepting.ResolveError("ResolveError: "
+                                        "Missing main frame context to resolve "
+                                        "relative pathname.", ipath,
+                                        self.act.frame.framer)
+                                parts[3] = self.act.frame.framer.main.name
+                            if (len(parts) >= 5 ) and parts[4] == 'actor':
+                                if parts[5] == 'me': # slice insert multiple parts
+                                    if not self.name:
+                                        raise excepting.ResolveError("ResolveError: Missing name"
+                                            " context to resolve relative pathname.", ipath, self)                                        
+                                    parts[5:6] = nameToPath(self.name).rstrip('.').split('.')
+                        elif parts[2] == 'actor':
+                            if parts[3] == 'me': # slice insert multiple parts
+                                if not self.name:
+                                    raise excepting.ResolveError("ResolveError: Missing name"
+                                        " context to resolve relative pathname.", ipath, self)                                
+                                parts[3:4] = nameToPath(self.name).rstrip('.').split('.')                        
+                
+                ipath = '.'.join(parts)
+            
+            if not self.store:
+                raise excepting.ResolveError("ResolveError: Missing store context"
+                                " to resolve relative pathname.", ipath, self)                
+            if ipath.endswith('.'): # Node not Share
+                ipath = self.store.createNode(ipath.rstrip('.'))
+            else: # Share
+                ipath = self.store.create(ipath)
+                if ival != None:
+                    if iown:
+                        ipath.update(ival)
+                    else:
+                        ipath.create(ival)
+                    
+        return ipath        
+     
     def clone(self):
         """ Clone self in support of framer cloning.
             Actors that are fully parametrized work as singletons so just return
@@ -250,7 +517,43 @@ class Actor(registering.StoriedRegistry):
                                                     iown=ioi.get('iown'),
                                                     act=_act)
         return parms
+    
+class StarActor(Actor): # registering.StoriedRegistry
+    """ Actor Subclass that allows instance attributes for iois"""
+    ioinits = odict()
+    __slots__ = ('name', 'store', 'act')
+    
+    def __init__(self, **kwa ):
+        """ Initialization method for instance.
+            Inherited attributes
+                .name = name string for Actor variant in class Registry
+                .store = reference to shared data Store
+                .act = reference to containing Act
+                
+            Instance attributes
+                dynamically created from resolved iois converted from .act.ioinits
+        """
+        super(StarActor,self).__init__(**kwa)
+    
+    def initio(self, **kwa):
+        """ Consume iois from superclass .initio and assign to instance attributes
+            
+            For each key, value in iois.items()
+                resolve value into share
+                create attribute with name of key and value of share
+                
+        """
+        iois = super(StarActor,self).initio(**kwa)
 
+        for key, ioi in iois.items():
+            if hasattr(self, key):
+                msg = "ResolveError: Pre-existing attribute and Ioi with same name"
+                raise excepting.ResolveError(msg, key, self)                
+            
+            setattr(self, key, self.resolvePath( ipath=ioi['ipath'],
+                                                 ival=ioi.get('ival'), 
+                                                 iown=ioi.get('iown'))
+        return (odict()) # return empty since iois are all attributes not parms
 
 class Interrupter(Actor):
     """Interrupter Actor Patron Registry Class 
@@ -618,31 +921,28 @@ class Deactivator(Actor):
         return parms
 
 class Restarter(Actor):
-    """RestarterActor Patron Registry Class 
-
-       Restarter is a special actor that acts on other actor
-       In the Restarter's action method, 
-       if the actor passed in as a parameter has a restart attribute
-          it calls the restart method
-
-       Builder checks at parse time
-       If deed instance has restart attribute then
-          adds enter restarter action for the deed
+    """ Restarter is a special actor that acts on other act's actor
+        In the Restarter's action method, 
+            if the act.actor passed in as a parameter has a restart attribute
+                 it calls the act.actor.restart() method
+          
+        Doesn't need to resolve its action method's 'act' parm because the act has
+        own entry in Frame it will get resolved normally
+        
+        Restarter act is created in .resolve of Deed's that need restarting.
     """
-    def action(self, actor, **kw):
-        """Action called by Actor
+    def action(self, act, **kw):
+        """ Action called by Actor
         """
-        console.profuse("{0} restart {1}\n".format(self.name, actor.name))
+        console.profuse("{0} restart {1}\n".format(self.name, act.actor.name))
 
-        if hasattr(actor, 'restart'):
+        if hasattr(act.actor, 'restart'):
             return actor.restart()
 
     def expose(self):
         """   """
         console.terse("Restarter {0}\n".format(self.name))
-
-
-
+    
 class Printer(Actor):
     """Printor Actor Patron Registry Class 
 

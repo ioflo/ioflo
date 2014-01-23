@@ -46,6 +46,13 @@ class Tasker(registering.StoriedRegistry):
            .schedule = initial scheduling context for this tasker vis a vis skedder
            .runner = generator to run tasker
 
+            The registry class will supply unique name when name is empty by using
+            the .__class__.__name__ as the default preface to the name.
+            To use a different default preface add this to the .__init__ method
+            before the super call
+            
+            if 'preface' not in kw:
+                kw['preface'] = 'MyDefaultPreface'
 
         """
         super(Tasker,self).__init__(**kw)

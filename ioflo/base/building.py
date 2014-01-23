@@ -2434,24 +2434,22 @@ class Builder(object):
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
         try:
-            name = ""
+            kind = "" # deed class key in registry
+            name = None #specific name of deed instance
             parts = []
             parms = odict()
-            ioinits = odict()
             inits = odict()
-            kind = None
+            ioinits = odict()
             connective = None
 
             while index < len(tokens): 
-                if tokens[index] in ['as', 'to', 'with', 'by', 'from', 'per', 'for']: # end of parts
-                    #connective = tokens[index]
-                    #index += 1 #eat token
+                if tokens[index] in ['as', 'to', 'by', 'with', 'from', 'per', 'for']: # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
             
             if parts:
-                name = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+                kind = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
             
             while index < len(tokens): #options 
                 connective = tokens[index]
@@ -2460,30 +2458,45 @@ class Builder(object):
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'to', 'with', 'by', 'from', 'per', 'for']: # end of parts
+                        if tokens[index] in ['as', 'to','by', 'with', 'from', 'per', 'for']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
 
-                    kind =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
-                    if not kind:
-                        msg = "ParseError: Building command '%s'. Missing kind for connective 'as'" % (command)
+                    name =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+                    if not name:
+                        msg = "ParseError: Building command '%s'. Missing name for connective 'as'" % (command)
                         raise excepting.ParseError(msg, tokens, index)                                     
             
-                elif connective in ['to', 'with']:
+                elif connective in ['to']:
                     data, index = self.parseDirect(tokens, index)
                     parms.update(data)
     
-                elif connective in ['by', 'from']:
+                elif connective in ['by']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Do from non-existent share %s ... creating anyway" %\
+                        print "     Warning: Do 'by' non-existent share %s ... creating anyway" %\
                               (srcPath)
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
                         parms[field] = src[field]
+                
+                elif connective in ['with']:
+                    data, index = self.parseDirect(tokens, index)
+                    inits.update(data)
+        
+                elif connective in ['from']:
+                    srcFields, index = self.parseFields(tokens, index)
+                    srcPath, index = self.parsePath(tokens, index)
+                    if self.currentStore.fetchShare(srcPath) is None:
+                        print "     Warning: Do 'from' non-existent share %s ... creating anyway" %\
+                              (srcPath)
+                    src = self.currentStore.create(srcPath)
+                    # assumes that src share was inited earlier in parsing so has fields
+                    for field in srcFields:
+                        inits[field] = src[field]                
                 
                 elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
@@ -2493,7 +2506,7 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Do from non-existent share %s ... creating anyway" %\
+                        print "     Warning: Do 'for' non-existent share %s ... creating anyway" %\
                               (srcPath)
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
@@ -2510,52 +2523,25 @@ class Builder(object):
                   (command, index, tokens)
             return False
         
-        if kind: # Create new instance from kind class with name
-            if name and name in deeding.Deed.Names:
-                msg = "ParseError: Building command '%s'. Deed named %s of kind %s already exists" % \
-                    (command, name, kind)
-                raise excepting.ParseError(msg, tokens, index)
-
-            if kind not in deeding.Deed.Names: # expect instance of same name as kind
-                msg = "ParseError: Building command '%s'. No Deed kind of %s" %\
-                    (command, kind)
-                raise excepting.ParseError(msg, tokens, index)
-
-            kinder = deeding.Deed.Names[kind]
-            #create new instance as the same type as kinder if name empty then
-            # a unique name will be provided
-            actor = type(kinder)(name=name, store=self.currentStore) 
-            actor.ioinits.update(kinder.ioinits) # copy ioinits defaults from kinder
-
-        else: # Use an existing instance
-            if not name:
-                msg = "ParseError: Building command '%s'. Missing name for Deed." %\
-                                    (command)
-                raise excepting.ParseError(msg, tokens, index)
-                            
-            if name not in deeding.Deed.Names: #instance not exist
-                msg = "ParseError: Building command '%s'. No Deed named %s" %\
-                    (command, name)
-                raise excepting.ParseError(msg, tokens, index)
-            
-            actor = deeding.Deed.Names[name] #fetch existing instance
-            kind = actor.__class__.__name__
+        if not kind:
+            msg = "ParseError: Building command '%s'. Missing kind for Deed." %\
+                                (command)
+            raise excepting.ParseError(msg, tokens, index)        
         
-        ioinits = actor.preinitio(**ioinits) # copy and update defaults with init
-        iois = actor.initio(**ioinits) # empty if not ._parametric
-        act = acting.Act(actor = actor, parms = parms, iois=iois)
-
-        if hasattr(actor, 'restart'): #some deeds need to be restarted on frame entry
-            #create restarter actor to restart actor 
-            #add restarAct before act so restartAct always runs before act if in same context
-            parms = dict(actor = actor)
-            restartAct = acting.Act(actor = acting.Actor.Names['restarter'], parms = parms)
-            self.currentFrame.addEnact(restartAct)
-            context = 'enact'
-
-            console.profuse("     Added {0} {1} with {2}\n".format(
-                context, restartAct.actor.name, restartAct.parms['actor'].name))         
-
+        if kind not in deeding.Deed.Registry: # class registration not exist
+            msg = "ParseError: Building command '%s'. No Deed of kind '%s' in registry" %\
+                (command, kind)
+            raise excepting.ParseError(msg, tokens, index)
+        
+        actor, rinits, rioinits = deeding.Deed.Registry[kind] # fetch from Registry
+        rinits = odict(rinits) if rinits else odict() # make copy if given
+        rinits.update(inits)
+        rinits['name'] = name or kind
+        rioinits = odict(rioinits) if rioinits else odict() # make copy if given
+        rioinits.update(ioinits)
+        
+        act = acting.Act(actor=actor, parms=parms, inits=rinits, ioinits=rioinits)        
+        
         context = self.currentContext
         if context == NATIVE: 
             context = RECUR #what is native for this command

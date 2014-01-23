@@ -15,38 +15,28 @@ from .aiding import reverseCamel
 from .consoling import getConsole
 console = getConsole()
 
-class MetaRegister(type):
+class RegisterType(type):
     """ Metaclass that registers all subclasses """
     def __init__(cls, name, bases, attrs):
         """ Create if needed and register cls into Registry under reverse of name """
-        super(MetaRegister, cls).__init__(name, bases, attrs)
+        super(RegisterType, cls).__init__(name, bases, attrs)
         if not hasattr(cls, 'Registry'):
             cls.Registry = odict()
         rname = reverseCamel(name)
         cls.__register__(rname, ioinits=getattr(cls, 'ioinits', None))
     
-    def __register__(cls, rname, ioinits=None, inits=None):
+    def __register__(cls, rname, inits=None,  ioinits=None):
         """ Register cls under rname with ioinits and inits
         
             Usage:  A.__register__(rname, ioinits, inits)
         """
-        console.terse( "Register class '{0}' under '{1}' per {2} with {3} ".format(
-            cls.__name__, rname, ioinits, inits))
+        console.terse( "Register class '{0}' under '{1}' with {2} per {3}.\n".format(
+            cls.__name__, rname, inits, ioinits))
         if rname in cls.Registry:
             msg = "Entry '{0}' already exists in registry of {1}".format(rname, cls)
             raise excepting.RegisterError(msg)
-        cls.Registry[rname] = (cls, ioinits, inits)
+        cls.Registry[rname] = (cls, inits, ioinits)
         return cls
-        
-
-class MetaSolo(MetaRegister):
-    """ Metaclass that only allows singleton instances of its classes
-        Since subtype of MetaRegister also has registry of subclasses
-    """
-    def __call__(cls, *pa, **kwa):
-        if not hasattr(cls, 'Instance'):
-            cls.Instance = super(MetaSolo, cls).__call__(*pa, **kwa)
-        return cls.Instance
         
 class Registry(object):
     """Class that ensures every instance has a unique name
@@ -140,26 +130,4 @@ class StoriedRegistry(Registry):
                 raise ValueError("Not store %s" % store)
         self.store = store        
 
-def Test():
-    """Module self test
-
-
-
-    """
-    
-    x = Registry()
-    print x.name
-    y = Registry()
-    print y.name
-
-    name = "Hello"
-    if Registry.VerifyName(name):
-        z = Registry(name= name)
-    print Registry.Names
-    print Registry.VerifyName(name)
-
-
-
-if __name__ == "__main__":
-    Test()
 
