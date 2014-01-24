@@ -127,11 +127,11 @@ class DoneNeed(Need):
 
         return result
     
-    def resolve(self, tasker, **kw):
+    def resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as tasker parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(DoneNeed, self).resolve( **kw) 
+        parms = super(DoneNeed, self).resolve( **kwa) 
 
         if not isinstance(tasker, tasking.Tasker): # name of tasker so resolve
             if tasker not in tasking.Tasker.Names: 
@@ -192,11 +192,11 @@ class StatusNeed(Need):
 
         return result
     
-    def resolve(self, tasker, **kw):
+    def resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(StatusNeed, self).resolve( **kw) 
+        parms = super(StatusNeed, self).resolve( **kwa) 
 
         if not isinstance(tasker, tasking.Tasker): #so name of tasker
             if tasker not in tasking.Tasker.Names: 
@@ -308,52 +308,54 @@ class MarkerNeed(Need):
             .name = unique name for action instance
             .store = shared data store
         parms:
-            share
-            name
+            share       share ref holding mark
+            name        name of frame where marker is watching
             frame       only used in resolvelinks
             marker      only used in resolvelinks
     
     """
-    def resolve(self, share, name, frame, marker, **kw):
-        """Resolves frame framename link and then
+    def resolve(self, share, frame, marker, **kwa):
+        """ Resolves frame name link and then
            inserts marker as first enact in the resolved frame
            
-           If appropriate resolved link(s) are passed back to container act to
-           update the act's parms
         """
-        parms = super(MarkerNeed, self).resolve( **kw) 
+        parms = super(MarkerNeed, self).resolve( **kwa) 
         
-        if not share.marks.get(name):
-            share.marks[name] = storing.Mark()        
-    
         if not isinstance(frame, framing.Frame): # must be pathname
-            if frame not in framing.Frame.Names: 
-                raise excepting.ResolveError("ResolveError: Bad need update frame link", frame, self.name)
+            if frame not in framing.Frame.Names:
+                msg = "ResolveError: Bad need update frame link"
+                raise excepting.ResolveError(msg, frame, self.name)
             parms['frame'] = frame = framing.Frame.Names[frame] #replace frame name with frame
         
-        if not isinstance(marker, acting.Marker): #marker is name of actor
-            if marker not in acting.Actor.Names:
-                raise excepting.ResolveError("ResolveError: Bad need marker link", marker, self.name)
-            parms['marker'] = marker = acting.Actor.Names[marker]
-        
+        if not share.marks.get(frame.name):
+            share.marks[frame.name] = storing.Mark()
+            
         found = False
         for enact in frame.enacts:
-            if (enact.actor is marker and
+            if (isinstance(enact.actor, acting.Actor) and 
+                    enact.actor.name is marker and
                     enact.parms['share'] is share and
-                    enact.parms['name'] == name):
+                    enact.parms['name'] == frame.name):
                 found = True
                 break
             
         if not found:
-            markerParms = dict(share=share, name=name)
-            markerAct = acting.Act(marker, parms=markerParms)
+            if marker not in acting.Actor.Registry:
+                msg = "ResolveError: Bad need marker link"
+                raise excepting.ResolveError(msg, marker, self.name)
             
-            frame.insertEnact(markerAct)
+            markerParms = dict(share=share, frame=frame.name)
+            parms['marker'] = marker = acting.Act(  actor=marker,
+                                                    registrar=acting.Actor,
+                                                    parms=markerParms)
+            
+            frame.insertEnact(marker)
             console.profuse("     Added {0} {1} with {2} in {3}\n".format(
                 'enact',
-                markerAct.actor.name,
-                markerAct.parms['share'].name,
-                markerAct.parms['name']))   
+                marker,
+                marker.parms['share'].name,
+                marker.parms['frame']))
+            marker.resolve()
                 
         return parms #return items are updated in original act parms    
     
@@ -387,22 +389,21 @@ class UpdateNeed(MarkerNeed):
             .store = shared data store
 
         parameters:
-            share
-            name
-            frame       only used in resolvelinks
-            marker      only used in resolvelinks
+            share = resolved share that is marked
+            frame = resolved frame where marker is placed
+            marker = marker kind name
     """
-    def action(self, share, name, **kw):
+    def action(self, share, frame, **kw):
         """ Check if share updated while in frame/mark denoted by name key if any
             Default is False
         """
         result = False
-        mark = share.marks.get(name) #get mark from mark frame name key
+        mark = share.marks.get(frame.name) #get mark from mark frame name key
         if mark and mark.stamp != None:
             result = share.stamp >= mark.stamp #equals so catch updates on enter
         
         console.profuse("Need Share {0} update in Frame {1} = {2}\n".format(
-            share.name, name, result)) 
+            share.name, frame.name, result)) 
 
         return result
 
@@ -418,12 +419,12 @@ class ChangeNeed(MarkerNeed):
             frame       only used in resolvelinks
             marker      only used in resolvelinks
     """
-    def action(self, share, name, **kw):
+    def action(self, share, frame, **kw):
         """ Check if share data changed while in frame/mark denoted by name key if any
             Default is False
         """
         result = False
-        mark = share.marks.get(name) #get mark from mark frame name key
+        mark = share.marks.get(frame.name) #get mark from mark frame name key
         if mark and mark.data != None:
             for field, value in share.items():
                 try:
@@ -438,7 +439,7 @@ class ChangeNeed(MarkerNeed):
                          
         
         console.profuse("Need Share {0} change in Frame {1} = {2}\n".format(
-            share.name, name, result)) 
+            share.name, frame.name, result)) 
 
         return result
 

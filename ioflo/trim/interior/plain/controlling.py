@@ -26,44 +26,44 @@ def CreateInstances(store):
        must be function so can recreate after clear registry
        globals useful for module self tests
     """
+    PidController(name = 'controllerPidSpeed', store = store).ioinits.update(
+        group = 'controller.pid.speed', output = 'goal.rpm',
+        input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
+        parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
+                     ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
+                     esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0))
 
-    PIDController(name = 'controllerPidSpeed', store = store).ioinits.update(
-            group = 'controller.pid.speed', output = 'goal.rpm',
-            input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
-            parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
-                         ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
-                         esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0))
+    PidController(name = 'controllerPidHeading', store = store).ioinits.update(
+        group = 'controller.pid.heading', output = 'goal.rudder', 
+        input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
+        parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
+                     ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
+                     esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
 
-    PIDController(name = 'controllerPidHeading', store = store).ioinits.update(
-            group = 'controller.pid.heading', output = 'goal.rudder', 
-            input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
-            parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
-                         ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
-                         esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
+    PidController(name = 'controllerPidDepth', store = store).ioinits.update(
+        group = 'controller.pid.depth', output = 'goal.pitch',
+        input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
+        parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
+                     ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
+                     esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0))
 
-
-    PIDController(name = 'controllerPidDepth', store = store).ioinits.update(
-            group = 'controller.pid.depth', output = 'goal.pitch',
-            input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
-            parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
-                         ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
-                         esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0))
-
-    PIDController(name = 'controllerPidPitch', store = store).ioinits.update(
-            group = 'controller.pid.pitch', output = 'goal.stern',
-            input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
-            parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
-                         ger = 1.0, gff = 0.0, gpe = 2.0, gde = 0.0, gie = 0.0,
-                         esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
+    PidController(name = 'controllerPidPitch', store = store).ioinits.update(
+        group = 'controller.pid.pitch', output = 'goal.stern',
+        input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
+        parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
+                     ger = 1.0, gff = 0.0, gpe = 2.0, gde = 0.0, gie = 0.0,
+                     esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
 
 #Class definitions
 
-class PIDController(deeding.LapseDeed):
+
+
+class PidController(deeding.LapseDeed):
     """PIDController LapseDeed Deed Class
        PID Controller Class
 
     """
-
+    
     def __init__(self, **kw):
         """Initialize instance
 
@@ -76,7 +76,7 @@ class PIDController(deeding.LapseDeed):
 
         """
         #call super class method
-        super(PIDController,self).__init__(**kw)  
+        super(PidController,self).__init__(**kw)  
 
         self.lapse = 0.0 #time lapse in seconds calculated on update 
         
@@ -128,8 +128,6 @@ class PIDController(deeding.LapseDeed):
            .rate = reference to input rate share
            .rsp = reference to input reference set point
 
-        
-        
         """
         
         self.group = group
@@ -162,7 +160,7 @@ class PIDController(deeding.LapseDeed):
         """update will use inputs from store
            assumes all inputs come from deeds that use value as their output attribute name
         """
-        super(PIDController,self).action(**kw) #computes lapse here
+        super(PidController,self).action(**kw) #computes lapse here
 
         self.elapsed.value = self.lapse  #update share
 
@@ -220,7 +218,33 @@ class PIDController(deeding.LapseDeed):
         print "    error = %0.3f errorRate = %0.3f errorSum = %0.3f output = %0.3f truth = %s" %\
               (self.e.value, self.er.value, self.es.value, self.output.value, self.output.truth)
 
+PidController.__register__('controllerPidSpeed', ioinits=odict(
+    group = 'controller.pid.speed', output = 'goal.rpm',
+    input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
+    parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
+                 ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
+                 esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0)) )
 
+PidController.__register__('controllerPidHeading', ioinits=odict(
+    group = 'controller.pid.heading', output = 'goal.rudder', 
+    input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
+    parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
+                 ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
+                 esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0)) )
+
+PidController.__register__('controllerPidDepth', ioinits=odict(
+    group = 'controller.pid.depth', output = 'goal.pitch',
+    input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
+    parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
+                 ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
+                 esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0)) )
+
+PidController.__register__('controllerPidPitch', ioinits=odict(
+    group = 'controller.pid.pitch', output = 'goal.stern',
+    input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
+    parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
+                 ger = 1.0, gff = 0.0, gpe = 2.0, gde = 0.0, gie = 0.0,
+                 esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0)) )
 
 def TestPID():
     """
@@ -235,7 +259,7 @@ def TestPID():
 
 
     print "\nTesting PID Controller"
-    controller = PIDController(name = 'controllerPIDTest', store = store, 
+    controller = PidController(name = 'controllerPIDTest', store = store, 
                                group = 'controller.pid.test', output = 'goal.testoutput',
                                input = 'state.testinput', rate = 'state.testrate', rsp = 'goal.testrsp',
                                parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,

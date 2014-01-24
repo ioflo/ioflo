@@ -8,6 +8,7 @@ from __future__ import with_statement
 import time
 import re
 import importlib
+import os
 
 from collections import deque
 from itertools import izip
@@ -219,6 +220,7 @@ class Builder(object):
         lineView = ''
 
         try: #IOError
+            self.fileName = os.path.abspath(self.fileName)
             self.currentFile = open(self.fileName,"r+")
             self.currentCount = 0
 
@@ -350,13 +352,16 @@ class Builder(object):
         try:
             name = tokens[index]
             index +=1
-
+            
             self.files.append(self.currentFile) #push currentFile
             self.counts.append(self.currentCount) #push current line ct
-
+            cwd = os.getcwd() #save current working directory
+            os.chdir(os.path.split(self.currentFile.name)[0]) # set cwd to current file
+            name = os.path.abspath(name) # resolve name if relpath to cwd
+            os.chdir(cwd) #restore old cwd
             self.currentFile = open(name,"r+")
             self.currentCount = 0
-            console.terse("Loading from file (0).\n".format(self.currentFile.name))
+            console.terse("Loading from file {0}.\n".format(self.currentFile.name))
 
         except IndexError:
             msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
@@ -392,7 +397,7 @@ class Builder(object):
             self.currentHouse.assignRegistries()
 
             from .. import CreateAllInstances, _InstanceModules # ioflo/__init__.py
-            CreateAllInstances(self.currentHouse.store, _InstanceModules)
+            #CreateAllInstances(self.currentHouse.store, _InstanceModules)
 
             console.profuse("     Clearing current Framer, Frame, Log etc.\n")
             #changed store so need to make new frameworks and frames
@@ -719,7 +724,7 @@ class Builder(object):
         """create server tasker in current house
            server has to have name so can  ask stop
 
-           server name [part ...] [as kind [part ...]] [at period] [be scheduled]
+           server name [at period] [be scheduled]
            [rx shost:sport] [tx dhost:dport] [in order] [to prefix] [per data]
            [for source]
 
@@ -755,9 +760,7 @@ class Builder(object):
         try:
             parms = {}
             init = {}
-            parts = []
             name = ''
-            kind = None
             connective = None
             period = 0.0 
             prefix = './'
@@ -770,34 +773,12 @@ class Builder(object):
 
             name = tokens[index]
             index +=1         
-
-            while index < len(tokens): # name parts end when connective
-                if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'per', 'for']: # end of parts
-                    break
-                parts.append(tokens[index])
-                index += 1 #eat token
-
-            name += "".join(part.capitalize() for part in parts)
-
+            
             while index < len(tokens): #options 
                 connective = tokens[index]
                 index += 1
 
-                if connective == 'as':
-                    parts = []
-                    while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'at', 'to', 'be', 'in', 'rx', 'tx', 'per', 'for']: # end of parts
-                            break
-                        parts.append(tokens[index])
-                        index += 1 #eat token
-
-                    #kind = "".join(part.capitalize() for part in parts)
-                    kind =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
-                    if not kind:
-                        msg = "ParseError: Building command '%s'. Missing kind for connective 'as'" % (command)
-                        raise excepting.ParseError(msg, tokens, index)                                     
-
-                elif connective == 'at':
+                if connective == 'at':
                     period = abs(Convert2Num(tokens[index]))
                     index +=1
 
@@ -879,56 +860,24 @@ class Builder(object):
             else:
                 dha = (txa, dha[1])
 
-        if kind: # Create new instance from kind class with name
-            if name in serving.Server.Names:
-                msg = "ParseError: Building command '%s'. Task named %s of kind %s already exists" % \
-                    (command, name, kind)
-                raise excepting.ParseError(msg, tokens, index)
+        server = serving.Server(name=name, store = self.currentStore,)
+        kw = dict(period=period, schedule=schedule, sha=sha, dha=dha, prefix=prefix,)
+        kw.update(init)
+        server.reinit(**kw)
 
-            if kind not in serving.Server.Names: # expect instance of same name as kind
-                msg = "ParseError: Building command '%s'. No tasker kind of %s" %\
-                    (command, kind)
-                raise excepting.ParseError(msg, tokens, index)
-
-            kinder = serving.Server.Names[kind]
-            #create new instance as the same type as kinder
-            tasker = type(kinder)(name=name, store=self.currentStore, period=period,
-                                  schedule=schedule, sha=sha, dha=dha, prefix=prefix)
-            kw = dict()
-            kw.update(init)
-            tasker.reinit(**kw)         
-
-        else: # Use an existing instance
-            if name not in serving.Server.Names: #instance not exist
-                msg = "ParseError: Building command '%s'. No tasker named %s" %\
-                    (command, name)
-                raise excepting.ParseError(msg, tokens, index)
-
-            tasker = serving.Server.Names[name] #fetch existing instance
-            kind = tasker.__class__.__name__
-
-            if tasker in self.currentHouse.taskers: #tasker already used somewhere else
-                msg = "ParseError: Building command '%s'. Task named %s of kind %s already scheduled" %\
-                    (command, name, kind)
-                raise excepting.ParseError(msg, tokens, index)             
-
-            kw = dict(period=period, schedule=schedule, sha=sha, dha=dha, prefix=prefix,)
-            kw.update(init)
-            tasker.reinit(**kw)
-
-        self.currentHouse.taskers.append(tasker)
+        self.currentHouse.taskers.append(server)
         if schedule == SLAVE:
-            self.currentHouse.slaves.append(tasker)
+            self.currentHouse.slaves.append(server)
         else: #taskable active or inactive
             if order == FRONT:
-                self.currentHouse.fronts.append(tasker)
+                self.currentHouse.fronts.append(server)
             elif order == BACK:
-                self.currentHouse.backs.append(tasker)
+                self.currentHouse.backs.append(server)
             else:
-                self.currentHouse.mids.append(tasker)
+                self.currentHouse.mids.append(server)
 
-        msg = "     Created tasker named {0} of kind {1} at period {2:0.4f} be {3}\n".format(
-            tasker.name, kind, tasker.period,  ScheduleNames[tasker.schedule])
+        msg = "     Created server named {0} at period {2:0.4f} be {3}\n".format(
+            server.name, name, server.period,  ScheduleNames[server.schedule])
         console.profuse(msg)
 
         return True
@@ -1595,23 +1544,26 @@ class Builder(object):
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later 
             parms = dict(needs = needs, main = self.currentFrame, aux = aux, human = human)
-            actor = acting.Actor.Names['suspender']
-            act = acting.Act(actor = actor, parms = parms)
+            act = acting.Act(   actor='suspender',
+                                registrar=acting.Actor, 
+                                parms=parms, )         
+            
             self.currentFrame.addPreact(act)
-
 
             console.profuse("     Added suspender preact,  '{0}', with aux {1} needs:\n".format(
                 command, aux))
             for need in needs:
-                console.profuse("       {0} with parms = {1}\n".format(need.actor.name, need.parms))
+                console.profuse("       {0} with parms = {1}\n".format(need.actor, need.parms))
 
             #create deactivator actor to deactivate aux in act 
             #add deactivator after act so decactivator always runs after act if in same context
-            parms = dict(actor = actor, aux = aux)
-            deAct = acting.Act(actor = acting.Actor.Names['deactivator'], parms = parms)
+            parms = dict(act = act, aux = aux)
+            deAct = acting.Act( actor='deactivator',
+                                registrar=acting.Actor, 
+                                parms=parms, )              
             self.currentFrame.addExact(deAct)
 
-            console.profuse("     Added Exact {0} with {1}\n".format(deAct.actor.name, deAct.parms))         
+            console.profuse("     Added Exact {0} with {1}\n".format(deAct.actor, deAct.parms))         
 
         else: # Simple auxiliary
             self.currentFrame.addAux(aux) #need to resolve later
@@ -1647,7 +1599,9 @@ class Builder(object):
 
             parms = {}
             parms['framer'] = framer #resolve later if needed
-            act = completing.Complete.actify(actorName, parms=parms)
+            act = acting.Act(    actor=actorName,
+                                 registrar=completing.Complete, 
+                                 parms=parms,)            
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -1668,7 +1622,7 @@ class Builder(object):
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Created done complete {0} with {1}\n".format(act.actor.name, act.parms))
+        console.profuse("     Created done complete {0} with {1}\n".format(act.actor, act.parms))
 
         return True
 
@@ -1711,14 +1665,15 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later 
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Act(actor = acting.Actor.Names['transiter'], parms = parms)
-
+        act = acting.Act(   actor='transiter',
+                            registrar=acting.Actor, 
+                            parms=parms, )  
         self.currentFrame.addPreact(act) #add transact as preact
 
         console.profuse("     Added timeout transition preact,  '{0}', with far {1} needs:\n".format(
             command, far))
         for act in needs:
-            console.profuse("       {0} with parms = {1}\n".format(act.actor.name, act.parms))
+            console.profuse("       {0} with parms = {1}\n".format(act.actor, act.parms))
 
         return True
 
@@ -1763,15 +1718,16 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later 
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Actor.actify('transiter', parms=parms)
-        #act = acting.Act(actor = acting.Actor.Names['transiter'], parms = parms)
+        act = acting.Act(    actor='transiter',
+                             registrar=acting.Actor, 
+                             parms=parms,)            
 
         self.currentFrame.addPreact(act) #add transact as preact
 
         console.profuse("     Added repeat transition preact,  '{0}', with far {1} needs:\n".format(
             command, far))
         for act in needs:
-            console.profuse("       {0} with parms = {1}\n".format(act.actor.name, act.parms))
+            console.profuse("       {0} with parms = {1}\n".format(act.actor, act.parms))
 
         return True
 
@@ -1874,7 +1830,9 @@ class Builder(object):
             message = ''
 
         parms = dict(message = message)
-        act = acting.Actor.actify('printer', parms=parms)
+        act = acting.Act(    actor='printer',
+                             registrar=acting.Actor, 
+                             parms=parms,)            
 
         context = self.currentContext
         if context == NATIVE: 
@@ -1886,7 +1844,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[context], act.actor.name, act.parms))
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -1947,8 +1905,9 @@ class Builder(object):
         parms = {}
         parms['data'] = dstData #this is dict
         parms['destination'] = dst #this is a share
-        
-        act = poking.Poke.actify(actorName, parms=parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=poking.Poke, 
+                            parms=parms, )        
 
         msg = "     Created Actor {0} parms: data = {1}  destination = {2} ".format(
             actorName, data, dst.name)
@@ -1964,7 +1923,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor.name, act.parms))
+            ActionContextNames[self.currentContext], act.actor, act.parms))
 
         return True
 
@@ -2055,7 +2014,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor.name, act.parms))
+            ActionContextNames[self.currentContext], act.actor, act.parms))
 
         return True
 
@@ -2119,7 +2078,9 @@ class Builder(object):
         parms['sourceFields'] = srcFields #this is a list
         parms['destination'] = dst #this is a share
         parms['destinationFields'] = dstFields #this is a list
-        act = poking.Poke.actify(actorName, parms=parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=poking.Poke, 
+                            parms=parms, )           
         
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -2136,7 +2097,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor.name, act.parms))
+            ActionContextNames[self.currentContext], act.actor, act.parms))
 
         return True
 
@@ -2234,7 +2195,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor.name, act.parms))      
+            ActionContextNames[self.currentContext], act.actor, act.parms))      
 
         return True
 
@@ -2305,17 +2266,16 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         #resolve far link later 
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Actor.actify('transiter', parms=parms)
-        #act = acting.Act(actor = acting.Actor.Names['transiter'], parms = parms)
-
-        #resolve far link later 
-        #act = acting.Transact(needs = needs, near = self.currentFrame, far = far, human = human)
+        act = acting.Act(   actor='transiter',
+                            registrar=acting.Actor, 
+                            parms=parms, )           
+        
         self.currentFrame.addPreact(act)
 
         console.profuse("     Added transition preact,  '{0}', with far {1} needs:\n".format(
             command, far))
         for act in needs:
-            console.profuse("       {0} with parms = {1}\n".format(act.actor.name, act.parms))
+            console.profuse("       {0} with parms = {1}\n".format(act.actor, act.parms))
 
         return True
 
@@ -2386,7 +2346,7 @@ class Builder(object):
 
         console.profuse("     Added beact,  '{0}', with needs:\n".format(command))
         for act in needs:
-            console.profuse("       {0} with {1}\n".format(act.actor.name, act.parms))
+            console.profuse("       {0} with {1}\n".format(act.actor, act.parms))
 
         return True      
 
@@ -2522,7 +2482,11 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
         
         inits['name'] = name or kind
-        act = deeding.Deed.actify(kind, parms=parms, inits=inits, ioinits=ioinits)
+        act = acting.Act(   actor=kind,
+                            registrar=deeding.Deed, 
+                            parms=parms,
+                            inits=inits,
+                            ioinits=ioinits)           
         
         context = self.currentContext
         if context == NATIVE: 
@@ -2534,7 +2498,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor.name, act.parms))
+            ActionContextNames[self.currentContext], act.actor, act.parms))
 
         return True
 
@@ -2585,7 +2549,9 @@ class Builder(object):
 
             parms = {}
             parms['taskers'] = taskers #resolve later
-            act = wanting.Want.actify(actorName, parms=parms)
+            act = acting.Act(   actor=actorName,
+                                registrar=wanting.Want, 
+                                parms=parms, )             
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2607,7 +2573,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} want {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor.name, act.parms))      
+            ActionContextNames[self.currentContext], act.actor, act.parms))      
 
         return True
 
@@ -2807,8 +2773,10 @@ class Builder(object):
         parms['destination'] = destination #this is a share
         parms['data'] = data #this is an ordered dictionary
         
-        act = poking.Poke.actify(actorName, parms=parms)
-        #act = acting.Act(actor = actor, parms = parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=poking.Poke, 
+                            parms=parms, )             
+        
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -2835,8 +2803,10 @@ class Builder(object):
         parms['destinationFields'] = destinationFields #this is a list
         parms['source'] = source #this is a share
         parms['sourceFields'] = sourceFields #this is a list
-        act = poking.Poke.actify(actorName, parms=parms)
-        #act = acting.Act(actor = actor, parms = parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=poking.Poke, 
+                            parms=parms, )         
+        
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -2926,7 +2896,9 @@ class Builder(object):
         parms['goal'] = goal #this is a share
         parms['data'] = data #this is a dictionary
         
-        act = goaling.Goal.actify(actorName, parms=parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=goaling.Goal, 
+                            parms=parms, )         
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -2952,7 +2924,10 @@ class Builder(object):
         parms['source'] = source #this is a share
         parms['sourceFields'] = sourceFields #this is a list
         
-        act = goaling.Goal.actify(actorName, parms=parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=goaling.Goal, 
+                            parms=parms, )         
+        
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -3061,14 +3036,15 @@ class Builder(object):
         """
         actorName = 'need' + kind.capitalize()
 
-        if actorName not in needing.Need.Names:
+        if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
-                (kind,actorName)
+                (kind, actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = needing.Need.Names[actorName]
         parms = {}
-        act = acting.Act(actor = actor, parms = parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=needing.Need, 
+                            parms=parms, )          
 
         return (act, index)
 
@@ -3088,7 +3064,10 @@ class Builder(object):
 
         parms = {}
         parms['tasker'] = tasker
-        act = needing.Need.actify(actorName, parms=parms)
+        act = acting.Act(   actor=actorName,
+                            registrar=needing.Need, 
+                            parms=parms, )         
+        
         return (act, index)
 
     def makeStatusNeed(self, kind, tokens, index):
@@ -3118,17 +3097,17 @@ class Builder(object):
 
         actorName = 'need' + kind.capitalize()
 
-        if actorName not in needing.Need.Names:
+        if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
                 (kind, actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = needing.Need.Names[actorName]
         parms = {}
         parms['tasker'] = tasker  #need to resolve this
         parms['status'] = status
-        act = acting.Act(actor = actor, parms = parms)
-
+        act = acting.Act(   actor=actorName,
+                            registrar=needing.Need, 
+                            parms=parms, )
         return (act, index)
     
     def makeUpdateNeed(self, kind, tokens, index):
@@ -3157,20 +3136,16 @@ class Builder(object):
         """ Support method to make either UpdateNeed or ChangeNeed
             as determined by kind
         """
-        name = "" #frame name
-        frame = None
+        frame = "" # name of marked frame
         
         connective = tokens[index]
         if connective == 'in': #optional in frame clause
             index += 1 #eat token
-            name = tokens[index] #need to resolve
+            frame = tokens[index] #need to resolve
             index += 1 #eat token
         
-        if not name: #default to current frame
-            name = self.currentFrame.name
-            frame = self.currentFrame
-        else:
-            frame = name #resolve frame later in resolve links
+        if not frame: #default to current frame
+            frame = self.currentFrame.name
 
         sharePath, index = self.parseIndirect(tokens, index, variant = '')
         share = self.currentStore.create(sharePath)
@@ -3181,19 +3156,18 @@ class Builder(object):
         marker = 'marker' + kind.capitalize() 
         
         actorName = 'need' + kind.capitalize()
-        if actorName not in needing.Need.Names:
+        if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
                 (kind, actorName)
             raise excepting.ParseError(msg, tokens, index)
-
-        actor = needing.Need.Names[actorName]
+        
         parms = {}
         parms['share'] = share
-        parms['name'] = name
-        parms['frame'] = frame  #resolved in resolvelinks
-        parms['marker'] = marker # resolved in resolvelinks
-        act = acting.Act(actor = actor, parms = parms)
-
+        parms['frame'] = frame  # marked frame name resolved in resolvelinks
+        parms['marker'] = marker # marker kind resolved in resolvelinks
+        act = acting.Act(   actor=actorName,
+                            registrar=needing.Need, 
+                            parms=parms, )
         return (act, index)    
 
     def makeImplicitDirectFramerNeed(self, name, comparison, goal, tolerance):
@@ -3285,18 +3259,18 @@ class Builder(object):
         """
         actorName = 'need' + 'Boolean' #capitalize second word
 
-        if actorName not in needing.Need.Names:
+        if actorName not in needing.Need.Registry:
             msg = "ParseError: Need can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = needing.Need.Names[actorName]
         parms = {}
         parms['state'] = state #this is a share
         parms['stateField'] = stateField #this is string
+        act = acting.Act(   actor=actorName,
+                            registrar=needing.Need, 
+                            parms=parms, )
 
-        act = acting.Act(actor = actor, parms = parms)
-
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))   
@@ -3321,8 +3295,9 @@ class Builder(object):
         parms['comparison'] = comparison #this is a string
         parms['goal'] = goal  #this is a value: boolean number or string
         parms['tolerance'] = tolerance #this is a number
-        act = needing.Need.actify(actorName, parms=parms)
-
+        act = acting.Act(   actor=actorName,
+                            registrar=needing.Need, 
+                            parms=parms, )         
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
@@ -3337,11 +3312,10 @@ class Builder(object):
         """
         actorName = 'need' + 'Indirect' #capitalize second word
 
-        if actorName not in needing.Need.Names:
+        if actorName not in needing.Need.Registry:
             msg = "ParseError: Need can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = needing.Need.Names[actorName]
         parms = {}
         parms['state'] = state #this is share
         parms['stateField'] = stateField #this is a string
@@ -3350,13 +3324,15 @@ class Builder(object):
         parms['goalField'] = goalField #this is a string
         parms['tolerance'] = tolerance #this is a number
 
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))   
 
-        act = acting.Act(actor = actor, parms = parms)
-
+        act = acting.Act(   actor=actorName,
+                            registrar=needing.Need, 
+                            parms=parms, )         
+        
         return act
 
     def makeFiat(self, name, kind, native, command, tokens, index):
@@ -3374,7 +3350,9 @@ class Builder(object):
 
         parms = {}
         parms['tasker'] = name #resolve later
-        act = fiating.Fiat.actify(actorName, parms=parms)    
+        act = acting.Act(   actor=actorName,
+                            registrar=fiating.Fiat, 
+                            parms=parms, )         
 
         context = self.currentContext
         if context == NATIVE: 
@@ -3386,7 +3364,7 @@ class Builder(object):
             return False
 
         console.profuse("     Added {0} fiat {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor.name, act.parms))
+            ActionContextNames[self.currentContext], act.actor, act.parms))
 
         return True      
 

@@ -6,6 +6,7 @@
 
 
 from .globaling import *
+from .odicting import odict
 
 from . import registering
 from . import storing 
@@ -95,9 +96,10 @@ class Tasker(registering.StoriedRegistry):
         """
         print "     Task %s status = %s" % (self.name, StatusNames[self.status])
 
-    def resolve(self):
+    def resolve(self, **kwa):
         """Resolves any by name links to other objects   """
-        pass    
+        parms = odict()
+        return parms
     
     def start(self):
         """ready runner

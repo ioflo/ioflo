@@ -39,11 +39,11 @@ class Deed(acting.Actor):
         Deeds default to converting iois into attributes
     """
     Registry = odict()
-    _ioattributive = True # convert iois into attributes
+    _Parametric = False # convert iois into attributes
 
 class ParamDeed(Deed):
     """ Iois are converted to parms not attributes """
-    _ioattributive = False # convert iois into parms
+    _Parametric = True # convert iois into parms
     
 class SinceDeed(Deed):
     """ SinceDeed 
@@ -83,9 +83,9 @@ class LapseDeed(Deed):
        has restart method when resuming after noncontiguous time interruption
        builder creates implicit entry action of restarter for deed
     """
-    def __init__(self, **kw):
+    def __init__(self, **kwa):
         """Initialize Instance """
-        super(LapseDeed,self).__init__( **kw)  
+        super(LapseDeed,self).__init__( **kwa)  
 
         self.stamp = None
         self.lapse = 0.0 #elapsed time in seconds between updates calculated on update
@@ -113,7 +113,7 @@ class LapseDeed(Deed):
             self.stamp = self.store.stamp #so make stamp same as store 
             self.lapse = 0.0
 
-    def action(self, **kw):
+    def action(self, **kwa):
         """    """
         console.profuse("Actioning LapseDeed  {0}\n".format(self.name))
         self.updateLapse()
@@ -122,12 +122,15 @@ class LapseDeed(Deed):
         """     """
         print "Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse)
     
-    def resolve(self):
+    def resolve(self, **kwa):
         """ Create enact with RestarterActor to restart this Actor """
+        parms = super(LapseDeed, self).resolve( **kwa)  
+        
         kind = 'restarter'
-        restartAct = acting.Act.actify(  kind,
-                                         parms=odict(act=self.act), 
-                                         inits=odict(name=kind), )
+        restartAct = acting.Act( actor=kind,
+                                 registrar=acting.Actor, 
+                                 parms=odict(act=self.act), 
+                                 inits=odict(name=kind), )
         
         # need to insert restartAct before self.act so restartAct runs first
         found = False
@@ -144,4 +147,4 @@ class LapseDeed(Deed):
         console.profuse("     Added {0} {1} for {2} in {3}\n".format(
             'enact', kind, self.name, self.act.frame.name ))
         
-        
+        return parms

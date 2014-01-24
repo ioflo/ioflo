@@ -13,7 +13,7 @@ frame start
 frame clone
    print clone
    enter
-      do cloner framer to framer "cloned" frame "run_clone" 
+      #do cloner framer to framer "cloned" frame "run_clone" 
       #do as framer cloner to framer "cloned" frame "run_clone" 
    go next 
    go abort if recurred >= 2
@@ -27,7 +27,7 @@ frame run_clone
 frame clone_again
    print clone again
    enter
-      do cloner framer to framer "cloned" frame "run_clone_again" 
+      #do cloner framer to framer "cloned" frame "run_clone_again" 
       #do as framer cloner to framer "cloned" frame "run_clone_again" 
    go next 
    go abort if recurred >= 2

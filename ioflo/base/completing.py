@@ -39,12 +39,12 @@ class Complete(acting.Actor):
 
     """
     Registry = odict()
-    def resolve(self, framer, **kw):
+    def resolve(self, framer, **kwa):
         """Resolves value (framer) link that is passed in as parm
            resolved link is passed back to act to store in parms
            since framer may not be current framer at build time
         """
-        parms = super(Complete, self).resolve( **kw)
+        parms = super(Complete, self).resolve( **kwa)
         parms['framer'] = framer = framing.resolveFramer(framer, who=self.name)
         
         #if not isinstance(framer, framing.Framer): #maker sure framer not other tasker

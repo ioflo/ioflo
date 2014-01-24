@@ -70,12 +70,12 @@ frame slave3 #so complete
    print slave3
    done
 
-server server one as server to /var/tmp/log/ioflo/ rx :55551 per stuff 5 
-server server two as server to /var/tmp/log/ioflo/ \
+server one to /var/tmp/log/ioflo/ rx :55551 per stuff 5 
+server two  to /var/tmp/log/ioflo/ \
    rx :55552 \
    for value in .meta.name # trailing comment
 server server to /var/tmp/log/ioflo/ # trailing comment
 
-tasker tasker one as tasker per stuff 5
-tasker tasker two as tasker for value in .meta.name
-tasker tasker 
+#tasker tasker one as tasker per stuff 5
+#tasker tasker two as tasker for value in .meta.name
+#tasker tasker 

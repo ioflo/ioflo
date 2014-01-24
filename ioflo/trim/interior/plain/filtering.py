@@ -50,7 +50,7 @@ def CreateInstances(store):
         parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
                      layer = 40.0, tolerance = 5.0))
 
-    MinCTDFilter(name = 'filterMinTemperature', store = store).ioinits.update(
+    MinCtdFilter(name = 'filterMinTemperature', store = store).ioinits.update(
         group = 'filter.min.temperature', outputs = 'state.mintemps',
         output = 'state.mintemp',
         input = 'ctd', field = 'temperature', 
@@ -62,7 +62,13 @@ class HeadingSensorFilter(deeding.LapseDeed):
     """HeadingSensorFilter LapseDeed Deed Class
        Heading Sensor Filter  class
     """
-
+    Ioinits = odict(
+        group = 'filter.sensor.heading', 
+        output = 'heading.output',
+        input = 'compass', 
+        scenario = 'scenario.magnetic',
+        parms = dict(phase = 0.0, amp = 0.0))
+    
     def __init__(self, **kw):
         """Initialize instance.
 
@@ -181,7 +187,12 @@ class WindowedFilter(deeding.LapseDeed):
     """WindowedFilter LapseDeed Deed Class
        Windowed Filter  class
     """
-
+    Ioinits = odict(
+        group = 'filter.sensor.generic', output = 'state.generic',
+        input = 'ctd', field = 'generic', depth = 'state.depth',
+        parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
+                     layer = 40.0, tolerance = 5.0))
+    
     def __init__(self,  **kw):
         """Initialize instance.
            
@@ -314,14 +325,38 @@ class WindowedFilter(deeding.LapseDeed):
         print "WindowedFilter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
         format = "output = %0.3f window = %0.3f frac = %0.3f"
         print format % (self.output.value, self.parm.data.window, self.parm.data.frac)
+        
+
+WindowedFilter.__register__('filterSensorSalinity', ioinits=odict(
+    group = 'filter.sensor.salinity', output = 'state.salinity',
+    input = 'ctd', field = 'salinity', depth = 'state.depth',
+    parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
+                 layer = 40.0, tolerance = 5.0)) )
+
+WindowedFilter.__register__('filterSensorSalinitysim', ioinits=odict(
+    group = 'filter.sensor.salinitysim', output = 'state.salinity',
+    input = 'ctdsim', field = 'salinity', depth = 'state.depth',
+    parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
+                 layer = 40.0, tolerance = 5.0)) )
+
+WindowedFilter.__register__('filterSensorTemperature', ioinits=odict(
+    group = 'filter.sensor.temperature', output = 'state.temperature',
+    input = 'ctd', field = 'temperature', depth = 'state.depth',
+    parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
+                 layer = 40.0, tolerance = 5.0)) )     
 
 
-
-class MinCTDFilter(deeding.LapseDeed):
+class MinCtdFilter(deeding.LapseDeed):
     """MinCTDFilter LapseDeed Deed Class
        Min CTDFilter  class
     """
-
+    Ioinits = odict(
+        group = 'filter.min.temperature', outputs = 'state.mintemps',
+        output = 'state.mintemp',
+        input = 'ctd', field = 'temperature', 
+        depth = 'state.depth', position = 'state.position',
+        parms = dict(preload = 100.0))
+    
     def __init__(self, **kw):
         """Initialize instance.
            
@@ -334,7 +369,7 @@ class MinCTDFilter(deeding.LapseDeed):
 
         """
         #call super class method
-        super(MinCTDFilter,self).__init__(**kw)  
+        super(MinCtdFilter,self).__init__(**kw)  
 
     
     def initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
@@ -462,7 +497,7 @@ class MinCTDFilter(deeding.LapseDeed):
         """
 
         #.lapse is time since last run and .stamp is current time
-        super(MinCTDFilter,self).action(**kw) #.lapse & .stamp updated here
+        super(MinCtdFilter,self).action(**kw) #.lapse & .stamp updated here
         self.elapsed.value = self.lapse #store lapse for logging
 
         if self.input.stamp is None:

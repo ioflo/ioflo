@@ -5,7 +5,6 @@
 
 import random
 
-
 from .globaling import *
 from .odicting import odict
 
@@ -23,7 +22,7 @@ class RegisterType(type):
         if not hasattr(cls, 'Registry'):
             cls.Registry = odict()
         rname = reverseCamel(name)
-        cls.__register__(rname, ioinits=getattr(cls, 'ioinits', None))
+        cls.__register__(rname, ioinits=getattr(cls, 'Ioinits', None))
     
     def __register__(cls, rname, inits=None,  ioinits=None):
         """ Register cls under rname with ioinits and inits
@@ -36,8 +35,8 @@ class RegisterType(type):
         inits = inits or odict()
         ioinits = ioinits or odict()
         cls.Registry[rname] = (cls, inits, ioinits)
-        console.profuse( "Registered class '{0}' under '{1}' with {2} per {3}.\n".format(
-            cls.__name__, rname, inits, ioinits))        
+        #console.terse( "Registered class '{0}' under '{1}' with {2} per {3}.\n".format(
+            #cls.__name__, rname, inits, ioinits))        
         return cls
     
     def __fetch__(cls, rname):

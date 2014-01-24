@@ -39,7 +39,12 @@ class BoxPositionDetector(deeding.Deed):
        Detects if vehicle position is in box or out
        output share indicates which side in or out
     """
-
+    Ioinits = odict(
+        group = 'detector.position.box',
+        output = 'box', input = 'state.position',
+        parms = dict(track = 0.0, north = 0.0, east = 0.0,
+                     length = 10000, width = 2000, turn = 45.0))
+    
     def __init__(self, **kw):
         """Initialize instance.
            group is path name of group in store, group has following subgroups or shares:

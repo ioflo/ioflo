@@ -38,20 +38,24 @@ def CreateInstances(store):
 
 class Act(object):
     """ Container class for actor resolve time initialization and runtime operation """
-    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'inits', 'ioinits')
+    __slots__ = ('frame', 'context', 'act',
+                 'actor', 'registrar', 'parms', 'inits', 'ioinits', 'action')
 
-    def __init__(self, frame=None, context=None, act=None,
-                       actor=None, parms=None, inits=None, ioinits=None, **kwa ):
+    def __init__(self, frame=None, context=None, act=None, actor=None, registrar=None,
+                 parms=None, inits=None, ioinits=None, action='', **kwa ):
         """ Initialization method for instance.
 
-            attributes
-                .frame = ref to Frame holding this Act
-                .context = name string of actioning context set when added to frame
-                .act = ref to super Act if self is embedded in another Act such as Need
-                .actor = ref to Actor class or instance, call performs instances method action
-                .parms = dictionary of keyword arguments for Actor instance call
-                .inits = dictionary of arguments to Actor.__init__()
-                .ioinits = dictionary of arguments to Actor.initio()
+            Attributes:
+            .frame = ref to Frame holding this Act
+            .context = name string of actioning context set when added to frame
+            .act = ref to super Act if self is embedded in another Act such as Need
+            .actor = ref to Actor instance or actor name to be resolved
+                    call performs instances method action
+            .registrar = ref to Actor class holding .Registry 
+            .parms = dictionary of keyword arguments for Actor instance call
+            .inits = dictionary of arguments to Actor.__init__()
+            .ioinits = dictionary of arguments to Actor.initio()
+            .action = string name of Actor method to call
         """
         super(Act,self).__init__()
 
@@ -59,9 +63,11 @@ class Act(object):
         self.context = context
         self.act = act
         self.actor = actor #callable instance performs action
+        self.registrar = registrar or Actor
         self.parms = parms or odict()       
         self.inits = inits or odict()
         self.ioinits = ioinits or odict()
+        self.action = action # default call
 
     def __call__(self): #make Act instance callable as function
         """ Define act as callable object """
@@ -74,17 +80,22 @@ class Act(object):
         if self.actor:
             self.actor.expose()
     
-    def resolve(self, *pa, **kwa):
+    def resolve(self, **kwa):
         """ Resolve .frame attribute and .actor. Cause .actor to resolve its parms """
         if self.act: # this is sub act of another act self.act so get super act context
             self.frame = self.act.frame
             self.context = self.act.context
         self.frame = framing.resolveFrame(self.frame, who=self)
         
-        if issubclass(self.actor, Actor): # class so convert to instance
-            self.inits['store'] = self.frame.store
-            self.inits['act'] = self
-            self.actor = self.actor(**self.inits) #create instance
+        if not isinstance(self.actor, Actor): # Need to resolve .actor
+            actor, inits, ioinits = self.registrar.__fetch__(self.actor)
+            inits.update(self.inits)
+            if 'name' not in inits:
+                inits['name'] = self.actor
+            inits['store'] = self.frame.store
+            inits['act'] = self
+            self.actor = actor(**inits)
+            self.ioinits.create(ioinits) #fill in defaults
             
         parms = self.actor.resolve(**self.parms)
         self.parms.update(parms)
@@ -110,7 +121,8 @@ class Act(object):
 class Nact(Act):
     """ Negating Act used for actor needs to give Not Need
     """
-    __slots__ = ('actor', 'parms', 'frame', 'context', 'act', 'inits', 'ioinits')
+    __slots__ = ('frame', 'context', 'act',
+                 'actor', 'registrar', 'parms', 'inits', 'ioinits', 'action')
 
     def __init__(self, **kwa ):
         """ Initialization method for instance. """
@@ -135,8 +147,8 @@ class Actor(object): # old registering.StoriedRegistry
     """
     __metaclass__ = registering.RegisterType
     Registry = odict() # Actor Registry
-    ioinits = odict() # class defaults
-    _ioattributive = False # Convert iois to attributes if Truthy
+    Ioinits = odict() # class defaults
+    _Parametric = True # Convert iois to action method parameters if Truthy
     __slots__ = ('name', 'store', 'act')
     
     @classmethod
@@ -186,7 +198,7 @@ class Actor(object): # old registering.StoriedRegistry
     def resolve(self, **kwa):
         """ Return updated parms from conversion of .act.ioinits into iois and
             resolution into share refs if any.
-            Based on ._ioattributive convert resolve iois to attributes or parms
+            Based on ._Parametric convert resolve iois to attributes or parms
             Extend in subclass to resolve specific kwa items that are links or
             share refs and update parms
         """
@@ -194,21 +206,20 @@ class Actor(object): # old registering.StoriedRegistry
         if self.act.ioinits:
             iois = self.initio(**self.act.ioinits)
             if iois:
-                if self._ioattributive:
-                    for key, ioi in iois.items():
-                        share = self.resolvePath(    ipath=ioi['ipath'],
-                                                     ival=ioi.get('ival'), 
-                                                     iown=ioi.get('iown'))
-                        if self._ioattributive:
-                            if hasattr(self, key):
-                                msg = "ResolveError: Attribute and Ioi with same name"
-                                raise excepting.ResolveError(msg, key, self) 
-                            setattr(self, key, share)
-                        else:
-                            if key in kwa:
-                                msg = "ResolveError: Parm and Ioi with same name"
-                                raise excepting.ResolveError(msg, key, self)
-                            parms[key] = share                            
+                for key, ioi in iois.items():
+                    share = self.resolvePath(    ipath=ioi['ipath'],
+                                                 ival=ioi.get('ival'), 
+                                                 iown=ioi.get('iown'))
+                    if self._Parametric:
+                        if key in kwa:
+                            msg = "ResolveError: Parm and Ioi with same name"
+                            raise excepting.ResolveError(msg, key, self)
+                        parms[key] = share                            
+                    else:
+                        if hasattr(self, key):
+                            msg = "ResolveError: Attribute and Ioi with same name"
+                            raise excepting.ResolveError(msg, key, self) 
+                        setattr(self, key, share)                            
         return parms    
     
     def initio(self, inode='', **kwa):
@@ -584,10 +595,10 @@ class Transiter(Interrupter):
         """      """
         console.terse("Transiter {0}\n".format(self.name))
     
-    def resolve(self, needs, near, far, human, **kw):
+    def resolve(self, needs, near, far, human, **kwa):
         """Resolve any links in far and in associated parms for actors"""
 
-        parms = super(Transiter, self).resolve( **kw)  
+        parms = super(Transiter, self).resolve( **kwa)  
         
         if not isinstance(near, framing.Frame):
             if near not in framing.Frame.Names:
@@ -732,9 +743,9 @@ class Suspender(Interrupter):
         aux.exitAll() # also sets .done = True
         aux.main = None
     
-    def resolve(self, needs, main, aux, human, **kw):
+    def resolve(self, needs, main, aux, human, **kwa):
         """Resolve any links aux and in associated parms for actors"""
-        parms = super(Suspender, self).resolve( **kw) 
+        parms = super(Suspender, self).resolve( **kwa) 
         
         if not isinstance(main, framing.Frame):
             if main not in framing.Frame.Names:
@@ -801,29 +812,29 @@ class Deactivator(Actor):
        Deactivator is a special actor that acts on an Act
 
        In the Deactivator's action method, 
-          IF the act passed in as a parameter has an _activate attribute THEN
-                       it calls the deactivate method
+          IF the act passed in as a parameter .actor has an _activate attribute THEN
+                       it calls the deactivate method its .actor
        This is to ensure the outline in cond aux is exited cleanly when the aux
           is preempted by higher level transition.
 
        Builder adds a deactivator for each Suspender preact
     """
-    def action(self, actor, aux, **kw):
+    def action(self, act, aux, **kw):
         """Action called by Actor
         """
         #console.profuse("{0} action {1} for {2}\n".format(self.name, actor.name, aux.name))
 
-        if hasattr(actor, '_activative') and not aux.done:
-            console.profuse("{0} deactivate {1} for {2}\n".format(self.name, actor.name, aux.name))
-            return actor.deactivate(aux)
+        if hasattr(act.actor, '_activative') and not aux.done:
+            console.profuse("{0} deactivate {1} for {2}\n".format(self.name, act.actor.name, aux.name))
+            return act.actor.deactivate(aux)
 
     def expose(self):
         """   """
         console.terse("Deactivator {0}\n".format(self.name))
     
-    def resolve(self, aux, **kw):
+    def resolve(self, aux, **kwa):
         """Resolve aux link parm"""
-        parms = super(Deactivator, self).resolve( **kw) 
+        parms = super(Deactivator, self).resolve( **kwa) 
 
         if not isinstance(aux, framing.Framer):
             if aux not in framing.Framer.Names:
@@ -939,18 +950,18 @@ class UpdateMarker(Marker):
         Builder at parse time when it encounters an UpdateNeed,
         creates the mark in the share and creates the appropriate UpdateMarker 
     """
-    def action(self, share, name, **kw):
+    def action(self, share, frame, **kwa):
         """ Update mark in share
-            Where share is reference to share and name is frame name key of mark in
+            Where share is reference to share and frame is frame name key of mark in
                 share.marks odict
             Updates mark.stamp
             
             only one mark per frame per share is needed 
         """
         console.profuse("{0} mark {1} in {2} on {3}\n".format(
-            self.name, share.name, name, 'update' ))
+            self.name, share.name, frame, 'update' ))
 
-        mark = share.marks.get(name)
+        mark = share.marks.get(frame)
         if mark:
             mark.stamp = self.store.stamp #stamp when marker runs
 
@@ -969,18 +980,18 @@ class ChangeMarker(Marker):
         Builder at parse time when it encounters a ChangeNeed,
         creates the mark in the share and creates the appropriate marker 
     """
-    def action(self, share, name, **kw):
+    def action(self, share, frame, **kwa):
         """ Update mark in share
-            Where share is reference to share and name is frame name key of mark in
+            Where share is reference to share and frame is frame name key of mark in
                 share.marks odict
             Updates mark.data
             
             only one mark per frame per share is needed 
         """
         console.profuse("{0} mark {1} in {2} on {3}\n".format(
-            self.name, share.name, name, 'change' ))
+            self.name, share.name, frame, 'change' ))
 
-        mark = share.marks.get(name)
+        mark = share.marks.get(frame)
         if mark:
             mark.data = storing.Data(share.items())
 

@@ -59,4 +59,4 @@ loggee position state.position heading state.heading depth state.depth speed sta
 log goal   on update
 loggee heading goal.heading depth goal.depth speed goal.speed
 
-load ../plan/gps.flo
+load gps.flo

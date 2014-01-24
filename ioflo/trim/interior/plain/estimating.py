@@ -28,23 +28,34 @@ def CreateInstances(store):
        globals useful for module self tests
     """
 
-    NLFPositionEstimator(name = 'estimatorPositionNlf', store = store).ioinits.update(
-                        group = 'estimator.position.nlf', 
-                        position = 'nlf.position', 
-                        drPosition = 'dr.position', drBias = 'dr.bias',
-                        speed = 'state.speed', heading = 'heading.output',
-                        current = 'dvl.current',
-                        dvlVelocity = 'dvl.velocity',
-                        gpsPosition = 'gps.position', gpsVelocity = 'gps.velocity',
-                        parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
-                                     dvlStamp = 0.0, stale = 1.0, 
-                                     gpsPosStamp = 0.0, gpsVelStamp = 0.0))
+    NflPositionEstimator(name = 'estimatorPositionNlf', store = store).ioinits.update(
+        group = 'estimator.position.nlf', 
+        position = 'nlf.position', 
+        drPosition = 'dr.position', drBias = 'dr.bias',
+        speed = 'state.speed', heading = 'heading.output',
+        current = 'dvl.current',
+        dvlVelocity = 'dvl.velocity',
+        gpsPosition = 'gps.position', gpsVelocity = 'gps.velocity',
+        parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
+                     dvlStamp = 0.0, stale = 1.0, 
+                     gpsPosStamp = 0.0, gpsVelStamp = 0.0))
 
 
-class NLFPositionEstimator(deeding.LapseDeed):
+class NflPositionEstimator(deeding.LapseDeed):
     """NLFPositionEstimator LapseDeed Deed Class
        NonlinearFusion Position Estimator class
     """
+    Ioinits = odict(
+        group = 'estimator.position.nlf', 
+        position = 'nlf.position', 
+        drPosition = 'dr.position', drBias = 'dr.bias',
+        speed = 'state.speed', heading = 'heading.output',
+        current = 'dvl.current',
+        dvlVelocity = 'dvl.velocity',
+        gpsPosition = 'gps.position', gpsVelocity = 'gps.velocity',
+        parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
+                     dvlStamp = 0.0, stale = 1.0, 
+                     gpsPosStamp = 0.0, gpsVelStamp = 0.0))
 
     def __init__(self, **kw):
         """Initialize instance.
@@ -57,7 +68,7 @@ class NLFPositionEstimator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(NLFPositionEstimator,self).__init__(**kw)  
+        super(NflPositionEstimator,self).__init__(**kw)  
     
     def initio(self, group, position, drPosition, drBias,
                  speed, heading, current, dvlVelocity, gpsPosition, gpsVelocity,
@@ -170,7 +181,7 @@ class NLFPositionEstimator(deeding.LapseDeed):
     def action(self, **kw):
         """Updates estimater
         """
-        super(NLFPositionEstimator,self).action(**kw) #.lapse & .stamp updated here
+        super(NflPositionEstimator,self).action(**kw) #.lapse & .stamp updated here
         #.lapse is time since last run
         #.stamp is current time
 
