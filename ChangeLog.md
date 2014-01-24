@@ -2,10 +2,15 @@
 CHANGE LOG
 -------------------
 -------------
-20140120
+20140124
 ------------
 
+Refactor Actor registration internally to use new metaclass and refactor resolution
+to that Actor creation is done at resolve time not build time. This gets rid
+of need for createIntances for Actors. This also makes it easier to specify new Actions 
+since all in one place.
 
+Some syntax changes.
 
 
 

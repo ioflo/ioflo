@@ -21,26 +21,6 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals useful for module self tests
-    """
-
-    NflPositionEstimator(name = 'estimatorPositionNlf', store = store).ioinits.update(
-        group = 'estimator.position.nlf', 
-        position = 'nlf.position', 
-        drPosition = 'dr.position', drBias = 'dr.bias',
-        speed = 'state.speed', heading = 'heading.output',
-        current = 'dvl.current',
-        dvlVelocity = 'dvl.velocity',
-        gpsPosition = 'gps.position', gpsVelocity = 'gps.velocity',
-        parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
-                     dvlStamp = 0.0, stale = 1.0, 
-                     gpsPosStamp = 0.0, gpsVelStamp = 0.0))
-
-
 class NflPositionEstimator(deeding.LapseDeed):
     """NLFPositionEstimator LapseDeed Deed Class
        NonlinearFusion Position Estimator class

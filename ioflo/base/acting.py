@@ -22,18 +22,6 @@ from .consoling import getConsole
 console = getConsole()
 
 
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-    """
-    transiter = Transiter(name = 'transiter', store = store)
-    suspender = Suspender(name = 'suspender', store = store)
-    deactivator = Deactivator(name = 'deactivator', store = store)
-    restarter = Restarter(name = 'restarter', store = store)
-    printer = Printer(name = 'printer', store = store)
-    markerUpdate = UpdateMarker(name = 'markerUpdate', store = store)
-    markerChange = ChangeMarker(name = 'markerChange', store = store)
-
 #Class definitions
 
 class Act(object):

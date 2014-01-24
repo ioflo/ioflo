@@ -8,5 +8,3 @@ __all__ = ['cloning']
 for m in __all__:
     exec "from . import %s" % m  #relative import
 
-#used by CreateAllInstances                 
-_InstanceModules = [cloning]

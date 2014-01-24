@@ -21,16 +21,6 @@ from . import tasking
 from .consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """Create server instances which automatically get registered on object creation
-       must be function so can recreate after clear registry
-    """
-    #special instance used as type to create more instances
-    server = Server(name = 'server', store = store, 
-                    shost = '', sport = 54321, dhost = 'localhost', dport = 54321,
-                    period = 0, prefix = './',)
-
 #Class definitions
 class Server(tasking.Tasker):
     """Server Task Patron Registry Class for IP comms 

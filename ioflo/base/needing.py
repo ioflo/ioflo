@@ -23,28 +23,6 @@ from . import framing
 from .consoling import getConsole
 console = getConsole()
 
-
-#Class definitions should be singletons or borgs
-#instance should be only one should use singleton or borg
-
-def CreateInstances(store):
-    """Create action gloal lists and instances
-       must be function so can recreate after clear registry
-       globals good for module self tests
-    """
-    #special needs
-    needDone = DoneNeed(name = 'needDone', store = store)
-    needAlways = AlwaysNeed(name = 'needAlways', store = store)
-    needStatus = StatusNeed(name = 'needStatus', store = store)
-    needUpdate = UpdateNeed(name = 'needUpdate', store = store)
-    needChange = ChangeNeed(name = 'needChange', store = store)
-
-    #dynamic need types
-    needBoolean = BooleanNeed(name = 'needBoolean', store = store)
-    needDirect = DirectNeed(name = 'needDirect', store = store)
-    needIndirect = IndirectNeed(name = 'needIndirect', store = store)
-
-
 class Need(acting.Actor):
     """Need Class for conditions  such as entry or trans
 

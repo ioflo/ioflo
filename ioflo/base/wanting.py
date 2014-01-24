@@ -25,14 +25,6 @@ from .consoling import getConsole
 console = getConsole()
 
 
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-    """
-    wantStart = StartWant(name = 'wantStart', store = store)
-    wantStop = StopWant(name = 'wantStop', store = store)
-    wantRun = RunWant(name = 'wantRun', store = store)
-
 class Want(acting.Actor):
     """Wnat Class for requesting control via skedder using .desire attribute
        of explicit peer tasker generators

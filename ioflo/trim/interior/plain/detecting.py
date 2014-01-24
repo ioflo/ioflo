@@ -19,20 +19,6 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals useful for module self tests
-    """
-
-    BoxPositionDetector(name = 'detectorPositionBox', store = store).ioinits.update(
-                        group = 'detector.position.box',
-                        output = 'box', input = 'state.position',
-                        parms = dict(track = 0.0, north = 0.0, east = 0.0,
-                                     length = 10000, width = 2000, turn = 45.0))
-
-
 class BoxPositionDetector(deeding.Deed):
     """BoxPositionDetector  Class
        Box Positiion Detector  class
@@ -255,8 +241,6 @@ def TestBox():
     deeding.Deed.Clear()
 
     store = storing.Store(name = 'Test')
-    #CreateInstances(store)
-    #
 
     print "\nTesting Box Position Detector"
     detector = BoxPositionDetector(name = 'detectorPositionBox', store = store, 

@@ -212,7 +212,6 @@ class Builder(object):
         if self.behaviors: #import behavior package/module
             for behavior in self.behaviors:
                 mod = importlib.import_module(behavior)
-                exterior._InstanceModules.append(mod) # add to trim.exterior._InstanceModules
 
         housing.House.Clear() #clear house registry
         housing.ClearRegistries() #clear all the other registries
@@ -396,8 +395,7 @@ class Builder(object):
 
             self.currentHouse.assignRegistries()
 
-            from .. import CreateAllInstances, _InstanceModules # ioflo/__init__.py
-            #CreateAllInstances(self.currentHouse.store, _InstanceModules)
+
 
             console.profuse("     Clearing current Framer, Frame, Log etc.\n")
             #changed store so need to make new frameworks and frames

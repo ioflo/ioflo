@@ -22,18 +22,6 @@ from . import acting
 from .consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals good for module self tests
-    """
-    #global traitDepth
-    #instance should be only one should use singleton or borg
-    traitDepth = DepthTrait(name = 'traitDepth', store = store)
-
-
-
 class Trait(acting.Actor):
     """Trait Class for configuration feature
 

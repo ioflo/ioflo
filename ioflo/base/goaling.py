@@ -25,17 +25,6 @@ from .consoling import getConsole
 console = getConsole()
 
 #Class definitions
-#instance should be only one should use singleton or borg
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals good for module self tests
-    """
-    #global goalDirect, goalIndirect
-
-    goalDirect = DirectGoal(name = 'goalDirect', store = store)
-    goalIndirect = IndirectGoal(name = 'goalIndirect', store = store)
-
 
 class Goal(acting.Actor):
     """Goal Class for setting configuration or command value in data share

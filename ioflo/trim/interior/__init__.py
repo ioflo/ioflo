@@ -5,10 +5,7 @@
 
 __all__ = ['plain', 'fancy'] 
 
-
 for m in __all__:
     exec "from . import %s" % m  #relative import
     #print "Imported %s" % globals().get(m,'')
 
-#used by CreateAllInstances               
-_InstanceModules = [plain, fancy]

@@ -23,20 +23,6 @@ from . import framing
 from .consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals good for module self tests
-    """
-    #global fiatStart, fiatStop, fiatRun
-    fiatReady = ReadyFiat(name = 'fiatReady', store = store)
-    fiatStart = StartFiat(name = 'fiatStart', store = store)
-    fiatStop = StopFiat(name = 'fiatStop', store = store)
-    fiatRun = RunFiat(name = 'fiatRun', store = store)
-    fiatAbort = AbortFiat(name = 'fiatAbort', store = store)
-
-
 class Fiat(acting.Actor):
     """Fiat Class for explicit control of slave framers
        slave framer is not in framer.auxes list and is not actively run by scheduler

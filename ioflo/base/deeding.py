@@ -24,13 +24,6 @@ console = getConsole()
 from .aiding import NonStringIterable, just, nameToPath
 
 
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-    """
-    pass
-
-
 class Deed(acting.Actor):
     """ Provides object of 'do' command verb
         Base class has Deed specific Registry of Classes

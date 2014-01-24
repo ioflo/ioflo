@@ -10,6 +10,3 @@ for m in __all__:
     exec "from . import %s" % m  #relative import
     #print "Imported %s" % globals().get(m,'')
 
-#used by CreateAllInstances                 
-_InstanceModules = [controlling, detecting, estimating,
-                    filtering, simulating]

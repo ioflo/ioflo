@@ -26,22 +26,6 @@ from . import acting
 from .consoling import getConsole
 console = getConsole()
 
-#Class definitions
-#since put is explicity then no subclasses for a given share
-def CreateInstances(store):
-    """Create action instances
-        must be function so can recreate after clear registry
-        globals good for module self tests
-    """
-    #global poke
-
-    poke = Poke(name = 'poke', store = store)
-
-    pokeDirect = DirectPoke(name = 'pokeDirect', store = store)
-    pokeIndirect = IndirectPoke(name = 'pokeIndirect', store = store)
-    incDirect = DirectInc(name = 'incDirect', store = store)
-    incIndirect = IndirectInc(name = 'incIndirect', store = store)
-
 class Poke(acting.Actor):
     """Poke Class to put values into explicit shares
 

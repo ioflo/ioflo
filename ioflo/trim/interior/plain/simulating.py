@@ -20,100 +20,6 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals useful for module self tests
-    """
-
-    UuvMotionSimulator(name = 'simulatorMotionUuv', store = store).ioinits.update(
-        group = 'simulator.motion.uuv',
-        speed = 'state.speed', speedRate = 'state.speedRate',
-        velocity = 'state.velocity',
-        depth = 'state.depth', depthRate = 'state.depthRate',
-        pitch = 'state.pitch', pitchRate = 'state.pitchRate', 
-        altitude = 'state.altitude',
-        heading = 'state.heading', headingRate = 'state.headingRate',
-        position = 'state.position', location = 'state.location',
-        rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
-        current = 'scenario.current', bottom = 'scenario.bottom', 
-        onset = 'scenario.onset', origin = 'scenario.origin',
-        parms = dict(rpmLimit = 1200.0, sternLimit = 20.0, rudderLimit = 20.0, 
-                     gs = 0.0022, gpr = -0.4, gpp = 0.0, gdb = -0.1, ghr = -0.4))
-
-    UsvMotionSimulator(name = 'simulatorMotionUsv', store = store).ioinits.update( 
-        group = 'simulator.motion.usv',
-        speed = 'state.speed', speedRate = 'state.speedRate',
-        velocity = 'state.velocity',
-        heading = 'state.heading', headingRate = 'state.headingRate',
-        position = 'state.position',
-        rpm = 'goal.rpm', rudder = 'goal.rudder',
-        current = 'scenario.current',  
-        onset = 'scenario.onset',
-        parms = dict(rpmLimit = 3000.0,  rudderLimit = 20.0, 
-                     gs = 0.0025,  ghr = -0.25))
-
-    GpsSensorSimulator(name = 'simulatorSensorGps', store = store).ioinits.update(
-        group = 'simulator.sensor.gps',
-        positionOut = 'gps.position', velocityOut = 'gps.velocity',
-        error = 'gps.error',
-        heading = 'heading.output', speed = 'state.speed',
-        positionIn = 'state.position', velocityIn = 'state.velocity', 
-        scenario = 'scenario.gps',
-        parms = dict(noiseBand = 5.0,  noiseJitter = 2.5, 
-                     noiseVelocity = 0.1))
-
-    DvlSensorSimulator(name = 'simulatorSensorDvl', store = store).ioinits.update(
-        group = 'simulator.sensor.dvl',
-        velocity = 'dvl.velocity', currentOut = 'dvl.current',
-        altitude = 'dvl.altitude',
-        heading = 'heading.output', speed = 'state.speed', 
-        currentIn = 'scenario.current',
-        bottom = 'scenario.bottom',
-        scenario = 'scenario.dvl',
-        parms = dict(velSigma = 0.01, bias = 0.1, altSigma = 0.01))
-
-    CompassSensorSimulator(name = 'simulatorSensorCompass', store = store).ioinits.update(
-        group = 'simulator.sensor.compass',
-        output = 'compass', 
-        input = 'state.heading', depth = 'state.depth',
-        scenario = 'scenario.magnetic',
-        parms = dict(phase = 24.0, amp = 1.0, sigma = 0.1))
-
-    LinearSalinitySimulator(name = 'simulatorSalinityLinear', store = store).ioinits.update(
-        group = 'simulator.salinity.linear', 
-        output = 'ctdsim', depth = 'state.depth',
-        input = 'state.position',
-        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                     layer = 20.0, shift = 2.0))
-
-    SinusoidSalinitySimulator(name = 'simulatorSalinitySinusoid', store = store).ioinits.update(
-        group = 'simulator.salinity.sinusoid', 
-        output = 'ctdsim',
-        input = 'state.position', depth = 'state.depth',
-        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                     layer = 20.0, shift = 2.0))
-
-    GradientSimulator(name = 'simulatorGradientTemperature', store = store).ioinits.update(
-        group = 'simulator.gradient.temperature', 
-        output = 'ctdsim', field = 'temperature', 
-        position = 'state.position', depth = 'state.depth',
-        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                     layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
-
-    GradientSimulator(name = 'simulatorGradientSalinity', store = store).ioinits.update(
-        group = 'simulator.gradient.salinity', 
-        output = 'ctdsim', field = 'salinity', 
-        position = 'state.position', depth = 'state.depth',
-        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
-                     middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                     layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
-
-
 class UuvMotionSimulator(deeding.LapseDeed):
     """UUVMotionsimulator LapseDeed Deed Class
        UUV motion simulator class
@@ -1627,8 +1533,6 @@ def TestSalinity():
     deeding.Deed.Clear()
 
     store = storing.Store(name = 'Test')
-    CreateInstances(store)
-
 
     print "\nTesting Salinity Sensor Front Simulator"
     sim = SalinitySensorSimulator(name = 'simulatorSensorSalinity', store = store, 
@@ -1708,7 +1612,6 @@ def Test():
     deeding.Deed.Clear()
 
     store = storing.Store(name = 'Test')
-    CreateInstances(store)
     store.expose()
 
 

@@ -23,17 +23,6 @@ from . import framing
 from .consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals good for module self tests
-    """
-    #global completeDone #used for testing
-
-    completeDone = DoneComplete(name = 'completeDone', store = store)
-
-
 class Complete(acting.Actor):
     """Complete Class for indicating tasker done state
 

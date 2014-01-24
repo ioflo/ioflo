@@ -17,14 +17,6 @@ from .consoling import getConsole
 console = getConsole()
 
 
-def CreateInstances(store):
-    """Create action instances
-       must be function so can recreate after clear registry
-       globals good for module self tests
-    """
-    pass
-
-
 #Arbiter Class
 class ArbiterDeed(deeding.Deed):
     """ArbiterDeed Deed Class
