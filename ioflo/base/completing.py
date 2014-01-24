@@ -11,7 +11,7 @@ import inspect
 
 
 from .globaling import *
-
+from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
@@ -38,8 +38,25 @@ class Complete(acting.Actor):
     """Complete Class for indicating tasker done state
 
     """
-    Counter = 0  
-    Names = {}
+    Registry = odict()
+    def resolve(self, framer, **kw):
+        """Resolves value (framer) link that is passed in as parm
+           resolved link is passed back to act to store in parms
+           since framer may not be current framer at build time
+        """
+        parms = super(Complete, self).resolve( **kw)
+        parms['framer'] = framer = framing.resolveFramer(framer, who=self.name)
+        
+        #if not isinstance(framer, framing.Framer): #maker sure framer not other tasker
+            #raise excepting.ResolveError("ResolveError: Bad done framer name not for framer", framer, '')
+
+        #if not framer.schedule in [AUX, SLAVE]: #maker sure framer is auxliary or slave
+            #raise excepting.ResolveError("ResolveError: Bad done framer, framer not auxiliary or slave", framer, '')
+
+        parms['framer'] = framer #replace name with valid link
+
+        return parms
+    
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -67,23 +84,6 @@ class Complete(acting.Actor):
         return parms
            
 
-    def resolveLinks(self, framer, **kw):
-        """Resolves value (framer) link that is passed in as parm
-           resolved link is passed back to act to store in parms
-           since framer may not be current framer at build time
-        """
-        parms = {}
-        parms['framer'] = framer = framing.resolveFramer(framer, who=self.name)
-        
-        #if not isinstance(framer, framing.Framer): #maker sure framer not other tasker
-            #raise excepting.ResolveError("ResolveError: Bad done framer name not for framer", framer, '')
-
-        #if not framer.schedule in [AUX, SLAVE]: #maker sure framer is auxliary or slave
-            #raise excepting.ResolveError("ResolveError: Bad done framer, framer not auxiliary or slave", framer, '')
-
-        parms['framer'] = framer #replace name with valid link
-
-        return parms
 
 
 class DoneComplete(Complete):

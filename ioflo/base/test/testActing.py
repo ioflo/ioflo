@@ -42,7 +42,10 @@ def test():
     #poke = Poke(name = 'put', store = store)
     #poke(name = 'autopilot.depth', value = dict(depth = 5))
 
-
+def testActify():
+    act = acting.Actor.actify('actor')
+    print acting.Actor.Registry
+    
 
 if __name__ == "__main__":
-    test()
+    testActify()

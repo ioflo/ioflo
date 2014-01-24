@@ -194,16 +194,16 @@ class Framer(tasking.Tasker):
             self.recurredShr.name, self.recurredShr.value, self.recurred))
         self.recurredShr.update(value = self.recurred)
 
-    def resolveLinks(self):
+    def resolve(self):
         """Convert all the name strings for links to references to instance
            by that name
         """
-        print "Resolving links for framer %s" % (self.name)
+        print "     Resolving framer %s" % (self.name)
 
         self.assignFrameRegistry() #needed by act links below
 
         for frame in Frame.Names.values(): #all frames in this framer's name space
-            frame.resolveLinks()
+            frame.resolve()
 
         #Resolve first frame link
         if self.first:
@@ -213,13 +213,12 @@ class Framer(tasking.Tasker):
 
                 self.first = Frame.Names[self.first] #replace link name with link
         else:
-            raise excepting.ResolveError("No first frame link", self.name, self.first)
-
+            raise excepting.ResolveError("No first frame link", self.name, self.first)        
 
     def traceOutlines(self):
         """Trace and assign outlines for each frame in framer
         """
-        print "Tracing outlines for framer %s" % (self.name)
+        print "     Tracing outlines for framer %s" % (self.name)
 
         self.assignFrameRegistry() 
 
@@ -459,7 +458,7 @@ class Framer(tasking.Tasker):
            yields next frame on a trans(ition)
         """
         #do any on creation initialization here
-        console.profuse("     Making Framer Runner {0}\n".format(self.name))
+        console.profuse("   Making Framer Runner {0}\n".format(self.name))
 
         self.status = STOPPED #operational status of framer
         self.desire = STOP
@@ -471,7 +470,7 @@ class Framer(tasking.Tasker):
 
                 status = self.status #for speed
 
-                console.profuse("\n     Iterate Framer {0} with control = {1} status = {2}\n".format(
+                console.profuse("\n   Iterate Framer {0} with control = {1} status = {2}\n".format(
                     self.name,
                     ControlNames.get(control, 'Unknown'),
                     StatusNames.get(status, 'Unknown')))
@@ -485,11 +484,11 @@ class Framer(tasking.Tasker):
                         self.status = RUNNING
 
                     elif status == STOPPED or status == READIED:
-                        console.profuse("     Need to Start Framer {0}\n".format(self.name))
+                        console.profuse("   Need to Start Framer {0}\n".format(self.name))
                         self.desire = START
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("     Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
@@ -498,21 +497,21 @@ class Framer(tasking.Tasker):
 
                 elif control == READY:
                     if status == STOPPED or status == READIED:
-                        console.profuse("     Attempting Ready Framer {0}\n".format(self.name))
+                        console.profuse("   Attempting Ready Framer {0}\n".format(self.name))
 
                         if self.checkStart(): #checks enters
-                            console.profuse("     Readied Framer {0} ...\n".format(self.name))
+                            console.profuse("   Readied Framer {0} ...\n".format(self.name))
                             self.status = READIED
                         else:  #checkStart failed
-                            console.profuse("     Failed Ready Framer {0}\n".format(self.name))
+                            console.profuse("   Failed Ready Framer {0}\n".format(self.name))
                             self.desire = STOP
                             self.status = STOPPED
 
                     elif status == RUNNING or status == STARTED:
-                        console.profuse("     Framer {0}, aleady Started\n".format(self.name))         
+                        console.profuse("   Framer {0}, aleady Started\n".format(self.name))         
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("     Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
@@ -521,10 +520,10 @@ class Framer(tasking.Tasker):
 
                 elif control == START:
                     if status == STOPPED or status == READIED:
-                        console.profuse("     Attempting Start Framer {0}\n".format(self.name))
+                        console.profuse("   Attempting Start Framer {0}\n".format(self.name))
 
                         if self.checkStart(): #checks enters
-                            console.terse("     Starting Framer {0} ...\n".format(self.name))
+                            console.terse("   Starting Framer {0} ...\n".format(self.name))
                             msg = "To: %s<%s at %s" % (self.name, self.first.human, self.store.stamp)
                             print msg
                             self.desire = RUN
@@ -532,16 +531,16 @@ class Framer(tasking.Tasker):
                             self.recur() #.desire may change here
                             self.status = STARTED
                         else:  #checkStart failed
-                            console.profuse("     Failed Start Framer {0}\n".format(self.name))
+                            console.profuse("   Failed Start Framer {0}\n".format(self.name))
                             self.desire = STOP
                             self.status = STOPPED
 
                     elif status == RUNNING or status == STARTED:
-                        console.profuse("     Framer {0}, aleady Started\n".format(self.name)) 
+                        console.profuse("   Framer {0}, aleady Started\n".format(self.name)) 
                         self.desire = RUN
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("     Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
@@ -550,20 +549,20 @@ class Framer(tasking.Tasker):
 
                 elif control == STOP:
                     if status == RUNNING or status == STARTED:
-                        msg = "     Stopping {0} in {1} at {2:0.3f}\n".format(
+                        msg = "   Stopping {0} in {1} at {2:0.3f}\n".format(
                             self.name,self.active.name,self.store.stamp)
                         self.desire = STOP
                         console.terse( msg)
                         self.exitAll()  #self.desire may change, self.done = True set in exitAll()
-                        console.profuse("     Stopped Framer {0}\n".format(self.name))
+                        console.profuse("   Stopped Framer {0}\n".format(self.name))
                         self.status = STOPPED
 
                     elif status == STOPPED or status == READIED:
-                        console.profuse("     Framer {0}, aleady Stopped\n".format(self.name)) 
+                        console.profuse("   Framer {0}, aleady Stopped\n".format(self.name)) 
                         #self.desire = STOP
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("     Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
@@ -571,25 +570,25 @@ class Framer(tasking.Tasker):
                         self.status = ABORTED
 
                 else: #control == ABORT or unknown
-                    console.profuse("     Framer {0} aborting with control = {1}\n".format(
+                    console.profuse("   Framer {0} aborting with control = {1}\n".format(
                         self.name, ControlNames.get(control, "Unknown")))
 
                     if status == RUNNING or status == STARTED:
-                        msg = "     Aborting %s in %s at %0.3f" %\
+                        msg = "   Aborting %s in %s at %0.3f" %\
                             (self.name, self.active.name, self.store.stamp)
                         print msg
                     elif status == STOPPED or status == READIED:
-                        msg = "     Aborting %s at %0.3f" %\
+                        msg = "   Aborting %s at %0.3f" %\
                             (self.name, self.store.stamp)
                         print msg
                     elif status == ABORTED:
-                        console.profuse("     Framer {0}, aleady Aborted\n".format(self.name)) 
+                        console.profuse("   Framer {0}, aleady Aborted\n".format(self.name)) 
 
                     self.desire = ABORT
                     self.status = ABORTED
 
         finally: #in case uncaught exception
-            console.profuse("     Exception causing Abort Framer {0} ...\n".format(self.name))
+            console.profuse("   Exception causing Abort Framer {0} ...\n".format(self.name))
             self.desire = ABORT
             self.status = ABORTED
 
@@ -928,12 +927,12 @@ class Frame(registering.StoriedRegistry):
                     raise excepting.ResolveError("ResolveError: Bad framer name, tasker not framer", self.name, framer.name)
                 self.framer = framer #replace link name with link
         
-    def resolveLinks(self):
+    def resolve(self):
         """Resolve links where links are instance name strings assigned during building
            need to be converted to object references using instance name registry
 
         """
-        console.profuse("Resolving links for frame {0} in framer {1}\n".format(
+        console.profuse("Resolving frame {0} in framer {1}\n".format(
             self.name, self.framer.name))
 
         self.resolveFramerLink()
@@ -943,25 +942,25 @@ class Frame(registering.StoriedRegistry):
         self.resolveUnderLinks()
 
         for act in self.beacts:
-            act.resolveLinks()
+            act.resolve()
 
         for act in self.enacts:
-            act.resolveLinks()
+            act.resolve()
 
         for act in self.reacts:
-            act.resolveLinks()
+            act.resolve()
 
         for act in self.preacts:
-            act.resolveLinks()
+            act.resolve()
 
         for act in self.exacts:
-            act.resolveLinks()
+            act.resolve()
 
         for act in self.rexacts:
-            act.resolveLinks()
+            act.resolve()
 
         for act in self.renacts:
-            act.resolveLinks()
+            act.resolve()
 
         self.resolveAuxLinks()
 

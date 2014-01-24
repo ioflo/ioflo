@@ -52,16 +52,20 @@ console = getConsole()
 
 Registries = odict(store = storing.Store,
                   tasker = tasking.Tasker,
-                  log = logging.Log,
-                  actor = acting.Actor,
-                  poke = poking.Poke,
-                  deed = deeding.Deed,
-                  goal = goaling.Goal,
-                  need = needing.Need,
-                  trait = traiting.Trait,
-                  fiat = fiating.Fiat,
-                  want = wanting.Want,
-                  complete = completing.Complete)
+                  log = logging.Log,)
+
+#Registries = odict(store = storing.Store,
+                  #tasker = tasking.Tasker,
+                  #log = logging.Log,
+                  #actor = acting.Actor,
+                  #poke = poking.Poke,
+                  #deed = deeding.Deed,
+                  #goal = goaling.Goal,
+                  #need = needing.Need,
+                  #trait = traiting.Trait,
+                  #fiat = fiating.Fiat,
+                  #want = wanting.Want,
+                  #complete = completing.Complete)
 
 
 def ClearRegistries():
@@ -119,8 +123,8 @@ class House(registering.StoriedRegistry):
         self.auxes = [] #list of aux framers in house
         self.slaves = [] #list of slave taskers in house
 
-        self.names = odict() #houses dict of registry Names  maybe should be odict?
-        self.counters = odict() #houses dict of registry Name Counters maybe should be odict
+        self.names = odict() #houses dict of registry Names  
+        self.counters = odict() #houses dict of registry Name Counters 
 
         self.meta = odict() # dict of meta data items (name, share) for skedder to access
 
@@ -136,6 +140,7 @@ class House(registering.StoriedRegistry):
     def orderTaskables(self):
         """Place taskables in order
         """
+        console.terse("   Ordering taskable taskers for house {0}\n".format(self.name))
         self.taskables = self.fronts + self.mids + self.backs
 
     def assignRegistries(self):
@@ -145,20 +150,22 @@ class House(registering.StoriedRegistry):
         for key, value in Registries.items():
             value.Names = self.names[key]
             value.Counter = self.counters[key]
-
-    def resolveLinks(self):
-        """ resolve links from building where links are name strings of objects
-           resolution looks up name string in appropriate registry and replaces
-           name string with link to object
+            
+    def resolve(self):
+        """ resolves links from building where links are name strings of objects
+            resolution looks up name string in appropriate registry and replaces
+            name string with link to object
         """
+        console.terse("   Resolving house {0}\n".format(self.name))
         self.assignRegistries()
 
         for tasker in self.taskers:
-            tasker.resolveLinks() 
+            tasker.resolve()
 
     def traceOutlines(self):
         """ trace and assign outlines for each frame
         """
+        console.terse("   Tracing outlines for house {0}\n".format(self.name))
         self.assignRegistries()
 
         for framer in self.framers:

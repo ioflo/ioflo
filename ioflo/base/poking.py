@@ -46,8 +46,7 @@ class Poke(acting.Actor):
     """Poke Class to put values into explicit shares
 
     """
-    Counter = 0  
-    Names = {}
+    Registry = odict()
 
     def action(self, share, data, **kw):
         """Put data into share """

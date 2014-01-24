@@ -88,7 +88,7 @@ class Act(object):
             
         parms = self.actor.resolve(**self.parms)
         self.parms.update(parms)
-        self.actor.postinitio(**self.parms)    
+        self.actor.postinitio(**self.parms)
             
     def clone(self, clones):
         """ Return clone of self in support of framer cloning
@@ -103,19 +103,8 @@ class Act(object):
         """ Fixup parms in actor for framer cloning.
             clones is dict whose items keys are original framer names
             and values are are duples of (original,clone) framer references
-            
         """
         parms = self.actor.cloneParms(parms=self.parms, clones=clones)
-        self.parms.update(parms)
-
-    def resolveLinks(self, *pa, **kwa):
-        """ Resolve .frame attribute and any links in associated parms for .actor"""
-        if self.act: # sub act such as need of another act .act
-            self.frame = self.act.frame
-            self.context = self.act.context
-        self.frame = framing.resolveFrame(self.frame, who=self)
-        
-        parms = self.actor.resolveLinks(**self.parms)
         self.parms.update(parms)
     
 class Nact(Act):
@@ -140,14 +129,31 @@ class Nact(Act):
         if self.actor:
             self.actor.expose()
 
-class Actor(object): # registering.StoriedRegistry
+class Actor(object): # old registering.StoriedRegistry
     """ Actor Base Class
         Has Actor specific Registry of classes
     """
     __metaclass__ = registering.RegisterType
-    Registry = odict() # Actor Registery
+    Registry = odict() # Actor Registry
     ioinits = odict() # class defaults
+    _ioattributive = False # Convert iois to attributes if Truthy
     __slots__ = ('name', 'store', 'act')
+    
+    @classmethod
+    def actify(cls, name, parms=None, inits=None, ioinits=None):
+        """ Return new Act using the class specific registry to get Actor class
+            from name and defaults for parms, inits, and ioinits
+            Updates defaults with passed in parms, inits, ioinits
+        """
+        inits = inits or odict()
+        ioinits = ioinits or odict()
+        # fetch actor and default copies of inits and ioinits from registry
+        actor, rinits, rioinits = cls.__fetch__(name)
+        inits.create(rinits) # set defaults of missing
+        if 'name' not in inits:
+            inits['name'] = name
+        ioinits.create(rioinits) # set defaults of missing
+        return Act(actor=actor, parms=parms, inits=inits, ioinits=ioinits)
     
     def __init__(self, name='', store=None, act=None, **kwa ):
         """ Initialization method for instance.
@@ -161,7 +167,8 @@ class Actor(object): # registering.StoriedRegistry
         if store is not None: 
             if  not isinstance(store, storing.Store):
                 raise ValueError("Not store %s" % store)
-            self.store = store               
+            self.store = store
+        self.act = act
         
     def __call__(self, **kwa):
         """ run .action  """
@@ -177,20 +184,31 @@ class Actor(object): # registering.StoriedRegistry
         console.terse("Actor {0}".format(self.name))    
     
     def resolve(self, **kwa):
-        """ Return updated parms from conversion of .act.ioints into iois and
-            resolution into share refs if any. 
+        """ Return updated parms from conversion of .act.ioinits into iois and
+            resolution into share refs if any.
+            Based on ._ioattributive convert resolve iois to attributes or parms
             Extend in subclass to resolve specific kwa items that are links or
             share refs and update parms
         """
         parms = odict()
-        iois = self.initio(**self.act.ioinits)
-        for key, ioi in iois.items(): # resolve iois if any and update parms 
-            if key in kwa:
-                msg = "ResolveError: Parm and Ioi with same name"
-                raise excepting.ResolveError(msg, key, self)
-            parms[key] = self.resolvePath(  ipath=ioi['ipath'],
-                                            ival=ioi.get('ival'), 
-                                            iown=ioi.get('iown'))
+        if self.act.ioinits:
+            iois = self.initio(**self.act.ioinits)
+            if iois:
+                if self._ioattributive:
+                    for key, ioi in iois.items():
+                        share = self.resolvePath(    ipath=ioi['ipath'],
+                                                     ival=ioi.get('ival'), 
+                                                     iown=ioi.get('iown'))
+                        if self._ioattributive:
+                            if hasattr(self, key):
+                                msg = "ResolveError: Attribute and Ioi with same name"
+                                raise excepting.ResolveError(msg, key, self) 
+                            setattr(self, key, share)
+                        else:
+                            if key in kwa:
+                                msg = "ResolveError: Parm and Ioi with same name"
+                                raise excepting.ResolveError(msg, key, self)
+                            parms[key] = share                            
         return parms    
     
     def initio(self, inode='', **kwa):
@@ -266,10 +284,6 @@ class Actor(object): # registering.StoriedRegistry
                 Else
                     init share with ival value using create ((change if not exist))
                 
-                If Solo then return iois dictionary of shares
-                Else
-                     Assign attribute name of key and value is share
-                
         """
         if not isinstance(inode, basestring):
             raise ValueError("Nonstring inode arg '{0}'".format(inode))
@@ -314,19 +328,11 @@ class Actor(object): # registering.StoriedRegistry
                     ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
             else:
                 ipath = '.'.join(inode.rstrip('.'), key)    
-            
             ioi = odict(ipath=ipath, ival=ival, iown=iown)
-            
-            if _parametric: # act resolveLinks will resolve share/node ref and init
-                iois[key] = ioi
-            else:           
-                self._iois[key] = ioi
-       
+            iois[key] = ioi
+        
         ioi = odict(ipath=inode)
-        if _parametric: # act resolveLinks will resolve node ref
-            iois['inode'] = ioi
-        else:
-            self._iois['inode'] = ioi
+        iois['inode'] = ioi
         
         return iois # non-empty when _parametric
     
@@ -498,63 +504,8 @@ class Actor(object): # registering.StoriedRegistry
                         newShare.create(stuff)
                         parms[key] = newShare                    
 
-        return parms      
-    
-    def resolveLinks(self, _act, **kwa):
-        """ Resolves any links in parms for Actor
-            should be overridden by sub class
-        """
-        parms =  {}
-
-        if _act.iois:
-            for key, ioi in _act.iois.items():
-                if key in kwa:
-                    raise excepting.ResolveError("ResolveError: Parm and Ioi with same key", key, _act)
-                
-                parms[key] = storing.resolvePath(   store=self.store,
-                                                    ipath=ioi['ipath'],
-                                                    ival=ioi.get('ival'), 
-                                                    iown=ioi.get('iown'),
-                                                    act=_act)
         return parms
     
-class StarActor(Actor): # registering.StoriedRegistry
-    """ Actor Subclass that allows instance attributes for iois"""
-    ioinits = odict()
-    __slots__ = ('name', 'store', 'act')
-    
-    def __init__(self, **kwa ):
-        """ Initialization method for instance.
-            Inherited attributes
-                .name = name string for Actor variant in class Registry
-                .store = reference to shared data Store
-                .act = reference to containing Act
-                
-            Instance attributes
-                dynamically created from resolved iois converted from .act.ioinits
-        """
-        super(StarActor,self).__init__(**kwa)
-    
-    def initio(self, **kwa):
-        """ Consume iois from superclass .initio and assign to instance attributes
-            
-            For each key, value in iois.items()
-                resolve value into share
-                create attribute with name of key and value of share
-                
-        """
-        iois = super(StarActor,self).initio(**kwa)
-
-        for key, ioi in iois.items():
-            if hasattr(self, key):
-                msg = "ResolveError: Pre-existing attribute and Ioi with same name"
-                raise excepting.ResolveError(msg, key, self)                
-            
-            setattr(self, key, self.resolvePath( ipath=ioi['ipath'],
-                                                 ival=ioi.get('ival'), 
-                                                 iown=ioi.get('iown'))
-        return (odict()) # return empty since iois are all attributes not parms
-
 class Interrupter(Actor):
     """Interrupter Actor Patron Registry Class 
        Interrupter is a base clase for all actor classes that interrupt normal precur
@@ -632,6 +583,42 @@ class Transiter(Interrupter):
     def expose(self):
         """      """
         console.terse("Transiter {0}\n".format(self.name))
+    
+    def resolve(self, needs, near, far, human, **kw):
+        """Resolve any links in far and in associated parms for actors"""
+
+        parms = super(Transiter, self).resolve( **kw)  
+        
+        if not isinstance(near, framing.Frame):
+            if near not in framing.Frame.Names:
+                raise excepting.ResolveError("ResolveError: Bad near link",
+                                            human, near)
+            parms['near'] = near = framing.Frame.Names[near] #replace name with valid link        
+
+        if not isinstance(far, framing.Frame):
+            if far == 'next':
+                if not isinstance(near.next, framing.Frame):
+                    raise excepting.ResolveError("ResolveError: Bad next frame",
+                                                 near.name, near.next)
+                far = near.next
+
+            elif far == 'me':
+                far = near
+
+            elif far in framing.Frame.Names:
+                far = framing.Frame.Names[far]
+
+            else:
+                raise excepting.ResolveError("ResolveError: Bad far link",
+                                             near.name + " " + human, far)
+
+            parms['far'] = far #replace name with valid link
+
+        for act in needs:
+            act.act = self.act
+            act.resolve()
+
+        return parms    
         
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -663,43 +650,6 @@ class Transiter(Interrupter):
         
         return parms    
         
-    def resolveLinks(self, _act, needs, near, far, human, **kw):
-        """Resolve any links in far and in associated parms for actors"""
-
-        parms = {}
-        
-        if not isinstance(near, framing.Frame):
-            if near not in framing.Frame.Names:
-                raise excepting.ResolveError("ResolveError: Bad near link",
-                                            human, near)
-            parms['near'] = near = framing.Frame.Names[near] #replace name with valid link        
-
-        if not isinstance(far, framing.Frame):
-            if far == 'next':
-                if not isinstance(near.next, framing.Frame):
-                    raise excepting.ResolveError("ResolveError: Bad next frame",
-                                                 near.name, near.next)
-                far = near.next
-
-            elif far == 'me':
-                far = near
-
-            elif far in framing.Frame.Names:
-                far = framing.Frame.Names[far]
-
-            else:
-                raise excepting.ResolveError("ResolveError: Bad far link",
-                                             near.name + " " + human, far)
-
-            parms['far'] = far #replace name with valid link
-
-        for act in needs:
-            act.act = _act
-            act.resolveLinks()
-
-        return parms
-
-
 class Suspender(Interrupter):
     """Suspender Interrupter Actor Patron Registry Class 
        Suspender  is a special actor that performs a conditional auxiliary
@@ -781,6 +731,33 @@ class Suspender(Interrupter):
 
         aux.exitAll() # also sets .done = True
         aux.main = None
+    
+    def resolve(self, needs, main, aux, human, **kw):
+        """Resolve any links aux and in associated parms for actors"""
+        parms = super(Suspender, self).resolve( **kw) 
+        
+        if not isinstance(main, framing.Frame):
+            if main not in framing.Frame.Names:
+                raise excepting.ResolveError("ResolveError: Bad main link", human, main)
+            parms['main'] = main = framing.Frame.Names[main] #replace name with valid link                    
+
+        if not isinstance(aux, framing.Framer):
+            if aux not in framing.Framer.Names:
+                raise excepting.ResolveError("ResolveError: Bad aux link",
+                                                main.name + " " + human, aux)                
+                
+            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
+            console.terse("    Resolved aux as {0} in {1}".format(aux.name, main.name))
+
+        if aux.schedule != AUX:
+            raise excepting.ResolveError("ResolveError: Bad aux link not scheduled as AUX",
+                                         main.name + " " + human, aux)
+
+        for act in needs:
+            act.act = self.act
+            act.resolve()
+
+        return parms    
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -818,35 +795,6 @@ class Suspender(Interrupter):
         
         return parms
 
-    def resolveLinks(self, _act, needs, main, aux, human, **kw):
-        """Resolve any links aux and in associated parms for actors"""
-
-        parms = {}
-        
-        if not isinstance(main, framing.Frame):
-            if main not in framing.Frame.Names:
-                raise excepting.ResolveError("ResolveError: Bad main link", human, main)
-            parms['main'] = main = framing.Frame.Names[main] #replace name with valid link                    
-
-        if not isinstance(aux, framing.Framer):
-            if aux not in framing.Framer.Names:
-                raise excepting.ResolveError("ResolveError: Bad aux link",
-                                                main.name + " " + human, aux)                
-                
-            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
-            console.terse("    Resolved aux as {0} in {1}".format(aux.name, main.name))
-
-        if aux.schedule != AUX:
-            raise excepting.ResolveError("ResolveError: Bad aux link not scheduled as AUX",
-                                         main.name + " " + human, aux)
-
-        for act in needs:
-            act.act = _act
-            act.resolveLinks()
-
-        return parms
-
-
 class Deactivator(Actor):
     """Deactivator Actor Patron Registry Class 
 
@@ -872,6 +820,23 @@ class Deactivator(Actor):
     def expose(self):
         """   """
         console.terse("Deactivator {0}\n".format(self.name))
+    
+    def resolve(self, aux, **kw):
+        """Resolve aux link parm"""
+        parms = super(Deactivator, self).resolve( **kw) 
+
+        if not isinstance(aux, framing.Framer):
+            if aux not in framing.Framer.Names:
+                raise excepting.ResolveError("ResolveError: Bad aux link",
+                                                             aux, self.name)                
+            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
+            console.terse("    Resolved aux as {0}".format(aux.name))
+
+        if aux.schedule != AUX:
+            msg = "ResolveError: Bad deactivator aux link not scheduled as AUX"
+            raise excepting.ResolveError(msg, aux.name, self.name)
+
+        return parms    
         
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -902,24 +867,6 @@ class Deactivator(Actor):
 
         return parms
               
-    def resolveLinks(self, actor, aux, **kw):
-        """Resolve any links aux and in associated parms for actors"""
-
-        parms = {}
-
-        if not isinstance(aux, framing.Framer):
-            if aux not in framing.Framer.Names:
-                raise excepting.ResolveError("ResolveError: Bad far link",
-                                                             near.name + " " + human, far)                
-            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
-            console.terse("    Resolved aux as {0}".format(aux.name))
-
-        if aux.schedule != AUX:
-            msg = "ResolveError: Bad deactivator aux link not scheduled as AUX"
-            raise excepting.ResolveError(msg, actor.name, aux)
-
-        return parms
-
 class Restarter(Actor):
     """ Restarter is a special actor that acts on other act's actor
         In the Restarter's action method, 
@@ -937,7 +884,7 @@ class Restarter(Actor):
         console.profuse("{0} restart {1}\n".format(self.name, act.actor.name))
 
         if hasattr(act.actor, 'restart'):
-            return actor.restart()
+            return act.actor.restart()
 
     def expose(self):
         """   """
@@ -979,13 +926,7 @@ class Marker(Actor):
         
         #don't need to do anything yet since rerefShares will reref
 
-        return parms    
-    
-    def resolveLinks(self, share, name, **kw):
-        """Resolves share and adds mark in share"""
-        parms = {}
-            
-        return parms    
+        return parms       
         
 class UpdateMarker(Marker):
     """ UpdateMarker Class 

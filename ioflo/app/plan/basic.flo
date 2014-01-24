@@ -1,0 +1,44 @@
+
+house basic
+
+init .speed to 20
+
+framer test be active first start
+
+   frame start
+      set depth to 5
+      set speed from .speed
+      put 30 into .heading
+      put green 4 blue 30 into .color
+      inc .heading to 5
+      inc .heading by green in .color
+      inc blue in .color by .goal.depth
+      copy green in .color into red in .tint
+      do deed
+      go next
+      
+   frame doslave
+      ready testslave #benter
+      start testslave # enter
+      run testslave # recur
+      go next if done testslave
+      stop testslave # exit
+   
+   frame abort 
+      bid stop all
+      
+framer testslave be slave first slave1 # slave framer
+
+   frame slave1
+      print slave1
+      go next 
+      
+   frame slave2
+      print slave2
+      repeat 3
+      recur
+         print slave2 again
+   
+   frame slave3 #so complete
+      print slave3
+      done

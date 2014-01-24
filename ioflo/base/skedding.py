@@ -254,11 +254,11 @@ class Skedder(object):
                             more = True
 
                     if not ready: #no pending taskers so done
-                        print "     No ready taskers. Shutting down skedder ..."
+                        print "No ready taskers. Shutting down skedder ..."
                         break
 
                     if not more: #all taskers stopped or aborted
-                        print "     No running or started taskers. Shutting down skedder ..."
+                        print "No running or started taskers. Shutting down skedder ..."
                         break
 
                     #update time stamps
@@ -274,16 +274,16 @@ class Skedder(object):
                         house.store.changeStamp(stamp)
 
                 except KeyboardInterrupt: #CNTL-C shutdown skedder
-                    print "    KeyboardInterrupt forcing shutdown of skedder ..."
+                    print "KeyboardInterrupt forcing shutdown of skedder ..."
 
                     break
 
                 except SystemExit: #User know why shutting down
-                    print "    SystemExit forcing shutdown of skedder ..."
+                    print "SystemExit forcing shutdown of skedder ..."
                     raise
 
                 except Exception: #Let user know what exception caused shutdoen
-                    print "    Surprise exception forcing shutdown of skedder ..." 
+                    print "Surprise exception forcing shutdown of skedder ..." 
                     raise
 
             print "Total elapsed real time = %0.4f" % self.elapsed.elapsed
@@ -294,7 +294,7 @@ class Skedder(object):
             #if last run tasker exited due to exception then try finally clause in
             #its generator is responsible for releasing resources
 
-            print "    Aborting all ready taskers ..."
+            print "Aborting all ready taskers ..."
             for i in xrange(len(ready)): #run each ready tasker once
                 tasker,retime,period = ready.popleft() #pop it off
 
@@ -306,10 +306,11 @@ class Skedder(object):
 
                 #tasker.runner.close() #kill generator
         
-        for house in self.houses:
-            #show store hierarchy
-            console.concise( "\nData Store for {0}\n".format(house.name))
-            house.store.expose(values=(console._verbosity >= console.Wordage.verbose))             
+        if console._verbosity >= console.Wordage.concise:
+            for house in self.houses:
+                #show store hierarchy
+                console.concise( "\nData Store for {0}\n".format(house.name))
+                house.store.expose(values=(console._verbosity >= console.Wordage.terse))             
 
 
 

@@ -290,18 +290,12 @@ class Builder(object):
 
                 #building done so now resolve links and collect actives inactives
                 for house in self.houses:
-                    console.terse("Ordering taskable taskers for house {0}\n".format(house.name))
                     house.orderTaskables()
-
-                    console.terse("Resolving links for house {0}\n".format(house.name))
-                    house.resolveLinks()
-
-                    console.terse("Tracing outlines for house {0}\n".format(house.name))
+                    house.resolve()
                     house.traceOutlines() #traces the outlines in each frame
 
                     if console._verbosity >= console.Wordage.concise:
                         house.showAllTaskers()
-
                         #show framework hierarchiy
                         for framer in house.framers:
                             framer.showHierarchy()
@@ -392,7 +386,7 @@ class Builder(object):
             self.houses.append(self.currentHouse)
             self.currentStore = self.currentHouse.store
 
-            console.terse("     Created house {0}. Assigning registries, "
+            console.terse("   Created house {0}. Assigning registries, "
                           "creating instances ...\n".format(name))
 
             self.currentHouse.assignRegistries()
@@ -424,7 +418,7 @@ class Builder(object):
                 (command)
             raise excepting.ParseError(msg, tokens, index)            
         
-        msg = "     Built house {0} with meta:\n".format(self.currentHouse.name)
+        msg = "   Built house {0} with meta:\n".format(self.currentHouse.name)
         for name, share in self.currentHouse.meta.items():
             msg += "       {0}: {1!r}\n".format(name, share)
         console.terse(msg)        
@@ -1646,17 +1640,14 @@ class Builder(object):
             kind = 'Done'
             framer = self.currentFramer
             actorName = 'complete' + kind.capitalize()
-            if actorName not in completing.Complete.Names:
+            if actorName not in completing.Complete.Registry:
                 print "Error building complete %s. No actor named %s. index = %d tokens = %s" %\
                       (kind, actorName, index, tokens)
                 return False
 
-            actor = completing.Complete.Names[actorName]
-
             parms = {}
             parms['framer'] = framer #resolve later if needed
-            act = acting.Act(actor = actor, parms = parms)
-
+            act = completing.Complete.actify(actorName, parms=parms)
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -1772,7 +1763,8 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later 
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Act(actor = acting.Actor.Names['transiter'], parms = parms)
+        act = acting.Actor.actify('transiter', parms=parms)
+        #act = acting.Act(actor = acting.Actor.Names['transiter'], parms = parms)
 
         self.currentFrame.addPreact(act) #add transact as preact
 
@@ -1882,7 +1874,7 @@ class Builder(object):
             message = ''
 
         parms = dict(message = message)
-        act = acting.Act(actor = acting.Actor.Names['printer'], parms = parms)
+        act = acting.Actor.actify('printer', parms=parms)
 
         context = self.currentContext
         if context == NATIVE: 
@@ -1948,20 +1940,18 @@ class Builder(object):
 
         actorName = 'poke' + 'Direct' #capitalize second word
 
-        if actorName not in poking.Poke.Names:
+        if actorName not in poking.Poke.Registry:
             msg = "ParseError: Can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
-
-        actor = poking.Poke.Names[actorName]
 
         parms = {}
         parms['data'] = dstData #this is dict
         parms['destination'] = dst #this is a share
-
-        act = acting.Act(actor = actor, parms = parms)
+        
+        act = poking.Poke.actify(actorName, parms=parms)
 
         msg = "     Created Actor {0} parms: data = {1}  destination = {2} ".format(
-            actor.name, data, dst.name)
+            actorName, data, dst.name)
         console.profuse(msg)
 
         context = self.currentContext
@@ -2120,21 +2110,18 @@ class Builder(object):
 
         actorName = 'poke' + 'Indirect' #capitalize second word
 
-        if actorName not in poking.Poke.Names:
+        if actorName not in poking.Poke.Registry:
             msg = "ParseError: Can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
-
-        actor = poking.Poke.Names[actorName]
 
         parms = {}
         parms['source'] = src #this is share
         parms['sourceFields'] = srcFields #this is a list
         parms['destination'] = dst #this is a share
         parms['destinationFields'] = dstFields #this is a list
-
-        act = acting.Act(actor = actor, parms = parms)
-
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        act = poking.Poke.actify(actorName, parms=parms)
+        
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))
@@ -2318,7 +2305,8 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         #resolve far link later 
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Act(actor = acting.Actor.Names['transiter'], parms = parms)
+        act = acting.Actor.actify('transiter', parms=parms)
+        #act = acting.Act(actor = acting.Actor.Names['transiter'], parms = parms)
 
         #resolve far link later 
         #act = acting.Transact(needs = needs, near = self.currentFrame, far = far, human = human)
@@ -2533,14 +2521,8 @@ class Builder(object):
                 (command, kind)
             raise excepting.ParseError(msg, tokens, index)
         
-        actor, rinits, rioinits = deeding.Deed.Registry[kind] # fetch from Registry
-        rinits = odict(rinits) if rinits else odict() # make copy if given
-        rinits.update(inits)
-        rinits['name'] = name or kind
-        rioinits = odict(rioinits) if rioinits else odict() # make copy if given
-        rioinits.update(ioinits)
-        
-        act = acting.Act(actor=actor, parms=parms, inits=rinits, ioinits=rioinits)        
+        inits['name'] = name or kind
+        act = deeding.Deed.actify(kind, parms=parms, inits=inits, ioinits=ioinits)
         
         context = self.currentContext
         if context == NATIVE: 
@@ -2596,15 +2578,14 @@ class Builder(object):
                 return False
 
             actorName = 'want' + control.capitalize()
-            if actorName not in wanting.Want.Names:
+            if actorName not in wanting.Want.Registry:
                 print "Error building  %s. No actor named %s. index = %d tokens = %s" %\
                       (command, actorName, index, tokens)
-                return False
+                return False            
 
-            actor = wanting.Want.Names[actorName]
             parms = {}
             parms['taskers'] = taskers #resolve later
-            act = acting.Act(actor = actor, parms = parms)
+            act = wanting.Want.actify(actorName, parms=parms)
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2816,19 +2797,20 @@ class Builder(object):
         """
         actorName = 'inc' + 'Direct' #capitalize second word
 
-        if actorName not in poking.Poke.Names:
+        if actorName not in poking.Poke.Registry:
             msg = "ParseError: Can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = poking.Poke.Names[actorName]
+        #actor = poking.Poke.Names[actorName]
 
         parms = {}
         parms['destination'] = destination #this is a share
         parms['data'] = data #this is an ordered dictionary
+        
+        act = poking.Poke.actify(actorName, parms=parms)
+        #act = acting.Act(actor = actor, parms = parms)
 
-        act = acting.Act(actor = actor, parms = parms)
-
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))      
@@ -2842,21 +2824,21 @@ class Builder(object):
         """
         actorName = 'inc' + 'Indirect' #capitalize second word
 
-        if actorName not in poking.Poke.Names:
+        if actorName not in poking.Poke.Registry:
             msg = "ParseError: Goal can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = poking.Poke.Names[actorName]
+        #actor = poking.Poke.Names[actorName]
 
         parms = {}
         parms['destination'] = destination #this is a share
         parms['destinationFields'] = destinationFields #this is a list
         parms['source'] = source #this is a share
         parms['sourceFields'] = sourceFields #this is a list
+        act = poking.Poke.actify(actorName, parms=parms)
+        #act = acting.Act(actor = actor, parms = parms)
 
-        act = acting.Act(actor = actor, parms = parms)
-
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))   
@@ -2935,20 +2917,18 @@ class Builder(object):
            method must be wrapped in appropriate try excepts
         """
         actorName = 'goal' + 'Direct' #capitalize second word
-
-        if actorName not in goaling.Goal.Names:
+        
+        if actorName not in goaling.Goal.Registry:
             msg = "ParseError: Goal can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
-
-        actor = goaling.Goal.Names[actorName]
 
         parms = {}
         parms['goal'] = goal #this is a share
         parms['data'] = data #this is a dictionary
+        
+        act = goaling.Goal.actify(actorName, parms=parms)
 
-        act = acting.Act(actor = actor, parms = parms)
-
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))   
@@ -2962,21 +2942,19 @@ class Builder(object):
         """
         actorName = 'goal' + 'Indirect' #capitalize second word
 
-        if actorName not in goaling.Goal.Names:
+        if actorName not in goaling.Goal.Registry:
             msg = "ParseError: Goal can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
-
-        actor = goaling.Goal.Names[actorName]
 
         parms = {}
         parms['goal'] = goal #this is share
         parms['goalFields'] = goalFields #this is a list
         parms['source'] = source #this is a share
         parms['sourceFields'] = sourceFields #this is a list
+        
+        act = goaling.Goal.actify(actorName, parms=parms)
 
-        act = acting.Act(actor = actor, parms = parms)
-
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))   
@@ -3096,26 +3074,21 @@ class Builder(object):
 
     def makeDoneNeed(self, kind, tokens, index):
         """Need to check if tasker completed by .done truthy
-
            method must be wrapped in appropriate try excepts
 
            done tasker
         """
         tasker = tokens[index]
         index += 1
-
         actorName = 'need' + kind.capitalize()
-
-        if actorName not in needing.Need.Names:
+        if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
                 (  kind, actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = needing.Need.Names[actorName]
         parms = {}
         parms['tasker'] = tasker
-        act = acting.Act(actor = actor, parms = parms)
-
+        act = needing.Need.actify(actorName, parms=parms)
         return (act, index)
 
     def makeStatusNeed(self, kind, tokens, index):
@@ -3204,7 +3177,7 @@ class Builder(object):
         #if not share.marks.get(name):
             #share.marks[name] = storing.Mark()
             
-        # assign marker type actual marker Act created in need's resolveLinks
+        # assign marker type actual marker Act created in need's resolve
         marker = 'marker' + kind.capitalize() 
         
         actorName = 'need' + kind.capitalize()
@@ -3338,22 +3311,19 @@ class Builder(object):
         """
         actorName = 'need' + 'Direct' #capitalize second word
 
-        if actorName not in needing.Need.Names:
+        if actorName not in needing.Need.Registry:
             msg = "ParseError: Need can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        actor = needing.Need.Names[actorName]
         parms = {}
         parms['state'] = state #this is a share
         parms['stateField'] = stateField #this is a string
         parms['comparison'] = comparison #this is a string
         parms['goal'] = goal  #this is a value: boolean number or string
         parms['tolerance'] = tolerance #this is a number
+        act = needing.Need.actify(actorName, parms=parms)
 
-        act = acting.Act(actor = actor, parms = parms)
-
-
-        msg = "     Created Actor {0} parms: ".format(actor.name)
+        msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))   
@@ -3397,15 +3367,14 @@ class Builder(object):
 
         """
         actorName = 'fiat' +  kind.capitalize()
-        if actorName not in fiating.Fiat.Names:
+        if actorName not in fiating.Fiat.Registry:
             print "Error building fiat %s. No actor named %s. index = %d tokens = %s" %\
                   (kind, actorName, index, tokens)
             return False
 
-        actor = fiating.Fiat.Names[actorName]
         parms = {}
         parms['tasker'] = name #resolve later
-        act = acting.Act(actor = actor, parms = parms)      
+        act = fiating.Fiat.actify(actorName, parms=parms)    
 
         context = self.currentContext
         if context == NATIVE: 

@@ -95,10 +95,10 @@ class Tasker(registering.StoriedRegistry):
         """
         print "     Task %s status = %s" % (self.name, StatusNames[self.status])
 
-    def resolveLinks(self):
+    def resolve(self):
         """Resolves any by name links to other objects   """
-        pass
-
+        pass    
+    
     def start(self):
         """ready runner
 

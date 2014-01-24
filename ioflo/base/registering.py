@@ -30,13 +30,26 @@ class RegisterType(type):
         
             Usage:  A.__register__(rname, ioinits, inits)
         """
-        console.terse( "Register class '{0}' under '{1}' with {2} per {3}.\n".format(
-            cls.__name__, rname, inits, ioinits))
         if rname in cls.Registry:
             msg = "Entry '{0}' already exists in registry of {1}".format(rname, cls)
             raise excepting.RegisterError(msg)
+        inits = inits or odict()
+        ioinits = ioinits or odict()
         cls.Registry[rname] = (cls, inits, ioinits)
+        console.profuse( "Registered class '{0}' under '{1}' with {2} per {3}.\n".format(
+            cls.__name__, rname, inits, ioinits))        
         return cls
+    
+    def __fetch__(cls, rname):
+        """ Return tuple derived from .Registry entry at rname if present
+            Otherwise raise exception
+            Makes copies of inits and ioinits so safe for downstream use
+        """
+        if rname not in cls.Registry:
+            msg = "Entry '{0}' not found in Registry of '{1}'".format(rname, cls.__name__)
+            raise excepting.RegisterError(msg)
+        actor, inits, ioinits = cls.Registry[rname]
+        return (actor, odict(inits), odict(ioinits))
         
 class Registry(object):
     """Class that ensures every instance has a unique name

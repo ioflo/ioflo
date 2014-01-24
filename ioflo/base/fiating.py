@@ -11,6 +11,7 @@ import inspect
 
 
 from .globaling import *
+from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
@@ -41,8 +42,25 @@ class Fiat(acting.Actor):
        slave framer is not in framer.auxes list and is not actively run by scheduler
 
     """
-    Counter = 0  
-    Names = {}
+    Registry = odict()
+    
+    def resolve(self, tasker, **kw):
+        """Resolves value (tasker) link that is passed in as parm
+           resolved link is passed back to act to store in parms
+           since framer may not be current framer at build time
+        """
+        parms = super(Fiat, self).resolve( **kw)
+        
+        if not isinstance(tasker, tasking.Tasker): #name
+            if tasker not in tasking.Tasker.Names: 
+                raise excepting.ResolveError("ResolveError: Bad fiat tasker link name", tasker, '')
+            parms['tasker'] = tasker = tasking.Tasker.Names[tasker] #replace name with valid link
+
+        if tasker.schedule != SLAVE : # only allowed on slave taskers
+            msg = "ResolveError: Bad tell tasker, not slave"
+            raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
+
+        return parms    
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -69,22 +87,7 @@ class Fiat(acting.Actor):
         
         return parms
            
-    def resolveLinks(self, tasker, **kw):
-        """Resolves value (tasker) link that is passed in as parm
-           resolved link is passed back to act to store in parms
-           since framer may not be current framer at build time
-        """
-        parms = {}
-        if not isinstance(tasker, tasking.Tasker): #name
-            if tasker not in tasking.Tasker.Names: 
-                raise excepting.ResolveError("ResolveError: Bad fiat tasker link name", tasker, '')
-            parms['tasker'] = tasker = tasking.Tasker.Names[tasker] #replace name with valid link
 
-        if tasker.schedule != SLAVE : # only allowed on slave taskers
-            msg = "ResolveError: Bad tell tasker, not slave"
-            raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
-
-        return parms
 
 class ReadyFiat(Fiat):
     """ReadyFiat Fiat

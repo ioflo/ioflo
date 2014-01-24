@@ -41,8 +41,7 @@ class Goal(acting.Actor):
     """Goal Class for setting configuration or command value in data share
 
     """
-    Counter = 0  
-    Names = {}
+    Registry = odict()
 
     def __init__(self,  **kw):
         """Initialization method for instance.

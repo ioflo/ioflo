@@ -114,10 +114,10 @@ class Logger(tasking.Tasker):
         for log in self.logs:
             log.prepare()
 
-    def resolveLinks(self):
+    def resolve(self):
         """    """
         for log in self.logs:
-            log.resolveLinks()
+            log.resolve()
 
     def addLog(self, log):
         """   """
@@ -581,7 +581,7 @@ class Log(registering.StoriedRegistry):
                 raise excepting.ResolveError("Duplicate tag", tag, loggee)
             self.loggees[tag] = loggee
 
-    def resolveLinks(self):
+    def resolve(self):
         """resolves links to loggees
 
         """
@@ -610,7 +610,7 @@ def TestLog(rule = UPDATE):
               prefix = 'log', path = './logs/', rule = rule)
     log.addLoggee(tag = 'heading', loggee = 'pose.heading')
     log.addLoggee(tag = 'pos', loggee = 'pose.position')
-    log.resolveLinks()
+    log.resolve()
     log.prepare()
 
     print "logging log %s to file %s" % (log.name, log.fileName)
@@ -655,7 +655,7 @@ def Test(rule = UPDATE):
               prefix = 'log', path = './logs/', rule = rule)
     log.addLoggee(tag = 'heading', loggee = 'pose.heading')
     log.addLoggee(tag = 'pos', loggee = 'pose.position')
-    log.resolveLinks()
+    log.resolve()
 
     logger = Logger(name = 'Test', store = store)
     logger.addLog(log) 

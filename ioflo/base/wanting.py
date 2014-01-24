@@ -12,7 +12,7 @@ import inspect
 
 
 from .globaling import *
-
+from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
@@ -42,8 +42,38 @@ class Want(acting.Actor):
           .store = shared data store
           
     """
-    Counter = 0  
-    Names = {}
+    Registry = odict()
+    
+    def resolve(self, taskers, **kw):
+        """Resolves value taskers list of links that is passed in as parm
+           resolved links are passed back to act to store in parms
+           since tasker may not be current framer at build time
+        """
+        parms = super(Want, self).resolve( **kw)  
+        links = []
+        for tasker in taskers:
+            if not isinstance(tasker, tasking.Tasker): # string name of tasker
+                if tasker == 'all':
+                    for tasker in self.store.house.taskables:
+                        if tasker not in links:
+                            links.append(tasker)
+                elif tasker in tasking.Tasker.Names: 
+                    tasker = tasking.Tasker.Names[tasker]
+                    if tasker not in links:
+                        links.append(tasker)
+                else:
+                    raise excepting.ResolveError("ResolveError: Bad want tasker link name", tasker, '')
+            else:
+                links.append(tasker)
+
+        for tasker in links:
+            if tasker.schedule == AUX or tasker.schedule == SLAVE : #want forbidden on aux or slave 
+                msg = "ResolveError: Bad want tasker, aux or slave forbidden"
+                raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
+
+        parms['taskers'] = links #replace with valid list
+
+        return parms    
     
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -72,38 +102,6 @@ class Want(acting.Actor):
         parms['taskers'] = links
         
         return parms    
-
-    def resolveLinks(self, taskers, **kw):
-        """Resolves value taskers list of links that is passed in as parm
-           resolved links are passed back to act to store in parms
-           since tasker may not be current framer at build time
-        """
-        parms = {}
-        links = []
-        for tasker in taskers:
-            if not isinstance(tasker, tasking.Tasker): # string name of tasker
-                if tasker == 'all':
-                    for tasker in self.store.house.taskables:
-                        if tasker not in links:
-                            links.append(tasker)
-                elif tasker in tasking.Tasker.Names: 
-                    tasker = tasking.Tasker.Names[tasker]
-                    if tasker not in links:
-                        links.append(tasker)
-                else:
-                    raise excepting.ResolveError("ResolveError: Bad want tasker link name", tasker, '')
-            else:
-                links.append(tasker)
-
-        for tasker in links:
-            if tasker.schedule == AUX or tasker.schedule == SLAVE : #want forbidden on aux or slave 
-                msg = "ResolveError: Bad want tasker, aux or slave forbidden"
-                raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
-
-        parms['taskers'] = links #replace with valid list
-
-        return parms
-
 
 class StartWant(Want):
     """StartWant Want 

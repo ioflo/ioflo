@@ -11,6 +11,7 @@ import inspect
 
 
 from .globaling import *
+from .odicting import odict
 
 from . import aiding
 from . import excepting
@@ -37,8 +38,7 @@ class Trait(acting.Actor):
     """Trait Class for configuration feature
 
     """
-    Counter = 0  
-    Names = {}
+    Registry = odict()
 
 class DepthTrait(Trait):
     """DepthTrait Trait

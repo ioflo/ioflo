@@ -31,13 +31,19 @@ def CreateInstances(store):
     pass
 
 
-class Deed(acting.StarActor):
+class Deed(acting.Actor):
     """ Provides object of 'do' command verb
-        Base class has Deed specific Registery of Classes
+        Base class has Deed specific Registry of Classes
 
          deeds are natively recur actions
+        Deeds default to converting iois into attributes
     """
     Registry = odict()
+    _ioattributive = True # convert iois into attributes
+
+class ParamDeed(Deed):
+    """ Iois are converted to parms not attributes """
+    _ioattributive = False # convert iois into parms
     
 class SinceDeed(Deed):
     """ SinceDeed 
@@ -50,8 +56,6 @@ class SinceDeed(Deed):
             .stamp = current time of deed evaluation in seconds
 
     """
-    __slots__ = ('stamp', )
-    
     def __init__(self, **kw):
         """Initialize Instance """
         super(SinceDeed,self).__init__( **kw)  
@@ -79,8 +83,6 @@ class LapseDeed(Deed):
        has restart method when resuming after noncontiguous time interruption
        builder creates implicit entry action of restarter for deed
     """
-    __slots__ = ('stamp', 'lapse')
-    
     def __init__(self, **kw):
         """Initialize Instance """
         super(LapseDeed,self).__init__( **kw)  
@@ -123,17 +125,11 @@ class LapseDeed(Deed):
     def resolve(self):
         """ Create enact with RestarterActor to restart this Actor """
         kind = 'restarter'
-        actor, inits, ioinits = acting.Actor.Registry[kind]
-        parms = odict(act=self.act)
-        inits = odict(inits) if inits else odict() # copy if given
-        inits['name']=kind
-        ioinits = odict(ioinits) if ioinits else odict() # copy if given
-        restartAct = acting.Act( actor=actor,
-                                 parms=parms,
-                                 inits=inits,
-                                 ioinits=ioinits)
+        restartAct = acting.Act.actify(  kind,
+                                         parms=odict(act=self.act), 
+                                         inits=odict(name=kind), )
         
-        # if self.act is enact then need to insert restartAct before it so it runs first
+        # need to insert restartAct before self.act so restartAct runs first
         found = False
         for i, enact in enumerate(self.act.frame.enacts):
             if enact is self.act:
@@ -142,6 +138,8 @@ class LapseDeed(Deed):
                 break
         if not found:
             self.act.frame.addEnact(restartAct)
+        
+        restartAct.resolve()
             
         console.profuse("     Added {0} {1} for {2} in {3}\n".format(
             'enact', kind, self.name, self.act.frame.name ))
