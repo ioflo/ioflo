@@ -6,7 +6,7 @@
 
 import time
 import struct
-from collections import deque,  Mapping
+from collections import deque, Mapping
 import inspect
 import copy
 
@@ -22,7 +22,6 @@ from .consoling import getConsole
 console = getConsole()
 
 from .aiding import NonStringIterable, just, nameToPath
-
 
 class Deed(acting.Actor):
     """ Provides object of 'do' command verb

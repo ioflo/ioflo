@@ -5,7 +5,7 @@
 
 import time
 import struct
-from collections import deque
+from collections import deque, Mapping
 import inspect
 import copy
 
@@ -13,6 +13,7 @@ from .globaling import *
 from .odicting import odict
 
 from . import aiding
+from .aiding import NonStringIterable, nameToPath
 from . import excepting
 from . import registering
 from . import storing 
