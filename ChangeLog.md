@@ -5,6 +5,14 @@ CHANGE LOG
 20140124
 ------------
 
+v0.9.0
+
+This version is incompatible with previous versions.
+
+A major refactor of the "Action" (Actor) Registration method and resolution
+for Framers to simplify custom Action programming and also enable easier framer
+cloning was added.
+
 Refactor Actor registration internally to use new metaclass and refactor resolution
 to that Actor creation is done at resolve time not build time. This gets rid
 of need for createIntances for Actors. This also makes it easier to specify new Actions 
@@ -12,6 +20,10 @@ since all in one place.
 
 Some syntax changes.
 
+Tasker command is broken still
+
+load command file path is now computed relative the the plan file in which the
+load appears and not the directory where ioflo executable lives
 
 
 --------
