@@ -28,7 +28,7 @@ console = getConsole()
 class Act(object):
     """ Container class for actor resolve time initialization and runtime operation """
     __slots__ = ('frame', 'context', 'act',
-                 'actor', 'registrar', 'parms', 'inits', 'ioinits', 'action')
+                 'actor', 'registrar', 'parms', 'inits', 'ioinits')
 
     def __init__(self, frame=None, context=None, act=None, actor=None, registrar=None,
                  parms=None, inits=None, ioinits=None, action='', **kwa ):
@@ -44,7 +44,6 @@ class Act(object):
             .parms = dictionary of keyword arguments for Actor instance call
             .inits = dictionary of arguments to Actor.__init__()
             .ioinits = dictionary of arguments to Actor.initio()
-            .action = string name of Actor method to call
         """
         super(Act,self).__init__()
 
@@ -53,10 +52,9 @@ class Act(object):
         self.act = act
         self.actor = actor #callable instance performs action
         self.registrar = registrar or Actor
-        self.parms = parms or odict()       
-        self.inits = inits or odict()
-        self.ioinits = ioinits or odict()
-        self.action = action # default call
+        self.parms = parms or odict() # parms must always be a dict
+        self.inits = inits if inits else None # store None if empty dict
+        self.ioinits = ioinits if ioinits else None # store None if empty dict
 
     def __call__(self): #make Act instance callable as function
         """ Define act as callable object """
@@ -78,17 +76,34 @@ class Act(object):
         
         if not isinstance(self.actor, Actor): # Need to resolve .actor
             actor, inits, ioinits = self.registrar.__fetch__(self.actor)
-            inits.update(self.inits)
+            inits.update(self.inits or odict())
             if 'name' not in inits:
                 inits['name'] = self.actor
             inits['store'] = self.frame.store
             inits['act'] = self
-            self.actor = actor(**inits)
-            self.ioinits.create(ioinits) #fill in defaults
+            self.actor = actor = actor(**inits)
             
-        parms = self.actor.resolve(**self.parms)
-        self.parms.update(parms)
-        self.actor.postinitio(**self.parms)
+            ioinits.update(self.ioinits or odict())
+            if ioinits:
+                iois = actor.initio(**ioinits)
+                if iois:
+                    for key, ioi in iois.items():
+                        share = actor.resolvePath(   ipath=ioi['ipath'],
+                                                     ival=ioi.get('ival'), 
+                                                     iown=ioi.get('iown'))
+                        if actor._Parametric:
+                            if key in self.parms:
+                                msg = "ResolveError: Parm and Ioi with same name"
+                                raise excepting.ResolveError(msg, key, self)
+                            self.parms[key] = share                            
+                        else:
+                            if hasattr(actor, key):
+                                msg = "ResolveError: Attribute and Ioi with same name"
+                                raise excepting.ResolveError(msg, key, self) 
+                            setattr(actor, key, share)                  
+            
+            self.parms.update(self.actor.resolve(**self.parms))
+            self.actor.postinitio(**self.parms)
             
     def clone(self, clones):
         """ Return clone of self in support of framer cloning
@@ -111,7 +126,7 @@ class Nact(Act):
     """ Negating Act used for actor needs to give Not Need
     """
     __slots__ = ('frame', 'context', 'act',
-                 'actor', 'registrar', 'parms', 'inits', 'ioinits', 'action')
+                 'actor', 'registrar', 'parms', 'inits', 'ioinits')
 
     def __init__(self, **kwa ):
         """ Initialization method for instance. """
@@ -130,6 +145,46 @@ class Nact(Act):
         if self.actor:
             self.actor.expose()
 
+class SideAct(Act):
+    """ Anciliary act to a main Act/Actor used to call a different 'action' method
+        of the Main act.actor in support of combined activity such as restarting
+        and action.
+        
+        SideAct are created in the .resolve method of an Actor and assume that
+        all attributes and parms have already been resolved.
+        
+        Unique Attributes:
+            .action = name of method to call in .actor 
+    """
+    __slots__ = ('action')
+
+    def __init__(self, action='', **kwa ):
+        """ Initialization method for instance. """
+        super(SideAct, self).__init__(**kwa)
+        self.action = action
+        
+    def __call__(self): #make Act instance callable as function
+        """ Define act as callable object
+           
+        """
+        return (getattr(self.actor, self.action)(**self.parms))
+
+    def resolve(self, **kwa):
+        """ Assumes all has been resolved.
+            Check for valid action
+        """
+        if not isinstance(self.actor, Actor): # Woops
+            msg = "ResolveError: Unresolved actor"
+            raise excepting.ResolveError(msg, self.actor, self)
+        
+        if not self.action : # Woops
+            msg = "ResolveError: Empty action"
+            raise excepting.ResolveError(msg, self.action, self)
+        
+        if not getattr(self.actor, self.action, None):
+            msg = "ResolveError: Missing action in actor"
+            raise excepting.ResolveError(msg, self.action, self)
+
 class Actor(object): # old registering.StoriedRegistry
     """ Actor Base Class
         Has Actor specific Registry of classes
@@ -139,22 +194,6 @@ class Actor(object): # old registering.StoriedRegistry
     Ioinits = odict() # class defaults
     _Parametric = True # Convert iois to action method parameters if Truthy
     __slots__ = ('name', 'store', 'act')
-    
-    @classmethod
-    def actify(cls, name, parms=None, inits=None, ioinits=None):
-        """ Return new Act using the class specific registry to get Actor class
-            from name and defaults for parms, inits, and ioinits
-            Updates defaults with passed in parms, inits, ioinits
-        """
-        inits = inits or odict()
-        ioinits = ioinits or odict()
-        # fetch actor and default copies of inits and ioinits from registry
-        actor, rinits, rioinits = cls.__fetch__(name)
-        inits.create(rinits) # set defaults of missing
-        if 'name' not in inits:
-            inits['name'] = name
-        ioinits.create(rioinits) # set defaults of missing
-        return Act(actor=actor, parms=parms, inits=inits, ioinits=ioinits)
     
     def __init__(self, name='', store=None, act=None, **kwa ):
         """ Initialization method for instance.
@@ -192,23 +231,7 @@ class Actor(object): # old registering.StoriedRegistry
             share refs and update parms
         """
         parms = odict()
-        if self.act.ioinits:
-            iois = self.initio(**self.act.ioinits)
-            if iois:
-                for key, ioi in iois.items():
-                    share = self.resolvePath(    ipath=ioi['ipath'],
-                                                 ival=ioi.get('ival'), 
-                                                 iown=ioi.get('iown'))
-                    if self._Parametric:
-                        if key in kwa:
-                            msg = "ResolveError: Parm and Ioi with same name"
-                            raise excepting.ResolveError(msg, key, self)
-                        parms[key] = share                            
-                    else:
-                        if hasattr(self, key):
-                            msg = "ResolveError: Attribute and Ioi with same name"
-                            raise excepting.ResolveError(msg, key, self) 
-                        setattr(self, key, share)                            
+                              
         return parms    
     
     def initio(self, inode='', **kwa):

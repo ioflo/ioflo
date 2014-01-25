@@ -32,8 +32,6 @@ class RegisterType(type):
         if rname in cls.Registry:
             msg = "Entry '{0}' already exists in registry of {1}".format(rname, cls)
             raise excepting.RegisterError(msg)
-        inits = inits or odict()
-        ioinits = ioinits or odict()
         cls.Registry[rname] = (cls, inits, ioinits)
         #console.terse( "Registered class '{0}' under '{1}' with {2} per {3}.\n".format(
             #cls.__name__, rname, inits, ioinits))        
@@ -48,7 +46,7 @@ class RegisterType(type):
             msg = "Entry '{0}' not found in Registry of '{1}'".format(rname, cls.__name__)
             raise excepting.RegisterError(msg)
         actor, inits, ioinits = cls.Registry[rname]
-        return (actor, odict(inits), odict(ioinits))
+        return (actor, odict(inits or odict()), odict(ioinits or odict()))
         
 class Registry(object):
     """Class that ensures every instance has a unique name

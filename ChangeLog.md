@@ -1,6 +1,25 @@
 ------------------
 CHANGE LOG
 -------------------
+-----------
+20140125
+-----------
+
+
+Added SideAct class that  uses .action attribute to call different method
+   in its associated actor. This is to support conversion of special Actor on
+   other actor/act to be SideAct on same actor but different mthod. So all in one
+   place. 
+   
+Refactored act.inits and act.ioints and registry so do not save empty dicts but
+   save None. More memory efficient.
+   ioints saved in Act are only the ones from builder not combined
+   with registry (change where initio gets called not in resolve but before resolve)
+   also change it so Act has by default None for ioints and inits to save space.
+   
+
+
+
 -------------
 20140124
 ------------

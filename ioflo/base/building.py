@@ -2381,7 +2381,7 @@ class Builder(object):
 
         try:
             kind = "" # deed class key in registry
-            name = None #specific name of deed instance
+            name = "" #specific name of deed instance
             parts = []
             parms = odict()
             inits = odict()
@@ -2479,7 +2479,8 @@ class Builder(object):
                 (command, kind)
             raise excepting.ParseError(msg, tokens, index)
         
-        inits['name'] = name or kind
+        if name:
+            inits['name'] = name
         act = acting.Act(   actor=kind,
                             registrar=deeding.Deed, 
                             parms=parms,
