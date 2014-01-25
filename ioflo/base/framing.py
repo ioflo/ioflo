@@ -1146,17 +1146,16 @@ class Frame(registering.StoriedRegistry):
 
               setup is considered part of the transition evaluation process.
 
-              When the act.actor is of Interruptor (sub)class indicated by having
-                 the attribute _interruptive the the action returns truthy
-                 return then preact execution is aborted as per a sucessful
+              When the act.actor action returns truthy
+                 return then preact execution is aborted as per a successful
                  transition or conditional aux
 
            called by self.framer.segue()
         """
         console.profuse("    Precur {0}\n".format(self.name))
-
+        
         for act in self.preacts:
-            if act() and hasattr(act.actor, '_interruptive'):
+            if act():
                 return True
 
         return False

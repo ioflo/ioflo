@@ -512,7 +512,7 @@ class Interrupter(Actor):
        processing and result in a change in the frame or the frame processing.
 
        This class must be subclassed. This is a convenience so can either use
-         isinstance to test or has_attr interruptive
+         isinstance to test
 
        Specifically and Interrupter's action() method returns truthy when its action
        will interrupt the normal frame processing examples are
@@ -522,13 +522,9 @@ class Interrupter(Actor):
 
 
     """
-    __slots__ = ('_interruptive', )
-    
     def __init__(self,**kw ):
         """Initialization method for instance. """
         super(Interrupter,self).__init__(**kw)
-
-        self._interruptive = None
 
 class Transiter(Interrupter):
     """Transiter Interrupter Actor Patron Registry Class 
@@ -656,9 +652,6 @@ class Suspender(Interrupter):
           which truncates the active outline effectively suspended the truncated
           frames
 
-       Instance Attributes
-          ._activative = flag which indicates this actor's action returns conditional aux
-
        Parameters
             needs = list of Act objects that are exit needs for this trans
             main = source frame of trans
@@ -666,12 +659,10 @@ class Suspender(Interrupter):
             human = text version of transition
 
     """
-    __slots__ = ('_activative',)
     
     def __init__(self,**kw ):
         """Initialization method for instance. """
         super(Suspender,self).__init__(**kw)
-        self._activative = None
 
     def action(self, needs, main, aux, human, **kw):
         """Action called by Actor  """
@@ -813,7 +804,7 @@ class Deactivator(Actor):
         """
         #console.profuse("{0} action {1} for {2}\n".format(self.name, actor.name, aux.name))
 
-        if hasattr(act.actor, '_activative') and not aux.done:
+        if hasattr(act.actor, 'deactivate') and not aux.done:
             console.profuse("{0} deactivate {1} for {2}\n".format(self.name, act.actor.name, aux.name))
             return act.actor.deactivate(aux)
 
