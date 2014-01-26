@@ -17,7 +17,7 @@ Refactored act.inits and act.ioints and registry so do not save empty dicts but
    with registry (change where initio gets called not in resolve but before resolve)
    also change it so Act has by default None for ioints and inits to save space.
    
-
+Replaced deactivator with new SideAct class and new way to do anciliary actors
 
 
 -------------

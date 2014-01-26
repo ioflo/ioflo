@@ -1553,23 +1553,13 @@ class Builder(object):
             for need in needs:
                 console.profuse("       {0} with parms = {1}\n".format(need.actor, need.parms))
 
-            #create deactivator actor to deactivate aux in act 
-            #add deactivator after act so decactivator always runs after act if in same context
-            parms = dict(act = act, aux = aux)
-            deAct = acting.Act( actor='deactivator',
-                                registrar=acting.Actor, 
-                                parms=parms, )              
-            self.currentFrame.addExact(deAct)
-
-            console.profuse("     Added Exact {0} with {1}\n".format(deAct.actor, deAct.parms))         
+            # deactivate added in suspender.resolve        
 
         else: # Simple auxiliary
             self.currentFrame.addAux(aux) #need to resolve later
             console.profuse("     Added aux framer {0}\n".format(aux))      
 
         return True
-
-
 
     def buildDone(self, command, tokens, index):
         """Creates complete action that indicates tasker completed by setting .done state to True

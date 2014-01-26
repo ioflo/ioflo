@@ -164,9 +164,7 @@ class SideAct(Act):
         self.action = action
         
     def __call__(self): #make Act instance callable as function
-        """ Define act as callable object
-           
-        """
+        """ Define call method named .action of .actor """
         return (getattr(self.actor, self.action)(**self.parms))
 
     def resolve(self, **kwa):
@@ -682,7 +680,6 @@ class Suspender(Interrupter):
             human = text version of transition
 
     """
-    
     def __init__(self,**kw ):
         """Initialization method for instance. """
         super(Suspender,self).__init__(**kw)
@@ -738,7 +735,13 @@ class Suspender(Interrupter):
     def expose(self):
         """      """
         console.terse("Suspender {0}\n".format(self.name))
-
+    
+    def deactivize(self, aux, **kwa):
+        """ If not aux.done Then force deactivate. Used in exit action."""
+        if not aux.done:
+            console.profuse("{0} deactivate {1}\n".format(self.name, aux.name))
+            self.deactivate(aux)             
+        
     def deactivate(self, aux):
         """Called by deactivator actor to cleanly exit      """
         console.profuse("Deactivating {0}\n".format(aux.name))
@@ -770,6 +773,14 @@ class Suspender(Interrupter):
         for act in needs:
             act.act = self.act
             act.resolve()
+        
+        deActParms = dict(aux=aux)
+        deAct = SideAct( actor=self,
+                        parms=deActParms,
+                        action='deactivize')              
+        self.act.frame.addExact(deAct)
+        console.profuse("     Added Exact {0} with {1}\n".format(deAct.actor, deAct.parms))
+        deAct.resolve()
 
         return parms    
 
@@ -809,78 +820,7 @@ class Suspender(Interrupter):
         
         return parms
 
-class Deactivator(Actor):
-    """Deactivator Actor Patron Registry Class 
 
-       Deactivator is a special actor that acts on an Act
-
-       In the Deactivator's action method, 
-          IF the act passed in as a parameter .actor has an _activate attribute THEN
-                       it calls the deactivate method its .actor
-       This is to ensure the outline in cond aux is exited cleanly when the aux
-          is preempted by higher level transition.
-
-       Builder adds a deactivator for each Suspender preact
-    """
-    def action(self, act, aux, **kw):
-        """Action called by Actor
-        """
-        #console.profuse("{0} action {1} for {2}\n".format(self.name, actor.name, aux.name))
-
-        if hasattr(act.actor, 'deactivate') and not aux.done:
-            console.profuse("{0} deactivate {1} for {2}\n".format(self.name, act.actor.name, aux.name))
-            return act.actor.deactivate(aux)
-
-    def expose(self):
-        """   """
-        console.terse("Deactivator {0}\n".format(self.name))
-    
-    def resolve(self, aux, **kwa):
-        """Resolve aux link parm"""
-        parms = super(Deactivator, self).resolve( **kwa) 
-
-        if not isinstance(aux, framing.Framer):
-            if aux not in framing.Framer.Names:
-                raise excepting.ResolveError("ResolveError: Bad aux link",
-                                                             aux, self.name)                
-            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
-            console.terse("    Resolved aux as {0}".format(aux.name))
-
-        if aux.schedule != AUX:
-            msg = "ResolveError: Bad deactivator aux link not scheduled as AUX"
-            raise excepting.ResolveError(msg, aux.name, self.name)
-
-        return parms    
-        
-    def cloneParms(self, parms, clones, **kw):
-        """ Returns parms fixed up for framing cloning. This includes:
-            Reverting any Frame links to name strings,
-            Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from clones
-            Replacing any parms that are acts with clones.
-            
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        parms = super(Deactivator,self).cloneParms(parms, clones, **kw)
-        
-        actor = parms.get('actor')
-        aux = parms.get('aux')
-        
-        if isinstance(aux, framing.Framer):
-            parms['aux'] = aux.name # revert to name
-        
-        if isinstance(aux, framing.Framer):
-            if aux.name in clones:
-                parms['aux'] = clones[aux.name][1].name
-            else:
-                parms['aux'] = aux.name # revert to name
-        elif aux: # assume namestring
-            if aux in clones:
-                parms['aux'] = clones[aux][1].name        
-
-        return parms
-              
 class Restarter(Actor):
     """ Restarter is a special actor that acts on other act's actor
         In the Restarter's action method, 
