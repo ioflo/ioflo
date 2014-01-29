@@ -108,7 +108,7 @@ house box1
 
 To run
 
-''' bash
+```bash
 
 
 $ ioflo -v terse -f box1.flo
@@ -172,7 +172,7 @@ Aborting all ready taskers ...
 ----------------------
 
 
-'''
+```
 
 
 * Automated reasoning engine
