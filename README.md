@@ -21,15 +21,13 @@ $ pip install ioflo
 on OS X
 
 ``` bash
-
 $ sudo pip install ioflo
-
 
 ```
 
 ### Command Line
-``` bash
 
+``` bash
 $ ioflo -h
 usage: ioflo [-h] [-v VERBOSE] [-p PERIOD] [-r] [-V] [-n NAME] [-f FILENAME]
              [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME] [-P PASSWORD]
@@ -54,7 +52,6 @@ optional arguments:
                         Username.
   -P PASSWORD, --password PASSWORD
                         Password.
-
 
 ```
 
@@ -109,10 +106,13 @@ house box1
 To run
 
 ```bash
-
-
 $ ioflo -v terse -f box1.flo
 
+```
+
+Something like this should print on the console.
+
+```text
 ----------------------
 Building ...
 Building Houses for Skedder Skedder ...
