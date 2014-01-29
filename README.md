@@ -32,8 +32,7 @@ $ ioflo -h
 usage: ioflo [-h] [-v VERBOSE] [-p PERIOD] [-r] [-V] [-n NAME] [-f FILENAME]
              [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME] [-P PASSWORD]
 
-Runs ioflo. Example: python go -f filename -p period -v level -r -h -b
-'mybehaviors.py'
+Runs ioflo. Example: python go -f filename -p period -v level -r -h -b 'mybehaviors.py'
 
 optional arguments:
   -h, --help            show this help message and exit
