@@ -29,6 +29,8 @@ $ sudo pip install ioflo
 
 ``` bash
 $ ioflo -h
+```
+```text
 usage: ioflo [-h] [-v VERBOSE] [-p PERIOD] [-r] [-V] [-n NAME] [-f FILENAME]
              [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME] [-P PASSWORD]
 
