@@ -6,6 +6,7 @@
 import time
 import struct
 from collections import deque, Mapping
+from functools import wraps
 import inspect
 import copy
 
@@ -148,9 +149,9 @@ class Nact(Act):
 class SideAct(Act):
     """ Anciliary act to a main Act/Actor used to call a different 'action' method
         of the Main act.actor in support of combined activity such as restarting
-        and action.
+        an action.
         
-        SideAct are created in the .resolve method of an Actor and assume that
+        SideActa are created in the .resolve method of an Actor and assume that
         all attributes and parms have already been resolved.
         
         Unique Attributes:
@@ -182,6 +183,43 @@ class SideAct(Act):
         if not getattr(self.actor, self.action, None):
             msg = "ResolveError: Missing action in actor"
             raise excepting.ResolveError(msg, self.action, self)
+        
+def actorify(name, base=None, registry=None, inits=None, ioinits=None, parametric=None):
+    """ Parametrized decorator function that converts the decorated function
+        into an Actor sub class with .action method and with class name that
+        is the reverse camel case of name and registers the
+        new subclass in the registry under name.
+        If base is not provided then use Actor
+        
+        The parameters  registry, parametric, inits, and ioinits if provided,
+        are used to create the class attributes for the new subclass
+        
+    """
+    base = base or Actor
+    if not issubclass(base, Actor):
+        msg = "Base class '{0}' not subclass of Actor".format(base)
+        raise excepting.RegisterError(msg)
+    
+    name = aiding.reverseCamel(name, lower=False) 
+    
+    attrs = odict()
+    if registry:
+        attrs(Registry=odict())
+    if parametric is not None:
+        attrs(_Parametric=parametric)
+    if inits:
+        attrs['Inits'] = odict(inits)
+    if ioinits:
+        attrs['Ioinits'] = odict(ioinits)
+    cls = type(name, (base, ), attrs )
+    
+    def implicit(func):
+        @wraps(func)
+        def inner(*pa, **kwa):
+            return func(*pa, **kwa)
+        cls.action = inner
+        return inner
+    return implicit    
 
 class Actor(object): # old registering.StoriedRegistry
     """ Actor Base Class
@@ -189,6 +227,7 @@ class Actor(object): # old registering.StoriedRegistry
     """
     __metaclass__ = registering.RegisterType
     Registry = odict() # Actor Registry
+    Inits = odict() # class defaults support for 
     Ioinits = odict() # class defaults
     _Parametric = True # Convert iois to action method parameters if Truthy
     __slots__ = ('name', 'store', 'act')

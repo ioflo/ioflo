@@ -22,7 +22,9 @@ class RegisterType(type):
         if not hasattr(cls, 'Registry'):
             cls.Registry = odict()
         rname = reverseCamel(name)
-        cls.__register__(rname, ioinits=getattr(cls, 'Ioinits', None))
+        cls.__register__(   rname,
+                            inits=getattr(cls, 'Inits', None),
+                            ioinits=getattr(cls, 'Ioinits', None))
     
     def __register__(cls, rname, inits=None,  ioinits=None):
         """ Register cls under rname with ioinits and inits

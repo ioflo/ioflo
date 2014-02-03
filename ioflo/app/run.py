@@ -9,7 +9,7 @@ def parseArgs():
     """ Parse command line arguments"""
     
     d = "Runs ioflo. "
-    d += "Example: python go -f filename -p period -v level -r -h -b 'mybehaviors.py'\n"
+    d += "Example: ioflo -f filename -p period -v level -r -h -b 'mybehaviors.py'\n"
     p = argparse.ArgumentParser(description = d)
     p.add_argument('-v','--verbose',
             action='store', 

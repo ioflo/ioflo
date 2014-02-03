@@ -7,6 +7,7 @@
 import time
 import struct
 from collections import deque, Mapping
+from functools import wraps
 import inspect
 import copy
 
@@ -22,6 +23,43 @@ from .consoling import getConsole
 console = getConsole()
 
 from .aiding import NonStringIterable, just, nameToPath
+
+def deedify(name, base=None, registry=None, inits=None, ioinits=None, parametric=None):
+    """ Parametrized decorator function that converts the decorated function
+        into an Actor sub class with .action method and with class name that
+        is the reverse camel case of name and registers the
+        new subclass in the registry under name.
+        If base is not provided then use Actor
+        
+        The parameters  registry, parametric, inits, and ioinits if provided,
+        are used to create the class attributes for the new subclass
+        
+    """
+    base = base or Deed
+    if not issubclass(base, Deed):
+        msg = "Base class '{0}' not subclass of Deed".format(base)
+        raise excepting.RegisterError(msg)
+    
+    name = aiding.reverseCamel(name, lower=False) 
+    
+    attrs = odict()
+    if registry:
+        attrs(Registry=odict())
+    if parametric is not None:
+        attrs(_Parametric=parametric)
+    if inits:
+        attrs['Inits'] = odict(inits)
+    if ioinits:
+        attrs['Ioinits'] = odict(ioinits)
+    cls = type(name, (base, ), attrs )
+    
+    def implicit(func):
+        @wraps(func)
+        def inner(*pa, **kwa):
+            return func(*pa, **kwa)
+        cls.action = inner
+        return inner
+    return implicit    
 
 class Deed(acting.Actor):
     """ Provides object of 'do' command verb

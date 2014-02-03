@@ -1,7 +1,9 @@
 import ioflo
+from ioflo.base import registering
 from ioflo.base import storing
 from ioflo.base import framing
 from ioflo.base import acting
+from ioflo.base import deeding
 
 
 def test():
@@ -42,10 +44,48 @@ def test():
     #poke = Poke(name = 'put', store = store)
     #poke(name = 'autopilot.depth', value = dict(depth = 5))
 
-def testActify():
-    act = acting.Actor.actify('actor')
-    print acting.Actor.Registry
+def testActorify():
     
+    @acting.actorify("beardBlue")
+    def testy(self, x=1, z=2):
+        """ Testy is a function"""
+        print self
+        print x
+        print z
+    
+    actor, inits, ioints = acting.Actor.__fetch__("beardBlue")
+    print actor.Registry
+    print actor._Parametric
+    print actor.Inits
+    print actor.Ioinits
+    
+    actor = actor()
+    actor()
+    print actor.action
+    print actor.action.__name__
+    print actor.action.__doc__
+    
+def testDeedify():
+    
+    @deeding.deedify("blackSmith")
+    def hammer(self, x=1, z=2):
+        """ hammer is a function"""
+        print self
+        print x
+        print z
+    
+    actor, inits, ioints = deeding.Deed.__fetch__("blackSmith")
+    print actor.Registry
+    print actor._Parametric
+    print actor.Inits
+    print actor.Ioinits
+    
+    actor = actor()
+    actor()
+    print actor.action
+    print actor.action.__name__
+    print actor.action.__doc__
 
 if __name__ == "__main__":
-    testActify()
+    #testActorify()
+    testDeedify()
