@@ -20,7 +20,7 @@ from .globaling import *
 from . import excepting
 from . import registering
 
-from . import storing 
+from . import storing
 from . import housing
 
 from . import acting
@@ -76,9 +76,9 @@ def Convert2Num(text):
     except ValueError, ex1:
         pass
 
-    raise ValueError, "Expected Number got '%s'" % (text) 
+    raise ValueError, "Expected Number got '%s'" % (text)
 
-    return None 
+    return None
 
 
 def Convert2CoordNum(text):
@@ -102,7 +102,7 @@ def Convert2CoordNum(text):
     try:
         return (Convert2Num(text))
     except ValueError:
-        raise ValueError, "Expected CoordNum got '%s'" % (text) 
+        raise ValueError, "Expected CoordNum got '%s'" % (text)
 
 
 def Convert2BoolCoordNum(text):
@@ -119,9 +119,9 @@ def Convert2BoolCoordNum(text):
     try:
         return (Convert2CoordNum(text))
     except ValueError:
-        raise ValueError, "Expected BoolCoordNum got '%s'" % (text) 
+        raise ValueError, "Expected BoolCoordNum got '%s'" % (text)
 
-    return None 
+    return None
 
 
 def Convert2StrBoolCoordNum(text):
@@ -138,25 +138,25 @@ def Convert2StrBoolCoordNum(text):
     except ValueError:
         raise ValueError, "Expected StrBoolNum got '%s'" % (text)
 
-    return None 
+    return None
 
-CommandList = ['load', 'house', 'init', 
+CommandList = ['load', 'house', 'init',
                'tasker', 'server', 'logger', 'log', 'loggee',
-               'framer', 'first', 
-               'frame', 'over', 'under', 'next', 'done', 'timeout', 'repeat', 
+               'framer', 'first',
+               'frame', 'over', 'under', 'next', 'done', 'timeout', 'repeat',
                'native', 'benter', 'enter', 'recur', 'exit', 'precur', 'renter', 'rexit',
                'print', 'put', 'inc', 'copy', 'set',
                'aux',
-               'go', 'let', 
-               'do', 
-               'bid', 'ready', 'start', 'stop', 'run', 'abort', 
+               'go', 'let',
+               'do',
+               'bid', 'ready', 'start', 'stop', 'run', 'abort',
                'use', 'flo', 'give', 'take' ]
 
 
 #reserved tokens
-Comparisons = ['==', '<', '<=', '>=', '>', '!='] 
+Comparisons = ['==', '<', '<=', '>=', '>', '!=']
 Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'as', 'at', 'in', 'of', 'on',
-               'if', 'be', 'into', 'and', 'not', '+-', ] 
+               'if', 'be', 'into', 'and', 'not', '+-', ]
 Reserved = Connectives + Comparisons #concatenate to get reserved words
 ReservedFrameNames = ['next',  'prev'] #these frame names have special meaning as goto target
 
@@ -188,7 +188,7 @@ class Builder(object):
         self.currentFramer = None
         self.currentFrame = None #current frame
         self.currentContext = NATIVE
-        
+
 
 
     def build(self, fileName='', mode=None, metaData=None, behaviors=None):
@@ -200,7 +200,7 @@ class Builder(object):
            Each house's store is inited with the metaData
         """
         #overwrite default if truthy argument
-        if fileName: 
+        if fileName:
             self.fileName = fileName
         if mode:
             self.mode = mode
@@ -208,7 +208,7 @@ class Builder(object):
             self.metaData = metaData
         if behaviors:
             self.behaviors = behaviors
-            
+
         if self.behaviors: #import behavior package/module
             for behavior in self.behaviors:
                 mod = importlib.import_module(behavior)
@@ -237,13 +237,13 @@ class Builder(object):
                             saveLineViews.append("%04d %s" % (self.currentCount, line))
                             saveLines.append(line.rstrip('\\').strip())
                             line = self.currentFile.readline() #empty if end of file
-                            self.currentCount  += 1 #inc line counter                     
+                            self.currentCount  += 1 #inc line counter
 
                         line = line.rstrip()
                         saveLineViews.append("%04d %s" % (self.currentCount, line))
                         saveLines.append(line)
                         lineView = "\n".join(saveLineViews)
-                        line = " ".join(saveLines)               
+                        line = " ".join(saveLines)
 
                         console.concise(lineView + '\n')
 
@@ -303,7 +303,7 @@ class Builder(object):
 
                         #show hierarchy of each house's store
                         console.concise( "\nData Store for {0}\n".format(house.name))
-                        house.store.expose(values=(console._verbosity >= console.Wordage.verbose)) 
+                        house.store.expose(values=(console._verbosity >= console.Wordage.verbose))
 
                 return True
 
@@ -331,7 +331,7 @@ class Builder(object):
             msg = "ParseError: Building {0}. Unknown command {1}, index = {2} tokens = {3}".format(
                      command, command, index, tokens)
             raise excepting.ParseError(msg, tokens, index)
-        
+
         commandMethod = 'build' + command.capitalize()
         if hasattr(self, commandMethod):
             return(getattr(self, commandMethod )(command, tokens, index))
@@ -342,7 +342,7 @@ class Builder(object):
     def buildGeneric(self, command, tokens, index):
         """Called with no build method exists for a command """
         msg = "ParseError: No build method for command {0}.".format(command)
-        raise excepting.ParseError(msg, tokens, index)        
+        raise excepting.ParseError(msg, tokens, index)
 
     def buildLoad(self, command, tokens, index):
         """
@@ -351,7 +351,7 @@ class Builder(object):
         try:
             name = tokens[index]
             index +=1
-            
+
             self.files.append(self.currentFile) #push currentFile
             self.counts.append(self.currentCount) #push current line ct
             cwd = os.getcwd() #save current working directory
@@ -363,11 +363,11 @@ class Builder(object):
             console.terse("Loading from file {0}.\n".format(self.currentFile.name))
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
@@ -407,24 +407,24 @@ class Builder(object):
             #metaData here triples of name, path, data
             for name, path, data in self.metaData:
                 self.currentHouse.meta[name] = self.initPathToData(path, data)
-            
+
             # set meta.name to house.name
             self.currentHouse.meta['name'] = self.initPathToData('.meta.name',
                     odict(value=self.currentHouse.name))
-            
+
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
-            raise excepting.ParseError(msg, tokens, index)            
-        
+            raise excepting.ParseError(msg, tokens, index)
+
         msg = "   Built house {0} with meta:\n".format(self.currentHouse.name)
         for name, share in self.currentHouse.meta.items():
             msg += "       {0}: {1!r}\n".format(name, share)
-        console.terse(msg)        
+        console.terse(msg)
 
         return True
 
@@ -432,7 +432,7 @@ class Builder(object):
 
     def initPathToData(self, path, data):
         """Convenience support function to preload metadata.
-           Initialize share given by path with data. 
+           Initialize share given by path with data.
            Assumes self.currentStore is valid
            path is share path string
            data is ordered dict of data
@@ -469,7 +469,7 @@ class Builder(object):
 
         """
         if not self.currentStore:
-            msg = "ParseError: Building command '%s'. No current store" % (command)
+            msg = "ParseError: Building verb '%s'. No current store" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         try:
@@ -488,7 +488,7 @@ class Builder(object):
 
             if connective in ['to', 'with']:
                 if destinationFields: #fields not allowed so error
-                    msg = "ParseError: Building command '%s'. Unexpected fields '%s in' clause " %\
+                    msg = "ParseError: Building verb '%s'. Unexpected fields '%s in' clause " %\
                         (command, destinationFields)
                     raise excepting.ParseError(msg, tokens, index)
 
@@ -506,7 +506,7 @@ class Builder(object):
 
                 source = self.currentStore.fetchShare(sourcePath)
                 if source is None:
-                    msg = "ParseError: Building command '%s'. Nonexistent source share '%s'" %\
+                    msg = "ParseError: Building verb '%s'. Nonexistent source share '%s'" %\
                         (command, sourcePath)
                     raise excepting.ParseError(msg, tokens, index)
 
@@ -528,16 +528,16 @@ class Builder(object):
                 console.profuse(msg)
 
             else:
-                msg = "ParseError: Building command '%s'. Unexpected connective '%s'" %\
+                msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
                     (command, connective)
                 raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
@@ -562,11 +562,11 @@ class Builder(object):
               [(value, fields) in] indirect
         """
         if not self.currentHouse:
-            msg = "ParseError: Building command '%s'. No current house" % (command)
-            raise excepting.ParseError(msg, tokens, index)      
+            msg = "ParseError: Building verb '%s'. No current house" % (command)
+            raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentStore:
-            msg = "ParseError: Building command '%s'. No current store" % (command)
+            msg = "ParseError: Building verb '%s'. No current store" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         try:
@@ -576,13 +576,13 @@ class Builder(object):
             name = ''
             kind = None
             connective = None
-            period = 0.0 
+            period = 0.0
             prefix = './'
             schedule = ACTIVE #globaling.py
             order = MID #globaling.py
 
             name = tokens[index]
-            index +=1         
+            index +=1
 
             while index < len(tokens): # name parts end when connective
                 if tokens[index] in ['as', 'at', 'be', 'in', 'per', 'for']: # end of parts
@@ -592,7 +592,7 @@ class Builder(object):
 
             name += "".join(part.capitalize() for part in parts)
 
-            while index < len(tokens): #options 
+            while index < len(tokens): #options
                 connective = tokens[index]
                 index += 1
 
@@ -607,8 +607,8 @@ class Builder(object):
                     #kind = "".join(part.capitalize() for part in parts)
                     kind =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
                     if not kind:
-                        msg = "ParseError: Building command '%s'. Missing kind for connective 'as'" % (command)
-                        raise excepting.ParseError(msg, tokens, index)                                     
+                        msg = "ParseError: Building verb '%s'. Missing kind for connective 'as'" % (command)
+                        raise excepting.ParseError(msg, tokens, index)
 
                 elif connective == 'at':
                     period = abs(Convert2Num(tokens[index]))
@@ -619,9 +619,9 @@ class Builder(object):
                     index +=1
 
                     if option not in ['active', 'inactive', 'slave']:
-                        msg = "ParseError: Building command '%s'. Bad server scheduled option got %s" % \
+                        msg = "ParseError: Building verb '%s'. Bad server scheduled option got %s" % \
                             (command, option)
-                        raise excepting.ParseError(msg, tokens, index)                   
+                        raise excepting.ParseError(msg, tokens, index)
 
                     schedule = ScheduleValues[option] #replace text with value
 
@@ -629,9 +629,9 @@ class Builder(object):
                     order = tokens[index]
                     index +=1
                     if order not in OrderValues:
-                        msg = "ParseError: Building command '%s'. Bad order option got %s" % \
+                        msg = "ParseError: Building verb '%s'. Bad order option got %s" % \
                             (command, order)
-                        raise excepting.ParseError(msg, tokens, index)                   
+                        raise excepting.ParseError(msg, tokens, index)
 
                     order = OrderValues[order] #convert to order value
 
@@ -639,7 +639,7 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     init.update(data)
 
-                elif connective == 'for': 
+                elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
@@ -651,27 +651,27 @@ class Builder(object):
                         init[field] = src[field]
 
                 else:
-                    msg = "ParseError: Building command '%s'. Bad connective got %s" % \
+                    msg = "ParseError: Building verb '%s'. Bad connective got %s" % \
                         (command, connective)
-                    raise excepting.ParseError(msg, tokens, index)                   
+                    raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
-            raise excepting.ParseError(msg, tokens, index)      
+            raise excepting.ParseError(msg, tokens, index)
 
         if kind: # Create new instance from kind class with name
             if name in tasking.Tasker.Names:
-                msg = "ParseError: Building command '%s'. Task named %s of kind %s already exists" % \
+                msg = "ParseError: Building verb '%s'. Task named %s of kind %s already exists" % \
                     (command, name, kind)
                 raise excepting.ParseError(msg, tokens, index)
 
             if kind not in tasking.Tasker.Names: # expect instance of same name as kind
-                msg = "ParseError: Building command '%s'. No tasker kind of %s" %\
+                msg = "ParseError: Building verb '%s'. No tasker kind of %s" %\
                     (command, kind)
                 raise excepting.ParseError(msg, tokens, index)
 
@@ -681,11 +681,11 @@ class Builder(object):
                                   schedule=schedule)
             kw = dict()
             kw.update(init)
-            tasker.reinit(**kw)         
+            tasker.reinit(**kw)
 
         else: # Use an existing instance
             if name not in tasking.Tasker.Names: #instance not exist
-                msg = "ParseError: Building command '%s'. No tasker named %s" %\
+                msg = "ParseError: Building verb '%s'. No tasker named %s" %\
                     (command, name)
                 raise excepting.ParseError(msg, tokens, index)
 
@@ -693,9 +693,9 @@ class Builder(object):
             kind = tasker.__class__.__name__
 
             if tasker in self.currentHouse.taskers: #tasker already used somewhere else
-                msg = "ParseError: Building command '%s'. Task named %s of kind %s already scheduled" %\
+                msg = "ParseError: Building verb '%s'. Task named %s of kind %s already scheduled" %\
                     (command, name, kind)
-                raise excepting.ParseError(msg, tokens, index)             
+                raise excepting.ParseError(msg, tokens, index)
 
             kw = dict(period=period, schedule=schedule)
             kw.update(init)
@@ -714,7 +714,7 @@ class Builder(object):
 
         msg = "     Created tasker named {0} of kind {1} at period {2:0.4f} be {3}\n".format(
             tasker.name, kind, tasker.period,  ScheduleNames[tasker.schedule])
-        console.profuse(msg)       
+        console.profuse(msg)
 
         return True
 
@@ -748,11 +748,11 @@ class Builder(object):
 
         """
         if not self.currentHouse:
-            msg = "ParseError: Building command '%s'. No current house" % (command)
-            raise excepting.ParseError(msg, tokens, index)      
+            msg = "ParseError: Building verb '%s'. No current house" % (command)
+            raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentStore:
-            msg = "ParseError: Building command '%s'. No current store" % (command)
+            msg = "ParseError: Building verb '%s'. No current store" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         try:
@@ -760,19 +760,19 @@ class Builder(object):
             init = {}
             name = ''
             connective = None
-            period = 0.0 
+            period = 0.0
             prefix = './'
             schedule = ACTIVE #globaling.py
             order = MID #globaling.py
             rxa = ''
             txa = ''
             sha = ('', 54321) #empty host means any interface on local host
-            dha = ('localhost', 54321) 
+            dha = ('localhost', 54321)
 
             name = tokens[index]
-            index +=1         
-            
-            while index < len(tokens): #options 
+            index +=1
+
+            while index < len(tokens): #options
                 connective = tokens[index]
                 index += 1
 
@@ -789,9 +789,9 @@ class Builder(object):
                     index +=1
 
                     if option not in ['active', 'inactive', 'slave']:
-                        msg = "ParseError: Building command '%s'. Bad server scheduled option got %s" % \
+                        msg = "ParseError: Building verb '%s'. Bad server scheduled option got %s" % \
                             (command, option)
-                        raise excepting.ParseError(msg, tokens, index)                   
+                        raise excepting.ParseError(msg, tokens, index)
 
                     schedule = ScheduleValues[option] #replace text with value
 
@@ -799,9 +799,9 @@ class Builder(object):
                     order = tokens[index]
                     index +=1
                     if order not in OrderValues:
-                        msg = "ParseError: Building command '%s'. Bad order option got %s" % \
+                        msg = "ParseError: Building verb '%s'. Bad order option got %s" % \
                             (command, order)
-                        raise excepting.ParseError(msg, tokens, index)                   
+                        raise excepting.ParseError(msg, tokens, index)
 
                     order = OrderValues[order] #convert to order value
 
@@ -827,20 +827,20 @@ class Builder(object):
                     #assumes src share inited before this line parsed
                     for field in srcFields:
                         init[field] = src[field]
-                        
+
                 else:
-                    msg = "ParseError: Building command '%s'. Bad connective got %s" % \
+                    msg = "ParseError: Building verb '%s'. Bad connective got %s" % \
                         (command, connective)
-                    raise excepting.ParseError(msg, tokens, index)                   
+                    raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
-            raise excepting.ParseError(msg, tokens, index)      
+            raise excepting.ParseError(msg, tokens, index)
 
         prefix += '/' + self.currentHouse.name #extra slashes are ignored
 
@@ -893,14 +893,14 @@ class Builder(object):
 
         """
         if not self.currentHouse:
-            msg = "ParseError: Building command '{0}'. No current house.".format(
+            msg = "ParseError: Building verb '{0}'. No current house.".format(
                 command, index, tokens)
-            raise excepting.ParseError(msg, tokens, index)                
-            
+            raise excepting.ParseError(msg, tokens, index)
+
         if not self.currentStore:
-            msg = "ParseError: Building command '{0}'. No current store.".format(
+            msg = "ParseError: Building verb '{0}'. No current store.".format(
                             command, index, tokens)
-            raise excepting.ParseError(msg, tokens, index)   
+            raise excepting.ParseError(msg, tokens, index)
 
         try:
             name = tokens[index]
@@ -912,7 +912,7 @@ class Builder(object):
             interval = 30.0
             prefix = './'
 
-            while index < len(tokens): #options 
+            while index < len(tokens): #options
                 connective = tokens[index]
                 index += 1
                 if connective == 'at':
@@ -959,7 +959,7 @@ class Builder(object):
                       (command, name, index, tokens)
                 return False
 
-            logger = logging.Logger(name = name, store = self.currentStore, 
+            logger = logging.Logger(name = name, store = self.currentStore,
                                     period = period, flushPeriod = interval,
                                     prefix = prefix)
             logger.schedule = schedule
@@ -998,15 +998,15 @@ class Builder(object):
         """create log in current logger
 
            log name  [to fileName] [as (text, binary)] [on rule]
-           rule: (once, never, always, update, change) 
-           default fileName is log's name 
+           rule: (once, never, always, update, change)
+           default fileName is log's name
            default type is text
            default rule  is update
 
-           for manual logging use tally command with rule once or never 
+           for manual logging use tally command with rule once or never
 
 
-           log autopilot (text, binary, console) to './logs/' on (never, once, update, change, always) 
+           log autopilot (text, binary, console) to './logs/' on (never, once, update, change, always)
         """
         if not self.currentLogger:
             print "Error building %s. No current logger. index = %d tokens = %s" %\
@@ -1065,7 +1065,7 @@ class Builder(object):
                       (command, name, index, tokens)
                 return False
 
-            log = logging.Log(name = name, store = self.currentStore, kind = kind, 
+            log = logging.Log(name = name, store = self.currentStore, kind = kind,
                               fileName = fileName, rule = rule)
             self.currentLogger.addLog(log)
             self.currentLog = log
@@ -1086,9 +1086,9 @@ class Builder(object):
         return True
 
     def buildLoggee(self, command, tokens, index):
-        """add loggee(s) to current log 
+        """add loggee(s) to current log
 
-           loggee tag sharepath tag sharepath ... 
+           loggee tag sharepath tag sharepath ...
         """
         if not self.currentLog:
             print "Error building %s. No current log. index = %d tokens = %s" %\
@@ -1142,7 +1142,7 @@ class Builder(object):
 
            framework framername [be (active, inactive, aux, slave)] [at period] [first frame]
            framework framername be active at 0.0
-           framework framername 
+           framework framername
         """
         if not self.currentHouse:
             print "Error building %s. No current house. index = %d tokens = %s" %\
@@ -1158,7 +1158,7 @@ class Builder(object):
             name = tokens[index]
             index +=1
 
-            self.verifyName(name, command, tokens, index)      
+            self.verifyName(name, command, tokens, index)
 
             schedule = INACTIVE  #globaling.py
             order = MID #globaling.py
@@ -1166,7 +1166,7 @@ class Builder(object):
             frame = ''
 
 
-            while index < len(tokens): #options 
+            while index < len(tokens): #options
                 connective = tokens[index]
                 index += 1
 
@@ -1210,7 +1210,7 @@ class Builder(object):
                       (command, name, index, tokens)
                 return False
             else:
-                framer = framing.Framer(name = name, store = self.currentStore, 
+                framer = framing.Framer(name = name, store = self.currentStore,
                                         period = period)
                 framer.schedule = schedule
                 framer.first = frame #need to resolve later
@@ -1267,7 +1267,7 @@ class Builder(object):
             name = tokens[index]
             index +=1
 
-            self.verifyName(name, command, tokens, index)       
+            self.verifyName(name, command, tokens, index)
 
             self.currentFramer.first = name #need to resolve later
 
@@ -1314,7 +1314,7 @@ class Builder(object):
 
             over = None
 
-            while index < len(tokens): #options 
+            while index < len(tokens): #options
                 connective = tokens[index]
                 index += 1
 
@@ -1345,15 +1345,15 @@ class Builder(object):
                   (command, self.currentFramer.name, name, index, tokens)
             return False
         else:
-            frame = framing.Frame(name = name, store = self.currentStore, 
-                                  framer = self.currentFramer) 
+            frame = framing.Frame(name = name, store = self.currentStore,
+                                  framer = self.currentFramer)
 
             if over:
                 frame.over = over #need to resolve later
 
             #if previous frame did not have explicit next frame then use this new frame
             # ad next lexically
-            if self.currentFrame and not self.currentFrame.next: 
+            if self.currentFrame and not self.currentFrame.next:
                 self.currentFrame.next = frame.name
 
                 #default first frame is first lexical frame if not assigned otherwise
@@ -1379,7 +1379,7 @@ class Builder(object):
             over = tokens[index]
             index +=1
 
-            self.verifyName(over, command, tokens, index)         
+            self.verifyName(over, command, tokens, index)
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -1410,7 +1410,7 @@ class Builder(object):
             under = tokens[index]
             index +=1
 
-            self.verifyName(under, command, tokens, index)          
+            self.verifyName(under, command, tokens, index)
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -1491,7 +1491,7 @@ class Builder(object):
               aux framername
 
            Conditional Auxiliary:
-              aux framername if [not] need 
+              aux framername if [not] need
               aux framername if [not] need [and [not] need ...]
 
         """
@@ -1510,12 +1510,12 @@ class Builder(object):
             if index < len(tokens): #check for optional if connective
                 connective = tokens[index]
                 if connective not in ['if']: #invalid connective
-                    msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                    msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
                         (command, connective)
                     raise excepting.ParseError(msg, tokens, index)
-                index += 1 #otherwise eat token            
+                index += 1 #otherwise eat token
 
-                while (index < len(tokens)):   
+                while (index < len(tokens)):
                     act, index = self.makeNeed(tokens, index)
                     if not act:
                         return False # something wrong do not know what
@@ -1523,10 +1523,10 @@ class Builder(object):
                     if index < len(tokens):
                         connective = tokens[index]
                         if connective not in ['and']:
-                            msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                            msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
                                                     (command, connective)
                             raise excepting.ParseError(msg, tokens, index)
-                        index += 1 #otherwise eat token                     
+                        index += 1 #otherwise eat token
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -1540,12 +1540,12 @@ class Builder(object):
 
         if connective: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
-            #resolve aux link later 
+            #resolve aux link later
             parms = dict(needs = needs, main = self.currentFrame, aux = aux, human = human)
             act = acting.Act(   actor='suspender',
-                                registrar=acting.Actor, 
-                                parms=parms, )         
-            
+                                registrar=acting.Actor,
+                                parms=parms, )
+
             self.currentFrame.addPreact(act)
 
             console.profuse("     Added suspender preact,  '{0}', with aux {1} needs:\n".format(
@@ -1553,11 +1553,11 @@ class Builder(object):
             for need in needs:
                 console.profuse("       {0} with parms = {1}\n".format(need.actor, need.parms))
 
-            # deactivate added in suspender.resolve        
+            # deactivate added in suspender.resolve
 
         else: # Simple auxiliary
             self.currentFrame.addAux(aux) #need to resolve later
-            console.profuse("     Added aux framer {0}\n".format(aux))      
+            console.profuse("     Added aux framer {0}\n".format(aux))
 
         return True
 
@@ -1588,8 +1588,8 @@ class Builder(object):
             parms = {}
             parms['framer'] = framer #resolve later if needed
             act = acting.Act(    actor=actorName,
-                                 registrar=completing.Complete, 
-                                 parms=parms,)            
+                                 registrar=completing.Complete,
+                                 parms=parms,)
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -1602,10 +1602,10 @@ class Builder(object):
             return False
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = ENTER #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
@@ -1644,18 +1644,18 @@ class Builder(object):
         need = self.makeImplicitDirectFramerNeed( name="elapsed",
                                                   comparison='>=',
                                                   goal=float(value),
-                                                  tolerance=0) 
+                                                  tolerance=0)
 
         needs = []
         needs.append(need)
 
-        # build transact 
+        # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
-        far = 'next' #resolve far link later 
+        far = 'next' #resolve far link later
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
         act = acting.Act(   actor='transiter',
-                            registrar=acting.Actor, 
-                            parms=parms, )  
+                            registrar=acting.Actor,
+                            parms=parms, )
         self.currentFrame.addPreact(act) #add transact as preact
 
         console.profuse("     Added timeout transition preact,  '{0}', with far {1} needs:\n".format(
@@ -1697,18 +1697,18 @@ class Builder(object):
         need = self.makeImplicitDirectFramerNeed( name="recurred",
                                                   comparison='>=',
                                                   goal=int(value),
-                                                  tolerance=0) 
+                                                  tolerance=0)
 
         needs = []
         needs.append(need)
 
-        # build transact 
+        # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
-        far = 'next' #resolve far link later 
+        far = 'next' #resolve far link later
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
         act = acting.Act(    actor='transiter',
-                             registrar=acting.Actor, 
-                             parms=parms,)            
+                             registrar=acting.Actor,
+                             parms=parms,)
 
         self.currentFrame.addPreact(act) #add transact as preact
 
@@ -1721,7 +1721,7 @@ class Builder(object):
 
 
     def buildNative(self, command, tokens, index):
-        """ sets context for current frame to 
+        """ sets context for current frame to
 
            native
         """
@@ -1731,7 +1731,7 @@ class Builder(object):
         return True
 
     def buildBenter(self, command, tokens, index):
-        """ sets context for current frame to  
+        """ sets context for current frame to
 
            benter
         """
@@ -1741,7 +1741,7 @@ class Builder(object):
         return True
 
     def buildEnter(self, command, tokens, index):
-        """ sets context for current frame to  
+        """ sets context for current frame to
 
            enter
         """
@@ -1761,17 +1761,17 @@ class Builder(object):
         return True
 
     def buildPrecur(self, command, tokens, index):
-        """ sets context for current frame to  
+        """ sets context for current frame to
 
            precur
         """
         self.currentContext = PRECUR
         console.profuse("     Changed context to {0}\n".format(
             ActionContextNames[self.currentContext]))
-        return True      
+        return True
 
     def buildRecur(self, command, tokens, index):
-        """ sets context for current frame to  
+        """ sets context for current frame to
 
            recur
         """
@@ -1791,7 +1791,7 @@ class Builder(object):
         return True
 
     def buildRexit(self, command, tokens, index):
-        """ sets context for current frame to 
+        """ sets context for current frame to
 
            rexit
         """
@@ -1808,7 +1808,6 @@ class Builder(object):
 
            print hello world
 
-
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
@@ -1819,19 +1818,19 @@ class Builder(object):
 
         parms = dict(message = message)
         act = acting.Act(    actor='printer',
-                             registrar=acting.Actor, 
-                             parms=parms,)            
+                             registrar=acting.Actor,
+                             parms=parms,)
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = ENTER #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} {1} with {2}\n".format(
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
 
         return True
@@ -1844,7 +1843,7 @@ class Builder(object):
            data:
               direct
 
-           destination: 
+           destination:
               [(value, fields) in] indirect
 
         """
@@ -1857,7 +1856,7 @@ class Builder(object):
             connective = tokens[index]
             index += 1
             if connective != 'into':
-                msg = "ParseError: Building command '%s'. Unexpected connective '%s'" %\
+                msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
                     (command, connective)
                 raise excepting.ParseError(msg, tokens, index)
 
@@ -1865,11 +1864,11 @@ class Builder(object):
             dstPath, index = self.parseIndirect(tokens, index, variant = '')
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
@@ -1894,24 +1893,24 @@ class Builder(object):
         parms['data'] = dstData #this is dict
         parms['destination'] = dst #this is a share
         act = acting.Act(   actor=actorName,
-                            registrar=poking.Poke, 
-                            parms=parms, )        
+                            registrar=poking.Poke,
+                            parms=parms, )
 
         msg = "     Created Actor {0} parms: data = {1}  destination = {2} ".format(
             actorName, data, dst.name)
         console.profuse(msg)
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = ENTER #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor, act.parms))
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -1921,7 +1920,7 @@ class Builder(object):
            inc destination by data
            inc destination from source
 
-           destination: 
+           destination:
               [(value, field) in] indirect
 
            data:
@@ -1951,7 +1950,7 @@ class Builder(object):
 
                 for field, value in data.items():
                     if isinstance(value, str):
-                        msg = "ParseError: Building command '%s'. " % (command)
+                        msg = "ParseError: Building verb '%s'. " % (command)
                         msg += "Data value = '%s' in field '%s' not a number" %\
                             (value, field)
                         raise excepting.ParseError(msg, tokens, index)
@@ -1971,7 +1970,7 @@ class Builder(object):
                      msg = ("     Warning: Inc from non-existent share {0}"
                             " ... creating anyway\n".format(srcPath))
                      console.terse(msg)
-                     
+
                 src = self.currentStore.create(srcPath)
 
                 srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
@@ -1979,30 +1978,30 @@ class Builder(object):
                 act = self.makeIndirectInc(dst, dstFields, src, srcFields)
 
             else:
-                msg = "ParseError: Building command '%s'. Unexpected connective '%s'" %\
+                msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
                     (command, connective)
                 raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = ENTER #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor, act.parms))
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -2014,7 +2013,7 @@ class Builder(object):
            source:
               [(value, fields) in] indirect
 
-           destination: 
+           destination:
               [(value, fields) in] indirect
 
         """
@@ -2027,7 +2026,7 @@ class Builder(object):
             connective = tokens[index]
             index += 1
             if connective != 'into':
-                msg = "ParseError: Building command '%s'. Unexpected connective '%s'" %\
+                msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
                     (command, connective)
                 raise excepting.ParseError(msg, tokens, index)
 
@@ -2035,11 +2034,11 @@ class Builder(object):
             dstPath, index = self.parseIndirect(tokens, index, variant = '')
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
@@ -2067,25 +2066,25 @@ class Builder(object):
         parms['destination'] = dst #this is a share
         parms['destinationFields'] = dstFields #this is a list
         act = acting.Act(   actor=actorName,
-                            registrar=poking.Poke, 
-                            parms=parms, )           
-        
+                            registrar=poking.Poke,
+                            parms=parms, )
+
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
         console.profuse("{0}\n".format(msg))
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = ENTER #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor, act.parms))
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -2095,7 +2094,7 @@ class Builder(object):
            set goal to data
            set goal from source
 
-           goal: 
+           goal:
               elapsed
               recurred
               [(value, fields) in] absolute
@@ -2131,7 +2130,7 @@ class Builder(object):
                 connective = tokens[index]
                 index += 1
 
-                if connective in ['to', 'with']: #data direct  
+                if connective in ['to', 'with']: #data direct
                     data, index = self.parseDirect(tokens, index)
                     dataFields = data.keys()
 
@@ -2157,7 +2156,7 @@ class Builder(object):
                     act = self.makeIndirectGoal(dst, dstFields, src, srcFields)
 
                 else:
-                    msg = "ParseError: Building command '%s'. Unexpected connective '%s'" %\
+                    msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
                         (command, connective)
                     raise excepting.ParseError(msg, tokens, index)
 
@@ -2165,25 +2164,25 @@ class Builder(object):
                 return False
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = ENTER #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor, act.parms))      
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -2192,9 +2191,9 @@ class Builder(object):
            transition conditions of forms
 
            Transitions:
-              go far 
-              go far if [not] need 
-              go far if [not] need [and [not] need ...] 
+              go far
+              go far if [not] need
+              go far if [not] need [and [not] need ...]
 
            Far:
               next
@@ -2217,12 +2216,12 @@ class Builder(object):
             if index < len(tokens): #check for optional if connective
                 connective = tokens[index]
                 if connective not in ['if']: #invalid connective
-                    msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                    msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
                         (command, connective)
                     raise excepting.ParseError(msg, tokens, index)
-                index += 1 #otherwise eat token            
+                index += 1 #otherwise eat token
 
-                while (index < len(tokens)):   
+                while (index < len(tokens)):
                     act, index = self.makeNeed(tokens, index)
                     if not act:
                         return False #something wrong do not know what
@@ -2230,34 +2229,34 @@ class Builder(object):
                     if index < len(tokens):
                         connective = tokens[index]
                         if connective not in ['and']:
-                            msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                            msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
                                                     (command, connective)
                             raise excepting.ParseError(msg, tokens, index)
-                        index += 1 #otherwise eat token                             
-                            
+                        index += 1 #otherwise eat token
+
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if not needs and connective: #if but no needs
-            msg = "ParseError: Building command '%s'. Connective %s but missing need(s)" %\
+            msg = "ParseError: Building verb '%s'. Connective %s but missing need(s)" %\
                 (command, connective)
-            raise excepting.ParseError(msg, tokens, index)         
+            raise excepting.ParseError(msg, tokens, index)
 
-        # build transact 
+        # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
-        #resolve far link later 
+        #resolve far link later
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
         act = acting.Act(   actor='transiter',
-                            registrar=acting.Actor, 
-                            parms=parms, )           
-        
+                            registrar=acting.Actor,
+                            parms=parms, )
+
         self.currentFrame.addPreact(act)
 
         console.profuse("     Added transition preact,  '{0}', with far {1} needs:\n".format(
@@ -2271,8 +2270,8 @@ class Builder(object):
         """Parse 'let' command  benter action  with entry conditions of forms
 
            Befor Enter:
-              let [me] if [not] need 
-              let [me] if [not] need [and [not] need ...] 
+              let [me] if [not] need
+              let [me] if [not] need [and [not] need ...]
 
            Far:
               next
@@ -2288,20 +2287,20 @@ class Builder(object):
 
             connective = tokens[index]  #get me or if
             if connective not in ['me', 'if']: #invalid connective
-                msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
                     (command, connective)
                 raise excepting.ParseError(msg, tokens, index)
-            index += 1 #otherwise eat token                     
+            index += 1 #otherwise eat token
 
-            if connective == 'me': 
+            if connective == 'me':
                 connective = tokens[index] #check for if connective
                 if connective not in ['if']: #invalid connective
-                    msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                    msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
                         (command, connective)
                     raise excepting.ParseError(msg, tokens, index)
-                index += 1 #otherwise eat token            
+                index += 1 #otherwise eat token
 
-            while (index < len(tokens)):   
+            while (index < len(tokens)):
                 act, index = self.makeNeed(tokens, index)
                 if not act:
                     return False # something wrong do know what
@@ -2309,26 +2308,26 @@ class Builder(object):
                 if index < len(tokens):
                     connective = tokens[index]
                     if connective not in ['and']:
-                        msg = "ParseError: Building command '%s'. Bad connective '%s'" % \
+                        msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
                                                 (command, connective)
                         raise excepting.ParseError(msg, tokens, index)
-                    index += 1 #otherwise eat token                 
+                    index += 1 #otherwise eat token
 
         except IndexError:
-            msg = "ParseError: Building command '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building command '%s'. Unused tokens after index" %\
+            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
         if not needs: # no needs
-            msg = "ParseError: Building command '%s'. Missing need(s)" %\
+            msg = "ParseError: Building verb '%s'. Missing need(s)" %\
                 (command)
-            raise excepting.ParseError(msg, tokens, index)         
+            raise excepting.ParseError(msg, tokens, index)
 
-        # build beact 
+        # build beact
         for act in needs:
             self.currentFrame.addBeact(act)
 
@@ -2336,24 +2335,24 @@ class Builder(object):
         for act in needs:
             console.profuse("       {0} with {1}\n".format(act.actor, act.parms))
 
-        return True      
+        return True
 
     def buildDo(self, command, tokens, index):
-        """ do name [part ...] [as kind [part ...]] [pa [as kind] {(to, with) data]
-                   [(by, from) source] [per data] [for source]
-                   
-            do [[name] [part ...]] as kind [part ...] [pa [as kind] {(to, with) data]
-                   [(by, from) source] [per data] [for source]
-            
-            deed: 
+        """ do kind [part ...] [as name [part ...]] [at context] [to data]
+                   [by source] [per data] [for source] [per data] [for source]
+
+            deed:
                 name [part ...]
-            
-            kind: 
+
+            kind:
                 name [part ...]
-            
+
+            context:
+                (native, benter, enter, recur, exit, precur, renter, rexit)
+
             data:
                 direct
-            
+
             source:
                 [(value, fields) in] indirect
 
@@ -2377,37 +2376,47 @@ class Builder(object):
             inits = odict()
             ioinits = odict()
             connective = None
+            context = self.currentContext
 
-            while index < len(tokens): 
-                if tokens[index] in ['as', 'to', 'by', 'with', 'from', 'per', 'for']: # end of parts
+            while index < len(tokens):
+                if tokens[index] in ['as', 'at', 'to', 'by', 'with', 'from', 'per', 'for']: # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
-            
+
             if parts:
                 kind = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
-            
-            while index < len(tokens): #options 
+
+            while index < len(tokens): #options
                 connective = tokens[index]
                 index += 1
 
                 if connective == 'as':
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'to','by', 'with', 'from', 'per', 'for']: # end of parts
+                        if tokens[index] in ['as', 'at', 'to','by', 'with', 'from', 'per', 'for']: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
 
                     name =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
                     if not name:
-                        msg = "ParseError: Building command '%s'. Missing name for connective 'as'" % (command)
-                        raise excepting.ParseError(msg, tokens, index)                                     
-            
+                        msg = "ParseError: Building verb '%s'. Missing name for connective 'as'" % (command)
+                        raise excepting.ParseError(msg, tokens, index)
+
+                elif connective in ['at']:
+                    context = tokens[index]
+                    index += 1
+                    if context not in ActionContextValues:
+                        msg = ("ParseError: Building verb '{0}'. Invalid context"
+                        " '{1} for connective 'as'".format(command, context))
+                        raise excepting.ParseError(msg, tokens, index)
+                    context = ActionContextValues[context]
+
                 elif connective in ['to']:
                     data, index = self.parseDirect(tokens, index)
                     parms.update(data)
-    
+
                 elif connective in ['by']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
@@ -2418,11 +2427,11 @@ class Builder(object):
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
                         parms[field] = src[field]
-                
+
                 elif connective in ['with']:
                     data, index = self.parseDirect(tokens, index)
                     inits.update(data)
-        
+
                 elif connective in ['from']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
@@ -2432,12 +2441,12 @@ class Builder(object):
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
-                        inits[field] = src[field]                
-                
+                        inits[field] = src[field]
+
                 elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
                     ioinits.update(data)
-                    
+
                 elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
@@ -2447,7 +2456,7 @@ class Builder(object):
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
-                        ioinits[field] = src[field]                
+                        ioinits[field] = src[field]
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2458,36 +2467,36 @@ class Builder(object):
             print "Error building %s. Unused tokens, index = %d tokens = %s" %\
                   (command, index, tokens)
             return False
-        
+
         if not kind:
-            msg = "ParseError: Building command '%s'. Missing kind for Deed." %\
+            msg = "ParseError: Building verb '%s'. Missing kind for Deed." %\
                                 (command)
-            raise excepting.ParseError(msg, tokens, index)        
-        
+            raise excepting.ParseError(msg, tokens, index)
+
         if kind not in deeding.Deed.Registry: # class registration not exist
-            msg = "ParseError: Building command '%s'. No Deed of kind '%s' in registry" %\
+            msg = "ParseError: Building verb '%s'. No Deed of kind '%s' in registry" %\
                 (command, kind)
             raise excepting.ParseError(msg, tokens, index)
-        
+
         if name:
             inits['name'] = name
         act = acting.Act(   actor=kind,
-                            registrar=deeding.Deed, 
+                            registrar=deeding.Deed,
                             parms=parms,
                             inits=inits,
-                            ioinits=ioinits)           
-        
-        context = self.currentContext
-        if context == NATIVE: 
+                            ioinits=ioinits)
+
+        #context = self.currentContext
+        if context == NATIVE:
             context = RECUR #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor, act.parms))
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -2521,7 +2530,7 @@ class Builder(object):
                 self.verifyName(tasker, command, tokens, index)
 
                 if tasker == 'me':
-                    tasker = self.currentFramer            
+                    tasker = self.currentFramer
 
                 taskers.append(tasker) #resolve later
 
@@ -2534,13 +2543,13 @@ class Builder(object):
             if actorName not in wanting.Want.Registry:
                 print "Error building  %s. No actor named %s. index = %d tokens = %s" %\
                       (command, actorName, index, tokens)
-                return False            
+                return False
 
             parms = {}
             parms['taskers'] = taskers #resolve later
             act = acting.Act(   actor=actorName,
-                                registrar=wanting.Want, 
-                                parms=parms, )             
+                                registrar=wanting.Want,
+                                parms=parms, )
 
         except IndexError:
             print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
@@ -2553,16 +2562,16 @@ class Builder(object):
             return False
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = ENTER #what is native for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} want {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor, act.parms))      
+        console.profuse("     Added {0} want '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -2704,7 +2713,7 @@ class Builder(object):
         native = ENTER
         self.makeFiat(tasker, 'abort', native, command, tokens, index)
 
-        return True   
+        return True
 
     def buildUse(self, command, tokens, index):
         """
@@ -2746,7 +2755,7 @@ class Builder(object):
 
 #------------------
     def makeDirectInc(self, destination, data):
-        """Make DirectInc act 
+        """Make DirectInc act
 
            method must be wrapped in appropriate try excepts
         """
@@ -2761,21 +2770,21 @@ class Builder(object):
         parms = {}
         parms['destination'] = destination #this is a share
         parms['data'] = data #this is an ordered dictionary
-        
+
         act = acting.Act(   actor=actorName,
-                            registrar=poking.Poke, 
-                            parms=parms, )             
-        
+                            registrar=poking.Poke,
+                            parms=parms, )
+
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
-        console.profuse("{0}\n".format(msg))      
+        console.profuse("{0}\n".format(msg))
 
         return act
 
     def makeIndirectInc(self, destination, destinationFields, source, sourceFields):
-        """Make IndirectInc act 
+        """Make IndirectInc act
 
            method must be wrapped in appropriate try excepts
         """
@@ -2793,14 +2802,14 @@ class Builder(object):
         parms['source'] = source #this is a share
         parms['sourceFields'] = sourceFields #this is a list
         act = acting.Act(   actor=actorName,
-                            registrar=poking.Poke, 
-                            parms=parms, )         
-        
+                            registrar=poking.Poke,
+                            parms=parms, )
+
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
-        console.profuse("{0}\n".format(msg))   
+        console.profuse("{0}\n".format(msg))
 
         return act
 
@@ -2813,7 +2822,7 @@ class Builder(object):
            goal from source
 
            goal:
-              name 
+              name
 
            implied goal is framer.currentframer.goal.name value
 
@@ -2832,13 +2841,13 @@ class Builder(object):
         dstFields = [dstField]
         #Create share as needed and create field as needed with default value
         #list of duples needed to initialize and dereference field
-        dst = self.currentStore.create(dstPath).create([(dstField, 0)]) 
+        dst = self.currentStore.create(dstPath).create([(dstField, 0)])
 
         #required connective
         connective = tokens[index]
         index += 1
 
-        if connective == 'to': #data direct  
+        if connective == 'to': #data direct
             data, index = self.parseDirect(tokens, index)
             dataFields = data.keys()
 
@@ -2871,12 +2880,12 @@ class Builder(object):
         return act, index
 
     def makeDirectGoal(self, goal, data):
-        """Make directGoal act 
+        """Make directGoal act
 
            method must be wrapped in appropriate try excepts
         """
         actorName = 'goal' + 'Direct' #capitalize second word
-        
+
         if actorName not in goaling.Goal.Registry:
             msg = "ParseError: Goal can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
@@ -2884,20 +2893,20 @@ class Builder(object):
         parms = {}
         parms['goal'] = goal #this is a share
         parms['data'] = data #this is a dictionary
-        
+
         act = acting.Act(   actor=actorName,
-                            registrar=goaling.Goal, 
-                            parms=parms, )         
+                            registrar=goaling.Goal,
+                            parms=parms, )
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
-        console.profuse("{0}\n".format(msg))   
+        console.profuse("{0}\n".format(msg))
 
         return act
 
     def makeIndirectGoal(self, goal, goalFields, source, sourceFields):
-        """Make indirectGoal act 
+        """Make indirectGoal act
 
            method must be wrapped in appropriate try excepts
         """
@@ -2912,23 +2921,23 @@ class Builder(object):
         parms['goalFields'] = goalFields #this is a list
         parms['source'] = source #this is a share
         parms['sourceFields'] = sourceFields #this is a list
-        
+
         act = acting.Act(   actor=actorName,
-                            registrar=goaling.Goal, 
-                            parms=parms, )         
-        
+                            registrar=goaling.Goal,
+                            parms=parms, )
+
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
-        console.profuse("{0}\n".format(msg))   
+        console.profuse("{0}\n".format(msg))
 
         return act
 
     def makeNeed(self, tokens, index):
         """Parse a need
 
-           method must be wrapped in try except indexError 
+           method must be wrapped in try except indexError
            method assumes already checked for currentStore
            method assumes already checked for currentFramer
            method assumes already checked for currentFrame
@@ -2937,15 +2946,15 @@ class Builder(object):
 
            [not] need
 
-           need: 
+           need:
               always
-              done tasker 
+              done tasker
               status tasker is (readied, started, running, stopped, aborted)
               update [in frame] share
               change [in frame] share
               elapsed comparison goal [+- tolerance]
               recurred comparison goal [+- tolerance]
-              state [comparison goal [+- tolerance]]  
+              state [comparison goal [+- tolerance]]
 
            goal:
               goal
@@ -2954,7 +2963,7 @@ class Builder(object):
               [(value, field) in] absolute
               [(value, field) in] relativegoal
 
-           comparison: 
+           comparison:
               (==, !=, <, <=, >=, >)
 
            state:
@@ -3032,8 +3041,8 @@ class Builder(object):
 
         parms = {}
         act = acting.Act(   actor=actorName,
-                            registrar=needing.Need, 
-                            parms=parms, )          
+                            registrar=needing.Need,
+                            parms=parms, )
 
         return (act, index)
 
@@ -3054,9 +3063,9 @@ class Builder(object):
         parms = {}
         parms['tasker'] = tasker
         act = acting.Act(   actor=actorName,
-                            registrar=needing.Need, 
-                            parms=parms, )         
-        
+                            registrar=needing.Need,
+                            parms=parms, )
+
         return (act, index)
 
     def makeStatusNeed(self, kind, tokens, index):
@@ -3095,44 +3104,44 @@ class Builder(object):
         parms['tasker'] = tasker  #need to resolve this
         parms['status'] = status
         act = acting.Act(   actor=actorName,
-                            registrar=needing.Need, 
+                            registrar=needing.Need,
                             parms=parms, )
         return (act, index)
-    
+
     def makeUpdateNeed(self, kind, tokens, index):
         """ Need to check if share updated in frame
 
             method must be wrapped in appropriate try excepts
-            
+
             Syntax:
                 if update [in frame] sharepath
-    
+
         """
         return (self.makeMarkerNeed(kind, tokens, index))
-    
+
     def makeChangeNeed(self, kind, tokens, index):
         """ Need to check if share updated in frame
 
             method must be wrapped in appropriate try excepts
-            
+
             Syntax:
                 if change [in frame] sharepath
-    
+
         """
-        return (self.makeMarkerNeed(kind, tokens, index))     
-    
+        return (self.makeMarkerNeed(kind, tokens, index))
+
     def makeMarkerNeed(self, kind, tokens, index):
         """ Support method to make either UpdateNeed or ChangeNeed
             as determined by kind
         """
         frame = "" # name of marked frame
-        
+
         connective = tokens[index]
         if connective == 'in': #optional in frame clause
             index += 1 #eat token
             frame = tokens[index] #need to resolve
             index += 1 #eat token
-        
+
         if not frame: #default to current frame
             frame = self.currentFrame.name
 
@@ -3140,24 +3149,24 @@ class Builder(object):
         share = self.currentStore.create(sharePath)
         #if not share.marks.get(name):
             #share.marks[name] = storing.Mark()
-            
+
         # assign marker type actual marker Act created in need's resolve
-        marker = 'marker' + kind.capitalize() 
-        
+        marker = 'marker' + kind.capitalize()
+
         actorName = 'need' + kind.capitalize()
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
                 (kind, actorName)
             raise excepting.ParseError(msg, tokens, index)
-        
+
         parms = {}
         parms['share'] = share
         parms['frame'] = frame  # marked frame name resolved in resolvelinks
         parms['marker'] = marker # marker kind resolved in resolvelinks
         act = acting.Act(   actor=actorName,
-                            registrar=needing.Need, 
+                            registrar=needing.Need,
                             parms=parms, )
-        return (act, index)    
+        return (act, index)
 
     def makeImplicitDirectFramerNeed(self, name, comparison, goal, tolerance):
         """Make implicit need, ie the need is not parsed but implied by the command
@@ -3171,7 +3180,7 @@ class Builder(object):
               value (direct number or string)
 
            state:
-              name 
+              name
 
            implied state is framer.currentframer.state.name value
         """
@@ -3198,7 +3207,7 @@ class Builder(object):
            state comparison goal [+- tolerance]
 
            state:
-              name 
+              name
 
            implied state is framer.currentframer.state.name value
 
@@ -3242,7 +3251,7 @@ class Builder(object):
         return (act, index)
 
     def makeBoolenNeed(self, state, stateField):
-        """Make booleanNeed act 
+        """Make booleanNeed act
 
            method must be wrapped in appropriate try excepts
         """
@@ -3256,19 +3265,19 @@ class Builder(object):
         parms['state'] = state #this is a share
         parms['stateField'] = stateField #this is string
         act = acting.Act(   actor=actorName,
-                            registrar=needing.Need, 
+                            registrar=needing.Need,
                             parms=parms, )
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
-        console.profuse("{0}\n".format(msg))   
+        console.profuse("{0}\n".format(msg))
 
         return act
 
 
     def makeDirectNeed(self, state, stateField, comparison, goal, tolerance):
-        """Make directNeed act 
+        """Make directNeed act
 
            method must be wrapped in appropriate try excepts
         """
@@ -3285,17 +3294,17 @@ class Builder(object):
         parms['goal'] = goal  #this is a value: boolean number or string
         parms['tolerance'] = tolerance #this is a number
         act = acting.Act(   actor=actorName,
-                            registrar=needing.Need, 
-                            parms=parms, )         
+                            registrar=needing.Need,
+                            parms=parms, )
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
-        console.profuse("{0}\n".format(msg))   
+        console.profuse("{0}\n".format(msg))
 
         return act
 
     def makeIndirectNeed(self, state, stateField, comparison, goal, goalField, tolerance):
-        """Make indirectNeed act 
+        """Make indirectNeed act
 
            method must be wrapped in appropriate try excepts
         """
@@ -3316,12 +3325,12 @@ class Builder(object):
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
-        console.profuse("{0}\n".format(msg))   
+        console.profuse("{0}\n".format(msg))
 
         act = acting.Act(   actor=actorName,
-                            registrar=needing.Need, 
-                            parms=parms, )         
-        
+                            registrar=needing.Need,
+                            parms=parms, )
+
         return act
 
     def makeFiat(self, name, kind, native, command, tokens, index):
@@ -3340,22 +3349,22 @@ class Builder(object):
         parms = {}
         parms['tasker'] = name #resolve later
         act = acting.Act(   actor=actorName,
-                            registrar=fiating.Fiat, 
-                            parms=parms, )         
+                            registrar=fiating.Fiat,
+                            parms=parms, )
 
         context = self.currentContext
-        if context == NATIVE: 
+        if context == NATIVE:
             context = native #The native context for this command
 
-        if not self.currentFrame.addByContext(act, context):   
+        if not self.currentFrame.addByContext(act, context):
             print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
                   (command, context, index, tokens)
             return False
 
-        console.profuse("     Added {0} fiat {1} with {2}\n".format(
-            ActionContextNames[self.currentContext], act.actor, act.parms))
+        console.profuse("     Added {0} fiat '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
-        return True      
+        return True
 
     #----------------------------
 
@@ -3372,7 +3381,7 @@ class Builder(object):
               data ordered dict
               index
 
-           method must be wrapped in appropriate try excepts 
+           method must be wrapped in appropriate try excepts
 
            Syntax:
 
@@ -3388,39 +3397,39 @@ class Builder(object):
         """
         data = odict()
         if index == (len(tokens) - 1): #only one more token so it must be value
-            value = tokens[index] 
+            value = tokens[index]
             index +=1 #eat token
             field = 'value' #default field
 
         else: #more than one so first may be field and second token may be value
             field = tokens[index]
             index += 1
-            value = tokens[index] 
+            value = tokens[index]
             if value in Reserved: #second reserved token so first token was value
                 value = field
                 field = 'value' #default field
             else: #first token was field and second value
                 index += 1 #eat token
 
-        data[field] = Convert2StrBoolCoordNum(value) #convert to BoolNumStr, load data 
+        data[field] = Convert2StrBoolCoordNum(value) #convert to BoolNumStr, load data
 
         #parse rest if any
         while index < len(tokens): #must be in pairs unless first is ending token
-            field = tokens[index]       
+            field = tokens[index]
             if field in Reserved: #ending token so break
                 break
-            
+
             if REO_Quoted.match(field): # field is double quoted string
-                field = field.strip('"')              
+                field = field.strip('"')
 
             index += 1 #eat token
-            value = tokens[index] 
+            value = tokens[index]
             index += 1
 
-            data[field] = Convert2StrBoolCoordNum(value) #convert to BoolNumStr, load data 
+            data[field] = Convert2StrBoolCoordNum(value) #convert to BoolNumStr, load data
 
         #prevent using multiple fields if one of them is 'value'
-        if (len(data) > 1) and ('value' in data): 
+        if (len(data) > 1) and ('value' in data):
             msg = "ParseError: Direct data field = 'value' must be only field '%s'" % (data.keys)
             raise excepting.ParseError(msg, tokens, index)
 
@@ -3445,7 +3454,7 @@ class Builder(object):
               data ordered dict
               index
 
-           method must be wrapped in appropriate try excepts 
+           method must be wrapped in appropriate try excepts
 
            Syntax:
 
@@ -3454,21 +3463,21 @@ class Builder(object):
 
         """
         if index == (len(tokens) - 1): #only one more token so it must be value
-            value = tokens[index] 
+            value = tokens[index]
             index +=1 #eat token
             field = 'value' #default field
 
         else: #more than one so first may be field and second token may be value
             field = tokens[index]
             index += 1
-            value = tokens[index] 
+            value = tokens[index]
             if value in Reserved: #second reserved token so first token was value
                 value = field
                 field = 'value' #default field
             else: #first token was field and second value
                 index += 1 #eat token
 
-        value = Convert2StrBoolCoordNum(value) #convert to boolnumstr 
+        value = Convert2StrBoolCoordNum(value) #convert to boolnumstr
 
         #prevent using incorrect format for fields
         if not REO_IdentPub.match(field): #invalid format
@@ -3488,7 +3497,7 @@ class Builder(object):
               fields
               index
 
-           method must be wrapped in appropriate try excepts 
+           method must be wrapped in appropriate try excepts
 
            Syntax:
 
@@ -3525,11 +3534,11 @@ class Builder(object):
             fields.append(field)
 
         if not found: #no fields clause
-            index = indexSave #so restore index 
+            index = indexSave #so restore index
             fields = [] #empty fields list
 
         #prevent using multiple fields if one of them is 'value'
-        if (len(fields) > 1) and ('value' in fields): 
+        if (len(fields) > 1) and ('value' in fields):
             msg = "ParseError: Field = 'value' with multiple fields = '%s'" % (fields)
             raise excepting.ParseError(msg, tokens, index)
 
@@ -3537,7 +3546,7 @@ class Builder(object):
             if REO_Quoted.match(field): # field is double quoted string
                 field = field.strip('"')
                 fields.insert(i, field )  #strip off quotes
-                
+
             if not REO_IdentPub.match(field):
                 msg = "ParseError: Invalid format of field '%s'" % (field)
                 raise excepting.ParseError(msg, tokens, index)
@@ -3555,7 +3564,7 @@ class Builder(object):
               field
               index
 
-           method must be wrapped in appropriate try excepts 
+           method must be wrapped in appropriate try excepts
 
            Syntax:
 
@@ -3587,15 +3596,15 @@ class Builder(object):
 
             index += 1 #eat token
             if REO_Quoted.match(field): # field is double quoted string
-                field = field.strip('"')               
+                field = field.strip('"')
             fields.append(field)
 
         if not found: #no fields clause
-            index = indexSave #so restore index 
+            index = indexSave #so restore index
             fields = [] #empty fields list
 
-        #prevent using multiple fields 
-        if (len(fields) > 1): 
+        #prevent using multiple fields
+        if (len(fields) > 1):
             msg = "ParseError: More than one field = '%s'" % (fields)
             raise excepting.ParseError(msg, tokens, index)
 
@@ -3615,7 +3624,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
         """
-        path = tokens[index] 
+        path = tokens[index]
         index +=1
 
         if not REO_Path.match(path): #check if valid path
@@ -3633,13 +3642,13 @@ class Builder(object):
            parms:
               tokens = list of tokens for command
               index = current index into tokens
-              variant = '' or if variant applies = 'goal' or 'state' 
+              variant = '' or if variant applies = 'goal' or 'state'
 
            returns:
               path
               index
 
-           method must be wrapped in appropriate try excepts 
+           method must be wrapped in appropriate try excepts
 
            Syntax:
 
@@ -3665,7 +3674,7 @@ class Builder(object):
               path of frame [name]
 
         """
-        path = tokens[index] 
+        path = tokens[index]
         index +=1
 
         if path in Reserved:
@@ -3677,7 +3686,7 @@ class Builder(object):
             #if 'of relation' clause then allows override of relative  variant
             #but still relative but using dotpath instead of path
             #so overrides any implied variants
-            relation, index = self.parseRelation(tokens, index) 
+            relation, index = self.parseRelation(tokens, index)
 
             path = relation + path #absolute path starts with '.'
 
@@ -3689,7 +3698,7 @@ class Builder(object):
                 relation += '.'
 
             if variant:
-                variant += '.' 
+                variant += '.'
 
             path = relation + variant + path
 
@@ -3712,7 +3721,7 @@ class Builder(object):
               relation
               index
 
-           method must be wrapped in appropriate try excepts 
+           method must be wrapped in appropriate try excepts
 
            Syntax:
 
@@ -3763,9 +3772,9 @@ class Builder(object):
 
                 if not name: #no name given so substitute default
                     name = self.currentFramer.name
-                
+
                 relation += '.' + name  #append name
-            
+
             if relation in ['frame']: #may be optional name of frame
                 name = '' #default name is empty
                 if index < len(tokens): #more tokens to check for optional name
@@ -3782,20 +3791,20 @@ class Builder(object):
 
                 if not name: #no name given so substitute default
                     name = self.currentFrame.name
-                
+
                 relation += '.' + name  #append name
-                
+
                 # parse optional of framer relation
                 framerRelation, index = self.parseRelation(tokens, index)
-                
+
                 if framerRelation and '.frame.' in framerRelation: # another of frame
                     msg = "ParseError: Invalid relation '%s' following frame relation" %\
                                                     (framerRelation)
-                    raise excepting.ParseError(msg, tokens, index)                    
-                
+                    raise excepting.ParseError(msg, tokens, index)
+
                 if framerRelation:
                     relation = framerRelation + '.' + relation
-                    
+
                 else: #use default framer
                     relation = ('framer.' + self.currentFramer.name + '.' + relation)
 
@@ -3809,7 +3818,7 @@ class Builder(object):
         comparison = None
         if index < len(tokens): #at least one more token
                 #if at least one more token could be connective or comparision
-            comparison = tokens[index] 
+            comparison = tokens[index]
             if comparison in Comparisons: #
                 index +=1 #so eat token
             else:
@@ -3832,7 +3841,7 @@ class Builder(object):
         return (comparison, index)
 
     def parseNeedState(self, tokens, index):
-        """Parse required need state 
+        """Parse required need state
 
            method must be wrapped in appropriate try excepts
         """
@@ -3862,7 +3871,7 @@ class Builder(object):
         return (state, statePath, stateField, index)
 
     def parseNeedGoal(self, statePath, stateField, tokens, index):
-        """Parse required goal 
+        """Parse required goal
 
            method must be wrapped in appropriate try excepts
         """
@@ -3871,7 +3880,7 @@ class Builder(object):
 
         goal = tokens[index]
         #parse required goal
-        try:  
+        try:
             goal = Convert2StrBoolCoordNum(tokens[index]) #goal is quoted string, boolean, or number
             index += 1 #eat token
             direct = True
@@ -3951,7 +3960,7 @@ class Builder(object):
 
         if index < len(tokens): #at least one more token
                 #if at least one more token could be connective
-            connective = tokens[index] 
+            connective = tokens[index]
             if connective == '+-': #valid tolerance connective
                 index +=1 #so eat token
                 tolerance = tokens[index] #get tolerance
@@ -3966,7 +3975,7 @@ class Builder(object):
     #---------------------------
 
     def prepareSrcDstFields(self, src, srcFields, dst, dstFields, tokens, index):
-        """Prepares and verifys a transfer of data 
+        """Prepares and verifys a transfer of data
            from sourceFields in source to dstFields in dst
            handles default conditions when fields are empty
 
@@ -3976,7 +3985,7 @@ class Builder(object):
         """
         if not srcFields: #no source fields so assign defaults
             if src:
-                if 'value' in src: 
+                if 'value' in src:
                     srcFields = ['value'] #use value field
 
                 elif dstFields: #use destination fields for source fields
@@ -3984,7 +3993,7 @@ class Builder(object):
 
                 else: #use pre-existing source fields
                     srcFields = src.keys()
-                #else: #ambiguous multiple source fields 
+                #else: #ambiguous multiple source fields
                 #msg = "ParseError: Can't determine source field"
                 #raise excepting.ParseError(msg, tokens, index)
 
@@ -3994,7 +4003,7 @@ class Builder(object):
         self.verifyShareFields(src, srcFields, tokens, index)
 
         if not dstFields: #no destination fields so assign defaults
-            if 'value' in dst: 
+            if 'value' in dst:
                 dstFields = ['value'] #use value field
 
             else: #use source fields for destination fields
@@ -4008,7 +4017,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         for dstField, srcField in izip(dstFields, srcFields):
-            if (dstField != srcField) and (srcField != 'value'): 
+            if (dstField != srcField) and (srcField != 'value'):
                 print "     Warning: Field names mismatch. '%s' in %s from '%s' in %s  ... creating anyway" %\
                       (dstField, dst.name, srcField, src.name)
 
@@ -4028,7 +4037,7 @@ class Builder(object):
         return (srcFields, dstFields)
 
     def prepareDataDstFields(self, data, dataFields, dst, dstFields, tokens, index):
-        """Prepares and verifys a transfer of data 
+        """Prepares and verifys a transfer of data
            from dataFields in data to dstFields in dst
            handles default conditions when fields are empty
 
@@ -4039,7 +4048,7 @@ class Builder(object):
         """
 
         if not dstFields: #no destinationField so use default rules
-            if 'value' in dst: 
+            if 'value' in dst:
                 dstFields = ['value'] #use value field
 
             else: #use dataField
@@ -4053,7 +4062,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         for dstField, dataField in izip(dstFields, dataFields):
-            if (dstField != dataField) and (dataField != 'value'): 
+            if (dstField != dataField) and (dataField != 'value'):
                 print "     Warning: Field names mismatch. '%s' in %s from '%s' ... creating anyway" %\
                       (dstField, dst.name, dataField)
 
@@ -4068,7 +4077,7 @@ class Builder(object):
 
     def verifyShareFields(self, share, fields, tokens, index):
         """Verify that updating fields in share won't violate the
-           condition that when a share has field == 'value' 
+           condition that when a share has field == 'value'
            it will be the only field
 
            fields is list of field names
@@ -4092,7 +4101,7 @@ class Builder(object):
 
     def validShareFields(self, share, fields):
         """Validates that updating fields in share won't violate the
-           condition that when a share has field = 'value' 
+           condition that when a share has field = 'value'
            it will be the only field
 
            fields is list of field names
@@ -4121,15 +4130,15 @@ class Builder(object):
            If not raises ParseError
         """
         if not self.currentStore:
-            msg = "ParseError: Building command '%s'. No current store" % (tokens)
+            msg = "ParseError: Building verb '%s'. No current store" % (tokens)
             raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentFramer:
-            msg = "ParseError: Building command '%s'. No current framer" % (tokens)
+            msg = "ParseError: Building verb '%s'. No current framer" % (tokens)
             raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentFrame:
-            msg = "ParseError: Building command '%s'. No current frame" % (tokens)
+            msg = "ParseError: Building verb '%s'. No current frame" % (tokens)
             raise excepting.ParseError(msg, tokens, index)
 
         return
@@ -4139,11 +4148,11 @@ class Builder(object):
            Used for Task, Framer, and Frame names
         """
         if not REO_IdentPub.match(name): #bad name
-            msg = "ParseError: Building command '%s'. Invalid entity name '%s'" %\
+            msg = "ParseError: Building verb '%s'. Invalid entity name '%s'" %\
                 (command, name)
-            raise excepting.ParseError(msg, tokens, index)        
+            raise excepting.ParseError(msg, tokens, index)
 
-    #------------------------   
+    #------------------------
 
 def DebugShareFields(store, name):
     """ prints out  fields of share named name from store for debugging """
@@ -4192,11 +4201,11 @@ def Test(fileName = None, verbose = False):
     import monitoring
     import testing
 
-    allModules = [globaling, aiding, excepting, registering,  storing, skedding, 
+    allModules = [globaling, aiding, excepting, registering,  storing, skedding,
                   acting, poking, goaling, needing, traiting,
                   fiating, wanting, completing,
                   deeding, arbiting, controlling,
-                  tasking, framing, logging, interfacing, serving, 
+                  tasking, framing, logging, interfacing, serving,
                   housing, monitoring, testing]
 
 
@@ -4205,7 +4214,7 @@ def Test(fileName = None, verbose = False):
 
     b = Builder()
     if b.build(fileName = fileName):
-        print 
+        print
         houses = b.houses
         for house in houses:
             house.store.changeStamp(0.0)

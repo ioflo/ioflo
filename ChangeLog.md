@@ -1,24 +1,42 @@
 ------------------
 CHANGE LOG
 -------------------
+------------
+20140204
+-----------
+v0.9.03
+
+Finished refactor of act actor managment and resolution with class based registry
+   Added decorators actorify and deedify to make it easier to create custom do behaviors
+
+Added at context clause to do verb to allow specifying context on a do by do basis
+
+
+Updated documentation to use refined terminology of declarative sentences not commands
+
+
+Changed builder error messages to use 'verb' not 'command'
+
+
 -----------
 20140125
 -----------
-
+v0.9.01
 
 Added SideAct class that  uses .action attribute to call different method
    in its associated actor. This is to support conversion of special Actor on
    other actor/act to be SideAct on same actor but different mthod. So all in one
-   place. 
-   
+   place.
+
 Refactored act.inits and act.ioints and registry so do not save empty dicts but
    save None. More memory efficient.
    ioints saved in Act are only the ones from builder not combined
    with registry (change where initio gets called not in resolve but before resolve)
    also change it so Act has by default None for ioints and inits to save space.
-   
+
 Replaced deactivator with new SideAct class and new way to do anciliary actors
 
+do verb now supports with and from clauses to setup inits
 
 -------------
 20140124
@@ -34,7 +52,7 @@ cloning was added.
 
 Refactor Actor registration internally to use new metaclass and refactor resolution
 to that Actor creation is done at resolve time not build time. This gets rid
-of need for createIntances for Actors. This also makes it easier to specify new Actions 
+of need for createIntances for Actors. This also makes it easier to specify new Actions
 since all in one place.
 
 Some syntax changes.
@@ -43,6 +61,8 @@ Tasker command is broken still
 
 load command file path is now computed relative the the plan file in which the
 load appears and not the directory where ioflo executable lives
+
+
 
 
 --------
@@ -58,7 +78,7 @@ Added default preface to be .__class__.__name__ to Register init  so that any
    Registered subclass gets friendly appropriate name without having to have u
    unique .__init__ method just for the preface.
    removed all superfluous __init__ methods
-   
+
 
 ---------
 20140112
@@ -92,19 +112,19 @@ if actor name is 'me'  then use current actor's camel case name converted to pat
 Since acts have ref to actor, actor is always available in acts resolve links.
 
 
-Added .frame, .context, .act (action execution) attributes to each Act instance. 
+Added .frame, .context, .act (action execution) attributes to each Act instance.
 Added _act key parms of each act whose value is self act
 These will better support more elegant framer cloning
 
 Added SerialNB class to aiding.py which uses and use termios configuriation
    of the serialport
 
-Refactored aiding.SocketNB receive function to use errno 
+Refactored aiding.SocketNB receive function to use errno
     import errno
     errno.EAGAIN is correct for the appropriate platform 35 on darwin and 11 on Linux
     also in python2.6 socket.error is a subclass of IOError which has .errno attribute
     so use that instead of first element of tuple and get rid of typeerror exception
-   
+
 
 -----------
 20140103
@@ -131,27 +151,27 @@ Support for fiat (ready start stop abort) cloning
 20131212
 -----------
 
-Added Marking (watch)capability to enable  
-   "if update share" 
-   and 
-   "if change share" 
+Added Marking (watch)capability to enable
+   "if update share"
+   and
+   "if change share"
    capability
-   
+
    Added to Share class .marks attribute which is odict of marks by frame
        values are mark objects with attributes that support last data and last stamp
        for share and rules for how to handle .rule see log for example.
-       
-       .marks keys are framenames 
-       
+
+       .marks keys are framenames
+
        The framenames will also be given to the associated
          actions via a parm to resolve to frame references upon resolvelinks
-       
+
        .marks[frame].data = last copy of data like log does
        .marks[frame].stamp = last stamp
-       
-   Add new Need class. 
+
+   Add new Need class.
    Add new Marker Actor class
-    
+
    When encounter Need syntax for mark the following happens
       Adds Mark to .marks of appropriate type to Share
       Inserts marker enter action actor at front of enter actions list for the
@@ -163,34 +183,34 @@ Added Marking (watch)capability to enable
             MarkNeed evaluates mark for share when Need runs
             Frame is framename that get resolved to frame reference so can insert
             marker. if not current frame.
-       
+
    New syntax
-    
+
       go frame if update [in frame] sharepath
       go frame if change [in frame] sharepath
-   
+
 
 ---------
 20131211
 ----------
 
-Changed so frame relative is always framer relative as well so can now specify 
+Changed so frame relative is always framer relative as well so can now specify
    which framer so can modify frame relative in a different
    framer. So two of clauses may appear.
-   
+
        put true into stuff of frame small of framer big
-       
+
        resolves to
-       
+
        .framer.big.frame.small
-       
+
 
 Frame relative is now stored relative to the frame's framer
     .framer.framername.frame.name....
     not
     .frame.name....
 
-    when using frame relative addressing the framer.name is now prepended so 
+    when using frame relative addressing the framer.name is now prepended so
     frame relative is always also framer relative
     since frame names are unique per framer not per store
 
@@ -199,10 +219,10 @@ Added framer.activeShr and framer.humanShr to store the active frame.name and hu
    for the framer so can be logged.
    framer.name.state.active
    framer.name.state.human
-   
 
-When verbosity is >= 3 "verbose" print out of data share at start of mission 
-   now includes the initial values not just the fields so can see what the 
+
+When verbosity is >= 3 "verbose" print out of data share at start of mission
+   now includes the initial values not just the fields so can see what the
    initial values ended up being
 
 
@@ -212,12 +232,12 @@ When verbosity is >= 3 "verbose" print out of data share at start of mission
 
 Updated version to 0.7.8
 
-Made executable for ioflo called ioflo that is installed as a script 
+Made executable for ioflo called ioflo that is installed as a script
    that can be run from the command line using setup.py
    default setup.py installs this to
    /Library/Frameworks/Python.framework/Versions/2.7/bin/ioflo
-   
-   
+
+
 
 ------------
 20131125
@@ -227,66 +247,66 @@ Made executable for ioflo called ioflo that is installed as a script
 
 Changed 'do' semantics so that if name is not provided but 'as' is then use
    the default generated name for the deed instance.
-   
+
 
 
 Standardized connective usage for commands
    to, with are aliases for reference to direct data
-   by, from are aliases for reference to indirect source 
-   
+   by, from are aliases for reference to indirect source
+
    The reason for having aliases is that commands may have a meaning that is
    confusion for one of the combinations. The goal is to use the shortest pair
    to/by  to direct by indirect but still allow for removing ambiguity.
    The example is the "inc" command
-   
-   inc share to data   
-   
+
+   inc share to data
+
    Would imply that the result if the command is that the value of share is data
    not that the value of share is share + data
-   
+
    so
-   
+
    inc share with data   could be used to remove ambiguity
-   
+
    The biggest change is that  inc share by  semantics have changed
-   
-   
+
+
    So all the command that use to/from will now
    accept
-   
+
    (to, with)/(by, from)
-   
+
    For Deed and Tasker commands that allow initialization of io share at parse time
    the connectives are
-   
+
    per data
    for source
 
-   
+
 Added  support for deeds that are to be inited via parameters not at parse
    time.  So if deed has attribute "._parametric" then process initio but instead of
    creating attributes for each init argument key add these keys to the parms
    dict for the Deed. Add check so can't use same key in "with" "per" as
     "to" "from"
-   
+
    Refactored preinitio, initio and build of do to support.
 
 
-    
+
 Fixed ioflo package version author etc with setup.py like bottle
 
 Go ioflo runner now uses argparse
-   
+
 
 Added capability to use external import to a given ioflo run with the
   -b --behavior  CLI and also behavior parameter which is module/package
   name that is imported and then added to the _Instances in trim/exterior/__init__.py
-  
+
    Import under
      ioflo/trim/exterior
-     
+
      Change trim so current are under
-     
+
      ioflo/trim/interior
         /plain
         /fancy
@@ -316,11 +336,11 @@ Made nodes objects in Store that are modified odicts that have name property
    and chaining of Node
 
 Refactored salting.py. To use shares instead of fields for status etc
-   change status on overload to be a node not share and then the overload, onCount, 
+   change status on overload to be a node not share and then the overload, onCount,
    offCount, healthy, deadCode.
 
 
-Added postInit method to deeds to be called by initio 
+Added postInit method to deeds to be called by initio
 
 
 ---------
@@ -342,8 +362,8 @@ Added .time share that is the store's time stamp .stamp. This gets reset by the 
 in its .run method so corresponds to start of mission.
 
 
-    
-Changed license to MIT 
+
+Changed license to MIT
 
 got rid of "debug" variable
 
@@ -367,7 +387,7 @@ Removed some prints in building not done
 
 salting.py mostly working
 
-Updated to use new ioinit paradigm. 
+Updated to use new ioinit paradigm.
 with this paradigm initializing the ioflo (inputs outputs)
 is not performed until the Deed instance is used in a floscript.
 There are three places to specify what the initialization of the ioflos will be when the instance is
@@ -375,7 +395,7 @@ used (not created)
 
 1) import time in CreateInstances by updating the ioinit attribute of the newly created instance
    at parse time .initio(**.ioinit) is called to initialize in the store
-   
+
 2) Parse time in buildDo using the 'with' and/or 'per' connectives
 
 3) link time (not yet implemented) with the "on link" clause in the do command
@@ -398,7 +418,7 @@ added StoriedRegistry to include .store. and Share has its own .store.
 This allows using slots for Actors at least for the first few levels of inheritance.
 
 Added __slots__ for Registry on down to Actors
-   
+
 Changed terminology. Store share path are nodes and tip not group.
 
 Registries now odicts
@@ -432,30 +452,30 @@ Registries now odicts
 -- Lots of refactoring of console printout when running Skedder
 
 -- Change Tasker to Skedder and Task to Tasker. Break out skedder into its own module
-   refactor Server, Monitor, Tasker Framer 
+   refactor Server, Monitor, Tasker Framer
 
 -- Replace verbose with Console object that acts like logger but not threaded
    but writes to file. Default is stdout
-   
+
    Refactor __init__ Verbose it don't have
    to be redefined in each __init__.py but instead recursively pull the globals
    from each module . That is they define module level globals
-   
-   
-    def Verbose(level = 1): 
-       """Sets the modules' verbose level 
+
+
+    def Verbose(level = 1):
+       """Sets the modules' verbose level
           Must redefine this function in each module since the global namespace
           is the namespace of the defining module not the calling module
        """
        global _verbose, __all__
        level = int(level)
        _verbose = level
-       
+
        #call the Verbose function on all modules named in __all__
        gns = globals() #get global namespace which includes modules
        for m in __all__: #assume module of name == m already imported
-          gns[m].Verbose(level) 
-    
+          gns[m].Verbose(level)
+
 
 
 
@@ -470,48 +490,48 @@ Registries now odicts
 -- Refactor CreateActors so it don't have
    to be redefined in each __init__.py but instead recursively pull the globals
    from each module . That is they define module level globals
-    
+
     def CreateActors(store):
           """Makes new instances of actors. Should have blank registry
              Must redefine this function in each module since the global namespace
              is the namespace of the defining module not the calling module
           """
           global _InstanceModules
-          
+
           if _verbose: print "Creating actors for package %s" % __name__
           for module in _InstanceModules:
              module.CreateActors(store = store)
-             
+
 
 -- Add task command and normalize other task commands.
     currently each type of task gets its own command
-    
+
     framer name options
     server kind name options
     logger name options
-    
+
     where options are repectively:
     [at period] [first frame][be scheduled] [in order]
-    
+
     [at pd] [rx h:p] [tx h:p][be sd] [in or] [to px]
-    
-    [at pd] [to px] [be sd] [in or] 
-    
+
+    [at pd] [to px] [be sd] [in or]
+
     But we need generic task
     task name [modifier ...] options
-    
+
     where name [modifier ...] allows us to name space tasks like we do deeds
     For example server has recon specific defaults in building.py these
     should not be there but should be in task definition specific not in builder.
-    
+
     so each specific task type would instead be of form
-    
+
     framer name [modifier ...] options
-    
+
     createInstances passes in store to all instances in registry are in same
     store. Need to update tasks so get store same way in stead of manually
     pasing in,
-    
+
 
 
 
@@ -522,7 +542,7 @@ Registries now odicts
 
 -- refactor resolvLinks so always to checks for type outside of if to convert name
     to object. Some resolveLinks were not right.
-    
+
 -- added **kw to resolveLinks method of actors so that if additional parms passed
    it will not cause reolveLinks to fail
 
@@ -549,18 +569,18 @@ Registries now odicts
    indicated by it having the attr ._interruptive. This makes it so other actors
    besides needs can be used in beacts in that they return something besides Falsy
    so that the beact semantics work but can also be used in preacts without messing up the
-   preact processing for transistions. 
-   
-   
+   preact processing for transistions.
+
+
    In general the  policy should still be that action methods return None unless
    there is a use case to do otherwise such as would be used in a beact or the actor
    is interruptive such as Transitor and Suspender (transisiton and conditional auxes)
-   
+
    The ReadyFiat is a use case where it can be used in a beact to determine if
    a slave framer is ready to be run before transitioning to the frame
-   
+
    ready testslave #benter
-    
+
 
 
 
@@ -570,12 +590,12 @@ Registries now odicts
     with new
     (start stop run abort) task  as slave tasks require explicit control this
     makes it more convenient. Only can work with slave framers/tasks.
-    
-    operate slave framers/tasks using new (start stop run abort) slave commands 
-    so activity  is explict runs slave framer/task generator directly and not 
+
+    operate slave framers/tasks using new (start stop run abort) slave commands
+    so activity  is explict runs slave framer/task generator directly and not
     done automatically by Tasker
-    
-    use the 'status' need conditions for slave tasks 
+
+    use the 'status' need conditions for slave tasks
         if status task is started, running, stopped, aborted
 
 
@@ -594,7 +614,7 @@ Registries now odicts
 
 -- Add with and from connectives to deed command so can pass in at runtime
    direct and indirect values to deed Actor.action() method.
-   
+
 
 -- Add support to all actors for run time parameters to action method
    .action(**kw)
@@ -603,16 +623,16 @@ Registries now odicts
 -- make deed name spacing generic now its a list of one or more name parts
       genre and kind optional for deed parsing
         do genre kind name
-        
--- repeat command similar to timeout command implicit transact 
+
+-- repeat command similar to timeout command implicit transact
 
     repeat 3
-    
+
     go next if recurred >= 3
-    
+
     which does it 4 times  0 1 2 3
-    
-                
+
+
 ---------
 20131007
 --------
@@ -624,7 +644,7 @@ Registries now odicts
     iter is too much like python iterm built in and would be confusing to python
     programmers while not meaning anything to non python programmers
     so maybe use recurred to be the recur count and is syntactically similar to
-    elapsed  
+    elapsed
 
 -------
 20131004
@@ -636,7 +656,7 @@ Registries now odicts
     let [me] if condition (Beact Benter) Other verbs (en, come, allow, admit)
     go target if condition (Transition
     aux target if condition (Conditional Aux)
-    
+
 
 
 -------
@@ -647,28 +667,28 @@ Registries now odicts
 -- get rid of behaving directory in haf.base
    move arbiting.py to haf.base
    move rest of the behaviors to the trim directory
-   
+
 -- have tasker inject metadata into build so there is hook back for build task
     to put stuff
    The metadata is not in each House as an odict house.meta of items (name, share)
    When each House is created an image of the metadata shares is created for that house
    The tasker has access to the meta data via its .houses list
-   
+
 -- Change Scaffold terminology to House to avoid meaning collison for testing scaffolds
 
 
--- refactor tasker so that tasker does the build, i.e. tasked calls builder 
+-- refactor tasker so that tasker does the build, i.e. tasked calls builder
     this will eventually allow
     tasker to run as daemon and autobuild based on config file.
 
 -- Refactor so all imports are relative using from . import syntax so guarantee
    that do not import module from some place else. The old way of doing relative
-   imports where a simple 
-     import mymodule 
+   imports where a simple
+     import mymodule
    would first look in the same directory
    as the importing module and then look in sys.path means there is a chance
    of importing the wrong thing. Using the new relative import
-     from . import mymodule 
+     from . import mymodule
    guarantees the correct thing is imported. (See Beazley)
 
 
@@ -686,17 +706,17 @@ not tested.
 -- Should context commands be verbs or nouns? exit is the same for both noun and verb
     I think verb since precur and recur do not have noun form.
     benter  - beacts (not bentry)
-    
+
     enter - enacts (not entry)
     renter - renacts (not rentry)
-    
+
     precur - preacts
     recur - reacts
-    
+
     rexit - rexacts
     exit - exacts
-    
-  
+
+
 
 
 ---------
@@ -706,12 +726,12 @@ not tested.
 Refactor directory layout to use HG mercurial and subprojects get AUV
 and WHOI specific actions in separate folder
 
-Put private repo on bitbucket 
+Put private repo on bitbucket
 -- Repository on BitBucket
     https://bitbucket.org/smithsamuelm/HalfScript need to commit setup
 
- 
--- Fixed circular import 
+
+-- Fixed circular import
 Had some kind of circular import problem that an instance of Store, store
 was failing isinstance(store, Store)
 I fixed it by replacing absolute imports from haf with the new relative imports
@@ -728,20 +748,20 @@ using from . import
    The incompatibility is that starting with pyton2.6 the root object's __init__
    and __new__ methods no longer accept any arguments. this is a problem when
    you have multiple inheritance with one class that accepts arguments.
-   
+
    the workaround is to define a dummy object that inherits from object
-   who's __init__ method throws away any argurments and use this object instead 
+   who's __init__ method throws away any argurments and use this object instead
    of the root object.
-   
+
    For new just don't pass in the arguments.
-   
+
    Dummy object defined in registering is Corpus. So Patron and Registry class
    now inhereit from Corpus instead of object and Data objects new method no longer
    calls object new with parameters.
-   
-   
+
+
    TypeError: object.__init__() takes no parameters
-   
+
    DeprecationWarning: object.__new__() takes no parameters
   return object.__new__(cls, uri)
 
@@ -783,54 +803,54 @@ log once to get initial values in the log.
    Also refactored to be able to put all the files that are recon specific in one
    directory. The analogy is base (as in base package or foundation) for the core
       and trim as in (trim package or extras) for application specific
-   
+
    haf
       base   (these are the base set of files for haf functionality
          behaving  (these are the standard basic actors
-      
+
       trim
          recon
          front
-   
+
    to do this had to figure out alot about the import statement
    also laid groundwork to go to version 2.7 where absolute_import is required
    need to scan through files and make all imports absolute
-   
+
 -- Made the importing a function of list __all__
 
 -- CreateActors is now initiated at the module level not from house (scaffold) object
 
 -- Replaced debug with _verbose so can use verbose levels to
-   filter what gets printed. _verbose  is a global 
+   filter what gets printed. _verbose  is a global
    level 0 means no verbose
    level 1 is old verbose
    level 4 is old debug
-   
-   go -v 1  
-   
-   
---------
-20090529  
 
--- Added support for storing modem rx messages in deque in share 
+   go -v 1
+
+
+--------
+20090529
+
+-- Added support for storing modem rx messages in deque in share
 
 -- Added support for Server log files  to log exchanges of packets
    server command now has to prefex option (works like logger)
-   
+
 ------------------------
 20090527 0.5.3+
 
 -- replaced  ask with  bid command so can use ask for something else
- 
+
 -- added collective "all" to bid command so can stop/start all active/inactive tasks
    to do this added .house attribute to store
    this way have access to store.house.taskables so actions can set the .desire
-   of all taskables to stop 
-   
+   of all taskables to stop
+
    bid stop all
-   
+
    also made it so bid command can be applied to a list of tasks
-   
+
    bid stop task1 task2 ...
 
 -- Changed Convert to recognize 80W25.0345 45N36.123 formats for lat lon
@@ -842,239 +862,239 @@ log once to get initial values in the log.
 
 -- Normalized convention for naming Observer Commander Recon Server shares
    and attributes
-   Adopt convention for server Store  all local shares for a server 
+   Adopt convention for server Store  all local shares for a server
    can always be found referenced off from
-   
+
    serverkind.rx.messagename[.messagevariant] for vehicle to remote
    serverkind.tx.messagename[.messagevariant] for remote to vehicle
-   
+
    recon.rx.depth.depth
    recon.rx.adcp
-   
+
    recon.tx.depth.depth
    recon.tx.speed.mps
-   
-.goal 
-   .heading 
-      value 
-   .depth 
-      value 
-   .speed 
-      value 
-   .rpm 
-      value 
-   .recon 
-      .override 
-         value 
-      .rcp 
-         value 
-      .gpsfix 
-         iridium 
-      .exitpos 
-         lat  lon 
-      .modem 
-         ack  overwrite  data 
-   .rudder 
-      value 
-   .pitch 
-      value 
-   .stern 
-      value 
-   .elapsed 
-     
-   .repeat 
-     
 
-   
-.recon 
-   .tx 
-      .heading 
-         .goal 
-            refresh  acked  headingGoal 
-      .depth 
-         .depth 
-            refresh  acked  depthGoal 
-      .speed 
-         .mps 
-            refresh  acked  speedMPSGoal 
-         .rpm 
-            refresh  acked  speedRPMGoal 
-      .override 
-         refresh  acked  enable 
-      .rcp 
-         refresh  acked  enable  rcp 
-      .set 
-         .gpsfix 
-            refresh  acked  iridium 
-         .exitpos 
-            refresh  acked  lat  lon 
-      .modem 
-         refresh  acked  ack  overwrite  data 
-   .rx 
-      .ctd 
-         temperature  conductivity  soundspeed  depth  salinity 
-      .fix 
-         kind  lat  lon 
-      .state 
-         hours  minutes  seconds  lat  lon  depth  depthGoal  altitude  pitch  roll  rpm  rpmGoal  speedMPS  heading  headingRate  headingGoal  mode  leg 
-      .adcp 
-         adcpAltitude  adcpHeading  adcpCurrentAhead  adcpSpeedUp  adcpSpeedAhead  adcpDown  adcpCurrentUp  adcpSpeedRight  adcpCurrentRight 
-      .depth 
-         .depth 
-            depthGoal 
-         .altitude 
-            altitudeGoal 
-         .triangle 
-            depthMin  depthMax  slope 
-         .unknown 
-            unknown 
-      .depth,trianglealt 
-         depthMin  altMin  slope 
-      .speed 
-         .rpmmps 
-            rpmGoal  speedMSGoal 
-         .unknown 
-            unknown 
-      .heading 
-         .goal 
-            headingGoal 
-         .rate 
-            headingRateGoal 
-         .destination 
-            latGoal  lonGoal 
-         .unknown 
-            unknown 
-      .fluorometer 
-         fluorometerGain  fluorometerValue 
-      .battery 
-         batteryAvailable  batteryCapacity  batteryPercentage 
-      .error 
-         errorCode  errorText 
-      .version 
-         .response 
-            versionDay  versionTime  versionMonth  versionYear 
-         .request 
-            versionRequest 
-      .route 
-         .leg 
-            leg  objective  latBegin  lonBegin  latEnd  lonEnd  depthAltTag  depthAlt  speed  speedUnits 
-         .legs 
-            legs  all 
-      .anchor 
-         pump  valve  fill  anchor  state 
-      .set 
-         kind  setter  lat  lon 
-      .mine 
-         valid  lat  lon  id  score1  score2  score3 
-      .modem 
-         .msg 
-            kind  source  dest  data 
-         .msgs 
-            msgs 
-      .ifla 
-         slant  altitude  down  range  pitch 
+.goal
+   .heading
+      value
+   .depth
+      value
+   .speed
+      value
+   .rpm
+      value
+   .recon
+      .override
+         value
+      .rcp
+         value
+      .gpsfix
+         iridium
+      .exitpos
+         lat  lon
+      .modem
+         ack  overwrite  data
+   .rudder
+      value
+   .pitch
+      value
+   .stern
+      value
+   .elapsed
 
-.commander 
-   .recon 
-      .heading 
-         .parm 
-           
-         .elapsed 
-            value 
-      .depth 
-         .parm 
-           
-         .elapsed 
-            value 
-      .speed 
-         .parm 
-           
-         .elapsed 
-            value 
-      .rpm 
-         .parm 
-           
-         .elapsed 
-            value 
-      .override 
-         .parm 
-           
-         .elapsed 
-            value 
-      .rcp 
-         .parm 
-           
-         .elapsed 
-            value 
-      .gpsfix 
-         .parm 
-           
-         .elapsed 
-            value 
-      .exitpos 
-         .parm 
-           
-         .elapsed 
-            value 
-      .modem 
-         .parm 
-           
-         .elapsed 
-            value 
+   .repeat
 
-.observer 
-   .recon 
-      .ctd 
-         .parm 
-           
-         .elapsed 
-            value 
-      .fix 
-         .parm 
-           
-         .elapsed 
-            value 
-      .state 
-         .parm 
-           
-         .elapsed 
-            value 
+
+
+.recon
+   .tx
+      .heading
+         .goal
+            refresh  acked  headingGoal
+      .depth
+         .depth
+            refresh  acked  depthGoal
+      .speed
+         .mps
+            refresh  acked  speedMPSGoal
+         .rpm
+            refresh  acked  speedRPMGoal
+      .override
+         refresh  acked  enable
+      .rcp
+         refresh  acked  enable  rcp
+      .set
+         .gpsfix
+            refresh  acked  iridium
+         .exitpos
+            refresh  acked  lat  lon
+      .modem
+         refresh  acked  ack  overwrite  data
+   .rx
+      .ctd
+         temperature  conductivity  soundspeed  depth  salinity
+      .fix
+         kind  lat  lon
+      .state
+         hours  minutes  seconds  lat  lon  depth  depthGoal  altitude  pitch  roll  rpm  rpmGoal  speedMPS  heading  headingRate  headingGoal  mode  leg
+      .adcp
+         adcpAltitude  adcpHeading  adcpCurrentAhead  adcpSpeedUp  adcpSpeedAhead  adcpDown  adcpCurrentUp  adcpSpeedRight  adcpCurrentRight
+      .depth
+         .depth
+            depthGoal
+         .altitude
+            altitudeGoal
+         .triangle
+            depthMin  depthMax  slope
+         .unknown
+            unknown
+      .depth,trianglealt
+         depthMin  altMin  slope
+      .speed
+         .rpmmps
+            rpmGoal  speedMSGoal
+         .unknown
+            unknown
+      .heading
+         .goal
+            headingGoal
+         .rate
+            headingRateGoal
+         .destination
+            latGoal  lonGoal
+         .unknown
+            unknown
+      .fluorometer
+         fluorometerGain  fluorometerValue
+      .battery
+         batteryAvailable  batteryCapacity  batteryPercentage
+      .error
+         errorCode  errorText
+      .version
+         .response
+            versionDay  versionTime  versionMonth  versionYear
+         .request
+            versionRequest
+      .route
+         .leg
+            leg  objective  latBegin  lonBegin  latEnd  lonEnd  depthAltTag  depthAlt  speed  speedUnits
+         .legs
+            legs  all
+      .anchor
+         pump  valve  fill  anchor  state
+      .set
+         kind  setter  lat  lon
+      .mine
+         valid  lat  lon  id  score1  score2  score3
+      .modem
+         .msg
+            kind  source  dest  data
+         .msgs
+            msgs
+      .ifla
+         slant  altitude  down  range  pitch
+
+.commander
+   .recon
+      .heading
+         .parm
+
+         .elapsed
+            value
+      .depth
+         .parm
+
+         .elapsed
+            value
+      .speed
+         .parm
+
+         .elapsed
+            value
+      .rpm
+         .parm
+
+         .elapsed
+            value
+      .override
+         .parm
+
+         .elapsed
+            value
+      .rcp
+         .parm
+
+         .elapsed
+            value
+      .gpsfix
+         .parm
+
+         .elapsed
+            value
+      .exitpos
+         .parm
+
+         .elapsed
+            value
+      .modem
+         .parm
+
+         .elapsed
+            value
+
+.observer
+   .recon
+      .ctd
+         .parm
+
+         .elapsed
+            value
+      .fix
+         .parm
+
+         .elapsed
+            value
+      .state
+         .parm
+
+         .elapsed
+            value
 
 -- Changed the convention for state  variables for recon
-.state 
-   .recon 
-      .fix 
-         .gps 
-            value 
-      .mode 
-         value 
-      .mission 
-         .prelaunch 
-            value 
-         .launched 
-            value 
-         .suspended 
-            value 
-         .complete 
-            value 
-      .override 
-         .enabled 
-            value 
-         .depth 
-            value 
-         .rcp 
-            value 
-         .active 
-            value 
-         .forbidden 
-            value 
-      .power 
-         .shore 
-            value 
-      .leg 
-         value 
+.state
+   .recon
+      .fix
+         .gps
+            value
+      .mode
+         value
+      .mission
+         .prelaunch
+            value
+         .launched
+            value
+         .suspended
+            value
+         .complete
+            value
+      .override
+         .enabled
+            value
+         .depth
+            value
+         .rcp
+            value
+         .active
+            value
+         .forbidden
+            value
+      .power
+         .shore
+            value
+      .leg
+         value
 
-   
+
 
 20090526  0.5.2
 
@@ -1085,13 +1105,13 @@ log once to get initial values in the log.
 -- Refactored module and package so that can add deed files without redoing all
    imports pacage Behaving
 
--- Got rid of Transact and Trunact classes made new actors 
-   that has needs and far or aux s parms (better) 
-      Transiter 
-      Suspender 
+-- Got rid of Transact and Trunact classes made new actors
+   that has needs and far or aux s parms (better)
+      Transiter
+      Suspender
    used .done as flag to determine if Suspender has beed activated (cond aux)
 
-  
+
 -- Added a function to recursively set the debug variable
    for nested modules in packages such as behaving.arbiting etc
    new nested deeds breaks testing.Test debug option
@@ -1107,7 +1127,7 @@ log once to get initial values in the log.
    so that quoted string can include spaces, ', or # characters but not "
    Changed Convert now have Convert2StrBoolNum Convert2BoolNum and Conver2Num
    depending on usage
-   
+
 -- Changed need goal to reflect fact that strings must be quoted so direct
    goal can be string as long as its quoted  (got rid of value value form)
 
@@ -1122,15 +1142,15 @@ log once to get initial values in the log.
 -- Put  precur and transacts and truncacts all in precur context
       precurs don't return anything and trans act only return something if
       valid tansition so if act does not return anything keep going so
-      if doesn't matter mixed types of acts in one list. 
-      
--- added in order option (in front mid back) to task commands framer server logger 
+      if doesn't matter mixed types of acts in one list.
+
+-- added in order option (in front mid back) to task commands framer server logger
    This is useful when multiple houses to synchronize sensor state before
    controllers run in case of inter house communication.
-   
--- Added 'me' as  goto target, 
+
+-- Added 'me' as  goto target,
    me useful for new reenter context and forced re-entry
-   
+
 --------------
 20090516
 
@@ -1146,21 +1166,21 @@ log once to get initial values in the log.
 -- Got rid of update method for LapseDeed folded it back into action()
    action() now calls updateLapse()
 
--- Change convention in framer. 
+-- Change convention in framer.
    .elapsed is attribute instead of elapsedTime
    .elapsedShr is ref to share
-   
+
    .repeat is attribute instead of repeatCount
    .repeatShr is ref to share
-   
+
    The actors deeds use .elapsed as share reference
    framer is not action so its normal reference is to itself not the shares
    whereas actions primarily modify shares not self
-   
+
 
 -- framer.stamp is now the time of the last outline change used to compute
-   .elapsed time 
-   
+   .elapsed time
+
 -- Now uses framer.stamp to replace startTime for starting elapsed time
 
 -- logger and server uses task.stamp as time last ran successfully
@@ -1176,19 +1196,19 @@ log once to get initial values in the log.
    This prevents problem of inadvertently having two framers run the same frame
    It also makes it easier to code auxiliaries since one can now reuse frame names
    in different framers.
-   
+
 -- Added framer.human and frame.headHuman so print out correct human active outline
    when a conditional auxiliary is active (truncated outline)--
-   
+
 -- Changed reenter to renter and reeexit to rexit contexts also changed
    reenacts to renacts and reexacts to rexacts and reenter() reexit() to renter() rexit()
    etc
-   
--- Changed Registry.clear() .Clear() since subclasses 
+
+-- Changed Registry.clear() .Clear() since subclasses
    might have alternate meaning for clear().
    Also since clear() is a class function it should be capitalized
-   
-   
+
+
 --------------
 20090514
 
@@ -1206,56 +1226,56 @@ log once to get initial values in the log.
 20090513
 
 --  added support for [not] in need make it be at connective level
-      [not] need inverts logic 
-         
+      [not] need inverts logic
+
    made a new Nact(Act) class that negates its actor() call
    if not need then replaces act with nact
-   
+
 
 -- Added reenter and reexit contexts for retrans = targeted unconditional reentry
    so can do counters that increment on entry not on recur.
-   
+
    A targeted re-entry occurs when an already active frame (that is any frame
-   in the active outline) is the explicit target of a successful transition. 
-   
-   In a targeted re-entry, 
+   in the active outline) is the explicit target of a successful transition.
+
+   In a targeted re-entry,
       entry condition checks are not performed on the reentered frames
-      standard enter actions and exit actions are not fired (as is the current policy) 
+      standard enter actions and exit actions are not fired (as is the current policy)
       but reenter actions and reexit actions are fired
-   
+
    renacts
    rexacts
-   
+
    reenter actions are  performed on every targeted re-entry but not on initial entry
    avoids conflict and deciding  which one has priority (reenter vs enter)
-   
+
    reexit actions are performed on every targeted re-exit  but not on final exit
    avoids conflict and deciding  which one has priority (reexit vs exit)
-   
-      
+
+
       enter (initial)
-      
+
       trans
          exit
          enter
-      
+
       retrans
          reexit
          reenter
-      
+
       trans
          exit
          enter
-      
+
       exit (final)
-      
-   
+
+
    But since rexit and reenter happen for the same frames at the same time
    there is no difference except that reexit is bottom up order and reenter
    is top down so reexit at higher level can override reexit at lower level
    Odd that reexit before reenter since no initial reenter and no final reexit
    So maybe should be reenter then reexit on retrans need use case to figure out.
-   
+
    See Design Notes for more discussion
 
 
@@ -1268,53 +1288,53 @@ log once to get initial values in the log.
 -- Refactored tasker and house task lists
    house now has tasks, framers, slaves, auxes
    framers is all framers so can do resolve links
-   
+
    tasks has all tasks that are taskable (active, inactive) including loggers servers framers
    slaves has all slave tasks including framers loggers servers
    auxes has all aux framers
-   
-   Put all .tasks from house into  ready list. 
+
+   Put all .tasks from house into  ready list.
    when put active task in ready list set .desire to start
    when put inactive task in ready list set .desire to stop
-   
+
    Got rid of stopped list
-   
+
    advantage of this is that execution order does not change if a task is stopped
    and started
-   
+
    Modified runners so that .desire works
 
 -- Changed go script to support -d debug option
 
 -- made done command only apply to auxiliary framers. also on done need
-   
+
 -- added flush interval to logger command
             default minimum is 1 second
-   logger basic at 0.0 flush 60.0 
-   
+   logger basic at 0.0 flush 60.0
+
 -- Added try finally to logger generator to make sure log files get closed if exception
 
 -- Changed log command parms to
    log name  [to path] [as (text, binary)] [on rule]
-   default file name is log name and path is default 
+   default file name is log name and path is default
    default is text
    default is update
-   rule: (once, never, always, update, change) automatically log on rule condition 
+   rule: (once, never, always, update, change) automatically log on rule condition
    for manual forced logging use once or never as the auto condition and then tally
    for forced logging
 
--- Added checks in builder to prevent adding server, logger, log, or loggee of 
+-- Added checks in builder to prevent adding server, logger, log, or loggee of
    same name as existing one
 
 
 -- Changed log files etc so house_date_time is directory holding files
-   
+
    open(filename, 'a+') won't create a directory or path that does not already
       exist. will only create a file if the file does not already exit
-      
+
    use os.makedirs(path, mode = 0777)
-   
-   
+
+
 
 
 ----------------
@@ -1341,20 +1361,20 @@ log once to get initial values in the log.
    to resume. The conditional auxiliaries do the repair.
    Another issue is the conditional auxiliary run until done always or only run
    while the condition is still true? Or do we allow both?
-   
-   Implemented run until done.  run while A is the logical inverse 
+
+   Implemented run until done.  run while A is the logical inverse
    of run until not A. Once done if the condition needing repair is not repaired it
    will try again. The drawback is the repair aux doesn't know apriori what the
-   repair condition was that activated it so it can't be done 
+   repair condition was that activated it so it can't be done
    as soon as the repair condition is satisfied.
    It could have a different done condition than the originating condition
-   
+
    Syntax choices
    if/on needs go aux
-   
+
    Like "go" one better as it matches more the truncated outline
    you are going to the aux and running it ans pausing the existing outline
-   
+
    alternate is if needs run aux (not implemeted)
 
 -----------------
@@ -1362,7 +1382,7 @@ log once to get initial values in the log.
 
 -- Put back in framer.actives attribute and use it so can prepare for conditional
    auxiliaries
-   
+
 -- Moved transition logic into Transact call method so can have different types of
     transacts. Preparatory to conditional auxes
 
@@ -1371,28 +1391,28 @@ log once to get initial values in the log.
 -- HAF frame outline names for human display should use something else maybe
          Also have issue of showing complete path but also indicating which frame
          is the active frame
-      Want different from Data Store Share path names which use dot '.' separateor 
-         
+      Want different from Data Store Share path names which use dot '.' separateor
+
          group.group.share
-      
+
       With framer
       framer<<superframe<superframe<activeframe>subframe>subframe
-      
+
       human without framer
       superframe<superframe<activeframe>subframe>subframe
-      
+
 -- Added frame.traceHuman and .human to hold this human friengly string represention
    of frame hierarchy
-   
+
 
 -----------------
 20090506
 
 -- Made it so if and on can be used for either entry conditions or transitions
    figures out which by presence of goto
-   
+
 -- Added DynTransact (Transact) class. This has a new call method that
-   gets the far frame by looking for an attribute of the framer given by the 
+   gets the far frame by looking for an attribute of the framer given by the
    string for target    goto last  looks for framer.last getattr(frame.framer, 'last')
     Needed new type of transact object that has dynamic far link that when
    called looks up value in framer.last instead of resolving at parse build time.
@@ -1404,28 +1424,28 @@ log once to get initial values in the log.
 
 -- got rid of .last support
 
-   
+
 -- Added to goto target where target can be 'last' this creates a DynTransact
    framer.last is the last frame before the current active frame. It is initialized and
    changed by framer.activate
-   
+
    This is by default the last frame executed before the current frame
    This is set to the near frame at the end of a transition from near to far  before executing the entry actions
-   in the far frame. This reference  maybe used as the target of a goto last  
-   
+   in the far frame. This reference  maybe used as the target of a goto last
+
    This enables returning from a transition to handle an error condition
    like an interrupt. If the "interrupt handing takes more that one frame then the first frame has to run an aux
    otherwise each subsequent frame with change last and there will be no way to return to the very first. without some
    other mechanism.
    (already did framer.last attribute and its gets set in .activate)
-   
+
 
 ------------
 20090502
 
 -- Changed preacts to beacts
 
--- added preacts as prior transition actions to frame 
+-- added preacts as prior transition actions to frame
 
 --  eval preacts in framer just prior to transition trans
 
@@ -1438,28 +1458,28 @@ log once to get initial values in the log.
    so trans in Framer just iterates through list
    -- Consider Refactor trans method of framer so can be encapsulated as Frame method
    Idea is to refactor framer so that all Framer methods iterate over outline of frames
-   but work is done by associated Frame method (checkEnter, enter recur exit trans etc) 
-   
+   but work is done by associated Frame method (checkEnter, enter recur exit trans etc)
+
    Problems are:
-      trans method which calls Framer methods. 
+      trans method which calls Framer methods.
       implicit entry exit recur actions. These are stored in Framer
    Added framer link to frame help overcome these problems.
-   
+
    Framer attributes .entries and .exits don't need to be globals but
    can be parameters passed into associated methods that use them.
    only need .actives
    runner method no longer accesses .entries .exits or .actives all
    handled with method calls.
-   
-   Replaced self.actives with self.active.outline
-   
 
--- replaced trans methods of framer and frame with segue 
+   Replaced self.actives with self.active.outline
+
+
+-- replaced trans methods of framer and frame with segue
 
 -- Replaced start command for framer with first command and
    replaced start option in framer command with first option
 
--- temporary activation no longer done in checkStart 
+-- temporary activation no longer done in checkStart
 
 -- Added .last attribute of Framer to save last active frame before current active
 
@@ -1480,15 +1500,15 @@ Fixed problem where if exception occurred in server recon remus that the socket
    would not be closed and on next run the socket would be "in use"
    added try finally to runner method of generator so finally would close
    the socket in the event of an exception causing the generator to close.
-   
+
 
 
 ---------------
 20081112
 
--- added warnings at parse time if share or field does not exist 
-   when created dynically for put, inc, copy, set, if, on 
-   
+-- added warnings at parse time if share or field does not exist
+   when created dynically for put, inc, copy, set, if, on
+
 -- new addressing syntax in init put inc copy set if on commands
 
 -- init command replaces share command
@@ -1497,37 +1517,37 @@ Fixed problem where if exception occurred in server recon remus that the socket
 
 -- added boolean need
 
--- added logic in init put inc copy set if on commands 
+-- added logic in init put inc copy set if on commands
    to enforce that if data field is value then only one field is allowed
-   this will make it hard to inadvertently have a share with a value field and non 
+   this will make it hard to inadvertently have a share with a value field and non
    value fields
 
 
-   
+
 -----------
 20081110
 
 -- fixed store code to:
    strip leading '.' on paths when adding
-   raise exception for  blank groups a..b 
+   raise exception for  blank groups a..b
    make sure that Store.create(path) .add only allows one to create shares without
    clobbering existing shares or groups when path collisions or overlap
    example:
-   
+
    path1  a.b.c.d   d is share
    path2  a.b.c.d.e e is share
-   
-   *creating path2  if path1 already exists will clobber share d of path1 
+
+   *creating path2  if path1 already exists will clobber share d of path1
       so while descending path check that intermediate level is not a preexisting
       share (since share acts like dictionary it will not cause error)
-   
+
    *creating path1 if path2 already exists will orphan share e of path2
       so while descending path check that tail is not a preexisting group
          group (part of preexisting path to lower level)
-      
--- added copy command and IndirectPoke implements new format for 
+
+-- added copy command and IndirectPoke implements new format for
    moving data between shares and HAFScript syntax
-   
+
 
 
 ------------
@@ -1535,17 +1555,17 @@ Fixed problem where if exception occurred in server recon remus that the socket
 
 -- completely redid need syntax and need parsing
    need = (state comparison goal) c
-   
+
    added relative addressing
    can now be framer  or frame or house relative
-   
+
    redefined absolute addressing for state and goal
    ie indirect goals allowed not just direct
-   
+
    added boolean need (no comparison or goal implicit comparison to True
    if state
    on state
-   
+
    changed where goals and state stored
    goal.name
    state.name
@@ -1553,19 +1573,19 @@ Fixed problem where if exception occurred in server recon remus that the socket
    framer.framername.goal.name
    frame.framename.state.name
    frame.framename.goal.name
-   
+
    state is now thename for need not pose
    changed behaviors to use state.xxx instead of pose.xxx
-   
+
 -- added dynamic goal creation if goal by name does not exist make new goal with name
    what about value vs data goals?
    change parse logic if one one more token after to connective then value goal
    if two or more then data goal
-   
+
    Change syntax
       make consistent so know if value or data goal based on if there is a field named value
       already?
-   
+
 
 -- add dynamic need creation if need by name does not exit make new need with name
    actially now all need specific info is in need parms so only need three basic types
@@ -1574,35 +1594,35 @@ Fixed problem where if exception occurred in server recon remus that the socket
 
 
 ----------
-20081018   
-   
+20081018
+
 -- added context commands without context word
       native enter recur exit
 
--- changed syntax of framework command 
+-- changed syntax of framework command
    added be scheduled option   aux and slaves must be explicitly defined
    added start frame option
    start frame is first lexical frame if not otherwise declared
-   
+
 -- added global ScheduleValues ScheduleNames and global constants
    INACTIVE, ACTIVE, AUX, SLAVE
 
--- added  task.schedule and removed .active .aux and .slave fixed up related   
-   code.  
-   
-   
+-- added  task.schedule and removed .active .aux and .slave fixed up related
+   code.
+
+
 ----------
 20081017
 -- share (added from) so can initialize a given share from the value or data
-         in another share 
-   
+         in another share
+
    share path as field value field value
    share path as value value
    share path as value
-   share path from path 
+   share path from path
    (potentially ambiguous could be single or multiple and could change later)
    so understand that only initializing share to preexisting share
-   
+
    share path from path value
    share path from path field [field]
 
@@ -1613,7 +1633,7 @@ Fixed problem where if exception occurred in server recon remus that the socket
    from same outline to same outline. This would occur any time upper frame had
    transition to a lower frame  in outline but active frame was already the lower frame
    Implications for mplicit entry actions
-   
+
 -- added framer link to frame so can refactor execution order code. Also makes
    it so can't inadvertently assign frame to more than one framer at build time.
 
@@ -1622,8 +1642,8 @@ Fixed problem where if exception occurred in server recon remus that the socket
 -- added  framer command same as framework
 
 
-         
-   
+
+
 -------------
 20080605
 -- change goal duration to goal elapsed so consistent goal and need same name
@@ -1632,7 +1652,7 @@ Fixed problem where if exception occurred in server recon remus that the socket
    times framer has run in a given state and then can do trans on count like
    on elapsed  This was done using the repeat need and the framer.repeatCount
    also for logging see pose.repeat.framer.value
-   
+
 
 
 
@@ -1645,7 +1665,7 @@ Fixed problem where if exception occurred in server recon remus that the socket
 
 --  set convention scenario.onset for starting position north east relative to origin.
    fscenario.origin lat lon for origin of flat earth coordinates
-   
+
    changed uuv and usv simulators to use scenario.onset instead of scenario.origin
    origin is now lat lon of origin of coordinate system whereas onset is initial
    position of the vehicle north east relative to origin.
@@ -1660,40 +1680,40 @@ Fixed problem where if exception occurred in server recon remus that the socket
    but never did it that way always used value.
    in hindsight may want to detect such inadvertant use as error.
    still have share.value as property to get field named value if exits
-   Did this because as implemented, updating a share with share.update(value = xxx) 
+   Did this because as implemented, updating a share with share.update(value = xxx)
    can mess up the way value works
    since update() doesn't check to see if there is already a field in the data that
    may not be named 'value'
-   to ensure that update(value = ) gets mapped to the first field 
+   to ensure that update(value = ) gets mapped to the first field
    instead it will create another field named value. So instead of adding
    yet more checks in change and create just got rid of it
-   
+
 -- Did a lot of HAFScript syntax refinements. See the haftscript manual
 -- added from syntax for needs and goals to allow comparing need from explicit
    share and setting goal from explicit share
-   
+
 
 
 ----------------
 20080429
    made it so optional parameters on commands ; server, framework, and logger have
    connectives
-   
+
    need to check all commands so that optional parameters have connectives
-   then order options appear doesn't matter 
+   then order options appear doesn't matter
 
 ----------------
 20080331
 
 Changed algorithm for marking outline exit enty. Since execution speed is more
    of a bottleneck than memory we can reduce execution speed by storing outline
-   as list for each frame and then get differences between outline lists 
-   get exit and entry list on a transition.  
+   as list for each frame and then get differences between outline lists
+   get exit and entry list on a transition.
    Will need to regenerate outline every time a new frame  is
    added or link made if update outline at run time.
 
 
-Simplified runner generator allowed by new execution ordering 
+Simplified runner generator allowed by new execution ordering
 
 .done is not set to False on framer enter not checkStart
 
@@ -1701,38 +1721,38 @@ Simplified runner generator allowed by new execution ordering
 ------------------
 20080327
 
-supported timeouts: 
+supported timeouts:
    hafscript
       timeout value
-      
+
    add implict transact
       on elapsed >= timeout goto next
-   
+
    what if want to go to someplace else on timeout? then use duration not timeout
-   
-   
-   
+
+
+
 
 
 fixed bug in building.Convert() where integer strings were getting converted
 to base 8 or base 16 (need to check base 10 first)
 
 
-Add support for next frame  
+Add support for next frame
    Explicit
       next frameName
-      next 
+      next
    Implicit lexical next
-   
+
    transitions
-   
+
    on xxx goto next
 
    need to make next frame link and resolve it
    Either with explicit
       next frame
-      or implicit next is next lexical frame 
-      so when creating a new frame before reassign current frame 
+      or implicit next is next lexical frame
+      so when creating a new frame before reassign current frame
          check of next of current is empty and if so then put in new as next.
 
 added context to mission script since no act is naturally an exit act except give
@@ -1741,25 +1761,25 @@ added context to mission script since no act is naturally an exit act except giv
    context recur
    context exit
    context native
-   
+
    currentContext reset to native with new frame
    some acts can have different context besides native
    some only allow native and ignore current context
-   
 
 
-added hooks to support slave framers. 
-   .slaves list in house 
+
+added hooks to support slave framers.
+   .slaves list in house
    .auxes list in house
    .slave flag in framer
 
-tell now restricted to slave framers 
+tell now restricted to slave framers
 
 
 Made it so ask not work on aux or slave framers.
-   
-   
-initializing data shares. removed cases where created value in shared then updated it. 
+
+
+initializing data shares. removed cases where created value in shared then updated it.
 But update does a create if not already exist so
 only need to do update when forcing and create when not forcing the value.
 
@@ -1775,45 +1795,45 @@ Changed tasker
    Task lists deques now have tuples (task, retime, period) instead of just tasks
       Tasker responsible for updating retime not task. Removed .retime attribute
       from tasks
-   
+
    Did speed tests and confirmed that tuple packing and unpacking is faster than
    object attribute access.
-   
+
 ------------------
 20080326
 
 Changed Framer and Frame
    Fixed frame and aux framer execution order
-   
+
    -- fix exec order again. start cycle with trans so trans/enter/recur same cycle
-   
+
    start framer
    enter initial outline
    recur
    time step
-   
+
    if trans
       exit
       enter
-   recur  
+   recur
    time step
-   
+
    if trans
       exit
       enter
    recur
    timestep
-   
-   Frames call trans which can call enter on auxes before lower level frames 
+
+   Frames call trans which can call enter on auxes before lower level frames
    so that lower level frames trans -> enter
    can still override anything a higher level aux frame does
 
-   
+
 
 -----------------
 20071115
 
-added support for "ask" task control for loggers 
+added support for "ask" task control for loggers
 added support for need done for loggers
 added tasker
 added real time to tasker
@@ -1821,11 +1841,11 @@ testing module now functional
 added house.inactives
 
 ------------------------------------------
-20071102 
+20071102
 
 
 1)  Done:
-   Revised Share and Data objects. 
+   Revised Share and Data objects.
    Revised odict so can be pickled
       old Data can't be copied since its a dict without iteritems
       old Data can't be pickled since it uses slots without __getstate__
@@ -1837,7 +1857,7 @@ added house.inactives
 3) time creep fixed.
 ** basically this change means logger doesn't see the last value of elapsed on  a state
 change since it gets reset to zero on state entry before logger gets to run. Only way to
-see it is to log it within state machine as recurring action do log deed. 
+see it is to log it within state machine as recurring action do log deed.
 
 fixed by having entry run on same time as exit but recur waits till next cycle.
 This prevents infinite chaining of transitions and since most controllers run in different
@@ -1858,6 +1878,6 @@ time step
 recur
    recur actions top to bottom
    trans checks top to bottom
-   
+
 
 
