@@ -28,13 +28,13 @@ def getPlanFiles(planDirPath=PLAN_DIR_PATH):
 def main():
     """ Run example scripts"""
     plans = getPlanFiles()
-    for plan in plans:      
+    for plan in plans:
         name, ext = os.path.splitext(os.path.basename(plan))
         ioflo.app.run.run(  name=name,
                             filename=plan,
                             period=0.0625, 
                             verbose=2,
-                            realtime=False,)        
+                            realtime=False,)
         
     
 
