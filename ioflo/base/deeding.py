@@ -16,7 +16,7 @@ from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
-from . import storing 
+from . import storing
 from . import acting
 
 from .consoling import getConsole
@@ -30,36 +30,36 @@ def deedify(name, base=None, registry=None, inits=None, ioinits=None, parametric
         is the reverse camel case of name and registers the
         new subclass in the registry under name.
         If base is not provided then use Actor
-        
+
         The parameters  registry, parametric, inits, and ioinits if provided,
         are used to create the class attributes for the new subclass
-        
+
     """
     base = base or Deed
     if not issubclass(base, Deed):
         msg = "Base class '{0}' not subclass of Deed".format(base)
         raise excepting.RegisterError(msg)
-    
-    name = aiding.reverseCamel(name, lower=False) 
-    
+
+    name = aiding.reverseCamel(name, lower=False)
+
     attrs = odict()
     if registry:
-        attrs(Registry=odict())
+        attrs['Registry'] = odict()
     if parametric is not None:
-        attrs(_Parametric=parametric)
+        attrs['_Parametric'] = parametric
     if inits:
         attrs['Inits'] = odict(inits)
     if ioinits:
         attrs['Ioinits'] = odict(ioinits)
     cls = type(name, (base, ), attrs )
-    
+
     def implicit(func):
         @wraps(func)
         def inner(*pa, **kwa):
             return func(*pa, **kwa)
         cls.action = inner
         return inner
-    return implicit    
+    return implicit
 
 class Deed(acting.Actor):
     """ Provides object of 'do' command verb
@@ -74,9 +74,9 @@ class Deed(acting.Actor):
 class ParamDeed(Deed):
     """ Iois are converted to parms not attributes """
     _Parametric = True # convert iois into parms
-    
+
 class SinceDeed(Deed):
-    """ SinceDeed 
+    """ SinceDeed
         Generic Super Class acts if input updated Since last time ran
         knows time of current iteration and last time processed input
 
@@ -88,7 +88,7 @@ class SinceDeed(Deed):
     """
     def __init__(self, **kw):
         """Initialize Instance """
-        super(SinceDeed,self).__init__( **kw)  
+        super(SinceDeed,self).__init__( **kw)
         self.stamp = None
 
     def action(self, **kw):
@@ -101,7 +101,7 @@ class SinceDeed(Deed):
         print "Deed %s stamp = %s" % (self.name, self.stamp)
 
 class LapseDeed(Deed):
-    """ LapseDeed 
+    """ LapseDeed
         Generic base class for Deeds that need to
         keep track of lapsed time between iterations.
         Should be subclassed
@@ -115,7 +115,7 @@ class LapseDeed(Deed):
     """
     def __init__(self, **kwa):
         """Initialize Instance """
-        super(LapseDeed,self).__init__( **kwa)  
+        super(LapseDeed,self).__init__( **kwa)
 
         self.stamp = None
         self.lapse = 0.0 #elapsed time in seconds between updates calculated on update
@@ -140,7 +140,7 @@ class LapseDeed(Deed):
         except TypeError: #either/both self.store.stamp or self.stamp is not a number
             #So if store is number then makes stamp number so next time lapse is non zero
             #If store.stamp is not a number then lapse will always be zero
-            self.stamp = self.store.stamp #so make stamp same as store 
+            self.stamp = self.store.stamp #so make stamp same as store
             self.lapse = 0.0
 
     def action(self, **kwa):
@@ -151,17 +151,17 @@ class LapseDeed(Deed):
     def expose(self):
         """     """
         print "Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse)
-    
+
     def resolve(self, **kwa):
         """ Create enact with RestarterActor to restart this Actor """
-        parms = super(LapseDeed, self).resolve( **kwa)  
-        
+        parms = super(LapseDeed, self).resolve( **kwa)
+
         kind = 'restarter'
         restartAct = acting.Act( actor=kind,
-                                 registrar=acting.Actor, 
-                                 parms=odict(act=self.act), 
+                                 registrar=acting.Actor,
+                                 parms=odict(act=self.act),
                                  inits=odict(name=kind), )
-        
+
         # need to insert restartAct before self.act so restartAct runs first
         found = False
         for i, enact in enumerate(self.act.frame.enacts):
@@ -171,10 +171,10 @@ class LapseDeed(Deed):
                 break
         if not found:
             self.act.frame.addEnact(restartAct)
-        
+
         restartAct.resolve()
-            
+
         console.profuse("     Added {0} {1} for {2} in {3}\n".format(
             'enact', kind, self.name, self.act.frame.name ))
-        
+
         return parms
