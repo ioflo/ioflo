@@ -45,41 +45,49 @@ def test():
     #poke(name = 'autopilot.depth', value = dict(depth = 5))
 
 def testActorify():
-    
+
     @acting.actorify("beardBlue")
     def testy(self, x=1, z=2):
         """ Testy is a function"""
         print self
         print x
         print z
-    
-    actor, inits, ioints = acting.Actor.__fetch__("beardBlue")
+
+    actor, inits, ioinits, parms = acting.Actor.__fetch__("beardBlue")
     print actor.Registry
     print actor._Parametric
     print actor.Inits
     print actor.Ioinits
-    
+    print actor.Parms
+    print inits
+    print ioinits
+    print parms
+
     actor = actor()
     actor()
     print actor.action
     print actor.action.__name__
     print actor.action.__doc__
-    
+
 def testDeedify():
-    
+
     @deeding.deedify("blackSmith")
     def hammer(self, x=1, z=2):
         """ hammer is a function"""
         print self
         print x
         print z
-    
-    actor, inits, ioints = deeding.Deed.__fetch__("blackSmith")
+
+    actor, inits, ioinits, parms = deeding.Deed.__fetch__("blackSmith")
     print actor.Registry
     print actor._Parametric
     print actor.Inits
     print actor.Ioinits
-    
+    print actor.Parms
+    print inits
+    print ioinits
+    print parms
+
     actor = actor()
     actor()
     print actor.action
@@ -87,5 +95,5 @@ def testDeedify():
     print actor.action.__doc__
 
 if __name__ == "__main__":
-    #testActorify()
+    testActorify()
     testDeedify()

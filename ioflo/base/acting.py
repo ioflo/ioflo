@@ -53,7 +53,7 @@ class Act(object):
         self.act = act
         self.actor = actor #callable instance performs action
         self.registrar = registrar or Actor
-        self.parms = parms or odict() # parms must always be a dict
+        self.parms = parms if parms else None # parms must always be not None
         self.inits = inits if inits else None # store None if empty dict
         self.ioinits = ioinits if ioinits else None # store None if empty dict
 
@@ -76,7 +76,7 @@ class Act(object):
         self.frame = framing.resolveFrame(self.frame, who=self)
 
         if not isinstance(self.actor, Actor): # Need to resolve .actor
-            actor, inits, ioinits = self.registrar.__fetch__(self.actor)
+            actor, inits, ioinits, parms = self.registrar.__fetch__(self.actor)
             inits.update(self.inits or odict())
             if 'name' not in inits:
                 inits['name'] = self.actor
@@ -84,6 +84,7 @@ class Act(object):
             inits['act'] = self
             self.actor = actor = actor(**inits)
 
+            parms.update(self.parms or odict())
             ioinits.update(self.ioinits or odict())
             if ioinits:
                 iois = actor.initio(**ioinits)
@@ -93,16 +94,16 @@ class Act(object):
                                                      ival=ioi.get('ival'),
                                                      iown=ioi.get('iown'))
                         if actor._Parametric:
-                            if key in self.parms:
+                            if key in parms:
                                 msg = "ResolveError: Parm and Ioi with same name"
                                 raise excepting.ResolveError(msg, key, self)
-                            self.parms[key] = share
+                            parms[key] = share
                         else:
                             if hasattr(actor, key):
                                 msg = "ResolveError: Attribute and Ioi with same name"
                                 raise excepting.ResolveError(msg, key, self)
                             setattr(actor, key, share)
-
+            self.parms = parms
             self.parms.update(self.actor.resolve(**self.parms))
             self.actor.postinitio(**self.parms)
 
@@ -184,14 +185,15 @@ class SideAct(Act):
             msg = "ResolveError: Missing action in actor"
             raise excepting.ResolveError(msg, self.action, self)
 
-def actorify(name, base=None, registry=None, inits=None, ioinits=None, parametric=None):
+def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
+             parametric=None):
     """ Parametrized decorator function that converts the decorated function
         into an Actor sub class with .action method and with class name that
         is the reverse camel case of name and registers the
         new subclass in the registry under name.
         If base is not provided then use Actor
 
-        The parameters  registry, parametric, inits, and ioinits if provided,
+        The parameters  registry, parametric, inits, ioinits, and parms if provided,
         are used to create the class attributes for the new subclass
 
     """
@@ -211,6 +213,8 @@ def actorify(name, base=None, registry=None, inits=None, ioinits=None, parametri
         attrs['Inits'] = odict(inits)
     if ioinits:
         attrs['Ioinits'] = odict(ioinits)
+    if parms:
+        attrs['Parms'] = odict(parms)
     cls = type(name, (base, ), attrs )
 
     def implicit(func):
@@ -229,6 +233,7 @@ class Actor(object): # old registering.StoriedRegistry
     Registry = odict() # Actor Registry
     Inits = odict() # class defaults support for
     Ioinits = odict() # class defaults
+    Parms = odict() # class defaults
     _Parametric = True # Convert iois to action method parameters if Truthy
     __slots__ = ('name', 'store', 'act')
 
@@ -261,9 +266,7 @@ class Actor(object): # old registering.StoriedRegistry
         console.terse("Actor {0}".format(self.name))
 
     def resolve(self, **kwa):
-        """ Return updated parms from conversion of .act.ioinits into iois and
-            resolution into share refs if any.
-            Based on ._Parametric convert resolve iois to attributes or parms
+        """ Return updated parms
             Extend in subclass to resolve specific kwa items that are links or
             share refs and update parms
         """

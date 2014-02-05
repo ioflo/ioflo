@@ -24,21 +24,20 @@ class RegisterType(type):
         rname = reverseCamel(name)
         cls.__register__(   rname,
                             inits=getattr(cls, 'Inits', None),
-                            ioinits=getattr(cls, 'Ioinits', None))
-    
-    def __register__(cls, rname, inits=None,  ioinits=None):
+                            ioinits=getattr(cls, 'Ioinits', None),
+                            parms=getattr(cls, 'Parms', None))
+
+    def __register__(cls, rname, inits=None,  ioinits=None, parms=None):
         """ Register cls under rname with ioinits and inits
-        
-            Usage:  A.__register__(rname, ioinits, inits)
+
+            Usage:  A.__register__(rname, ioinits, inits, parms)
         """
         if rname in cls.Registry:
             msg = "Entry '{0}' already exists in registry of {1}".format(rname, cls)
             raise excepting.RegisterError(msg)
-        cls.Registry[rname] = (cls, inits, ioinits)
-        #console.terse( "Registered class '{0}' under '{1}' with {2} per {3}.\n".format(
-            #cls.__name__, rname, inits, ioinits))        
+        cls.Registry[rname] = (cls, inits, ioinits, parms)
         return cls
-    
+
     def __fetch__(cls, rname):
         """ Return tuple derived from .Registry entry at rname if present
             Otherwise raise exception
@@ -47,17 +46,20 @@ class RegisterType(type):
         if rname not in cls.Registry:
             msg = "Entry '{0}' not found in Registry of '{1}'".format(rname, cls.__name__)
             raise excepting.RegisterError(msg)
-        actor, inits, ioinits = cls.Registry[rname]
-        return (actor, odict(inits or odict()), odict(ioinits or odict()))
-        
+        actor, inits, ioinits, parms = cls.Registry[rname]
+        return (actor,
+                odict(inits or odict()),
+                odict(ioinits or odict()),
+                odict(parms or odict()))
+
 class Registry(object):
     """Class that ensures every instance has a unique name
        uses class variable Counter and  Names dictionary
     """
     __slots__ = ('name', )
-    
+
     #for base class to have distinct name space shadow these by defining in sub class def
-    Counter = 0  
+    Counter = 0
     Names = {}
 
     def __init__(self, name = '', preface = '', **kw):
@@ -68,7 +70,7 @@ class Registry(object):
 
         """
         self.__class__.Counter += 1 #increment class Counter variable
-        
+
         if not preface:
             preface = self.__class__.__name__ #use class name of instance as preface
 
@@ -110,7 +112,7 @@ class Registry(object):
 
     @classmethod
     def Retrieve(cls, name = ''):
-        """Retrieves object in registry with name 
+        """Retrieves object in registry with name
 
            return object with name or  False if no object by name
         """
@@ -121,25 +123,25 @@ class StoriedRegistry(Registry):
     """Adds store attribute to Registry instances
     """
     __slots__ = ('store', )
-    
+
     def __init__(self, store=None, **kw):
         """Initializer method for instance.
            Inherited instance attributes:
            .name
-           
+
            New instance attributes
            .store = reference to shared data store
 
         """
         super(StoriedRegistry, self).__init__(**kw)
         self.changeStore(store=store)
-        
+
     def changeStore(self, store=None):
         """Replace .store """
         from . import storing
-        if store is not None: 
+        if store is not None:
             if  not isinstance(store, storing.Store):
                 raise ValueError("Not store %s" % store)
-        self.store = store        
+        self.store = store
 
 

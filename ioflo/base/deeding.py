@@ -24,14 +24,15 @@ console = getConsole()
 
 from .aiding import NonStringIterable, just, nameToPath
 
-def deedify(name, base=None, registry=None, inits=None, ioinits=None, parametric=None):
+def deedify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
+            parametric=None):
     """ Parametrized decorator function that converts the decorated function
         into an Actor sub class with .action method and with class name that
         is the reverse camel case of name and registers the
         new subclass in the registry under name.
         If base is not provided then use Actor
 
-        The parameters  registry, parametric, inits, and ioinits if provided,
+        The parameters  registry, parametric, inits, ioinits, and parms if provided,
         are used to create the class attributes for the new subclass
 
     """
@@ -51,6 +52,8 @@ def deedify(name, base=None, registry=None, inits=None, ioinits=None, parametric
         attrs['Inits'] = odict(inits)
     if ioinits:
         attrs['Ioinits'] = odict(ioinits)
+    if parms:
+        attrs['Parms'] = odict(parms)
     cls = type(name, (base, ), attrs )
 
     def implicit(func):

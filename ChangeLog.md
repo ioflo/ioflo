@@ -2,6 +2,18 @@
 CHANGE LOG
 -------------------
 ------------
+20140205
+-----------
+v0.9.04
+
+Added parms to metamethod __register__ and also Parms class attribute to Actor
+   This allows setting a different set of default arguments to the action method
+   parameters. Useful for alternate registrations of a given Actor class
+   Updated the decorators to use as well.
+
+
+
+------------
 20140204
 -----------
 v0.9.03
