@@ -23,11 +23,11 @@ console = getConsole()
 
 #Class definitions
 class Server(tasking.Tasker):
-    """Server Task Patron Registry Class for IP comms 
+    """Server Task Patron Registry Class for IP comms
 
-       Usage:   
+       Usage:
     """
-    #Counter = 0  
+    #Counter = 0
     #Names = {}
 
     def __init__(self, sha=('', 54321), dha=('localhost', 54321), prefix='./', **kw):
@@ -35,7 +35,7 @@ class Server(tasking.Tasker):
 
            iherited instance attributes
            .name = unique name for machine
-           .store = data store 
+           .store = data store
 
            .period = desired time in seconds between runs must be non negative, zero means asap
            .stamp = time when tasker last ran sucessfully not interrupted by exception
@@ -54,11 +54,11 @@ class Server(tasking.Tasker):
            .logFile = log file
 
         """
-        super(Server,self).__init__(**kw) 
+        super(Server,self).__init__(**kw)
 
         #create socket server
         self.sha = sha
-        self.server = aiding.SocketNB(ha=sha, path='') #reopened by runner
+        self.server = aiding.SocketUdpNb(ha=sha, path='') #reopened by runner
         self.dha = dha #set up destination address
 
         self.prefix = prefix #prefix to log directory for server
@@ -75,10 +75,10 @@ class Server(tasking.Tasker):
         if sha is not None:
             self.sha = sha
             if not self.server:
-                self.server = aiding.SocketNB(ha=sha, path='') #reopened by runner
+                self.server = aiding.SocketUdpNb(ha=sha, path='') #reopened by runner
             self.server.ha = sha
 
-        if dha is not None:   
+        if dha is not None:
             self.dha = dha #set up destination address
 
         if prefix is not None:
@@ -91,7 +91,7 @@ class Server(tasking.Tasker):
 
         dt = datetime.datetime.now()
         self.path = "%s_%s_%04d%02d%02d_%02d%02d%02d" % \
-            (prefix, self.name, 
+            (prefix, self.name,
              dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
         try:
@@ -117,7 +117,7 @@ class Server(tasking.Tasker):
             return False
 
         if not self.reopenLog():
-            return False      
+            return False
 
         if not self.server.reopen():
             return False
@@ -188,10 +188,10 @@ class Server(tasking.Tasker):
                 console.profuse("\n     Iterate Server {0} with control = {1} status = {2}\n".format(
                     self.name,
                     ControlNames.get(control, 'Unknown'),
-                    StatusNames.get(self.status, 'Unknown')))                
+                    StatusNames.get(self.status, 'Unknown')))
 
                 if control == RUN:
-                    if self.status == STARTED or self.status == RUNNING:          
+                    if self.status == STARTED or self.status == RUNNING:
                         console.profuse("     Running Server {0} ...\n".format(self.name))
                         input, sa = self.server.receive() #if no data the tuple is ('',None)
 
@@ -247,7 +247,7 @@ class Server(tasking.Tasker):
                         self.name,  CommandNames[control]))
 
                     self.close()
-                    break #break out of while loop. this will cause stopIteration            
+                    break #break out of while loop. this will cause stopIteration
 
                 self.stamp = self.store.stamp
 

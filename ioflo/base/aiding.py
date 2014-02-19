@@ -102,7 +102,7 @@ class Timer(object):
         """Returns time remaining in seconds (fractional) before expires.
            returns zero if it has already expired
         """
-        return max(0.0, self.stop - time.time()) 
+        return max(0.0, self.stop - time.time())
     remaining = property(getRemaining, doc = 'Remaining time.')
 
     def getExpired(self):
@@ -114,7 +114,7 @@ class Timer(object):
 
     def restart(self,start = None, duration = None):
         """Starts timer at start time secs for duration secs.
-           (fractional from epoc) 
+           (fractional from epoc)
            If start arg is missing then restarts at current time
            If duration arg is missing then restarts for current duration
         """
@@ -123,7 +123,7 @@ class Timer(object):
         else: #use current time
             self.start = time.time()
 
-        if duration != None: 
+        if duration != None:
             self.duration = abs(duration) #must be non negative
         #Otherwise keep old duration
 
@@ -171,25 +171,25 @@ class SerialNB(object):
     def open(self, device = '', speed = None, canonical = True):
         """ Opens fd on serial port in non blocking mode.
 
-            device is the serial device path name or 
+            device is the serial device path name or
             if '' then use os.ctermid() which
             returns path name of console usually '/dev/tty'
- 
+
             canonical sets the mode for the port. Canonical means no characters
             available until a newline
- 
+
             os.O_NONBLOCK makes non blocking io
             os.O_RDWR allows both read and write.
             os.O_NOCTTY don't make this the controlling terminal of the process
             O_NOCTTY is only for cross platform portability BSD never makes it the
             controlling terminal
- 
+
             Don't use print at same time since it will mess up non blocking reads.
- 
+
             Default is canonical mode so no characters available until newline
             need to add code to enable  non canonical mode
- 
-            It appears that canonical mode is default only applies to the console. 
+
+            It appears that canonical mode is default only applies to the console.
             For other serial devices the characters are available immediately so
             have to explicitly set termios to canonical mode.
         """
@@ -216,11 +216,11 @@ class SerialNB(object):
             #to set size have to mask out(clear) CSIZE bits and or in size
             settings[cflag] = ((settings[cflag] & ~termios.CSIZE) | termios.CS8)
             # no parity clear PARENB
-            settings[cflag] = (settings[cflag] & ~termios.PARENB) 
+            settings[cflag] = (settings[cflag] & ~termios.PARENB)
             #one stop bit clear CSTOPB
-            settings[cflag] = (settings[cflag] & ~termios.CSTOPB) 
+            settings[cflag] = (settings[cflag] & ~termios.CSTOPB)
             #no hardware handshake clear crtscts
-            settings[cflag] = (settings[cflag] & ~termios.CRTSCTS) 
+            settings[cflag] = (settings[cflag] & ~termios.CRTSCTS)
 
             if canonical:
                 settings[lflag] = (settings[lflag] | termios.ICANON)
@@ -237,14 +237,14 @@ class SerialNB(object):
             #print settings
 
     def close(self):
-        """Closes fd. 
+        """Closes fd.
 
         """
         if self.fd:
             os.close(self.fd)
 
     def get(self,bs = 80):
-        """Gets nonblocking characters from serial device up to bs characters 
+        """Gets nonblocking characters from serial device up to bs characters
            including newline.
 
            Returns empty string if no characters available else returns all available.
@@ -253,7 +253,7 @@ class SerialNB(object):
         line = ''
         try:
             line = os.read(self.fd, bs)  #if no chars available generates exception
-        except OSError, ex1:  #ex1 is the target instance of the exception            
+        except OSError, ex1:  #ex1 is the target instance of the exception
             if ex1.errno == errno.EAGAIN: #BSD 35, Linux 11
                 pass #No characters available
             else:
@@ -312,7 +312,7 @@ class ConsoleNB(object):
 
 
     def close(self):
-        """Closes fd. 
+        """Closes fd.
 
         """
         if self.fd:
@@ -347,8 +347,8 @@ class ConsoleNB(object):
         """
         os.write(self.fd, data)
 
-class SocketNB(object):
-    """Class to manage non blocking reads from socket.
+class SocketUdpNb(object):
+    """Class to manage non blocking reads and writes from UDP socket.
 
        Opens non blocking socket
        Use instance method close to close socket
@@ -356,7 +356,7 @@ class SocketNB(object):
        Needs socket module
     """
 
-    def __init__(self, ha=None, host = '', port = 55000, bufsize = 1024, 
+    def __init__(self, ha=None, host = '', port = 55000, bufsize = 1024,
                  path = '', log = False):
         """Initialization method for instance.
 
@@ -425,9 +425,9 @@ class SocketNB(object):
         except socket.error, e:
             console.terse("socket.error = {0}\n".format(e))
             return False
-        
+
         self.ha = self.ss.getsockname() #get resolved ha after bind
-        self.host, self.port = self.ha
+        #self.host, self.port = self.ha
 
         if self.log:
             if not self.openLogs():
@@ -441,7 +441,7 @@ class SocketNB(object):
         return self.open()
 
     def close(self):
-        """Closes  socket. 
+        """Closes  socket.
 
         """
         if self.ss:
@@ -451,7 +451,7 @@ class SocketNB(object):
         self.closeLogs()
 
     def receive(self):
-        """Perform non blocking read on  socket. 
+        """Perform non blocking read on  socket.
 
            returns tuple of form (data, sa)
            if no data then returns ('',None)
@@ -459,7 +459,7 @@ class SocketNB(object):
         """
         try:
             #sa = source address tuple (sourcehost, sourceport)
-            data, sa = self.ss.recvfrom(self.bs) 
+            data, sa = self.ss.recvfrom(self.bs)
 
             message = "Server at {0} received {1} from {2}\n".format(
                 str(self.ha),data, str(sa))
@@ -473,15 +473,15 @@ class SocketNB(object):
             if ex1.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
                 return ('',None) #receive has nothing empty string for data
             else:
-                raise #re raise exception ex1            
-            
+                raise #re raise exception ex1
+
     def send(self,data, da):
-        """Perform non blocking send on  socket. 
+        """Perform non blocking send on  socket.
 
            data is string
            da is destination address tuple (destHost, destPort)
 
-        """  
+        """
         try:
             result = self.ss.sendto(data,da) #result is number of bytes sent
         except socket.error, e:
@@ -721,7 +721,7 @@ def IsIdentifier(s):
        if reo.match('_hello') is not None: #matched returns match object or None
 
        #re.match caches compiled pattern string compile so faster after first
-       if re.match(r'^[a-zA-Z_]\w*$', '_hello') 
+       if re.match(r'^[a-zA-Z_]\w*$', '_hello')
 
        reo = re.compile(r'^[a-zA-Z_][a-zA-Z_0-9]*$')
        reo.match(
@@ -769,7 +769,7 @@ def Delta(desired, actual, wrap = 180.0):
 
 
 def Wrap2(angle, wrap = 180.0):
-    """Wrap2 = (2 sided one positive one negative) wrap of angle to 
+    """Wrap2 = (2 sided one positive one negative) wrap of angle to
        signed interval [-wrap, + wrap] wrap is half circle
        if wrap = 0 then don't wrap
        angle may be positive or negative
@@ -777,12 +777,12 @@ def Wrap2(angle, wrap = 180.0):
 
        Wrap preserves convention so angle can be in compass or Cartesian coordinates
 
-       Uses property of python modulo operator that implement true 
+       Uses property of python modulo operator that implement true
        clock or circular arithmetic as location on circle
        distance % circumference = location
-       if circumference positive then locations postive sign, 
+       if circumference positive then locations postive sign,
              magnitues increase CW  (CW 0 1 2 3 ... 0)
-       if circumference negative then locations negative sign, 
+       if circumference negative then locations negative sign,
              magnitudes increase CCW  (CCW 0 -1 -2 -3 ... 0)
 
        if distance positive then wrap distance CW around circle
@@ -803,7 +803,7 @@ def Wrap2(angle, wrap = 180.0):
 
 
 def MoveByHSD(heading = 0.0, speed = 1.0, duration = 0.0):
-    """ 
+    """
        Returns change in position after moving on heading at speed for duration
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
     """
@@ -812,9 +812,9 @@ def MoveByHSD(heading = 0.0, speed = 1.0, duration = 0.0):
 
     return (deltaNorth, deltaEast)
 
-def MoveToHSD(north = 0.0, east = 0.0, 
+def MoveToHSD(north = 0.0, east = 0.0,
               heading = 0.0, speed = 1.0, duration = 0.0):
-    """ 
+    """
        Returns new position after moving on heading at speed for duration
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
 
@@ -828,7 +828,7 @@ def MoveToHSD(north = 0.0, east = 0.0,
 
 
 def RotateFSToNE(heading = 0.0, forward = 0.0, starboard = 0.0):
-    """ 
+    """
        rotates Forward Starboard vector to North East vector
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
 
@@ -842,7 +842,7 @@ def RotateFSToNE(heading = 0.0, forward = 0.0, starboard = 0.0):
     return (north,east)
 
 def RotateNEToFS(heading = 0.0, north = 0.0, east = 0.0):
-    """ 
+    """
        Rotate north east vector to Forward Starboard
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
 
@@ -857,10 +857,10 @@ def RotateNEToFS(heading = 0.0, north = 0.0, east = 0.0):
     return (forward,starboard)
 
 
-def AlongCrossTrack(track = 0.0, north = 0.0, east = 0.0, 
+def AlongCrossTrack(track = 0.0, north = 0.0, east = 0.0,
                     mag = None, heading = None):
-    """ 
-       Returns as a tuple, the along and cross track components  of the vector 
+    """
+       Returns as a tuple, the along and cross track components  of the vector
        given by (north, east) where the track is from origin to (n, e)
        or by mag (magnitude) heading (degrees) if provided
 
@@ -904,15 +904,15 @@ def AlongCrossTrack(track = 0.0, north = 0.0, east = 0.0,
 
     return (A,C)
 
-def CrabSpeed(track = 0.0,  speed = 2.0, north = 0.0, east = 0.0, 
+def CrabSpeed(track = 0.0,  speed = 2.0, north = 0.0, east = 0.0,
               mag = None, heading = None):
-    """ 
-       Returns a tuple of the compensating (crabbed) course angle (in degrees) 
+    """
+       Returns a tuple of the compensating (crabbed) course angle (in degrees)
        and the delta crab angle
        and the resulting along track speed (including current and cluster).
        The crabbed course is that needed to compensate for the current
        given by (east, north) or mag (magnitude) heading (degrees) if provided
-       Where the resulting along track speed is the projection of 
+       Where the resulting along track speed is the projection of
        the compensating course at speed onto the desired course
 
        track is the desired track course ( nav angle degrees)
@@ -944,7 +944,7 @@ def CrabSpeed(track = 0.0,  speed = 2.0, north = 0.0, east = 0.0,
     B = speed * (math.sin(DEGTORAD * crab) * math.sin(DEGTORAD * track) +
                  math.cos(DEGTORAD * crab) * math.cos(DEGTORAD * track)  )
 
-    #print B                 
+    #print B
 
     return (crab, delta, B + A)
 
@@ -973,7 +973,7 @@ def DotProduct(a,b):
 
 def PerpProduct2D(a,b):
     """Computes the the 2D perpendicular product of sequences a and b.
-       The convention is a perp b. 
+       The convention is a perp b.
        The product is:
           positive if b is to the left of a
           negative if b is to the right of a
@@ -984,7 +984,7 @@ def PerpProduct2D(a,b):
 
 def DistancePointToTrack2D(a,track, b):
     """Computes the signed distance between point b and  the track ray defined by
-       point a and track azimuth track 
+       point a and track azimuth track
        a and b are sequences x (east) coord is  index 0, y (north) coord is index 1
        track in degrees from north
        x = east
@@ -1003,7 +1003,7 @@ def DistancePointToTrack2D(a,track, b):
 
 def SpheroidLLLLToDNDE(a,b):
     """Computes the flat earth approx of change in north east position meters
-       for a change in lat lon location on spheroid.   
+       for a change in lat lon location on spheroid.
        from location lat0 lon0 to location lat1 lon1
        point lat0 lon0  in total fractional degrees north east positive
        point lat1, lon1 in total fractional degrees north east positive
@@ -1017,7 +1017,7 @@ def SpheroidLLLLToDNDE(a,b):
 
 def SphereLLLLToDNDE(lat0,lon0,lat1,lon1):
     """Computes the flat earth approx of change in north east position meters
-       for a change in lat lon location on sphere.   
+       for a change in lat lon location on sphere.
        from location lat0 lon0 to location lat1 lon1
        point lat0 lon0  in total fractional degrees north east positive
        point lat1, lon1 in total fractional degrees north east positive
@@ -1026,23 +1026,23 @@ def SphereLLLLToDNDE(lat0,lon0,lat1,lon1):
     """
     r = 6366710.0 #radius of earth in meters = 1852 * 60 * 180/pi
 
-    dlat = (lat1 - lat0) 
-    dlon = (lon1 - lon0) 
+    dlat = (lat1 - lat0)
+    dlon = (lon1 - lon0)
 
     avlat = (lat1 + lat0)/2.0
     #avlat = lat0
 
-    dn = r * dlat * DEGTORAD 
+    dn = r * dlat * DEGTORAD
     de = r * dlon * DEGTORAD * math.cos( DEGTORAD * avlat)
 
     return (dn, de)
 
 def SphereLLByDNDEToLL(lat0,lon0,dn,de):
     """Computes new lat lon location on sphere
-       from the flat earth approx of  change in position dn (north) meters 
+       from the flat earth approx of  change in position dn (north) meters
        and de (east) meters from the given location lat0 lon0
        point lat0 lon0  in total fractional degrees north east positive
-       returns tuple (lat1,lon1) 
+       returns tuple (lat1,lon1)
        Uses sphere 1 nm = 1 minute 1852 meters per nautical mile
     """
     r = 6366710.0 #radius of earth in meters = 1852 * 60 * 180/pi
@@ -1067,7 +1067,7 @@ def SphereLLbyRBtoLL(lat0,lon0,range,bearing):
         from the flat earth approx of  change in range meters at bearing degrees from
          from the given location lat0 lon0
        point lat0 lon0  in total fractional degrees north east positive
-       returns tuple (lat1,lon1) 
+       returns tuple (lat1,lon1)
        Uses sphere 1 nm = 1 minute 1852 meters per nautical mile
     """
     r = 6366710.0 #radius of earth in meters = 1852 * 60 * 180/pi
@@ -1092,7 +1092,7 @@ def SphereLLbyRBtoLL(lat0,lon0,range,bearing):
 
 def SphereLLLLToRB(lat0,lon0,lat1,lon1):
     """Computes the flat earth approx of change in range meters bearing degrees
-       for a change in lat lon location.   
+       for a change in lat lon location.
        from location lat0 lon0 to location lat1 lon1
        point lat0 lon0  in total fractional degrees north east positive
        point lat1, lon1 in total fractional degrees north east positive
@@ -1101,13 +1101,13 @@ def SphereLLLLToRB(lat0,lon0,lat1,lon1):
     """
     r = 6366710.0 #radius of earth in meters = 1852 * 60 * 180/pi
 
-    dlat = (lat1 - lat0) 
-    dlon = (lon1 - lon0) 
+    dlat = (lat1 - lat0)
+    dlon = (lon1 - lon0)
 
     avlat = (lat1 + lat0)/2.0
     #avlat = lat0
 
-    dn = r * dlat * DEGTORAD 
+    dn = r * dlat * DEGTORAD
     de = r * dlon * DEGTORAD * math.cos( DEGTORAD * avlat)
 
     range = (dn * dn + de * de) ** 0.5
@@ -1117,7 +1117,7 @@ def SphereLLLLToRB(lat0,lon0,lat1,lon1):
 
 
 def RBToDNDE(range, bearing):
-    """Computes change in north east position for an offset 
+    """Computes change in north east position for an offset
        of range (meters) at bearing (degrees)
        returns tuple(delta north, delta East)
     """
@@ -1127,7 +1127,7 @@ def RBToDNDE(range, bearing):
     return (dn, de)
 
 def DNDEToRB(dn ,de):
-    """Computes relative range (meters) and bearing (degrees)for change 
+    """Computes relative range (meters) and bearing (degrees)for change
        in position of north (meters) east (meters)
        returns tuple(Range, Bearing)
     """
@@ -1167,26 +1167,26 @@ def FracDegToDegMin(lat, lon):
        lonMin are in signed minutes East positive West Negative
     """
     latDeg = int(lat)
-    latMin = (lat - latDeg) * 60.0 
+    latMin = (lat - latDeg) * 60.0
 
     lonDeg = int(lon)
-    lonMin = (lon - lonDeg) * 60.0 
+    lonMin = (lon - lonDeg) * 60.0
 
     return (latDeg, latMin, lonDeg, lonMin)
 
 def FracDegToHuman(lat, lon):
     """Converts location in format of total fractional degrees to
-       tuple (latDM, lonDM) of human friendly string of form  
+       tuple (latDM, lonDM) of human friendly string of form
        latDegXlatMin where X is N if lat positive and S if lat negative
           latDeg in units of integer degrees [0 ,90]
           lat Min in units of fractinal minutes [0.0, 60.0)
-       and 
+       and
        lonDegXlonMin where X is E if lon positive and W if lon negative
           lonDeg in units of integer degrees [0 ,180]
           lon Min in units of fractinal minutes [0.0, 60.0)
 
        lat is in signed fractional degrees positive = North, negative = South
-          [-90, 90]  
+          [-90, 90]
        lon in in signed fractional dregrees positive = East, negative = West
           [-180, 180]
 
@@ -1207,24 +1207,24 @@ def FracDegToHuman(lat, lon):
     return (latDM, lonDM)
 
 def HumanLatToFracDeg(latDM):
-    """Converts latDM  in human friendly string of form  
+    """Converts latDM  in human friendly string of form
        latDegXlatMin where X is N if lat positive and S if lat negative
           latDeg in units of integer degrees [0 ,90]
           lat Min in units of fractinal minutes [0.0, 60.0)
 
-       to lat in total fractional degrees 
+       to lat in total fractional degrees
 
        lat is in signed fractional degrees positive = North, negative = South
-          [-90, 90]  
+          [-90, 90]
 
        Does not handle wrapping lat over poles or lon past halfway round
     """
-    latDM = latDM.upper() 
-    if ('N' in latDM): 
+    latDM = latDM.upper()
+    if ('N' in latDM):
         (degrees,minutes) = latDM.split('N')
         lat = int(degrees) + (float(minutes) / 60.0)
 
-    elif ('S' in latDM): 
+    elif ('S' in latDM):
         (degrees,minutes) = latDM.split('S')
         lat = - (int(degrees) + (float(minutes) / 60.0))
 
@@ -1234,24 +1234,24 @@ def HumanLatToFracDeg(latDM):
     return (lat)
 
 def HumanLonToFracDeg(lonDM):
-    """Converts  lonDM  in human friendly string of form  
+    """Converts  lonDM  in human friendly string of form
        lonDegXlonMin where X is E if lon positive and W if lon negative
           lonDeg in units of integer degrees [0 ,180]
           lon Min in units of fractinal minutes [0.0, 60.0)
 
-       to lon in total fractional degrees 
+       to lon in total fractional degrees
 
        lon in in signed fractional dregrees positive = East, negative = West
           [-180, 180]
 
        Does not handle wrapping lat over poles or lon past halfway round
     """
-    lonDM = lonDM.upper() 
-    if ('E' in lonDM): 
+    lonDM = lonDM.upper()
+    if ('E' in lonDM):
         (degrees,minutes) = lonDM.split('E')
         lon = int(degrees) + (float(minutes) / 60.0)
 
-    elif ('W' in lonDM): 
+    elif ('W' in lonDM):
         (degrees,minutes) = lonDM.split('W')
         lon = - (int(degrees) + (float(minutes) / 60.0))
 
@@ -1265,7 +1265,7 @@ def HumanToFracDeg(latDM, lonDM):
     """Converts  pair of coordinates  in human friendly strings of form   DegXMin to
        total fractional degrees where
        the result is positive if X is N or E and
-       the result is negative if X is S or W 
+       the result is negative if X is S or W
 
        Does not handle wrapping over poles or past halfway round
     """
@@ -1277,7 +1277,7 @@ def HumanLLToFracDeg(hdm):
     """Converts  a coordinate  in human friendly string of form   DegXMin to
        total fractional degrees where
        the result is positive if X is N or E and
-       the result is negative if X is S or W 
+       the result is negative if X is S or W
 
        Does not handle wrapping over poles or past halfway round
     """
@@ -1296,7 +1296,7 @@ def HumanLLToFracDeg(hdm):
     raise ValueError, "Bad format for lat or lon '%s'" % (hdm)
 
 def Midpoint(latDM0, lonDM0, latDM1, lonDM1):
-    """Computes the midpoint  of a trackline between 
+    """Computes the midpoint  of a trackline between
        (latDM0,lonDM0) and (latDM1,lonDM1)
        arguments are in human friendly degrees fractional minutes format
        40N35.67  70W56.45
@@ -1315,7 +1315,7 @@ def Midpoint(latDM0, lonDM0, latDM1, lonDM1):
     return (latDM, lonDM)
 
 def Endpoint(latDM0, lonDM0, range, bearing):
-    """Computes the endpoint  track from latDM, lonDm of range at bearing 
+    """Computes the endpoint  track from latDM, lonDm of range at bearing
 
        arguments are in human friendly degrees fractional minutes format
        40N35.67  70W56.45
@@ -1365,7 +1365,7 @@ def Blend1(d = 0.0, u = 1.0, s = 1.0):
     a = float(abs(d)) #symmetric about origin
 
     if a >= v or v == 0.0 : #outside uncertainty radius accept delta
-        b = 1.0 
+        b = 1.0
     elif a < v/2.0: # inside 1/2 uncertainty radius closer to 0
         b = 2.0 * (a * a)/(v * v)
     else: #greater than 1/2 uncertainty radius closer to 1
@@ -1414,15 +1414,15 @@ def PackByte(format = '8',fields = [0x0000]):
        char in format is the corresponding bit field length.
        Assumes unsigned fields values.
        Assumes network big endian so first fields element is high order bits.
-       Format string is number of bits per bit field 
+       Format string is number of bits per bit field
        Fields with length of 1 are treated as has having boolean field values
           that is,   nonzero is True and packs as a 1
-       for 2-8 length bit fields the field element is truncated 
+       for 2-8 length bit fields the field element is truncated
        to the number of low order bits in the bit field
        if sum of number of bits in format less than 8 last bits are padded
        if sum of number of bits in format greater than 8 returns exception
-       to pad just use 0 value in source. 
-       example 
+       to pad just use 0 value in source.
+       example
        PackByte("1322",(True,4,0,3)). returns 0xc3
     """
 
@@ -1466,7 +1466,7 @@ def UnpackByte(format = '11111111', byte = 0x00, boolean = True):
        Each char of format is a bit field length.
        returns unsigned fields values.
        Assumes network big endian so first format is high order bits.
-       Format string is number of bits per bit field 
+       Format string is number of bits per bit field
        If boolean parameter is True then return boolean values for
           bit fields of length 1
 
@@ -1476,7 +1476,7 @@ def UnpackByte(format = '11111111', byte = 0x00, boolean = True):
        if sum of number of bits in format greater than 8 returns exception
        only low order byte of byte is used.
 
-       example 
+       example
        UnpackByte("1322",0xc3, False ) returns (1,4,0,3)
        UnpackByte("1322",0xc3, True ) returns (True,4,0,3)
     """
@@ -1515,7 +1515,7 @@ unpackByte = UnpackByte # alias
 
 def Hexize(s = ''):
     """Converts string s into hex format
-       Where each char (byte) in string s is expanded into the 2 charater hex 
+       Where each char (byte) in string s is expanded into the 2 charater hex
        equivalent of the decimal value of each byte
        returns the expanded hex version of the string
     """
@@ -1600,7 +1600,7 @@ def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
     for i in range(len(s)):
         ps += ("%02x" % ord(s[i]))
         #add space or dot if not end of line or end of string
-        if ((i + 1) % line) and ((i+1) % slen): 
+        if ((i + 1) % line) and ((i+1) % slen):
             if not ((i + 1) % chunk): #end of chunk
                 ps += ' ' #space between chunks
             else:
@@ -1633,7 +1633,7 @@ def CRC16(inpkt):
        needs struct module
     """
     poly = 0x1021  # Generator Polynomial
-    crc = 0xffff        
+    crc = 0xffff
     for element in inpkt :
         i = 0
         byte = ord(element)
@@ -1641,7 +1641,7 @@ def CRC16(inpkt):
             crcbit = 0x0
             if (crc & 0x8000):
                 crcbit = 0x01
-            databit = 0x0   
+            databit = 0x0
             if (byte & 0x80):
                 databit = 0x01
             crc = crc << 1
@@ -1670,18 +1670,18 @@ def CRC64(inpkt) :
         while i < 8 :
             topbit = 0x0
             if (crctop & 0x80000000):
-                topbit = 0x01        
-            databit = 0x0   
+                topbit = 0x01
+            databit = 0x0
             if (byte & 0x80):
                 databit = 0x01
             crctop = crctop << 1
             crctop = crctop & 0xffffffff
             botbit = 0x0
             if (crcbot & 0x80000000):
-                botbit = 0x01  
+                botbit = 0x01
             crctop = crctop | botbit
             crcbot = crcbot << 1
-            crcbot = crcbot & 0xffffffff        
+            crcbot = crcbot & 0xffffffff
             if (topbit != databit):
                 crctop = crctop ^ polytop
                 crcbot = crcbot ^ polybot
@@ -1697,7 +1697,7 @@ crc64 = CRC64 # alias
 def Ocfn(filename, openMode = 'r+'):
     """Atomically open or create file from filename.
 
-       If file already exists, Then open file using openMode 
+       If file already exists, Then open file using openMode
        Else create file using write update mode
        Returns file object
     """
@@ -1708,8 +1708,8 @@ def Ocfn(filename, openMode = 'r+'):
         if ex.errno == errno.EEXIST:
             newfile = open(filename, openMode)
         else:
-            raise 
-    return newfile 
+            raise
+    return newfile
 
 def Load(file = ""):
     """Loads object from pickled file, returns object"""
@@ -1760,12 +1760,12 @@ def TestConsoleNB():
 
 
 def TestSocketNB():
-    """Class SocketNB self test """
+    """Class SocketUdpNb self test """
     try:
-        print "Testing SocketNB"
-        serverA = SocketNB(port = 6101)
+        print "Testing SocketUdpNb"
+        serverA = SocketUdpNb(port = 6101)
         serverA.open()
-        serverB = SocketNB(port = 6102)
+        serverB = SocketUdpNb(port = 6102)
         serverB.open()
 
         serverA.send("A sends to B",serverB.ha)
