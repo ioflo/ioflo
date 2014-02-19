@@ -16,17 +16,15 @@ import re
 import string
 from collections import deque
 
-
 from .globaling import *
 
 from .consoling import getConsole
 console = getConsole()
 
-
-class fifo(deque):  #new-style class to add put get methods
+class Fifo(deque):  #new-style class to add put get methods
     """ Extends deque to support more convenient FIFO queue access
 
-       for any python sequence to determin if it is empty just use "if s:"
+       for any python sequence to determine if it is empty just use "if s:"
 
        local methods
        .put inserts non-None item at tail, back (right side) of deque
@@ -65,42 +63,40 @@ class fifo(deque):  #new-style class to add put get methods
 
         return item
 
-
-
 class Timer(object):
-    """Class to manage real elaspsed time.  needs time module
-       attributes:
-       .duration = time duration of timer start to stop
-       .start = time started
-       .stop = time when timer expires
+    """ Class to manage real elaspsed time.  needs time module
+        attributes:
+        .duration = time duration of timer start to stop
+        .start = time started
+        .stop = time when timer expires
 
-       properties:
-       .elaspsed = time elasped since start
-       .remaining = time remaining until stop
-       .expired = True if expired, False otherwise
+        properties:
+        .elaspsed = time elasped since start
+        .remaining = time remaining until stop
+        .expired = True if expired, False otherwise
 
-       methods:
-       .extend() = extends/shrinks timer duration
-       .repeat() = restarts timer at last .stop so no time lost
-       .restart() = restarts timer
+        methods:
+        .extend() = extends/shrinks timer duration
+        .repeat() = restarts timer at last .stop so no time lost
+        .restart() = restarts timer
     """
 
     def __init__(self, duration = 0.0):
-        """Initialization method for instance.
-           duration in seconds (fractional)
+        """ Initialization method for instance.
+            duration in seconds (fractional)
         """
         self.restart(start = time.time(), duration = duration)
 
     def getElapsed(self): #for property
-        """Computes elapsed time in seconds (fractional) since start.
-           if zero then hasn't started yet
+        """ Computes elapsed time in seconds (fractional) since start.
+            if zero then hasn't started yet
         """
         return abs(time.time() - self.start)
     elapsed = property(getElapsed, doc = 'Elapsed time.')
 
     def getRemaining(self):# for property
-        """Returns time remaining in seconds (fractional) before expires.
-           returns zero if it has already expired
+        """ Returns time remaining in seconds (fractional) before expires.
+            returns zero if it has already expired
         """
         return max(0.0, self.stop - time.time())
     remaining = property(getRemaining, doc = 'Remaining time.')
@@ -113,10 +109,10 @@ class Timer(object):
     expired = property(getExpired, doc = 'True if expired, False otherwise')
 
     def restart(self,start = None, duration = None):
-        """Starts timer at start time secs for duration secs.
-           (fractional from epoc)
-           If start arg is missing then restarts at current time
-           If duration arg is missing then restarts for current duration
+        """ Starts timer at start time secs for duration secs.
+            (fractional from epoc)
+            If start arg is missing then restarts at current time
+            If duration arg is missing then restarts for current duration
         """
         if start != None:
             self.start = abs(start) #must be non negative
@@ -132,18 +128,18 @@ class Timer(object):
         return (self.start, self.stop)
 
     def repeat(self):
-        """restarts timer at stop so no time lost
+        """ Restarts timer at stop so no time lost
 
         """
         return self.restart(start = self.stop)
 
     def extend(self, extension = None):
-        """Extends timer duration for additional extension seconds (fractional).
-           Useful so as not to lose time when  need more/less time on timer
+        """ Extends timer duration for additional extension seconds (fractional).
+            Useful so as not to lose time when  need more/less time on timer
 
-           If extension negative then shortens existing duration
-           If extension arg missing then extends for the existing duration
-           effectively doubling the time
+            If extension negative then shortens existing duration
+            If extension arg missing then extends for the existing duration
+            effectively doubling the time
 
         """
         if extension == None: #otherwise extend by .duration or double
@@ -1757,7 +1753,6 @@ def TestConsoleNB():
         console.put("You typed: " + x)
     finally:
         console.close()
-
 
 def TestSocketNB():
     """Class SocketUdpNb self test """

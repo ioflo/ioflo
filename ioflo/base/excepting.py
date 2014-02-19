@@ -95,13 +95,13 @@ class CloneError(Exception):
     """
     def __init__(self, message = None):
         self.message = message #description of error
-        
+
         self.args = (message)
 
 
     def __str__(self):
         return ("%s.\n" % (self.message, ))
-    
+
 class RegisterError(Exception):
     """Used to indicate error in Registry
 
@@ -116,14 +116,13 @@ class RegisterError(Exception):
     def __str__(self):
         return ("{0}: {1}.\n".format(self.__class__.__name__, self.message))
 
-
 def Test():
     """Module self test
 
 
 
     """
-    
+
     raise ParameterError("Expected something else", 'whatever', 1)
 
 
