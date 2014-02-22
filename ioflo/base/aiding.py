@@ -149,6 +149,95 @@ class Timer(object):
 
         return self.restart(start = self.start, duration = duration)
 
+class StoreTimer(object):
+    """ Class to manage realtive Store based time.
+        Uses Store instance .stamp attribute as current time
+        Attributes:
+        .duration = time duration of timer start to stop
+        .start = time started
+        .stop = time when timer expires
+
+        properties:
+        .elaspsed = time elasped since start
+        .remaining = time remaining until stop
+        .expired = True if expired, False otherwise
+
+        methods:
+        .extend() = extends/shrinks timer duration
+        .repeat() = restarts timer at last .stop so no time lost
+        .restart() = restarts timer
+    """
+
+    def __init__(self, store, duration = 0.0):
+        """ Initialization method for instance.
+            store is reference to Store instance
+            duration in seconds (fractional)
+        """
+        self.store = store
+        self.restart(start = store.stamp, duration = duration)
+
+    def getElapsed(self): #for property
+        """ Computes elapsed time in seconds (fractional) since start.
+            if zero then hasn't started yet
+        """
+        return abs(self.store.stamp - self.start)
+    elapsed = property(getElapsed, doc = 'Elapsed time.')
+
+    def getRemaining(self):# for property
+        """ Returns time remaining in seconds (fractional) before expires.
+            returns zero if it has already expired
+        """
+        return max(0.0, self.stop - self.store.stamp)
+    remaining = property(getRemaining, doc = 'Remaining time.')
+
+    def getExpired(self):
+        if (self.store.stamp >= self.stop):
+            return True
+        else:
+            return False
+    expired = property(getExpired, doc = 'True if expired, False otherwise')
+
+    def restart(self,start = None, duration = None):
+        """ Starts timer at start time secs for duration secs.
+            (fractional from epoc)
+            If start arg is missing then restarts at current time
+            If duration arg is missing then restarts for current duration
+        """
+        if start != None:
+            self.start = abs(start) #must be non negative
+        else: #use current time
+            self.start = self.store.stamp
+
+        if duration != None:
+            self.duration = abs(duration) #must be non negative
+        #Otherwise keep old duration
+
+        self.stop = self.start + self.duration
+
+        return (self.start, self.stop)
+
+    def repeat(self):
+        """ Restarts timer at stop so no time lost
+
+        """
+        return self.restart(start = self.stop)
+
+    def extend(self, extension = None):
+        """ Extends timer duration for additional extension seconds (fractional).
+            Useful so as not to lose time when  need more/less time on timer
+
+            If extension negative then shortens existing duration
+            If extension arg missing then extends for the existing duration
+            effectively doubling the time
+
+        """
+        if extension == None: #otherwise extend by .duration or double
+            extension = self.duration
+
+        duration = self.duration + extension
+
+        return self.restart(start = self.start, duration = duration)
+
 class SerialNB(object):
     """ Class to manage non blocking reads from serial port.
 

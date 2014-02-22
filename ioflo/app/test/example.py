@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 """
 Runs alls the example FloScripts
-       
-    
+
+
 """
 import sys
 import os
@@ -32,11 +32,9 @@ def main():
         name, ext = os.path.splitext(os.path.basename(plan))
         ioflo.app.run.run(  name=name,
                             filename=plan,
-                            period=0.0625, 
+                            period=0.0625,
                             verbose=2,
                             realtime=False,)
-        
-    
 
 if __name__ == '__main__':
     main()
