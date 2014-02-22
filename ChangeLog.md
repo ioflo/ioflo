@@ -2,6 +2,15 @@
 CHANGE LOG
 -------------------
 -----------
+20140222
+---------
+v0.9.07
+
+Added StoreTimer utility class to aiding.py.
+Timer that keeps time relative to Store.stamp
+
+
+-----------
 20140219
 ---------
 v0.9.06
