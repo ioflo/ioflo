@@ -11,7 +11,7 @@ from .odicting import odict
 from .globaling import *
 from . import excepting
 from . import registering
-from . import storing 
+from . import storing
 from . import tasking
 
 from .consoling import getConsole
@@ -25,7 +25,7 @@ class Framer(tasking.Tasker):
         inherited instance attributes
             .name = unique name for machine
             .store = data store
-  
+
             .period = desired time in seconds between runs must be non negative, zero means asap
             .stamp = time of last outline change beginning time to compute elapsed time
             .status = operational status of tasker
@@ -39,26 +39,26 @@ class Framer(tasking.Tasker):
             .done = auxiliary completion state True or False when an auxiliary
             .elapsed = elapsed time from outline change
             .elapsedShr = share where .elapsed is stored for logging and need checks
-  
+
             .recurred = number of completed recurrences of the current outline
                      recurred is zeroed upon entry
-                     during first iteration recurred is 0 
+                     during first iteration recurred is 0
                      during second iteration (before trans evaluated) recurred is 1
                      so a trans check on recurred == 2 means its already iterated twice
             .recurredShr = share where recurred is stored for logging and need checks
-  
+
             .first = first frame (default frame to start at)
             .active = active frame
             .actives = active outline list of frames
             .activeShr = share where .active name is stored for logging
-  
+
             .human = human readable version of active outline
             .humanShr = share where .human is stored for logging
-  
+
             .frameNames = frame name registry , name space of frame names
-            .frameCounter = frame name registry counter 
+            .frameCounter = frame name registry counter
     """
-    #Counter = 0  
+    #Counter = 0
     #Names = {}
 
     def __init__(self, **kw):
@@ -92,32 +92,32 @@ class Framer(tasking.Tasker):
         self.human = '' #human readable version of actives outline
         path = 'framer.' + self.name + '.state.human'
         self.humanShr = self.store.create(path)
-        self.humanShr.update(value = self.human)        
+        self.humanShr.update(value = self.human)
 
-        self.frameNames = {} #frame name registry for framer. name space of frame names
+        self.frameNames = odict() #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
-    
+
     def clone(self, index, clones):
         """ Return clone of self with name derived from index
             Assumes that Framer Registry as been assigned to self.store.house
-            
+
         """
         name = "{0}_{1:d}".format(self.name, index)
-        
+
         if name and not REO_IdentPub.match(name):
             msg = "CloneError: Invalid framer name '{0}'.".format(name)
-            raise excepting.CloneError(msg)  
-        
+            raise excepting.CloneError(msg)
+
         if name in Framer.Names:
             msg = "CloneError: Framer '{0}' already exists.".format(name)
             raise excepting.CloneError(msg)
-                
+
         clone = Framer(name=name, store=self.store, period=0.0)
         console.profuse("     Cloning framer {0} to {1}\n".format(self.name, clone.name))
         clone.schedule = AUX
         clone.first = self.first.name # resolve later
         clones[self.name] = (self, clone)
-        
+
         for frame in self.frameNames.values():
             for aux in frame.auxes:
                 aux.clone(index, clones) # changes clones in place
@@ -127,12 +127,12 @@ class Framer(tasking.Tasker):
     def cloneFrames(self, clone, clones):
         """ Return clone of self with name derived from index
             Assumes that Framer Registry as been assigned to self.store.house
-            
+
         """
         clone.assignFrameRegistry()
         for frame in self.frameNames.values():
             frame.clone(framer=clone, clones=clones) #creates cloned frames in cloned framer registry
-        
+
     def assignFrameRegistry(self):
         """Point Frame class name registry dict and counter to .frameNames
            and .frameCounter.
@@ -183,7 +183,7 @@ class Framer(tasking.Tasker):
         """update the recurred counter and share of framer in current outline
 
         """
-        self.recurred += 1 
+        self.recurred += 1
         self.updateRecurred()
 
     def updateRecurred(self):
@@ -213,14 +213,14 @@ class Framer(tasking.Tasker):
 
                 self.first = Frame.Names[self.first] #replace link name with link
         else:
-            raise excepting.ResolveError("No first frame link", self.name, self.first)        
+            raise excepting.ResolveError("No first frame link", self.name, self.first)
 
     def traceOutlines(self):
         """Trace and assign outlines for each frame in framer
         """
         print "     Tracing outlines for framer %s" % (self.name)
 
-        self.assignFrameRegistry() 
+        self.assignFrameRegistry()
 
         for frame in Frame.Names.values(): #all frames in this framer's name space
             frame.traceOutline()
@@ -272,7 +272,7 @@ class Framer(tasking.Tasker):
         """checks beacts for frames in enters list
            return on first failure do not keep testing
            assumes enters outline in top down order
-           
+
         """
         console.profuse("{0}Check enters of {1} Framer {2}\n".format(
             '    ' if self.schedule == AUX or self.schedule == SLAVE else '',
@@ -298,7 +298,7 @@ class Framer(tasking.Tasker):
         console.profuse("{0}Enter All {1} Framer {2}\n".format(
             '    ' if self.schedule == AUX or self.schedule == SLAVE else '',
             ScheduleNames[self.schedule],
-            self.name))      
+            self.name))
 
         self.done = False #reset done state
         self.activate(self.first)
@@ -332,7 +332,7 @@ class Framer(tasking.Tasker):
         console.profuse("{0}Recur {1} Framer {2}\n".format(
             '    ' if self.schedule == AUX or self.schedule == SLAVE else '',
             ScheduleNames[self.schedule],
-            self.name))      
+            self.name))
 
         for frame in self.actives:  #recur actions top to bottom so all actions get run before trans
             frame.recur()
@@ -348,7 +348,7 @@ class Framer(tasking.Tasker):
         console.profuse("{0}Segue {1} Framer {2}\n".format(
             '    ' if self.schedule == AUX or self.schedule == SLAVE else '',
             ScheduleNames[self.schedule],
-            self.name))      
+            self.name))
 
         self.updateTimer() #this also updates share
         self.updateCounter() #this also updates share
@@ -376,7 +376,7 @@ class Framer(tasking.Tasker):
         console.profuse("{0}Exit All {1} Framer {2}\n".format(
             '    ' if self.schedule == AUX or self.schedule == SLAVE else '',
             ScheduleNames[self.schedule],
-            self.name))      
+            self.name))
 
         exits = self.actives[:]  #make copy of self.actives so can reverse it
         #exits.reverse() #reverse (in place)  so in bottom up order
@@ -386,7 +386,7 @@ class Framer(tasking.Tasker):
 
     def exit(self, exits = []):
         """calls exitActions for frames in exits list
-           assumes exits outline is in top down order 
+           assumes exits outline is in top down order
            so reverses it to bottom up
         """
         exits.reverse()
@@ -395,7 +395,7 @@ class Framer(tasking.Tasker):
 
     def rexit(self, rexits = []):
         """calls exitActions for frames in rexits list
-           assumes rexits outline is in top down order 
+           assumes rexits outline is in top down order
            so reverses it to bottom up
         """
         rexits.reverse()
@@ -458,7 +458,7 @@ class Framer(tasking.Tasker):
            yields next frame on a trans(ition)
         """
         #do any on creation initialization here
-        console.profuse("   Making Framer Runner {0}\n".format(self.name))
+        console.profuse("   Making Framer '{0}' runner\n".format(self.name))
 
         self.status = STOPPED #operational status of framer
         self.desire = STOP
@@ -470,7 +470,7 @@ class Framer(tasking.Tasker):
 
                 status = self.status #for speed
 
-                console.profuse("\n   Iterate Framer {0} with control = {1} status = {2}\n".format(
+                console.profuse("\n   Iterate Framer '{0}' with control = {1} status = {2}\n".format(
                     self.name,
                     ControlNames.get(control, 'Unknown'),
                     StatusNames.get(status, 'Unknown')))
@@ -480,15 +480,15 @@ class Framer(tasking.Tasker):
                         #self.desire = RUN
                         self.segue()
                         self.recur() #.desire may change here
-                        console.profuse("     Ran Framer {0}\n".format(self.name))
+                        console.profuse("     Ran Framer '{0}'\n".format(self.name))
                         self.status = RUNNING
 
                     elif status == STOPPED or status == READIED:
-                        console.profuse("   Need to Start Framer {0}\n".format(self.name))
+                        console.profuse("   Need to Start Framer '{0}'\n".format(self.name))
                         self.desire = START
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer '{0}', bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
@@ -497,33 +497,33 @@ class Framer(tasking.Tasker):
 
                 elif control == READY:
                     if status == STOPPED or status == READIED:
-                        console.profuse("   Attempting Ready Framer {0}\n".format(self.name))
+                        console.profuse("   Attempting Ready Framer '{0}'\n".format(self.name))
 
                         if self.checkStart(): #checks enters
-                            console.profuse("   Readied Framer {0} ...\n".format(self.name))
+                            console.profuse("   Readied Framer '{0}' ...\n".format(self.name))
                             self.status = READIED
                         else:  #checkStart failed
-                            console.profuse("   Failed Ready Framer {0}\n".format(self.name))
+                            console.profuse("   Failed Ready Framer '{0}'\n".format(self.name))
                             self.desire = STOP
                             self.status = STOPPED
 
                     elif status == RUNNING or status == STARTED:
-                        console.profuse("   Framer {0}, aleady Started\n".format(self.name))         
+                        console.profuse("   Framer '{0}', aleady Started\n".format(self.name))
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer '{0}', bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
                         self.desire = ABORT
-                        self.status = ABORTED            
+                        self.status = ABORTED
 
                 elif control == START:
                     if status == STOPPED or status == READIED:
-                        console.profuse("   Attempting Start Framer {0}\n".format(self.name))
+                        console.profuse("   Attempting Start Framer '{0}'\n".format(self.name))
 
                         if self.checkStart(): #checks enters
-                            console.terse("   Starting Framer {0} ...\n".format(self.name))
+                            console.terse("   Starting Framer '{0}' ...\n".format(self.name))
                             msg = "To: %s<%s at %s" % (self.name, self.first.human, self.store.stamp)
                             print msg
                             self.desire = RUN
@@ -536,11 +536,11 @@ class Framer(tasking.Tasker):
                             self.status = STOPPED
 
                     elif status == RUNNING or status == STARTED:
-                        console.profuse("   Framer {0}, aleady Started\n".format(self.name)) 
+                        console.profuse("   Framer '{0}', aleady Started\n".format(self.name))
                         self.desire = RUN
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer '{0}', bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
@@ -549,20 +549,20 @@ class Framer(tasking.Tasker):
 
                 elif control == STOP:
                     if status == RUNNING or status == STARTED:
-                        msg = "   Stopping {0} in {1} at {2:0.3f}\n".format(
+                        msg = "   Stopping Framer '{0}' in {1} at {2:0.3f}\n".format(
                             self.name,self.active.name,self.store.stamp)
                         self.desire = STOP
                         console.terse( msg)
                         self.exitAll()  #self.desire may change, self.done = True set in exitAll()
-                        console.profuse("   Stopped Framer {0}\n".format(self.name))
+                        console.profuse("   Stopped Framer '{0}'\n".format(self.name))
                         self.status = STOPPED
 
                     elif status == STOPPED or status == READIED:
-                        console.profuse("   Framer {0}, aleady Stopped\n".format(self.name)) 
+                        console.profuse("   Framer '{0}', aleady Stopped\n".format(self.name))
                         #self.desire = STOP
 
                     else: # self.status == ABORTED or unknown:
-                        console.profuse("   Aborting Framer {0}, bad status = {1} control = {2}\n".format(
+                        console.profuse("   Aborting Framer '{0}', bad status = {1} control = {2}\n".format(
                             self.name,
                             StatusNames.get(status, "Unknown"),
                             ControlNames.get(control, "Unknown")))
@@ -570,7 +570,7 @@ class Framer(tasking.Tasker):
                         self.status = ABORTED
 
                 else: #control == ABORT or unknown
-                    console.profuse("   Framer {0} aborting with control = {1}\n".format(
+                    console.profuse("   Framer '{0}' aborting with control = {1}\n".format(
                         self.name, ControlNames.get(control, "Unknown")))
 
                     if status == RUNNING or status == STARTED:
@@ -582,30 +582,30 @@ class Framer(tasking.Tasker):
                             (self.name, self.store.stamp)
                         print msg
                     elif status == ABORTED:
-                        console.profuse("   Framer {0}, aleady Aborted\n".format(self.name)) 
+                        console.profuse("   Framer '{0}', aleady Aborted\n".format(self.name))
 
                     self.desire = ABORT
                     self.status = ABORTED
 
         finally: #in case uncaught exception
-            console.profuse("   Exception causing Abort Framer {0} ...\n".format(self.name))
+            console.profuse("   Exception causing Abort Framer '{0}' ...\n".format(self.name))
             self.desire = ABORT
             self.status = ABORTED
 
     @staticmethod
     def ExEn(nears,far):
-        """Computes the relative differences (uncommon  and common parts) between 
-           the outline lists nears and fars. 
+        """Computes the relative differences (uncommon  and common parts) between
+           the outline lists nears and fars.
            Assumes outlines are in top down order
-           Supports forced transition when far is in nears 
-              in this case 
+           Supports forced transition when far is in nears
+              in this case
                  the common part of nears from far down is exited and
                  the common part of fars from far down is entered
 
            returns tuple (exits, enters, reexens):
               the exits as list of frames to be exited from near (uncommon)
-              the enters as list of frame to be entered in far (uncommon) 
-              the reexens as list of frames for reexit reenter from near (common) 
+              the enters as list of frame to be entered in far (uncommon)
+              the reexens as list of frames for reexit reenter from near (common)
         """
         fars = far.outline
         l = min(len(nears), len(fars))
@@ -622,8 +622,8 @@ class Framer(tasking.Tasker):
 
     @staticmethod
     def Uncommon(near,far):
-        """Computes the relative differences (uncommon part) between 
-           the outline lists near and far. 
+        """Computes the relative differences (uncommon part) between
+           the outline lists near and far.
            Assumes outlines are in top down order
            returns tuple (exits, enters):
               the exits as list of frames to be exited from near bottom up
@@ -655,14 +655,14 @@ class Frame(registering.StoriedRegistry):
         instance attributes
             .framer = link to framer that executes this frame
             .over = link to frame immediately above this one in hierarchy
-            .under = property link to primary frame immediately below this one in hierarchy 
+            .under = property link to primary frame immediately below this one in hierarchy
             .unders = list of all frames immediately below this one
-            .outline = list of frames in outline for this frame top down order 
+            .outline = list of frames in outline for this frame top down order
             .head = list of frames from top down to self
             .human = string of names of frames in outline top down '>' separated
             .headHuman = string of names of frames in head top down '>' separated
             .next = next frame used by builder for transitions to next
-  
+
             .beacts = before entry action (need) acts or entry checks
             .preacts = precur action acts (pre transition recurrent actions and transitions)
             .enacts = enter action acts
@@ -670,12 +670,12 @@ class Frame(registering.StoriedRegistry):
             .reacts = recur action acts
             .exacts = exit action acts
             .rexacts = rexit action acts
-  
+
             .auxes = auxiliary framers
 
     """
-    Counter = 0  
-    Names = {}
+    Counter = 0
+    Names = odict()
 
     def __init__(self, framer = None, **kw):
         """Initialize instance.
@@ -706,48 +706,48 @@ class Frame(registering.StoriedRegistry):
         self.auxes = [] #list of auxilary framers for this frame
 
     def clone(self, framer, clones):
-        """ Return clone of self by creating new frame in framer and by 
+        """ Return clone of self by creating new frame in framer and by
             frame links, acts, and auxes
             clones is dict with items each key is name of orignal framer and value
                  is duple of (original, clone) framer references
-            
+
             Assumes that the Frame Registry is pointing to framer which is a clone
             of this Frame's Framer so all new Frames will be in the cloned registry.
 
         """
         clone = Frame(  name=self.name,
-                        store=self.store, 
+                        store=self.store,
                         framer=framer)
         console.profuse("     Cloning frame {0} into framer {1}\n".format(
                                clone.name, framer.name))
-        
+
         if self.over:
             if isinstance(self.over, Frame):
-                clone.over = self.over.name            
+                clone.over = self.over.name
             else:
-                clone.over = self.over 
+                clone.over = self.over
         if self.next:
             if isinstance(self.next, Frame):
-                clone.next = self.next.name            
+                clone.next = self.next.name
             else:
                 clone.next = self.next
-        
+
         for under in self.unders:
             if isinstance(under, Frame):
                 clone.unders.append(under.name)
             else:
                 clone.unders.append(under)
-                
+
         for i, aux in enumerate(self.auxes): #replace each aux with its clone name
             if isinstance(aux, Framer):
                 if aux.name in clones:
-                    self.auxes[i] = clones[aux.name][1].name                
+                    self.auxes[i] = clones[aux.name][1].name
             else: # assume namestring
                 if aux in clones:
                     self.auxes[i] = clones[aux][1].name
-            
+
         for act in self.beacts:
-            clone.addBeact(act.clone(clones)) 
+            clone.addBeact(act.clone(clones))
         for act in self.preacts:
             clone.addPreact(act.clone(clones))
         for act in self.enacts:
@@ -761,13 +761,13 @@ class Frame(registering.StoriedRegistry):
         for act in self.rexacts:
             clone.addRexact(act.clone(clones))
 
-        
+
         return clone
 
     def expose(self):
         """Prints out instance variables.
 
-        """   
+        """
         if self.framer:
             framername = self.framer.name
         else:
@@ -812,15 +812,15 @@ class Frame(registering.StoriedRegistry):
         """attaches self to over frame if attaching would not create loop
 
            detach from existing over
-           setting self.over to over 
-           adding self to over.unders and 
+           setting self.over to over
+           adding self to over.unders and
            if no primary under for over make self overs's primary under
 
         """
         if self.over == over: #already attached to over
             return
 
-        if self.checkLoop(over): 
+        if self.checkLoop(over):
             raise excepting.ParameterError("Attaching would create loop", "frame", frame)
         else:
             self.detach()
@@ -886,7 +886,7 @@ class Frame(registering.StoriedRegistry):
 
             under = over
             over = over.over #rise one level
-            
+
     def resolveUnderLinks(self):
         """ Resolve under links """
         for i, under in enumerate(self.unders):
@@ -926,7 +926,7 @@ class Frame(registering.StoriedRegistry):
                 if not isinstance(framer, Framer):  #maker sure framer not tasker since tasker framer share registry
                     raise excepting.ResolveError("ResolveError: Bad framer name, tasker not framer", self.name, framer.name)
                 self.framer = framer #replace link name with link
-        
+
     def resolve(self):
         """Resolve links where links are instance name strings assigned during building
            need to be converted to object references using instance name registry
@@ -1003,7 +1003,7 @@ class Frame(registering.StoriedRegistry):
             frame = frame.under
 
         self.outline = outline
-        return outline 
+        return outline
 
     def traceHead(self):
         """traces head portion of outline.
@@ -1020,7 +1020,7 @@ class Frame(registering.StoriedRegistry):
 
         head.reverse() #reverse so top  is left-most in list
         self.head = head
-        return head 
+        return head
 
     def traceHuman(self):
         """traces human readable version of outline as '> <'separated string
@@ -1047,7 +1047,7 @@ class Frame(registering.StoriedRegistry):
         human += '>' +  '>'.join(names)
 
         self.human = human
-        return human 
+        return human
 
     def traceHeadHuman(self):
         """traces human readable version of head as '<'separated string
@@ -1066,7 +1066,7 @@ class Frame(registering.StoriedRegistry):
         human =  '<' + '<'.join(names) + '>'
 
         self.headHuman = human
-        return human 
+        return human
 
     def checkEnter(self):
         """Check beacts for self and auxes
@@ -1078,7 +1078,7 @@ class Frame(registering.StoriedRegistry):
                 return False #return False on first failure
 
         for aux in self.auxes:
-            #if aux.main is not None then it has not been released and so 
+            #if aux.main is not None then it has not been released and so
             #we can't enter unless its ourself for forced re-entry
             if aux.main and (aux.main is not self): #see if aux still belongs to another frame
                 console.profuse("    False aux {0}.main in use".format(aux.name))
@@ -1113,7 +1113,7 @@ class Frame(registering.StoriedRegistry):
         for act in self.renacts: #could use generator expression
             act() #call renter actions
 
-    def recur(self): 
+    def recur(self):
         """calls reacts recurring acts for self and runs auxes
         """
         console.profuse("    Recur {0}\n".format(self.name))
@@ -1124,7 +1124,7 @@ class Frame(registering.StoriedRegistry):
         for aux in self.auxes:
             aux.recur()
 
-    def segueAuxes(self): 
+    def segueAuxes(self):
         """performs transitions for auxes
            called by self.framer.segue()
            segue Auxes is its own context
@@ -1135,10 +1135,10 @@ class Frame(registering.StoriedRegistry):
             aux.segue()
 
 
-    def precur(self): 
+    def precur(self):
         """Calls preacts pre-recurring acts for self
            Preacts are used for:
-              1) Setting up conditions for transitions and conditional auxes 
+              1) Setting up conditions for transitions and conditional auxes
               2) Interrupting the frame flow such as
                  a) transitions
                  b) conditional auxiliaries
@@ -1153,7 +1153,7 @@ class Frame(registering.StoriedRegistry):
            called by self.framer.segue()
         """
         console.profuse("    Precur {0}\n".format(self.name))
-        
+
         for act in self.preacts:
             if act():
                 return True
@@ -1161,7 +1161,7 @@ class Frame(registering.StoriedRegistry):
         return False
 
     def exit(self):
-        """calls exacts exit acts for self 
+        """calls exacts exit acts for self
         """
         console.profuse("    Exit {0}\n".format(self.name))
 
@@ -1173,7 +1173,7 @@ class Frame(registering.StoriedRegistry):
             act() #call Exit Action
 
     def rexit(self):
-        """calls  rexacts rexit acts for self 
+        """calls  rexacts rexit acts for self
         """
         console.profuse("    Rexit {0}\n".format(self.name))
 
@@ -1190,43 +1190,43 @@ class Frame(registering.StoriedRegistry):
         """         """
         self.enacts.append(act)
         act.frame = self.name #resolve later
-        act.context = ActionContextNames[ENTER]        
+        act.context = ActionContextNames[ENTER]
 
     def insertEnact(self, act, index=0):
         """         """
         self.enacts.insert(index, act)
         act.frame = self.name #resolve later
-        act.context = ActionContextNames[ENTER]         
+        act.context = ActionContextNames[ENTER]
 
     def addRenact(self, act):
         """         """
         self.renacts.append(act)
         act.frame = self.name #resolve later
-        act.context = ActionContextNames[RENTER]         
+        act.context = ActionContextNames[RENTER]
 
     def addReact(self, act):
         """         """
         self.reacts.append(act)
         act.frame = self.name #resolve later
-        act.context = ActionContextNames[RECUR]         
+        act.context = ActionContextNames[RECUR]
 
     def addPreact(self, act):
         """         """
         self.preacts.append(act)
         act.frame = self.name #resolve later
-        act.context = ActionContextNames[PRECUR]         
+        act.context = ActionContextNames[PRECUR]
 
     def addExact(self, act):
         """         """
         self.exacts.append(act)
         act.frame = self.name #resolve later
-        act.context = ActionContextNames[EXIT]         
-        
+        act.context = ActionContextNames[EXIT]
+
     def addRexact(self, act):
         """         """
         self.rexacts.append(act)
         act.frame = self.name #resolve later
-        act.context = ActionContextNames[REXIT]         
+        act.context = ActionContextNames[REXIT]
 
     def addAux(self, aux):
         """         """
@@ -1250,13 +1250,13 @@ class Frame(registering.StoriedRegistry):
         elif context == REXIT:
             self.addRexact(act)
         elif context == BENTER:
-            self.addBeact(act)      
+            self.addBeact(act)
         else:
             return False
 
         return True #needed since builder uses it
 
-    
+
 #utility functions
 def resolveFramer(framer, who=''):
     """ Returns resolved framer instance from framer
@@ -1265,7 +1265,7 @@ def resolveFramer(framer, who=''):
         Framer.Names registry must be setup
     """
     if not isinstance(framer, Framer): # not instance so name
-        if framer not in Framer.Names: 
+        if framer not in Framer.Names:
             raise excepting.ResolveError("ResolveError: Bad framer link name", framer, who)
         framer = Framer.Names[framer]
 
@@ -1276,14 +1276,14 @@ ResolveFramer = resolveFramer
 def resolveFrame(frame, who=''):
     """ Returns resolved frame instance from frame
             frame may be name of frame or instance
-    
+
             Frame.Names registry must be setup
-        """    
+        """
     if not isinstance(frame, Frame): # not instance so name
-        if frame not in Frame.Names: 
+        if frame not in Frame.Names:
             raise excepting.ResolveError("ResolveError: Bad frame link name", frame, who)
         frame = Frame.Names[frame] #replace frame name with frame
-    
+
     return frame
 
 ResolveFrame = resolveFrame

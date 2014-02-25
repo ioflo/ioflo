@@ -165,13 +165,13 @@ class Builder(object):
     """
 
     """
-    def __init__(self, fileName='', mode=None, metaData=None, behaviors=None):
+    def __init__(self, fileName='', mode=None, metadata=None, behaviors=None):
         """
 
         """
         self.fileName = fileName #initial name of file to start building from
         self.mode = mode or []
-        self.metaData = metaData or {}
+        self.metadata = metadata or {}
         self.behaviors = behaviors or []
         self.files = [] #list of open file objects, appended to by load commands
         self.counts = [] #list of linectr s for open file objects
@@ -189,23 +189,21 @@ class Builder(object):
         self.currentFrame = None #current frame
         self.currentContext = NATIVE
 
-
-
-    def build(self, fileName='', mode=None, metaData=None, behaviors=None):
+    def build(self, fileName='', mode=None, metadata=None, behaviors=None):
         """
            Allows building from multiple files. Essentially files list is stack of files
            fileName is name of first file. Load commands in any files push (append) file onto files
            until file completed loaded and then popped off
 
-           Each house's store is inited with the metaData
+           Each house's store is inited with the metadata
         """
         #overwrite default if truthy argument
         if fileName:
             self.fileName = fileName
         if mode:
             self.mode = mode
-        if metaData:
-            self.metaData = metaData
+        if metadata:
+            self.metadata = metadata
         if behaviors:
             self.behaviors = behaviors
 
@@ -390,7 +388,7 @@ class Builder(object):
             self.houses.append(self.currentHouse)
             self.currentStore = self.currentHouse.store
 
-            console.terse("   Created house {0}. Assigning registries, "
+            console.terse("   Created House '{0}'. Assigning registries and "
                           "creating instances ...\n".format(name))
 
             self.currentHouse.assignRegistries()
@@ -404,12 +402,12 @@ class Builder(object):
             self.currentLogger = None #current logger
             self.currentLog = None #current log
 
-            #metaData here triples of name, path, data
-            for name, path, data in self.metaData:
+            #metadata are triples of name, path, data
+            for name, path, data in self.metadata:
                 self.currentHouse.meta[name] = self.initPathToData(path, data)
 
-            # set meta.name to house.name
-            self.currentHouse.meta['name'] = self.initPathToData('.meta.name',
+            # set meta.house to house.name
+            self.currentHouse.meta['house'] = self.initPathToData('.meta.house',
                     odict(value=self.currentHouse.name))
 
         except IndexError:
@@ -421,7 +419,7 @@ class Builder(object):
                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
-        msg = "   Built house {0} with meta:\n".format(self.currentHouse.name)
+        msg = "   Built House '{0}' with meta:\n".format(self.currentHouse.name)
         for name, share in self.currentHouse.meta.items():
             msg += "       {0}: {1!r}\n".format(name, share)
         console.terse(msg)
@@ -1234,10 +1232,10 @@ class Builder(object):
                 self.currentFramer.assignFrameRegistry()
                 self.currentFrame = None #changed current Framer so no current Frame
 
-                console.profuse("     Created framer named {0} at period {1:0.4f} be {2} first {3}\n".format(
+                console.profuse("     Created Framer named '{0}' at period {1:0.4f} be {2} first {3}\n".format(
                     framer.name, framer.period, ScheduleNames[framer.schedule], framer.first))
 
-                console.profuse("     Added framer {0} to house {1}, Assigned frame registry\n".format(
+                console.profuse("     Added Framer '{0}' to House '{1}', Assigned frame registry\n".format(
                     framer.name, self.currentHouse.name))
 
 

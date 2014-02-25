@@ -5,9 +5,9 @@
 
 house meta
 
-init meta.name to value "test"
+init meta.test to value "test"
 init meta.spot to when "now" where "here"
-init meta.name to value "test2"
+init meta.stuff to value "test2"
 
 framer testmeta be active first testmeta
 
@@ -15,31 +15,31 @@ frame testmeta
    print "Hello World"
    set elapsed to 1.0
    go next if elapsed >= goal
-   
+
 frame testtimeout
    print "timeout"
    timeout 1.0
-   
+
 frame testrecurred
    print "recurred"
    set recurred to 4
    recur
       print "recurred again"
    go next if recurred >= goal
-   
+
 frame testrepeat
    print "repeat"
    recur
       print "repeated again"
    repeat 2
-   
+
 frame doslave
    ready testslave #benter
    start testslave # enter
    run testslave # recur
    go next if done testslave
    stop testslave # exit
-   
+
 frame abortslave
    print abortslave
    abort testslave
@@ -58,8 +58,8 @@ framer testslave be slave first slave1 # slave framer
 
 frame slave1
    print slave1
-   go next 
-   
+   go next
+
 frame slave2
    print slave2
    repeat 3
@@ -70,7 +70,7 @@ frame slave3 #so complete
    print slave3
    done
 
-server one to /var/tmp/log/ioflo/ rx :55551 per stuff 5 
+server one to /var/tmp/log/ioflo/ rx :55551 per stuff 5
 server two  to /var/tmp/log/ioflo/ \
    rx :55552 \
    for value in .meta.name # trailing comment
@@ -78,4 +78,4 @@ server server to /var/tmp/log/ioflo/ # trailing comment
 
 #tasker tasker one as tasker per stuff 5
 #tasker tasker two as tasker for value in .meta.name
-#tasker tasker 
+#tasker tasker

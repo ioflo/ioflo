@@ -105,7 +105,7 @@ class House(registering.StoriedRegistry):
           .meta = dictionary of (name, share) items of metadata for access by skedder
                   name is how skedder accesses the associated share
     """
-    Counter = 0  
+    Counter = 0
     Names = {}
 
     def __init__(self, **kw):
@@ -123,8 +123,8 @@ class House(registering.StoriedRegistry):
         self.auxes = [] #list of aux framers in house
         self.slaves = [] #list of slave taskers in house
 
-        self.names = odict() #houses dict of registry Names  
-        self.counters = odict() #houses dict of registry Name Counters 
+        self.names = odict() #houses dict of registry Names
+        self.counters = odict() #houses dict of registry Name Counters
 
         self.meta = odict() # dict of meta data items (name, share) for skedder to access
 
@@ -140,7 +140,7 @@ class House(registering.StoriedRegistry):
     def orderTaskables(self):
         """Place taskables in order
         """
-        console.terse("   Ordering taskable taskers for house {0}\n".format(self.name))
+        console.terse("   Ordering taskable taskers for House '{0}' ...\n".format(self.name))
         self.taskables = self.fronts + self.mids + self.backs
 
     def assignRegistries(self):
@@ -150,13 +150,13 @@ class House(registering.StoriedRegistry):
         for key, value in Registries.items():
             value.Names = self.names[key]
             value.Counter = self.counters[key]
-            
+
     def resolve(self):
         """ resolves links from building where links are name strings of objects
             resolution looks up name string in appropriate registry and replaces
             name string with link to object
         """
-        console.terse("   Resolving house {0}\n".format(self.name))
+        console.terse("   Resolving House '{0}' ...\n".format(self.name))
         self.assignRegistries()
 
         for tasker in self.taskers:
@@ -174,18 +174,18 @@ class House(registering.StoriedRegistry):
     def showAllTaskers(self):
         """Show all Taskers and Slaves and Auxes and Framers."""
 
-        console.terse("Taskables in House {0}:\n     {1}\n".format(
+        console.terse("Taskables in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.taskables])))
 
-        console.terse("Slaves in House {0}:\n     {1}\n".format(
+        console.terse("Slaves in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.slaves])))
 
-        console.terse("Auxes in House {0}:\n     {1}\n".format(
+        console.terse("Auxes in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.auxes])))
 
-        console.terse("Framers in House {0}:\n     {1}\n".format(
+        console.terse("Framers in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.framers])))
-        
+
     def cloneFramer(self, framer, index):
         """ Create a clone of framer framer with name generated from index
                 as aux framer and return
@@ -193,28 +193,28 @@ class House(registering.StoriedRegistry):
         self.assignRegistries()
         clones = odict() # key original.name : (original, clone)
         clonee = framer.clone(index=index, clones=clones) #changes clones in place
-            
+
         for original, clone in clones.values(): #values are tuples
             original.cloneFrames(clone, clones)
             clone.resolveLinks() # resolve links in clone
-            clone.traceOutlines()  # traceoutlines in clone          
+            clone.traceOutlines()  # traceoutlines in clone
             self.taskers.append(clone)
             self.framers.append(clone)
             self.auxes.append(clone)
-        
-            console.profuse("     Cloned framer {0} to house {1}\n".format(
+
+            console.profuse("     Cloned framer {0} to House '{1}'\n".format(
                 clone.name, self.name))
-        
-        return clonee # return primary clone of framer        
+
+        return clonee # return primary clone of framer
 
 def Test():
     """Module Common self test
 
     """
-    
+
     house = House()
 
-    
+
 
 
 if __name__ == "__main__":

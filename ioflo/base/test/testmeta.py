@@ -9,7 +9,7 @@ import struct
 import argparse
 
 
-def Run(fileName = None, period = 0.2, real = False, 
+def Run(fileName = None, period = 0.2, real = False,
         verbose = 0, profiling = False):
     """Run once """
 
@@ -22,15 +22,15 @@ def Run(fileName = None, period = 0.2, real = False,
     print "Building ..."
     skedder = tasking.Skedder(name = "TestTasker",
                               period = period,
-                              real = real, 
-                              filePath = fileName)
+                              real = real,
+                              filepath = fileName)
     if skedder.build():
         print "\n\nStarting mission from file %s...\n" % (fileName)
         if not profiling:
             skedder.run()
         else:
             import cProfile
-            import pstats         
+            import pstats
 
             cProfile.runctx('skedder.run()',globals(),locals(), './profiles/skedder')
             p = pstats.Stats('./profiles/skedder')
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
 
     try:
-        (opts, pargs) = getopt.getopt(sys.argv[1:], "hrv:f:p:") #format 
+        (opts, pargs) = getopt.getopt(sys.argv[1:], "hrv:f:p:") #format
     except getopt.GetoptError:
         #print help info and exit
         sys.stderr.write(str(opts) + "usage\n") #joins list items with space separator
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         opts.append(('-h',''))
 
     for x in opts:
-        if x[0] == '-f':  
+        if x[0] == '-f':
             filename = x[1]
         if x[0] == '-p':
             period = float(x[1])

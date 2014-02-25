@@ -15,7 +15,7 @@ from .globaling import *
 from .consoling import getConsole
 
 
-def Test(fileName = None, period = 0.2, real = False, 
+def Test(fileName = None, period = 0.2, real = False,
          verbose = 0, profiling = False):
     """Module self test
 
@@ -31,8 +31,8 @@ def Test(fileName = None, period = 0.2, real = False,
     console.terse( "Building ...")
     skedder = tasking.Skedder(name = "TestSkedder",
                               period = period,
-                              real = real, 
-                              filePath = fileName)
+                              real = real,
+                              filepath = fileName)
     if skedder.build():
         console.terse( "\n\nStarting mission from file 0}...\n".format(fileName))
         if not profiling:
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     usage = "python wradia/testing.py -f filename -p period -v level -r -h"
 
     try:
-        (opts, pargs) = getopt.getopt(sys.argv[1:], "hrv:f:p:") #format 
+        (opts, pargs) = getopt.getopt(sys.argv[1:], "hrv:f:p:") #format
     except getopt.GetoptError:
         console.profuse(str(opts) + "usage\n")
         console.concise( usage)
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         opts.append(('-h',''))
 
     for x in opts:
-        if x[0] == '-f':  
+        if x[0] == '-f':
             filename = x[1]
         if x[0] == '-p':
             period = float(x[1])

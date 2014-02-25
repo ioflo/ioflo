@@ -1,23 +1,31 @@
-""" setup.py
-    Basic setup file to enable pip install
-    See http://python-distribute.org/distribute_setup.py
-    
-    
-    python setup.py register sdist upload 
+"""
+setup.py
+
+Basic setup file to enable pip install
+See:
+    https://pythonhosted.org/setuptools/
+    https://bitbucket.org/pypa/setuptools
+
+
+python setup.py register sdist upload
 
 """
-
+import  sys
 from setuptools import setup, find_packages
 
 import ioflo
 
+PYTHON26__REQUIRES = []
+if sys.version_info < (2, 7): #tuple comparison element by element
+    PYTHON26_REQUIRES.append('importlib>=1.0.3')
+
 setup(
     name='ioflo',
-    version=ioflo.__version__, 
+    version=ioflo.__version__,
     description='Flow Based Programming Automated Reasoning Engine and Automation Operation System',
-    long_description='Enabling the Programmable World. http://ioflo.com  ', 
+    long_description='Enabling the Programmable World. http://ioflo.com  ',
     url='https://github.com/ioflo/ioflo',
-    download_url='https://github.com/ioflo/ioflo/archive/master.zip', 
+    download_url='https://github.com/ioflo/ioflo/archive/master.zip',
     author=ioflo.__author__,
     author_email='info@ioflo.com',
     license=ioflo.__license__,
@@ -31,7 +39,7 @@ setup(
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL'],
         'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
-    install_requires = [],
+    install_requires = [] + PYTHON26_REQUIRES,
     extras_require = {},
     scripts=['scripts/ioflo'],)
-    
+

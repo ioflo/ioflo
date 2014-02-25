@@ -3,7 +3,8 @@
 
 """
 #print "module %s" % __name__
-
+import sys
+import os
 import time
 from collections import deque
 
@@ -21,6 +22,8 @@ from . import storing
 from . import tasking
 from . import building
 
+from .. import __version__
+
 from .consoling import getConsole
 console = getConsole()
 
@@ -28,7 +31,7 @@ console = getConsole()
 class Skedder(object):
     """Schedules weightless tasker objects based on generators.
 
-       run method runs the skedder main loop until interrupted or all taskers 
+       run method runs the skedder main loop until interrupted or all taskers
        completed
 
        taskers is a dictionary of taskers indexed by tasker name
@@ -48,14 +51,14 @@ class Skedder(object):
           should be run
 
           There are three deques the skedder maintains. Each entry in each deque
-          is a tuple (tasker, retime, period) 
+          is a tuple (tasker, retime, period)
              tasker is reference to tasker object
              retime is time that the tasker should next be run
                 a retime of zero means runs asap or always
              period is the time period between runs
 
           ready = deque of tuples where taskers are ready to be run
-             If need different priorities then need to add a 
+             If need different priorities then need to add a
                 ready list for each priority
 
           stopped = deque of tuples where taskers stopped awaiting start
@@ -80,74 +83,78 @@ class Skedder(object):
 
        .ready = deque of tasker  tuples ready to run
        .aborted = deque of tasker tuples aborted
-
-
     """
 
     def __init__(  self,
-                   name="Skedder",
+                   name="skedder",
                    period=0.125,
-                   stamp=0.0, 
+                   stamp=0.0,
                    real=False,
-                   houses=None,
-                   filePath='',
-                   mode=None,
-                   behaviors='',
+                   filepath='',
+                   behaviors=None,
                    username='',
-                   password='', 
-                   metaData=None):
+                   password='',
+                   mode=None,
+                   houses=None,
+                   metadata=None,):
         """Initialize Skedder instance.
            parameters:
            name = name string
            period = iteration period
            stamp = initial time stamp value
            real = time mode real time True or simulated time False
-           houses = list of houses
-           filePath = filePath to build file
-           mode = parsing mode
+           filepath = filepath to build file
            behaviors = list of pathnames to packages with external behavior modules
            username = username
            password = password
-           metaData = list of triples of (name, path, data) where
+           mode = parsing mode
+           houses = list of houses
+           metadata = list of triples of (name, path, data) where
                         name = name string, path = path string, data = odict
 
         """
         self.name = name
         self.period = float(abs(period))
+
         self.stamp = float(abs(stamp))
         #real time or sim time mode
         self.real = True if real else False
         self.timer = aiding.Timer(duration = self.period)
         self.elapsed = aiding.Timer()
-        self.house = houses or []
-        self.filePath = filePath
-        self.mode = mode or []
+
+        self.filepath = os.path.abspath(filepath)
+        self.plan = os.path.split(self.filepath)[1]
         self.behaviors = behaviors or []
         self.username = username
         self.password = password
-        if metaData:
-            self.metaData = metaData
-        else:
-            self.metaData = [
-                ("plan", "meta.plan", odict(value="Test")),
-                ("version", "meta.version", odict(value="0.7.2")),
-                ("platform", "meta.platform",
-                     odict([("os", "unix"), ("processor", "intel"), ])),
+        self.mode = mode or []
+        self.houses = houses or []
+
+        #Meta data format is list of triples of form (name, path, value)
+        self.metadata = [
+                ("name", "meta.name", odict(value=self.name)),
                 ("period", "meta.period", odict(value=self.period)),
                 ("real", "meta.real", odict(value=self.real)),
-                ("filepath", "meta.filepath", odict(value=self.filePath)),
                 ("mode", "meta.mode", odict(value=self.mode)), #applied mode logging only
-                ("behaviors", "meta.behaviors", odict(value=self.behaviors)), 
+                ("plan", "meta.plan", odict(value=self.plan)),
+                ("filepath", "meta.filepath", odict(value=self.filepath)),
+                ("version", "meta.version", odict(value=__version__)),
+                ("platform", "meta.platform",
+                     odict([("os", sys.platform),
+                            ("python", "{0}.{1}.{2}".format(*sys.version_info)),] )),
+                ("behaviors", "meta.behaviors", odict(value=self.behaviors)),
                 ("credentials", "meta.credentials",
-                     odict([('username', self.username), ('password', self.password)])), 
-            ] 
+                     odict([('username', self.username), ('password', self.password)])),
+            ]
+        if metadata:
+            self.metadata.extend(metadata)
 
         self.ready = deque() #deque of taskers in run order
         self.aborted = deque() #deque of aborted taskers
 
 
     def addReadyTask(self,tasker):
-        """Prepare tasker to be started"""    
+        """Prepare tasker to be started"""
         if tasker.schedule == ACTIVE:
             tasker.desire = START
         else:
@@ -161,21 +168,21 @@ class Skedder(object):
         console.profuse("     Add ready: {0} retime: {1} period: {2} desire {3}\n".format(
             tasker.name, retime, period, ControlNames[tasker.desire]))
 
-    def build(self, filePath='', mode=None, metaData=None):
-        """ Build houses from file given by filePath """
+    def build(self, filepath='', mode=None, metadata=None):
+        """ Build houses from file given by filepath """
 
-        console.terse("Building Houses for Skedder {0} ...\n".format(self.name))
+        console.terse("Building Houses for Skedder '{0}' ...\n".format(self.name))
         #use parameter otherwise use inited value
-        if filePath: 
-            self.filePath = filePath
+        if filepath:
+            self.filepath = filepath
         if mode:
             self.mode =  mode
-        if metaData: 
-            self.metaData = metaData
+        if metadata:
+            self.metadata = metadata
 
-        b = building.Builder(fileName = self.filePath,
+        b = building.Builder(fileName = self.filepath,
                              mode=self.mode,
-                             metaData = self.metaData,
+                             metadata = self.metadata,
                              behaviors=self.behaviors)
 
         if not b.build():
@@ -185,9 +192,9 @@ class Skedder(object):
 
         for house in self.houses:
             meta = house.meta
-            console.profuse("Meta Data for House {0}:\n{1}\n".format(house.name, house.meta))
+            console.profuse("Meta Data for House '{0}':\n{1}\n".format(house.name, house.meta))
 
-        return True   
+        return True
 
     def run(self):
         """runs all generator taskers in running list by calling next() method.
@@ -197,7 +204,7 @@ class Skedder(object):
            run can be executed again
         """
 
-        console.concise("Starting Skedder {0} ...\n".format(self.name))
+        console.terse("Starting Skedder '{0}' ...\n".format(self.name))
 
         stamp = self.stamp
         for house in self.houses:
@@ -208,9 +215,9 @@ class Skedder(object):
             for tasker in house.taskables:
                 self.addReadyTask(tasker)
 
-        console.profuse("Ready taskers: {0}\n".format(
+        console.profuse("Ready Taskers: {0}\n".format(
             ', '.join([tasker.name for tasker,r,p in self.ready])))
-        console.profuse("Aborted taskers: {0}\n".format(
+        console.profuse("Aborted Taskers: {0}\n".format(
             ', '.join([tasker.name for tasker,r,p in self.aborted])))
 
 
@@ -222,10 +229,10 @@ class Skedder(object):
         #stopped = self.stopped
         aborted = self.aborted
 
-        try: #so always clean up resources if exception   
+        try: #so always clean up resources if exception
             while True:
                 try: #CNTL-C generates keyboardInterrupt to break out of while loop
-                    console.profuse("\nRunning Skedder {0} at stamp = {1} real elapsed = {2:0.4f}\n".format(
+                    console.profuse("\nRunning Skedder '{0}' at stamp = {1} real elapsed = {2:0.4f}\n".format(
                         self.name, self.stamp,  self.elapsed.elapsed))
 
                     more = False #are any taskers RUNNING or STARTED
@@ -239,7 +246,7 @@ class Skedder(object):
 
                         else: #run it
                             try:
-                                status = tasker.runner.send(tasker.desire)  
+                                status = tasker.runner.send(tasker.desire)
                                 if status == ABORTED: #aborted so abort tasker
                                     aborted.append((tasker,stamp,period))
                                     console.profuse("     Tasker Self Aborted: {0}\n".format(tasker.name))
@@ -274,16 +281,16 @@ class Skedder(object):
                         house.store.changeStamp(stamp)
 
                 except KeyboardInterrupt: #CNTL-C shutdown skedder
-                    print "KeyboardInterrupt forcing shutdown of skedder ..."
+                    print "KeyboardInterrupt forcing shutdown of Skedder ..."
 
                     break
 
                 except SystemExit: #User know why shutting down
-                    print "SystemExit forcing shutdown of skedder ..."
+                    print "SystemExit forcing shutdown of Skedder ..."
                     raise
 
                 except Exception: #Let user know what exception caused shutdoen
-                    print "Surprise exception forcing shutdown of skedder ..." 
+                    print "Surprise exception forcing shutdown of Skedder ..."
                     raise
 
             print "Total elapsed real time = %0.4f" % self.elapsed.elapsed
@@ -294,23 +301,23 @@ class Skedder(object):
             #if last run tasker exited due to exception then try finally clause in
             #its generator is responsible for releasing resources
 
-            print "Aborting all ready taskers ..."
+            print "Aborting all ready Taskers ..."
             for i in xrange(len(ready)): #run each ready tasker once
                 tasker,retime,period = ready.popleft() #pop it off
 
                 try:
-                    status = tasker.runner.send(ABORT)  
+                    status = tasker.runner.send(ABORT)
                     print "       Tasker '%s' aborted" % tasker.name
                 except StopIteration: #generator returned instead of yielded
                     print "       Tasker '%s' generator already exited" % tasker.name
 
                 #tasker.runner.close() #kill generator
-        
+
         if console._verbosity >= console.Wordage.concise:
             for house in self.houses:
                 #show store hierarchy
                 console.concise( "\nData Store for {0}\n".format(house.name))
-                house.store.expose(values=(console._verbosity >= console.Wordage.terse))             
+                house.store.expose(values=(console._verbosity >= console.Wordage.terse))
 
 
 
