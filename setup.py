@@ -15,7 +15,7 @@ from setuptools import setup, find_packages
 
 import ioflo
 
-PYTHON26__REQUIRES = []
+PYTHON26_REQUIRES = []
 if sys.version_info < (2, 7): #tuple comparison element by element
     PYTHON26_REQUIRES.append('importlib>=1.0.3')
 
@@ -31,7 +31,7 @@ setup(
     license=ioflo.__license__,
     keywords=('Automation Operating System Automated Reasoning Engine '
               'Flow Based Programming Intelligent Automation Pub/Sub ioflo FloScript'),
-    packages = find_packages(exclude=['test', 'test.*',
+    packages=find_packages(exclude=['test', 'test.*',
                                       'docs', 'docs*',
                                       'log', 'log*', 'ioflo/app/log*']),
     package_data={
@@ -39,7 +39,7 @@ setup(
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL'],
         'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
-    install_requires = ([] + PYTHON26_REQUIRES),
-    extras_require = {},
+    install_requires=([] + PYTHON26_REQUIRES),
+    extras_require={},
     scripts=['scripts/ioflo'],)
 
