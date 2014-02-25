@@ -39,7 +39,7 @@ setup(
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL'],
         'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
-    install_requires = [] + PYTHON26_REQUIRES
+    install_requires = ([] + PYTHON26_REQUIRES),
     extras_require = {},
     scripts=['scripts/ioflo'],)
 
