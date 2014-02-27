@@ -16,7 +16,16 @@ import re
 import string
 from collections import deque
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
+# Import ioflo libs
+
+
 from .globaling import *
+from .odicting import odict
 
 from .consoling import getConsole
 console = getConsole()
@@ -499,7 +508,9 @@ class SocketUdpNb(object):
         #create socket ss = server socket
         self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-        #make socket address reusable. doesn't seem to have an effect.
+        # make socket address reusable. doesn't seem to have an effect.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
         self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.ss.setblocking(0) #non blocking socket
@@ -532,6 +543,162 @@ class SocketUdpNb(object):
         if self.ss:
             self.ss.close() #close socket
             self.ss = None
+
+        self.closeLogs()
+
+    def receive(self):
+        """Perform non blocking read on  socket.
+
+           returns tuple of form (data, sa)
+           if no data then returns ('',None)
+           but always returns a tuple with two elements
+        """
+        try:
+            #sa = source address tuple (sourcehost, sourceport)
+            data, sa = self.ss.recvfrom(self.bs)
+
+            message = "Server at {0} received {1} from {2}\n".format(
+                str(self.ha),data, str(sa))
+            console.profuse(message)
+
+            if self.log and self.rxLog:
+                self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
+
+            return (data,sa)
+        except socket.error, ex1: # 2.6 socket.error is subclass of IOError
+            if ex1.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+                return ('',None) #receive has nothing empty string for data
+            else:
+                raise #re raise exception ex1
+
+    def send(self,data, da):
+        """Perform non blocking send on  socket.
+
+           data is string
+           da is destination address tuple (destHost, destPort)
+
+        """
+        try:
+            result = self.ss.sendto(data,da) #result is number of bytes sent
+        except socket.error, e:
+            print "socket.error = %s" % e
+            result = 0
+
+        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha),result))
+
+        if self.log and self.txLog:
+            self.txLog.write("%s %s bytes\n%s\n" %
+                             (str(da), str(result), repr(data)))
+
+        return result
+
+class SocketUxdNb(object):
+    """Class to manage non blocking reads and writes from UXD (unix domain) socket.
+
+       Opens non blocking socket
+       Use instance method close to close socket
+
+       Needs socket module
+    """
+
+    def __init__(self, ha=None, bufsize = 1024, path = '', log = False):
+        """Initialization method for instance.
+
+           ha = host address duple (host, port)
+           host = '' equivalant to any interface on host
+           port = socket port
+           bs = buffer size
+        """
+        self.ha = ha # uxd host address string name
+        self.bs = bufsize
+        self.ss = None #server's socket needs to be opened
+
+        self.path = path #path to directory where log files go must end in /
+        self.txLog = None #transmit log
+        self.rxLog = None #receive log
+        self.log = log
+
+    def openLogs(self, path = ''):
+        """Open log files
+
+        """
+        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
+        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.txLog = open(name, 'w+')
+        except IOError:
+            self.txLog = None
+            self.log = False
+            return False
+        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.rxLog = open(name, 'w+')
+        except IOError:
+            self.rxLog = None
+            self.log = False
+            return False
+
+        return True
+
+    def closeLogs(self):
+        """Close log files
+
+        """
+        if self.txLog and not self.txLog.closed:
+            self.txLog.close()
+        if self.rxLog and not self.rxLog.closed:
+            self.rxLog.close()
+
+    def open(self):
+        """Opens socket in non blocking mode.
+
+           if socket not closed properly, binding socket gets error
+              socket.error: (48, 'Address already in use')
+        """
+        #create socket ss = server socket
+        self.ss = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+
+        # make socket address reusable.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
+        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        self.ss.setblocking(0) #non blocking socket
+
+        #bind to Host Address Port
+        try:
+            self.ss.bind(self.ha)
+        except socket.error, e:
+            console.terse("socket.error = {0}\n".format(e))
+            return False
+
+        self.ha = self.ss.getsockname() #get resolved ha after bind
+        #self.host, self.port = self.ha
+
+        if self.log:
+            if not self.openLogs():
+                return False
+
+        return True
+
+    def reopen(self):
+        """     """
+        self.close()
+        return self.open()
+
+    def close(self):
+        """Closes  socket.
+
+        """
+        if self.ss:
+            self.ss.close() #close socket
+            self.ss = None
+
+        try:
+            os.unlink(self.ha)
+        except OSError:
+            if os.path.exists(self.ha):
+                raise
 
         self.closeLogs()
 
@@ -1796,6 +1963,8 @@ def Ocfn(filename, openMode = 'r+'):
             raise
     return newfile
 
+ocfn = Ocfn # alias
+
 def Load(file = ""):
     """Loads object from pickled file, returns object"""
 
@@ -1807,6 +1976,8 @@ def Load(file = ""):
     it = p.load()
     f.close()
     return it
+
+load = Load
 
 def Dump(it = None, file = ""):
     """Pickles  it object to file"""
@@ -1823,69 +1994,36 @@ def Dump(it = None, file = ""):
     p.dump(it)
     f.close()
 
-ocfn = Ocfn # alias
+dump = Dump
 
-# These test should be redone with assert statements so that can get a boolean
-# result that the test passed
-def TestConsoleNB():
-    """Class ConsoleNB self test"""
-    try:
-        print "Testing ConsoleNB"
-        console = ConsoleNB()
-        console.open()
+def DumpJson(it = None, filename = "", indent=2):
+    """Jsonifys it and dumps it to filename"""
+    if not it:
+        raise ValueError, "No object to Dump: {0}".format(it)
 
-        console.put("Testing nonblocking console\n")
-        console.put("Enter characters and hit return: ")
-        x = ''
-        while not x:
-            x = console.getLine()
-        console.put("You typed: " + x)
-    finally:
-        console.close()
+    if not filename:
+        raise ValueError, "No file to Dump to: {0}".format(filename)
 
-def TestSocketNB():
-    """Class SocketUdpNb self test """
-    try:
-        print "Testing SocketUdpNb"
-        serverA = SocketUdpNb(port = 6101)
-        serverA.open()
-        serverB = SocketUdpNb(port = 6102)
-        serverB.open()
+    with ocfn(filename, "w+") as f:
+        json.dump(it, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
 
-        serverA.send("A sends to B",serverB.ha)
-        print serverB.receive()
-        serverA.send("A sends to A",serverA.ha)
-        print serverA.receive()
-        serverB.send("B sends to A",serverA.ha)
-        print serverA.receive()
-        serverB.send("B sends to B",serverB.ha)
-        print serverB.receive()
+dumpJson = DumpJson
 
-    finally:
-        serverA.close()
-        serverB.close()
+def LoadJson(filename = ""):
+    """ Loads json object from filename, returns unjsoned object"""
+    if not filename:
+        raise ParameterError, "Empty filename to load."
 
-def TestBlend0(u = .25, s = .75, steps = 10):
-    """Test the Blend0 function
+    with ocfn(filename) as f:
+        try:
+            it = json.load(f, object_pairs_hook=odict())
+        except EOFError:
+            return None
+        except ValueError:
+            return None
+        return it
 
-    """
-    u = abs(u)
-    s = abs(s)
-    steps = abs(steps)
-    span = u + s
-    ss = span / steps
-    for x in xrange(-(steps + 1), steps + 2, 1):
-        d = x * ss
-        b = Blend0(d,u,s)
-        print d, b
+loadJson = LoadJson
 
-def Test():
-    """Module self test
-
-
-
-    """
-    pass
-
-if __name__ == "__main__":
-    Test()

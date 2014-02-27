@@ -40,11 +40,7 @@ Finished refactor of act actor managment and resolution with class based registr
    Added decorators actorify and deedify to make it easier to create custom do behaviors
 
 Added at context clause to do verb to allow specifying context on a do by do basis
-
-
 Updated documentation to use refined terminology of declarative sentences not commands
-
-
 Changed builder error messages to use 'verb' not 'command'
 
 
@@ -91,9 +87,6 @@ Tasker command is broken still
 
 load command file path is now computed relative the the plan file in which the
 load appears and not the directory where ioflo executable lives
-
-
-
 
 --------
 20140115
@@ -172,10 +165,6 @@ Support for markerNeed cloning
 Support for doneNeed, statusNeed cloning
 Support for bid cloning
 Support for fiat (ready start stop abort) cloning
-
-
-
-
 
 -----------
 20131212
@@ -273,12 +262,8 @@ Made executable for ioflo called ioflo that is installed as a script
 20131125
 -------------
 
-
-
 Changed 'do' semantics so that if name is not provided but 'as' is then use
    the default generated name for the deed instance.
-
-
 
 Standardized connective usage for commands
    to, with are aliases for reference to direct data
@@ -351,7 +336,6 @@ Added capability to use external import to a given ioflo run with the
 ---------
 20131121 v0.7.4
 -----------
-
 
 Changed initio check on attribute so that allows reuse of deed in other frames
    use _iois to store attribute names created with initio. If name in _iois
