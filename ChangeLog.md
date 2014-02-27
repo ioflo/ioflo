@@ -2,6 +2,14 @@
 CHANGE LOG
 -------------------
 -----------
+20140227
+---------
+v0.9.11
+
+Added Non Blocking Unix Domain Socket Datagram class ServerUxdNb to aiding.py
+
+
+-----------
 20140222
 ---------
 v0.9.07
