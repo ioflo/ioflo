@@ -673,7 +673,6 @@ class SocketUxdNb(object):
             return False
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
-        #self.host, self.port = self.ha
 
         if self.log:
             if not self.openLogs():
