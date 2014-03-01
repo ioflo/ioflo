@@ -86,6 +86,11 @@ def TestSocketUxdNB():
         serverC.send("C sends to C again",serverC.ha)
         print serverC.receive()
 
+        print serverA.receive()
+        print serverB.receive()
+        print serverC.receive()
+
+
     finally:
         serverA.close()
         serverB.close()
