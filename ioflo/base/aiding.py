@@ -601,7 +601,7 @@ class SocketUxdNb(object):
        Needs socket module
     """
 
-    def __init__(self, ha=None, bufsize = 1024, path = '', log = False):
+    def __init__(self, ha=None, bufsize = 1024, path = '', log = False, umask=None):
         """Initialization method for instance.
 
            ha = host address duple (host, port)
@@ -617,6 +617,7 @@ class SocketUxdNb(object):
         self.txLog = None #transmit log
         self.rxLog = None #receive log
         self.log = log
+        self.umask = umask
 
     def openLogs(self, path = ''):
         """Open log files
@@ -665,6 +666,11 @@ class SocketUxdNb(object):
 
         self.ss.setblocking(0) #non blocking socket
 
+
+        oldumask = None
+        if self.umask is not None: # change umask for the uxd file
+            oldumask = os.umask(self.umask) # set new and return old
+
         #bind to Host Address Port
         try:
             self.ss.bind(self.ha)
@@ -682,6 +688,9 @@ class SocketUxdNb(object):
             except socket.error as ex:
                 console.terse("socket.error = {0}\n".format(ex))
                 return False
+
+        if oldumask is not None: # restore old umask
+            os.umask(oldumask)
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
 
