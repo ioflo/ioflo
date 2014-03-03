@@ -96,22 +96,25 @@ class Skedder(object):
                    password='',
                    mode=None,
                    houses=None,
-                   metas=None,):
-        """Initialize Skedder instance.
-           parameters:
-           name = name string
-           period = iteration period
-           stamp = initial time stamp value
-           real = time mode real time True or simulated time False
-           filepath = filepath to build file
-           behaviors = list of pathnames to packages with external behavior modules
-           username = username
-           password = password
-           mode = parsing mode
-           houses = list of houses
-           metas = list of triples of (name, path, data) where
-                        name = name string, path = path string, data = odict
-
+                   metas=None,
+                   preloads=None, ):
+        """
+        Initialize Skedder instance.
+        parameters:
+            name = name string
+            period = iteration period
+            stamp = initial time stamp value
+            real = time mode real time True or simulated time False
+            filepath = filepath to build file
+            behaviors = list of pathnames to packages with external behavior modules
+            username = username
+            password = password
+            mode = parsing mode
+            houses = list of houses
+            metas = list of triples of (name, path, data) where
+                name = name string of house attribute, path = path string, data = odict
+            preloads = list of duples of (path, data) to preload Store where
+               path = path string, data = odict
         """
         self.name = name
         self.period = float(abs(period))
@@ -138,16 +141,22 @@ class Skedder(object):
                 ("mode", "meta.mode", odict(value=self.mode)), #applied mode logging only
                 ("plan", "meta.plan", odict(value=self.plan)),
                 ("filepath", "meta.filepath", odict(value=self.filepath)),
-                ("version", "meta.version", odict(value=__version__)),
-                ("platform", "meta.platform",
-                     odict([("os", sys.platform),
-                            ("python", "{0}.{1}.{2}".format(*sys.version_info)),] )),
                 ("behaviors", "meta.behaviors", odict(value=self.behaviors)),
                 ("credentials", "meta.credentials",
                      odict([('username', self.username), ('password', self.password)])),
             ]
         if metas:
             self.metas.extend(metas)
+
+        self.preloads = [
+                ("ioflo.version", odict(value=__version__)),
+                ("ioflo.platform",
+                     odict([("os", sys.platform),
+                            ("python", "{0}.{1}.{2}".format(*sys.version_info)),] )),
+
+            ]
+        if preloads:
+            self.preloads.extend(preloads)
 
         self.ready = deque() #deque of taskers in run order
         self.aborted = deque() #deque of aborted taskers
@@ -168,7 +177,7 @@ class Skedder(object):
         console.profuse("     Add ready: {0} retime: {1} period: {2} desire {3}\n".format(
             tasker.name, retime, period, ControlNames[tasker.desire]))
 
-    def build(self, filepath='', mode=None, metas=None):
+    def build(self, filepath='', mode=None, metas=None, preloads=None):
         """ Build houses from file given by filepath """
 
         console.terse("Building Houses for Skedder '{0}' ...\n".format(self.name))
@@ -176,13 +185,16 @@ class Skedder(object):
         if filepath:
             self.filepath = filepath
         if mode:
-            self.mode =  mode
+            self.mode.extend(mode)
         if metas:
-            self.metas = metas
+            self.metas.extend(metas)
+        if preloads:
+            self.preloads.extend(preloads)
 
         b = building.Builder(fileName = self.filepath,
                              mode=self.mode,
                              metas = self.metas,
+                             preloads =self.preloads,
                              behaviors=self.behaviors)
 
         if not b.build():
@@ -191,8 +203,8 @@ class Skedder(object):
         self.houses = b.houses
 
         for house in self.houses:
-            meta = house.metas
-            console.profuse("Meta Data for House '{0}':\n{1}\n".format(house.name, house.metas))
+            console.profuse("Meta Data for House '{0}':\n{1}\n".format(
+                house.name, house.metas))
 
         return True
 

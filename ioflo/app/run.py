@@ -127,6 +127,7 @@ def start(
             mode=None,
             houses=None,
             metas=None,
+            preloads=None,
             verbose=0,
         ):
     """ Start Skedder, build and run """
@@ -149,7 +150,8 @@ def start(
                                password=password,
                                mode=mode,
                                houses=houses,
-                               metas=metas, )
+                               metas=metas,
+                               preloads=preloads, )
     if skedder.build():
         console.terse( "\n----------------------\n")
         console.terse( "\n\nStarting mission plan '{0}' ... from file {1}\n".format(

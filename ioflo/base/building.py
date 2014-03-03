@@ -165,13 +165,14 @@ class Builder(object):
     """
 
     """
-    def __init__(self, fileName='', mode=None, metas=None, behaviors=None):
+    def __init__(self, fileName='', mode=None, metas=None, preloads=None, behaviors=None):
         """
 
         """
         self.fileName = fileName #initial name of file to start building from
         self.mode = mode or []
-        self.metas = metas or {}
+        self.metas = metas or []
+        self.preloads = preloads or []
         self.behaviors = behaviors or []
         self.files = [] #list of open file objects, appended to by load commands
         self.counts = [] #list of linectr s for open file objects
@@ -189,7 +190,7 @@ class Builder(object):
         self.currentFrame = None #current frame
         self.currentContext = NATIVE
 
-    def build(self, fileName='', mode=None, metas=None, behaviors=None):
+    def build(self, fileName='', mode=None, metas=None, preloads=None, behaviors=None):
         """
            Allows building from multiple files. Essentially files list is stack of files
            fileName is name of first file. Load commands in any files push (append) file onto files
@@ -201,11 +202,13 @@ class Builder(object):
         if fileName:
             self.fileName = fileName
         if mode:
-            self.mode = mode
+            self.mode.extend[mode]
         if metas:
-            self.metas = metas
+            self.metas.extend[metas]
+        if preloads:
+            self.preloads.extend[preloads]
         if behaviors:
-            self.behaviors = behaviors
+            self.behaviors.extend[behaviors]
 
         if self.behaviors: #import behavior package/module
             for behavior in self.behaviors:
@@ -410,6 +413,9 @@ class Builder(object):
             self.currentHouse.metas['house'] = self.initPathToData('.meta.house',
                     odict(value=self.currentHouse.name))
 
+            for path, data in self.preloads:
+                self.initPathToData(path, data)
+
         except IndexError:
             msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
             raise excepting.ParseError(msg, tokens, index)
@@ -422,6 +428,12 @@ class Builder(object):
         msg = "   Built House '{0}' with meta:\n".format(self.currentHouse.name)
         for name, share in self.currentHouse.metas.items():
             msg += "       {0}: {1!r}\n".format(name, share)
+        console.terse(msg)
+
+        msg = "   Built House '{0}' with preload:\n".format(self.currentHouse.name)
+        for path, data in self.preloads:
+            share = self.currentHouse.store.fetch(path)
+            msg += "       {0}: {1!r}\n".format(path, share)
         console.terse(msg)
 
         return True

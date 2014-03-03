@@ -1,6 +1,21 @@
 ------------------
 CHANGE LOG
 -------------------
+
+v0.9.13
+
+Changed metadata .metas
+Added .preloads to Skedder and Builder for one way preload of data store whereas
+metas is two way (access back to skedder through house.metas dict)
+
+---------
+20140303
+----------
+v0.9.12
+
+Added umask to aiding.SocketUxdNb
+Added check for missing directory path to
+
 -----------
 20140227
 ---------
