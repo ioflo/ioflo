@@ -94,6 +94,7 @@ def TestSocketUxdNB():
     finally:
         serverA.close()
         serverB.close()
+        serverC.close()
 
 def TestBlend0(u = .25, s = .75, steps = 10):
     """Test the Blend0 function
