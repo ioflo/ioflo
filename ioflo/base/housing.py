@@ -102,7 +102,7 @@ class House(registering.StoriedRegistry):
           .names = dictonary of names from each name registry
           .counters = dictionary of counters from each name registry
 
-          .meta = dictionary of (name, share) items of metadata for access by skedder
+          .metas = dictionary of (name, share) items of meta data for access by skedder
                   name is how skedder accesses the associated share
     """
     Counter = 0
@@ -126,7 +126,7 @@ class House(registering.StoriedRegistry):
         self.names = odict() #houses dict of registry Names
         self.counters = odict() #houses dict of registry Name Counters
 
-        self.meta = odict() # dict of meta data items (name, share) for skedder to access
+        self.metas = odict() # dict of meta data items (name, share) for skedder to access
 
         for key in Registries: #initialize names dicts for registry Names
             self.names[key] = odict()

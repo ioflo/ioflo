@@ -30,7 +30,7 @@ def test():
     plans = getPlanFiles()
     filepath = "../plan/meta.flo"
     opts = dict(gandolf='grey', saruman='white')
-    metadata = [("opts", ".testmeta.opts", dict(value=opts))]
+    metas = [("opts", ".testmeta.opts", dict(value=opts))]
 
     ioflo.app.run.start(
                         name='teststart',
@@ -43,7 +43,7 @@ def test():
                         password="",
                         mode=None,
                         houses=None,
-                        metadata=metadata,
+                        metas=metas,
                         verbose=2,
                         )
 

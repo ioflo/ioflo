@@ -96,7 +96,7 @@ class Skedder(object):
                    password='',
                    mode=None,
                    houses=None,
-                   metadata=None,):
+                   metas=None,):
         """Initialize Skedder instance.
            parameters:
            name = name string
@@ -109,7 +109,7 @@ class Skedder(object):
            password = password
            mode = parsing mode
            houses = list of houses
-           metadata = list of triples of (name, path, data) where
+           metas = list of triples of (name, path, data) where
                         name = name string, path = path string, data = odict
 
         """
@@ -131,7 +131,7 @@ class Skedder(object):
         self.houses = houses or []
 
         #Meta data format is list of triples of form (name, path, value)
-        self.metadata = [
+        self.metas = [
                 ("name", "meta.name", odict(value=self.name)),
                 ("period", "meta.period", odict(value=self.period)),
                 ("real", "meta.real", odict(value=self.real)),
@@ -146,8 +146,8 @@ class Skedder(object):
                 ("credentials", "meta.credentials",
                      odict([('username', self.username), ('password', self.password)])),
             ]
-        if metadata:
-            self.metadata.extend(metadata)
+        if metas:
+            self.metas.extend(metas)
 
         self.ready = deque() #deque of taskers in run order
         self.aborted = deque() #deque of aborted taskers
@@ -168,7 +168,7 @@ class Skedder(object):
         console.profuse("     Add ready: {0} retime: {1} period: {2} desire {3}\n".format(
             tasker.name, retime, period, ControlNames[tasker.desire]))
 
-    def build(self, filepath='', mode=None, metadata=None):
+    def build(self, filepath='', mode=None, metas=None):
         """ Build houses from file given by filepath """
 
         console.terse("Building Houses for Skedder '{0}' ...\n".format(self.name))
@@ -177,12 +177,12 @@ class Skedder(object):
             self.filepath = filepath
         if mode:
             self.mode =  mode
-        if metadata:
-            self.metadata = metadata
+        if metas:
+            self.metas = metas
 
         b = building.Builder(fileName = self.filepath,
                              mode=self.mode,
-                             metadata = self.metadata,
+                             metas = self.metas,
                              behaviors=self.behaviors)
 
         if not b.build():
@@ -191,8 +191,8 @@ class Skedder(object):
         self.houses = b.houses
 
         for house in self.houses:
-            meta = house.meta
-            console.profuse("Meta Data for House '{0}':\n{1}\n".format(house.name, house.meta))
+            meta = house.metas
+            console.profuse("Meta Data for House '{0}':\n{1}\n".format(house.name, house.metas))
 
         return True
 

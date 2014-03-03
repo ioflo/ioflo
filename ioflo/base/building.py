@@ -165,13 +165,13 @@ class Builder(object):
     """
 
     """
-    def __init__(self, fileName='', mode=None, metadata=None, behaviors=None):
+    def __init__(self, fileName='', mode=None, metas=None, behaviors=None):
         """
 
         """
         self.fileName = fileName #initial name of file to start building from
         self.mode = mode or []
-        self.metadata = metadata or {}
+        self.metas = metas or {}
         self.behaviors = behaviors or []
         self.files = [] #list of open file objects, appended to by load commands
         self.counts = [] #list of linectr s for open file objects
@@ -189,21 +189,21 @@ class Builder(object):
         self.currentFrame = None #current frame
         self.currentContext = NATIVE
 
-    def build(self, fileName='', mode=None, metadata=None, behaviors=None):
+    def build(self, fileName='', mode=None, metas=None, behaviors=None):
         """
            Allows building from multiple files. Essentially files list is stack of files
            fileName is name of first file. Load commands in any files push (append) file onto files
            until file completed loaded and then popped off
 
-           Each house's store is inited with the metadata
+           Each house's store is inited with the meta data in metas
         """
         #overwrite default if truthy argument
         if fileName:
             self.fileName = fileName
         if mode:
             self.mode = mode
-        if metadata:
-            self.metadata = metadata
+        if metas:
+            self.metas = metas
         if behaviors:
             self.behaviors = behaviors
 
@@ -402,12 +402,12 @@ class Builder(object):
             self.currentLogger = None #current logger
             self.currentLog = None #current log
 
-            #metadata are triples of name, path, data
-            for name, path, data in self.metadata:
-                self.currentHouse.meta[name] = self.initPathToData(path, data)
+            #meta data in metas is list of triples of (name, path, data)
+            for name, path, data in self.metas:
+                self.currentHouse.metas[name] = self.initPathToData(path, data)
 
-            # set meta.house to house.name
-            self.currentHouse.meta['house'] = self.initPathToData('.meta.house',
+            # set .meta.house to house.name
+            self.currentHouse.metas['house'] = self.initPathToData('.meta.house',
                     odict(value=self.currentHouse.name))
 
         except IndexError:
@@ -420,7 +420,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         msg = "   Built House '{0}' with meta:\n".format(self.currentHouse.name)
-        for name, share in self.currentHouse.meta.items():
+        for name, share in self.currentHouse.metas.items():
             msg += "       {0}: {1!r}\n".format(name, share)
         console.terse(msg)
 
@@ -429,7 +429,7 @@ class Builder(object):
     # Convenince Functions
 
     def initPathToData(self, path, data):
-        """Convenience support function to preload metadata.
+        """Convenience support function to preload meta data.
            Initialize share given by path with data.
            Assumes self.currentStore is valid
            path is share path string
