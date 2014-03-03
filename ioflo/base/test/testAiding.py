@@ -49,11 +49,11 @@ def TestSocketUxdNB():
     console.reinit(verbosity=console.Wordage.verbose)
     try:
         print "Testing SocketUxdNb"
-        serverA = aiding.SocketUxdNb(ha = '/tmp/uxdA')
+        serverA = aiding.SocketUxdNb(ha = '/tmp/local/uxdA')
         serverA.reopen()
-        serverB = aiding.SocketUxdNb(ha = '/tmp/usdB')
+        serverB = aiding.SocketUxdNb(ha = '/tmp/local/usdB')
         serverB.reopen()
-        serverC = aiding.SocketUxdNb(ha = '/tmp/usdC')
+        serverC = aiding.SocketUxdNb(ha = '/tmp/local/usdC')
         serverC.reopen()
 
         serverA.send("A sends to B",serverB.ha)

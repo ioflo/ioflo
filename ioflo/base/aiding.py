@@ -518,8 +518,8 @@ class SocketUdpNb(object):
         #bind to Host Address Port
         try:
             self.ss.bind(self.ha)
-        except socket.error, e:
-            console.terse("socket.error = {0}\n".format(e))
+        except socket.error as ex:
+            console.terse("socket.error = {0}\n".format(ex))
             return False
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
@@ -565,8 +565,8 @@ class SocketUdpNb(object):
                 self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
 
             return (data,sa)
-        except socket.error, ex1: # 2.6 socket.error is subclass of IOError
-            if ex1.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+        except socket.error as ex: # 2.6 socket.error is subclass of IOError
+            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
                 return ('',None) #receive has nothing empty string for data
             else:
                 raise #re raise exception ex1
@@ -580,8 +580,8 @@ class SocketUdpNb(object):
         """
         try:
             result = self.ss.sendto(data,da) #result is number of bytes sent
-        except socket.error, e:
-            print "socket.error = %s" % e
+        except socket.error as ex:
+            print "socket.error = %s" % ex
             result = 0
 
         console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha),result))
@@ -668,9 +668,20 @@ class SocketUxdNb(object):
         #bind to Host Address Port
         try:
             self.ss.bind(self.ha)
-        except socket.error, e:
-            console.terse("socket.error = {0}\n".format(e))
-            return False
+        except socket.error as ex:
+            if not ex.errno == errno.ENOENT: # No such file or directory
+                console.terse("socket.error = {0}\n".format(ex))
+                return False
+            try:
+                os.makedirs(os.path.dirname(self.ha))
+            except OSError as ex:
+                console.terse("OSError = {0}\n".format(ex))
+                return False
+            try:
+                self.ss.bind(self.ha)
+            except socket.error as ex:
+                console.terse("socket.error = {0}\n".format(ex))
+                return False
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
 
@@ -720,8 +731,8 @@ class SocketUxdNb(object):
                 self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
 
             return (data,sa)
-        except socket.error, ex1: # 2.6 socket.error is subclass of IOError
-            if ex1.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+        except socket.error as ex: # 2.6 socket.error is subclass of IOError
+            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
                 return ('',None) #receive has nothing empty string for data
             else:
                 raise #re raise exception ex1
@@ -735,8 +746,8 @@ class SocketUxdNb(object):
         """
         try:
             result = self.ss.sendto(data,da) #result is number of bytes sent
-        except socket.error, e:
-            print "socket.error = %s" % e
+        except socket.error as ex:
+            print "socket.error = %s" % ex
             result = 0
 
         console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha),result))
