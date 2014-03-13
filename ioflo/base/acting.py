@@ -480,7 +480,7 @@ class Actor(object): # old registering.StoriedRegistry
                     if (len(parts) >= 3):
                         if parts[2] == 'frame':
                             if parts[3] == 'me':
-                                parts[3] = self.frame.name
+                                parts[3] = self.act.frame.name
                             elif parts[3] == 'main':
                                 if not self.act.frame.framer.main:
                                     raise excepting.ResolveError("ResolveError: "

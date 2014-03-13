@@ -4081,7 +4081,7 @@ class Builder(object):
             if field not in dst:
                 print "     Warning: Transfer into non-existent field '%s' in share %s ... creating anyway" %\
                       (field, dst.name)
-                dst[field] = 0.0 #create
+                dst[field] = 0 #create
 
         return (dataFields, dstFields)
 

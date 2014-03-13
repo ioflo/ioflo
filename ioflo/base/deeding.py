@@ -30,7 +30,7 @@ def deedify(name, base=None, registry=None, inits=None, ioinits=None, parms=None
         into an Actor sub class with .action method and with class name that
         is the reverse camel case of name and registers the
         new subclass in the registry under name.
-        If base is not provided then use Actor
+        If base is not provided then use Deed
 
         The parameters  registry, parametric, inits, ioinits, and parms if provided,
         are used to create the class attributes for the new subclass

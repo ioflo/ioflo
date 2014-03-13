@@ -206,7 +206,7 @@ class StoreTimer(object):
             return False
     expired = property(getExpired, doc = 'True if expired, False otherwise')
 
-    def restart(self,start = None, duration = None):
+    def restart(self, start = None, duration = None):
         """ Starts timer at start time secs for duration secs.
             (fractional from epoc)
             If start arg is missing then restarts at current time
@@ -402,7 +402,7 @@ class ConsoleNB(object):
         if not port:
             port = os.ctermid() #default to console
 
-        self.fd = os.open(port,os.O_NONBLOCK | os.O_RDWR | os.O_NOCTTY)
+        self.fd = os.open(port, os.O_NONBLOCK | os.O_RDWR | os.O_NOCTTY)
 
 
     def close(self):
@@ -439,7 +439,7 @@ class ConsoleNB(object):
         """Writes data string to console.
 
         """
-        os.write(self.fd, data)
+        return(os.write(self.fd, data))
 
 class SocketUdpNb(object):
     """Class to manage non blocking reads and writes from UDP socket.
@@ -769,6 +769,14 @@ class SocketUxdNb(object):
 
 
 #Utility Functions
+
+def TotalSeconds(td):
+    """ Compute total seconds for datetime.timedelta object
+        needed for python 2.6
+    """
+    return ((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6)
+
+totalSeconds = TotalSeconds
 
 def ReverseCamel(name, lower=True):
     """ Returns camel case reverse of name.
