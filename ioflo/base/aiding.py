@@ -582,8 +582,10 @@ class SocketUdpNb(object):
         try:
             result = self.ss.sendto(data,da) #result is number of bytes sent
         except socket.error as ex:
-            print "socket.error = %s" % ex
+            emsg = "socket.error = {0}\n".format(ex)
+            console.terse(emsg)
             result = 0
+            raise
 
         console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha),result))
 
@@ -757,8 +759,10 @@ class SocketUxdNb(object):
         try:
             result = self.ss.sendto(data,da) #result is number of bytes sent
         except socket.error as ex:
-            print "socket.error = %s" % ex
+            emsg = "socket.error = {0}\n".format(ex)
+            console.terse(emsg)
             result = 0
+            raise
 
         console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha),result))
 
