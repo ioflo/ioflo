@@ -183,7 +183,8 @@ class StoreTimer(object):
             duration in seconds (fractional)
         """
         self.store = store
-        self.restart(start = store.stamp, duration = duration)
+        start = self.store.stamp if self.store.stamp is not None else 0.0
+        self.restart(start = start, duration = duration)
 
     def getElapsed(self): #for property
         """ Computes elapsed time in seconds (fractional) since start.
