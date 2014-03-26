@@ -1,6 +1,14 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+20140326
+---------
+
+v0.9.17
+
+Resizes socket buffers if too small for non blocking UDP and UXD servers
+
 
 ---------
 20140303
