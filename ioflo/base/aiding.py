@@ -3,7 +3,6 @@
 """
 #print "module %s" % __name__
 
-
 import exceptions
 import math
 import types
@@ -22,8 +21,6 @@ except ImportError:
     import json
 
 # Import ioflo libs
-
-
 from .globaling import *
 from .odicting import odict
 
@@ -513,7 +510,10 @@ class SocketUdpNb(object):
         # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
         # TIME_WAIT state, without waiting for its natural timeout to expire.
         self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
         self.ss.setblocking(0) #non blocking socket
 
         #bind to Host Address Port
@@ -666,9 +666,11 @@ class SocketUxdNb(object):
         # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
         # TIME_WAIT state, without waiting for its natural timeout to expire.
         self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
         self.ss.setblocking(0) #non blocking socket
-
 
         oldumask = None
         if self.umask is not None: # change umask for the uxd file
@@ -771,7 +773,6 @@ class SocketUxdNb(object):
                              (str(da), str(result), repr(data)))
 
         return result
-
 
 #Utility Functions
 
@@ -896,7 +897,6 @@ def Just(n, seq):
         yield next(it, None)
 
 just = Just #alias
-
 
 from abc import ABCMeta,  abstractmethod
 class NonStringIterable:
@@ -1232,7 +1232,6 @@ def CrabSpeed(track = 0.0,  speed = 2.0, north = 0.0, east = 0.0,
 
     return (crab, delta, B + A)
 
-
 def CrossProduct3D(a,b):
     """Forms the 3 dimentional vector cross product of sequences a and b
        a is crossed onto b
@@ -1543,7 +1542,6 @@ def HumanLonToFracDeg(lonDM):
         raise ValueError, "Bad format for longitude '%s'" % (lonDM)
 
     return (lon)
-
 
 def HumanToFracDeg(latDM, lonDM):
     """Converts  pair of coordinates  in human friendly strings of form   DegXMin to
