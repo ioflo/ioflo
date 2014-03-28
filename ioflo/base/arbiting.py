@@ -1,7 +1,7 @@
 """arbiting.py arbiter deed module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import struct
@@ -32,9 +32,9 @@ class ArbiterDeed(deeding.Deed):
                     if sel: then the input is selected
                     otherwise input is ignored
               confidences are used either for threshold or for weighting output
-                 confidences can be number in interval [ 0.0, 1.0] or Boolean or None. 
+                 confidences can be number in interval [ 0.0, 1.0] or Boolean or None.
                  when necessary arbiter will convert confidence to be in [0.0, 1.0] using rules
-                    if None then assumed = 1.0, 
+                    if None then assumed = 1.0,
                     if True then 1.0
                     if False then 0.0
                     otherwise hard limit and convert numbers to interval [0.0, 1.0]
@@ -42,17 +42,17 @@ class ArbiterDeed(deeding.Deed):
                  if non negative numbers
 
               Values are not constrained for Switch and Priority arbiters but must be numbers for
-                 Weighted arbiter. 
-                 With a weighted arbiter if one of the input values is not number then 
+                 Weighted arbiter.
+                 With a weighted arbiter if one of the input values is not number then
                     the weighted arbiter uses the default outputs.
 
            Init Parameters:
 
-           output is path name of share for output/truth of arbiter 
+           output is path name of share for output/truth of arbiter
 
            group is path name of group in store, group has following subgroups or shares:
               group.default = share of default value and confidence (truth) for arbiter
-              group.inimps = data structure of input importances 
+              group.inimps = data structure of input importances
               group.insels = data structure of input selections
 
 
@@ -75,7 +75,7 @@ class ArbiterDeed(deeding.Deed):
            .store
 
         """
-        super(ArbiterDeed,self).__init__(**kw)  
+        super(ArbiterDeed,self).__init__(**kw)
 
         #create it if it does not already exist
         self.output = self.store.create(output).create(value = 0.0)
@@ -133,7 +133,7 @@ class ArbiterDeed(deeding.Deed):
         """
         print "Updating arbiter %s" % self.name
 
-        self.update() 
+        self.update()
 
 
     @staticmethod
@@ -157,7 +157,7 @@ class ArbiterDeed(deeding.Deed):
             truth = 1.0
         elif truth is False: #Boolean False
             truth = 0.0
-        else: 
+        else:
             truth = float(min(1.0,max(0.0,truth)))
 
         return truth
@@ -189,7 +189,7 @@ class SwitchArbiter(ArbiterDeed):
                 self.output.stamp = stamp
                 return
 
-        #self.output.updateJointly(value = self.default.value, 
+        #self.output.updateJointly(value = self.default.value,
         #                           truth = self.default.truth, stamp = stamp)
         self.output.value = self.default.value
         self.output.truth = self.default.truth
@@ -210,7 +210,7 @@ class PriorityArbiter(ArbiterDeed):
            if an input's truth is True or None then use truth = 1.0
            an input is most important if it has maximum importance of all selected sufficient inputs
 
-           find first and most important input 
+           find first and most important input
 
            if found then output's value/truth is found input's value/truth
            else output's value/truth is default's value/truth
@@ -223,8 +223,8 @@ class PriorityArbiter(ArbiterDeed):
         for tag, input in self.inputs.items():
             truth = self.FixTruth(input.truth) #fix truth to be float in range [0.0, 1.0]
             imp = self.inimps.fetch(tag)  # or could use form self.inimps[tag]
-            if (  self.insels.fetch(tag) and 
-                  (truth > self.default.truth) and 
+            if (  self.insels.fetch(tag) and
+                  (truth > self.default.truth) and
                   (imp > impmax) ):
                 inputmax = input
                 impmax = imp
@@ -236,7 +236,7 @@ class PriorityArbiter(ArbiterDeed):
             self.output.truth = truthmax
             self.output.stamp = stamp
         else:
-            #self.output.updateJointly(value = self.default.value, 
+            #self.output.updateJointly(value = self.default.value,
             #                              truth = self.default.truth, stamp = stamp)
             self.output.value = self.default.value
             self.output.truth = self.default.truth
@@ -255,7 +255,7 @@ class TrustedArbiter(ArbiterDeed):
            an input is sufficient if its confidence is > default truth
            input's truth confidence constrained to range [0.0, 1.0]
            if an input's truth is True or None then use truth = 1.0
-           an input has the highest confidence if its confidence is maximum amoung all 
+           an input has the highest confidence if its confidence is maximum amoung all
               selected sufficient inputs
            an input is most important if it has maximum importance of all highest confidence inputs
 
@@ -273,7 +273,7 @@ class TrustedArbiter(ArbiterDeed):
             sel = self.insels.fetch(tag) #or could use form self.insel[tag]
             truth = self.FixTruth(input.truth) #fix truth to be float in range [0.0, 1.0]
             imp = self.inimps.fetch(tag)
-            if (sel and (truth > self.default.truth) ): 
+            if (sel and (truth > self.default.truth) ):
                 if (truth > truthmax):
                     truthmax = truth
                     impmax = imp
@@ -289,7 +289,7 @@ class TrustedArbiter(ArbiterDeed):
             self.output.truth = truthmax
             self.output.stamp = stamp
         else:
-            #self.output.updateJointly(value = self.default.value, 
+            #self.output.updateJointly(value = self.default.value,
             #                           truth = self.default.truth, stamp = stamp)
             self.output.value = self.default.value
             self.output.truth = self.default.truth
@@ -313,7 +313,7 @@ class WeightedArbiter(ArbiterDeed):
 
            if weighted conf > default truth then
               output's value/truth is found input's value/fixed truth
-           else 
+           else
               output's value/truth is default's value/truth
 
         """
@@ -334,14 +334,14 @@ class WeightedArbiter(ArbiterDeed):
 
         except TypeError:#one of the input values is not number
             console.terse("     Warning, bad input value for Arbiter {0}\n".format(self.name))
-            #self.output.updateJointly(value = self.default.value, 
+            #self.output.updateJointly(value = self.default.value,
             #                              truth = self.default.truth, stamp = stamp)
             self.output.value = self.default.value
             self.output.truth = self.default.truth
             self.output.stamp = stamp
             return
         except ZeroDivisionError:  #no selected input with non zero truth or importance
-            #self.output.updateJointly(value = self.default.value, 
+            #self.output.updateJointly(value = self.default.value,
             #                           truth = self.default.truth, stamp = stamp)
             self.output.value = self.default.value
             self.output.truth = self.default.truth
@@ -356,7 +356,7 @@ class WeightedArbiter(ArbiterDeed):
             self.output.stamp = stamp
 
         else:
-            #self.output.updateJointly(value = self.default.value, 
+            #self.output.updateJointly(value = self.default.value,
             #                           truth = self.default.truth, stamp = stamp)
             self.output.value = self.default.value
             self.output.truth = self.default.truth
@@ -393,7 +393,7 @@ def Test():
     print "\nTesting SwitchArbiter"
     group = 'arbiters.switch'
     output = 'switch.output'
-    arbiter = SwitchArbiter(name = 'Switch', store = store, output = output, 
+    arbiter = SwitchArbiter(name = 'Switch', store = store, output = output,
                             group = group, inputs = inputs)
     arbiter.expose()
     store.expose()
@@ -408,7 +408,7 @@ def Test():
     print "\nTesting PriorityArbiter"
     group = 'arbiters.priority'
     output = 'priority.output'
-    arbiter = PriorityArbiter(name = 'Priority', store = store, output = output, 
+    arbiter = PriorityArbiter(name = 'Priority', store = store, output = output,
                               group = group, inputs = inputs)
     arbiter.expose()
     store.expose()
@@ -434,7 +434,7 @@ def Test():
     print "\nTesting TrustedArbiter"
     group = 'arbiters.trusted'
     output = 'trusted.output'
-    arbiter = TrustedArbiter(name = 'Trusted', store = store, output = output, 
+    arbiter = TrustedArbiter(name = 'Trusted', store = store, output = output,
                              group = group, inputs = inputs)
     arbiter.expose()
     store.expose()
@@ -461,7 +461,7 @@ def Test():
     print "\nTesting WeightedArbiter"
     group = 'arbiters.weighted'
     output = 'weighted.output'
-    arbiter = WeightedArbiter(name = 'Weighted', store = store, output = output, 
+    arbiter = WeightedArbiter(name = 'Weighted', store = store, output = output,
                               group = group, inputs = inputs)
     arbiter.expose()
     store.expose()

@@ -2,7 +2,7 @@
 
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import sys
 import os
@@ -18,7 +18,7 @@ from .odicting import odict
 
 from . import excepting
 from . import registering
-from . import storing 
+from . import storing
 from . import tasking
 
 from .consoling import getConsole
@@ -28,7 +28,7 @@ console = getConsole()
 
 
 class Logger(tasking.Tasker):
-    """Logger Task Patron Registry Class for managing Logs  
+    """Logger Task Patron Registry Class for managing Logs
 
        Usage:   logger.send(START) to prepare log formats also reopens files
                 logger.send(RUN) runs logs
@@ -39,7 +39,7 @@ class Logger(tasking.Tasker):
           .store = data store for house should be same for all frameworks
 
           .period = desired time in seconds between runs must be non negative, zero means asap
-          .stamp = time when tasker last ran sucessfully (not interrupted by exception) 
+          .stamp = time when tasker last ran sucessfully (not interrupted by exception)
           .status = operational status of tasker
           .desire = desired control asked by this or other taskers
           .runner = generator to run tasker
@@ -52,7 +52,7 @@ class Logger(tasking.Tasker):
           .path = full path name of log directory
 
     """
-    #Counter = 0  
+    #Counter = 0
     #Names = {}
 
     def __init__(self, flushPeriod = 30.0, prefix = './', **kw):
@@ -132,13 +132,13 @@ class Logger(tasking.Tasker):
 
         try:
             #if repened too quickly could be same so we make a do until kludge
-            path = self.path 
+            path = self.path
 
             i = 0
-            while path == self.path: #do until keep trying until different 
+            while path == self.path: #do until keep trying until different
                 dt = datetime.datetime.now()
                 path = "%s_%s_%04d%02d%02d_%02d%02d%02d" % \
-                    (prefix, self.name, 
+                    (prefix, self.name,
                      dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second + i)
                 path = os.path.abspath(path) #convert to proper absolute path
                 i +=1
@@ -180,7 +180,7 @@ class Logger(tasking.Tasker):
                     console.profuse("     Attempting Ready Logger {0}\n".format(self.name))
                     #doesn't do anything yet
                     console.terse("     Readied Logger {0} ...\n".format(self.name))
-                    self.status = READIED            
+                    self.status = READIED
 
                 elif control == START:
                     console.profuse("     Attempting Start Logger {0}\n".format(self.name))
@@ -209,7 +209,7 @@ class Logger(tasking.Tasker):
                     self.desire = ABORT
                     self.status = ABORTED
 
-                self.stamp = self.store.stamp 
+                self.stamp = self.store.stamp
 
         finally:
             console.terse("     Exception Causing Abort Logger {0}\n".format(self.name))
@@ -224,7 +224,7 @@ class Log(registering.StoriedRegistry):
 
        Iherited instance attributes:
           .name = unique name for log (group)
-          .store = data store 
+          .store = data store
 
        Instance attributes:
           .stamp = time stamp last time logged used by once and update actions
@@ -236,9 +236,9 @@ class Log(registering.StoriedRegistry):
           .action = function to use when logging
           .header = header for log file
           .formats = ordered dictionary of log format strings
-          .loggees = ordered dictionary of shares to be logged 
+          .loggees = ordered dictionary of shares to be logged
     """
-    Counter = 0  
+    Counter = 0
     Names = {}
 
     def __init__(self, kind = 'text', fileName = '', rule = NEVER, loggees = None, **kw):
@@ -259,7 +259,7 @@ class Log(registering.StoriedRegistry):
 
         self.kind = kind
         if fileName:
-            self.fileName = fileName #file name only 
+            self.fileName = fileName #file name only
         else:
             self.fileName = self.name
         self.path = '' #full dir path name of file
@@ -338,7 +338,7 @@ class Log(registering.StoriedRegistry):
         if rule is not None:
             self.rule = rule
 
-        if self.rule == ONCE: 
+        if self.rule == ONCE:
             self.action = self.once
         elif self.rule == ALWAYS:
             self.action = self.always
@@ -349,7 +349,7 @@ class Log(registering.StoriedRegistry):
         elif self.rule == LIFO:
             self.action = self.lifo
         elif self.rule == FIFO:
-            self.action = self.fifo         
+            self.action = self.fifo
         else:
             self.action = self.never
 
@@ -370,7 +370,7 @@ class Log(registering.StoriedRegistry):
         cf.write('_time')
         for tag, loggee in self.loggees.items():
             if len(loggee) > 1:
-                for field in loggee: 
+                for field in loggee:
                     cf.write('\t')
                     cf.write(tag)
                     cf.write('.')
@@ -447,7 +447,7 @@ class Log(registering.StoriedRegistry):
             print ex1
 
         cf.close()
-    
+
     def logSequence(self, fifo=False):
         """ called by conditional actions
             Log and remove all elements of sequence
@@ -465,7 +465,7 @@ class Log(registering.StoriedRegistry):
             stamp = self.formats['_time'] % self.stamp
         except TypeError:
             stamp = '%s' % self.stamp
-        
+
         if self.loggees:
             tag, loggee = self.loggees.items()[0] # only works for one loggee
             if loggee: # not empty
@@ -474,26 +474,26 @@ class Log(registering.StoriedRegistry):
                 if isinstance(value, MutableSequence): #has pop method
                     while value: # not empty
                         d.appendleft(value.pop()) #remove and copy in order
-                
+
                 elif isinstance(value, MutableMapping): # has popitem method
                     while value: # not empty
                         d.appendleft(value.popitem()) #remove and copy in order
-                
+
                 else: #not mutable sequence or mapping so log normally
                     d.appendleft(value)
-                        
+
                 while d: # not empty
                     if fifo:
                         element = d.popleft()
                     else: #lifo
                         element = d.pop()
-                        
+
                     try:
                         text = self.formats[tag][field] % (element, )
                     except TypeError:
                         text = '%s' % element
-                    cf.write("%s\t%s\n" % (stamp, text))                          
-                    
+                    cf.write("%s\t%s\n" % (stamp, text))
+
         try:
             self.file.write(cf.getvalue())
         except ValueError, ex1: #if self.file already closed then ValueError
@@ -509,7 +509,7 @@ class Log(registering.StoriedRegistry):
         pass
 
     def once(self):
-        """log once 
+        """log once
            Good for logging paramters that don't change but want record
         """
         if self.stamp is None:
@@ -520,21 +520,21 @@ class Log(registering.StoriedRegistry):
 
         """
         self.log()
-    
+
     def lifo(self):
         """log lifo sequence
-            log elements in lifo order from sequence until empty 
+            log elements in lifo order from sequence until empty
         """
-        self.logSequence()       
-    
+        self.logSequence()
+
     def fifo(self):
         """log fifo sequence
-            log elements in fifo order from sequence until empty 
+            log elements in fifo order from sequence until empty
         """
-        self.logSequence(fifo=True)    
+        self.logSequence(fifo=True)
 
     def update(self):
-        """log if updated 
+        """log if updated
            logs once and then only if updated
         """
         if self.stamp is None: #Always log at least once even if not updated
@@ -564,10 +564,10 @@ class Log(registering.StoriedRegistry):
                     if getattr(last, field) != value:
                         change = True
                         setattr(last, field, value)
-                except AttributeError as ex: # 
+                except AttributeError as ex: #
                     console.terse("Warning: Log {0}, new runtime field"
                                   " '{1}' for loggee {2}\n".format(
-                                      self.name, field, loggee.name))                     
+                                      self.name, field, loggee.name))
 
         if change:
             self.log()
@@ -606,7 +606,7 @@ def TestLog(rule = UPDATE):
     heading = store.create('pose.heading').create(value = 0.0)
     position = store.create('pose.position').create(north = 10.0, east = 5.0)
 
-    log = Log(name = 'test', store = store, kind = 'console', 
+    log = Log(name = 'test', store = store, kind = 'console',
               prefix = 'log', path = './logs/', rule = rule)
     log.addLoggee(tag = 'heading', loggee = 'pose.heading')
     log.addLoggee(tag = 'pos', loggee = 'pose.position')
@@ -651,14 +651,14 @@ def Test(rule = UPDATE):
     heading = store.create('pose.heading').create(value = 0.0)
     position = store.create('pose.position').create(north = 10.0, east = 5.0)
 
-    log = Log(name = 'test', store = store, kind = 'text', 
+    log = Log(name = 'test', store = store, kind = 'text',
               prefix = 'log', path = './logs/', rule = rule)
     log.addLoggee(tag = 'heading', loggee = 'pose.heading')
     log.addLoggee(tag = 'pos', loggee = 'pose.position')
     log.resolve()
 
     logger = Logger(name = 'Test', store = store)
-    logger.addLog(log) 
+    logger.addLog(log)
 
     status = logger.runner.send(START) #also prepares logs
     status = logger.runner.send(RUN)

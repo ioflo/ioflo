@@ -1,2 +1,2 @@
 """ plain test package"""
-#print "\nPackage at%s" % __path__[0]
+#print "\nPackage at {0}".format( __path__[0])

@@ -2,7 +2,7 @@
 
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 import sys
 import os
 import time

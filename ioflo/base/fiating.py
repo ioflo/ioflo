@@ -1,7 +1,7 @@
 """fiating.py goal action module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import struct
@@ -15,7 +15,7 @@ from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
-from . import storing 
+from . import storing
 from . import acting
 from . import tasking
 from . import framing
@@ -29,16 +29,16 @@ class Fiat(acting.Actor):
 
     """
     Registry = odict()
-    
+
     def resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as parm
            resolved link is passed back to act to store in parms
            since framer may not be current framer at build time
         """
         parms = super(Fiat, self).resolve( **kwa)
-        
+
         if not isinstance(tasker, tasking.Tasker): #name
-            if tasker not in tasking.Tasker.Names: 
+            if tasker not in tasking.Tasker.Names:
                 raise excepting.ResolveError("ResolveError: Bad fiat tasker link name", tasker, '')
             parms['tasker'] = tasker = tasking.Tasker.Names[tasker] #replace name with valid link
 
@@ -46,7 +46,7 @@ class Fiat(acting.Actor):
             msg = "ResolveError: Bad tell tasker, not slave"
             raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
 
-        return parms    
+        return parms
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -54,14 +54,14 @@ class Fiat(acting.Actor):
             Reverting non cloned Framer links into name strings
             Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts with clones.
-            
+
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
         parms = super(Fiat,self).cloneParms(parms, clones, **kw)
-        
+
         tasker = parms.get('tasker')
-        
+
         if isinstance(tasker, tasking.Tasker):
             if tasker.name in clones:
                 parms['tasker'] = clones[tasker.name][1].name
@@ -70,9 +70,9 @@ class Fiat(acting.Actor):
         elif tasker: # assume namestring
             if tasker in clones:
                 parms['tasker'] = clones[tasker][1].name
-        
+
         return parms
-           
+
 
 
 class ReadyFiat(Fiat):
@@ -81,7 +81,7 @@ class ReadyFiat(Fiat):
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(ReadyFiat,self).__init__(**kw)  
+        super(ReadyFiat,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """ready control for explicit slave tasker"""
@@ -96,7 +96,7 @@ class StartFiat(Fiat):
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(StartFiat,self).__init__(**kw)  
+        super(StartFiat,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """start control for explicit slave tasker"""
@@ -111,7 +111,7 @@ class StopFiat(Fiat):
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(StopFiat,self).__init__(**kw)  
+        super(StopFiat,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """stop control for explicit slave framer"""
@@ -126,7 +126,7 @@ class RunFiat(Fiat):
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(RunFiat,self).__init__(**kw)  
+        super(RunFiat,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """run control for explicit slave tasker"""
@@ -141,12 +141,12 @@ class AbortFiat(Fiat):
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(AbortFiat,self).__init__(**kw)  
+        super(AbortFiat,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """abort control for explicit slave tasker"""
 
-        console.profuse("Abort {0}\n".format(tasker.name))      
+        console.profuse("Abort {0}\n".format(tasker.name))
         status = tasker.runner.send(ABORT)
         return (status == ABORTED)
 

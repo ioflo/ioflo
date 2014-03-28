@@ -1,7 +1,7 @@
 """filtering.py filter deed module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import math
 import time
@@ -25,12 +25,12 @@ class HeadingSensorFilter(deeding.LapseDeed):
        Heading Sensor Filter  class
     """
     Ioinits = odict(
-        group = 'filter.sensor.heading', 
+        group = 'filter.sensor.heading',
         output = 'heading.output',
-        input = 'compass', 
+        input = 'compass',
         scenario = 'scenario.magnetic',
         parms = dict(phase = 0.0, amp = 0.0))
-    
+
     def __init__(self, **kw):
         """Initialize instance.
 
@@ -43,12 +43,12 @@ class HeadingSensorFilter(deeding.LapseDeed):
 
         """
         #call super class method
-        super(HeadingSensorFilter,self).__init__(**kw)  
+        super(HeadingSensorFilter,self).__init__(**kw)
 
-    
+
     def initio(self, group, output, input, scenario, parms = None, **kw):
         """ Override since legacy init interface
-        
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
@@ -90,10 +90,10 @@ class HeadingSensorFilter(deeding.LapseDeed):
         self.output = self.store.create(output).update(value = 0.0)
         #inputs
         self.input = self.store.create(input).create(value = 0.0)
-        self.scenario = self.store.create(scenario).create(declination = 0.0)        
-    
+        self.scenario = self.store.create(scenario).create(declination = 0.0)
+
     def restart(self):
-        """Restart 
+        """Restart
 
         """
         self.stamp = self.store.stamp
@@ -102,7 +102,7 @@ class HeadingSensorFilter(deeding.LapseDeed):
 
 
     def action(self, **kw):
-        """Updates 
+        """Updates
         """
         super(HeadingSensorFilter,self).action(**kw) #.lapse & .stamp updated here
         #.lapse is time since last run
@@ -111,11 +111,11 @@ class HeadingSensorFilter(deeding.LapseDeed):
         self.elapsed.value = self.lapse #store lapse for logging
 
         #check here because rate calc divide by lapse
-        #only finish update if lapse positive 
+        #only finish update if lapse positive
         if self.lapse <= 0.0: #lapse non positive so return
             return
 
-        rawHeading = self.input.value 
+        rawHeading = self.input.value
         declination =  self.scenario.data.declination
 
         heading = rawHeading + declination #true heading
@@ -123,7 +123,7 @@ class HeadingSensorFilter(deeding.LapseDeed):
         phase = self.parm.data.phase
         amp = self.parm.data.amp
 
-        error = amp * math.cos(DEGTORAD * (heading + phase)) 
+        error = amp * math.cos(DEGTORAD * (heading + phase))
 
         heading -= error #reverse error introduced by compass
 
@@ -154,10 +154,10 @@ class WindowedFilter(deeding.LapseDeed):
         input = 'ctd', field = 'generic', depth = 'state.depth',
         parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
                      layer = 40.0, tolerance = 5.0))
-    
+
     def __init__(self,  **kw):
         """Initialize instance.
-           
+
            inherited instance attributes
            .stamp = time stamp
            .lapse = time lapse between updates of controller
@@ -166,12 +166,12 @@ class WindowedFilter(deeding.LapseDeed):
 
         """
         #call super class method
-        super(WindowedFilter,self).__init__(**kw)  
+        super(WindowedFilter,self).__init__(**kw)
 
-    
+
     def initio(self, group, output, input, field, depth, parms = None, **kw):
         """ Override since legacy init interface
-        
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
@@ -225,10 +225,10 @@ class WindowedFilter(deeding.LapseDeed):
         self.field = field
         self.input.create({self.field : 0.0})
 
-        self.depth = self.store.create(depth).create(value = 0.0)        
-    
+        self.depth = self.store.create(depth).create(value = 0.0)
+
     def restart(self):
-        """Restart 
+        """Restart
 
         """
         self.stamp = self.store.stamp
@@ -251,7 +251,7 @@ class WindowedFilter(deeding.LapseDeed):
             preload = self.parm.data.preload
             if self.output.value != preload:
                 self.output.value = preload
-            return 
+            return
 
         #.lapse is time since last run and .stamp is current time
         super(WindowedFilter,self).action(**kw) #.lapse & .stamp updated here
@@ -261,7 +261,7 @@ class WindowedFilter(deeding.LapseDeed):
 
         #check here because window calc divide by lapse
         if self.lapse <= 0.0: #lapse non positive so just use raw value
-            self.output.value = raw 
+            self.output.value = raw
             return
 
         old = self.output.value #old salinity
@@ -287,7 +287,7 @@ class WindowedFilter(deeding.LapseDeed):
         print "WindowedFilter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
         format = "output = %0.3f window = %0.3f frac = %0.3f"
         print format % (self.output.value, self.parm.data.window, self.parm.data.frac)
-        
+
 
 WindowedFilter.__register__('filterSensorSalinity', ioinits=odict(
     group = 'filter.sensor.salinity', output = 'state.salinity',
@@ -305,7 +305,7 @@ WindowedFilter.__register__('filterSensorTemperature', ioinits=odict(
     group = 'filter.sensor.temperature', output = 'state.temperature',
     input = 'ctd', field = 'temperature', depth = 'state.depth',
     parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
-                 layer = 40.0, tolerance = 5.0)) )     
+                 layer = 40.0, tolerance = 5.0)) )
 
 
 class MinCtdFilter(deeding.LapseDeed):
@@ -315,13 +315,13 @@ class MinCtdFilter(deeding.LapseDeed):
     Ioinits = odict(
         group = 'filter.min.temperature', outputs = 'state.mintemps',
         output = 'state.mintemp',
-        input = 'ctd', field = 'temperature', 
+        input = 'ctd', field = 'temperature',
         depth = 'state.depth', position = 'state.position',
         parms = dict(preload = 100.0))
-    
+
     def __init__(self, **kw):
         """Initialize instance.
-           
+
 
            inherited instance attributes
            .stamp = time stamp
@@ -331,12 +331,12 @@ class MinCtdFilter(deeding.LapseDeed):
 
         """
         #call super class method
-        super(MinCtdFilter,self).__init__(**kw)  
+        super(MinCtdFilter,self).__init__(**kw)
 
-    
+
     def initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
         """ Override since legacy init interface
-        
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
@@ -408,10 +408,10 @@ class MinCtdFilter(deeding.LapseDeed):
 
         self.output = self.store.create(output)
         self.output.update(out)
-        
-        
+
+
     def restart(self):
-        """Restart   
+        """Restart
            assumes one will restart in a frame while at appropriate depth
            and position so first output after restart is at a max and then move
            to find minimum
@@ -502,7 +502,7 @@ class MinCtdFilter(deeding.LapseDeed):
 
 def TestTemperature():
     """           """
-    
+
 
     #clear registries
     storing.Store.Clear()
@@ -511,7 +511,7 @@ def TestTemperature():
     store = storing.Store(name = 'Test')
 
     print "\nTesting Temperature Filter"
-    filter = TemperatureSensorFilter(name = 'filterSensorTemp', store = store, 
+    filter = TemperatureSensorFilter(name = 'filterSensorTemp', store = store,
                                      group = 'filter.sensor.temperature', output = 'state.temperature',
                                      input = 'ctd', depth = 'state.depth',
                                      parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
@@ -536,7 +536,7 @@ def TestTemperature():
 
 def TestSalinity():
     """           """
-    
+
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -544,7 +544,7 @@ def TestSalinity():
     store = storing.Store(name = 'Test')
 
     print "\nTesting Salinity Filter"
-    filter = SalinitySensorFilter(name = 'filterSensorSalinity', store = store, 
+    filter = SalinitySensorFilter(name = 'filterSensorSalinity', store = store,
                                   group = 'filter.sensor.salinity', output = 'state.salinity',
                                   input = 'ctd.salinity',
                                   parms = dict(window = 60.0, frac = 0.9))

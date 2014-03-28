@@ -1,9 +1,8 @@
 """aiding.py constants and basic functions
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
-import exceptions
 import math
 import types
 import socket
@@ -320,7 +319,7 @@ class SerialNB(object):
                 settings[lflag] = (settings[lflag] &  ~(termios.ICANON))
 
             if speed: #in linux the speed flag does not equal value
-                speedattr = "B%d" % speed #convert numeric speed to attribute name string
+                speedattr = "B{0}".format(speed) #convert numeric speed to attribute name string
                 speed = getattr(termios, speedattr)
                 settings[ispeed] = speed
                 settings[ospeed] = speed
@@ -345,7 +344,7 @@ class SerialNB(object):
         line = ''
         try:
             line = os.read(self.fd, bs)  #if no chars available generates exception
-        except OSError, ex1:  #ex1 is the target instance of the exception
+        except OSError as ex1:  #ex1 is the target instance of the exception
             if ex1.errno == errno.EAGAIN: #BSD 35, Linux 11
                 pass #No characters available
             else:
@@ -421,14 +420,14 @@ class ConsoleNB(object):
         line = ''
         try:
             line = os.read(self.fd, bs)
-        except OSError, ex1:  #if no chars available generates exception
+        except OSError as ex1:  #if no chars available generates exception
             try: #need to catch correct exception
                 errno = ex1.args[0] #if args not sequence get TypeError
                 if errno == 35:
                     pass #No characters available
                 else:
                     raise #re raise exception ex1
-            except TypeError, ex2:  #catch args[0] mismatch above
+            except TypeError as ex2:  #catch args[0] mismatch above
                 raise ex1 #ignore TypeError, re-raise exception ex1
 
         return line
@@ -1214,22 +1213,13 @@ def CrabSpeed(track = 0.0,  speed = 2.0, north = 0.0, east = 0.0,
         east = mag * math.sin(DEGTORAD * heading)
 
     track = Wrap2(track)
-
     (A,C) = AlongCrossTrack(track = track, north = north, east = east)
-
-    #print A
-    #print C
     #current compensated course crab = track + delta crab angle
     delta = - RADTODEG * math.asin(C / speed)
     crab = track + delta
-
-
     #B = along track component of compensated course
     B = speed * (math.sin(DEGTORAD * crab) * math.sin(DEGTORAD * track) +
                  math.cos(DEGTORAD * crab) * math.cos(DEGTORAD * track)  )
-
-    #print B
-
     return (crab, delta, B + A)
 
 def CrossProduct3D(a,b):
@@ -1512,7 +1502,7 @@ def HumanLatToFracDeg(latDM):
         lat = - (int(degrees) + (float(minutes) / 60.0))
 
     else:
-        raise ValueError, "Bad format for latitude '%s'" % (latDM)
+        raise ValueError("Bad format for latitude '{0}'".format(latDM))
 
     return (lat)
 
@@ -1539,7 +1529,7 @@ def HumanLonToFracDeg(lonDM):
         lon = - (int(degrees) + (float(minutes) / 60.0))
 
     else:
-        raise ValueError, "Bad format for longitude '%s'" % (lonDM)
+        raise ValueError("Bad format for longitude '{0}'".format(lonDM))
 
     return (lon)
 
@@ -1575,7 +1565,7 @@ def HumanLLToFracDeg(hdm):
         min = float(dm[0][1])
         return (-(deg + min/60.0))
 
-    raise ValueError, "Bad format for lat or lon '%s'" % (hdm)
+    raise ValueError("Bad format for lat or lon '{0}'".format(hdm))
 
 def Midpoint(latDM0, lonDM0, latDM1, lonDM1):
     """Computes the midpoint  of a trackline between
@@ -1717,11 +1707,11 @@ def PackByte(format = '8',fields = [0x0000]):
         bfl = int(format[i])
 
         if not (0 < bfl <= 8):
-            raise ValueError, "Bit field length in format must be > 0 and <= 8"
+            raise ValueError("Bit field length in format must be > 0 and <= 8")
 
         bu += bfl
         if bu > 8:
-            raise ValueError, "Sum of bit field lengths in format must be <= 8"
+            raise ValueError("Sum of bit field lengths in format must be <= 8")
 
         if bfl == 1:
             if fields[i]:
@@ -1772,11 +1762,11 @@ def UnpackByte(format = '11111111', byte = 0x00, boolean = True):
         bfl = int(format[i])
 
         if not (0 < bfl <= 8):
-            raise ValueError, "Bit field length in format must be > 0 and <= 8"
+            raise ValueError("Bit field length in format must be > 0 and <= 8")
 
         bu += bfl
         if bu > 8:
-            raise ValueError, "Sum of bit field lengths in format must be <= 8"
+            raise ValueError("Sum of bit field lengths in format must be <= 8")
 
         mask = (2**bfl - 1) << (bfp - bfl) #make mask
         bits = byte & mask #mask off other bits
@@ -1836,7 +1826,7 @@ binize = Binize # alias
 def Denary2BinaryStr(n, l = 8):
     """ Convert denary integer n to binary string bs, left pad to length l"""
     bs = ''
-    if n < 0:  raise ValueError, "must be a positive integer"
+    if n < 0:  raise ValueError("must be a positive integer")
     if n == 0: return '0'
     while n > 0:
         bs = str(n % 2) + bs
@@ -1862,10 +1852,10 @@ def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
        silent = True means return formatted string but do not print
     """
     if (chunk < 0):
-        raise ValueError, "invalid size of chunk"
+        raise ValueError("invalid size of chunk")
 
     if (chunks < 0):
-        raise ValueError, "invalid chunks per line"
+        raise ValueError("invalid chunks per line")
 
     slen = len(s)
 
@@ -1891,7 +1881,7 @@ def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
             ps += '\n' #newline
 
     if not silent:
-        print ps
+        console.terse("{0}\n".format(ps))
 
     return ps
 
@@ -1905,7 +1895,7 @@ def PrintDecimal(s):
     for i in range(len(s)):
         ps = ps + ("%03d." % ord(s[i]))
     ps = ps[0:-1] #strip trailing .
-    print ps
+    print(ps)
 
 printDecimal = PrintDecimal # alias
 
@@ -1984,7 +1974,7 @@ def Ocfn(filename, openMode = 'r+'):
        Returns file object
     """
     try:
-        newfd = os.open(filename, os.O_EXCL | os.O_CREAT | os.O_RDWR, 0664)
+        newfd = os.open(filename, os.O_EXCL | os.O_CREAT | os.O_RDWR, 436) # 436 == octal 0664
         newfile = os.fdopen(newfd,"w+")
     except OSError as ex:
         if ex.errno == errno.EEXIST:
@@ -1999,7 +1989,7 @@ def Load(file = ""):
     """Loads object from pickled file, returns object"""
 
     if not file:
-        raise ParameterError, "No file to Load form: %s" % file
+        raise ParameterError("No file to Load form: {0}".format(file))
 
     f = open(file,"r+")
     p = pickle.Unpickler(f)
@@ -2013,10 +2003,10 @@ def Dump(it = None, file = ""):
     """Pickles  it object to file"""
 
     if not it:
-        raise ParameterError, "No object to Dump: %s" % str(it)
+        raise ParameterError("No object to Dump: {0}".format(str(it)))
 
     if not file:
-        raise ParameterError, "No file to Dump to: %s" % file
+        raise ParameterError("No file to Dump to: {0}".format(file))
 
 
     f = open(file, "w+")
@@ -2029,10 +2019,10 @@ dump = Dump
 def DumpJson(it = None, filename = "", indent=2):
     """Jsonifys it and dumps it to filename"""
     if not it:
-        raise ValueError, "No object to Dump: {0}".format(it)
+        raise ValueError("No object to Dump: {0}".format(it))
 
     if not filename:
-        raise ValueError, "No file to Dump to: {0}".format(filename)
+        raise ValueError("No file to Dump to: {0}".format(filename))
 
     with ocfn(filename, "w+") as f:
         json.dump(it, f, indent=2)
@@ -2044,7 +2034,7 @@ dumpJson = DumpJson
 def LoadJson(filename = ""):
     """ Loads json object from filename, returns unjsoned object"""
     if not filename:
-        raise ParameterError, "Empty filename to load."
+        raise ParameterError("Empty filename to load.")
 
     with ocfn(filename) as f:
         try:

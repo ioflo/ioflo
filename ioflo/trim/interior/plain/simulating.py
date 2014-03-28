@@ -2,7 +2,7 @@
    simulates the motion of UUV or USV etc
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import math
 import time
@@ -29,19 +29,19 @@ class UuvMotionSimulator(deeding.LapseDeed):
         speed = 'state.speed', speedRate = 'state.speedRate',
         velocity = 'state.velocity',
         depth = 'state.depth', depthRate = 'state.depthRate',
-        pitch = 'state.pitch', pitchRate = 'state.pitchRate', 
+        pitch = 'state.pitch', pitchRate = 'state.pitchRate',
         altitude = 'state.altitude',
         heading = 'state.heading', headingRate = 'state.headingRate',
         position = 'state.position', location = 'state.location',
         rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
-        current = 'scenario.current', bottom = 'scenario.bottom', 
+        current = 'scenario.current', bottom = 'scenario.bottom',
         onset = 'scenario.onset', origin = 'scenario.origin',
-        parms = dict(rpmLimit = 1200.0, sternLimit = 20.0, rudderLimit = 20.0, 
-                     gs = 0.0022, gpr = -0.4, gpp = 0.0, gdb = -0.1, ghr = -0.4))    
+        parms = dict(rpmLimit = 1200.0, sternLimit = 20.0, rudderLimit = 20.0,
+                     gs = 0.0022, gpr = -0.4, gpp = 0.0, gdb = -0.1, ghr = -0.4))
 
     def __init__(self, **kw):
         """Initialize instance.
-           
+
            inherited instance attributes
            .stamp = time stamp
            .lapse = time lapse between updates of controller
@@ -56,31 +56,31 @@ class UuvMotionSimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(UuvMotionSimulator,self).__init__(**kw)  
+        super(UuvMotionSimulator,self).__init__(**kw)
 
         #used in reset to speed up processing
         self.ionames = dict( speed = None, speedRate = None, bottom = None,
                              pitch = None, pitchRate = None,
                              depth = None, depthRate = None, altitude = None,
-                             heading = None, headingRate = None) 
-        
-        
+                             heading = None, headingRate = None)
+
+
     def initio(self, group, speed, speedRate, velocity,
                  depth, depthRate, pitch, pitchRate, altitude,
                  heading, headingRate, position, location,
                  rpm, stern, rudder, current, bottom, onset, origin, parms = None, **kw):
         """ Override since legacy interface
-        
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     rpmLimit = max rpm of motor
                     sternLimit = max absolute stern angle
                     rudderLimit = max abs rudder angle
-                    gs = gain speed due to rpm where speed = gs * rpm 
+                    gs = gain speed due to rpm where speed = gs * rpm
                     gpr = gain pitch rate due to stern where pitch rate = gpr * stern
                     gpp = gain pitch rate due to pitch where pitch rate = gpp * pitch (neg)
-                          (cbcg restoring force) 
+                          (cbcg restoring force)
                     gdb = gain depth rate due to buoyancy where depth rate = gdb (neg)
                     ghr = gain heading rate dut to rudder where headingRate = ghr * rudder
 
@@ -138,15 +138,15 @@ class UuvMotionSimulator(deeding.LapseDeed):
            .origin = ref to origin share
         """
         self.group = group
-        
+
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
-            parms = dict(rpmLimit = 1200.0, sternLimit = 20.0,rudderLimit = 20.0, 
+            parms = dict(rpmLimit = 1200.0, sternLimit = 20.0,rudderLimit = 20.0,
                          gs = 0.0020, gpr = -0.4, gpp = 0.0, gdb = -0.1, ghr = -0.4)
         self.parm.create(**parms)
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
-        
+
         #outputs create share if not exist but force update of value
         self.speed = self.store.create(speed).update(value = 0.0)
         self.speedRate = self.store.create(speedRate).update(value = 0.0)
@@ -184,9 +184,9 @@ class UuvMotionSimulator(deeding.LapseDeed):
         self.onset.create(east = 0.0)
         self.origin = self.store.create(origin)
         self.origin.create(lat = 0.0) #preserves order
-        self.origin.create(lon = 0.0)        
-        
-        
+        self.origin.create(lon = 0.0)
+
+
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
         """
@@ -205,12 +205,12 @@ class UuvMotionSimulator(deeding.LapseDeed):
         #need to init position here since onset may be changed at build time by init command
         if self.position.stamp is None: #only on first run
             #init position to onset where vehicle starts relative to 0,0 origin
-            self.position.update(north = self.onset.data.north, east = self.onset.data.east) 
+            self.position.update(north = self.onset.data.north, east = self.onset.data.east)
 
         #need to init location here since origin may be changed at build time by init command
         if self.location.stamp is None: #only on first run
             #init location to origin lat lon
-            self.location.update(lat = self.origin.data.lat, lon = self.origin.data.lon) 
+            self.location.update(lat = self.origin.data.lat, lon = self.origin.data.lon)
 
 
     def action(self, **kw):
@@ -248,7 +248,7 @@ class UuvMotionSimulator(deeding.LapseDeed):
         pitchLast = self.pitch.value
         #linear approximation
         #pitchrate a function of stern (gpr) and restoring force cbcg (gpp) as a function of pitch
-        pitchRate = self.parm.data.gpr * stern + self.parm.data.gpp * pitchLast 
+        pitchRate = self.parm.data.gpr * stern + self.parm.data.gpp * pitchLast
         self.pitchRate.value = pitchRate
 
 
@@ -260,7 +260,7 @@ class UuvMotionSimulator(deeding.LapseDeed):
         #vertical component of slant is depth change
         #positive pitch decreases depth also buoyancy term gdb that changes depth
         depth = depthLast - slant * math.sin(DEGTORAD * pitch) + self.parm.data.gdb * self.lapse
-        #depth delta calculation assumes that if trying to change depth 
+        #depth delta calculation assumes that if trying to change depth
         #but can't when on suface that horizontal component of motion
         #still needs to be reduced since vehicle slows down when pitched
         depthChange = depth - depthLast #virtual depth change
@@ -282,7 +282,7 @@ class UuvMotionSimulator(deeding.LapseDeed):
         heading = headingLast +  self.lapse * headingRate
 
         #Position
-        #average heading over time lapse to calc position change must avg before wrap around 
+        #average heading over time lapse to calc position change must avg before wrap around
         headAvg = (heading + headingLast)/2.0
         #don't remember why want heading to be [0, 360] instead of [-180, 180]
         #if the latter we could use aiding.Wrap2()
@@ -291,14 +291,14 @@ class UuvMotionSimulator(deeding.LapseDeed):
             heading += 360.0
         self.heading.value = heading
 
-        #scale by horiz component of slant when changing depth 
+        #scale by horiz component of slant when changing depth
         horizontal = (slant**2 + depthChange**2)**0.5
 
         #heading angle convention  0 is north increasing clockwise
         #cartesian angle convention is 0 east increasing counter clockwise
         #cartesion angle = pi/2 - heading angle
         #cos(pi/2 - psi) = sin(psi)
-        #sin(pi/2 - psi) = cos(psi) 
+        #sin(pi/2 - psi) = cos(psi)
 
         north = self.position.data.north
         east = self.position.data.east
@@ -328,7 +328,7 @@ class UuvMotionSimulator(deeding.LapseDeed):
         print "heading = %0.3f rudder = %0.3f" %\
               (self.heading.value, self.rudder.value)
         print "vel north = %0.3f vel east = %0.3f, pos north = %0.3f pos east = %0.3f" %\
-              (self.velocity.data.north, self.velocity.data.east, 
+              (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east)
 
 class UsvMotionSimulator(deeding.LapseDeed):
@@ -342,14 +342,14 @@ class UsvMotionSimulator(deeding.LapseDeed):
         heading = 'state.heading', headingRate = 'state.headingRate',
         position = 'state.position',
         rpm = 'goal.rpm', rudder = 'goal.rudder',
-        current = 'scenario.current',  
+        current = 'scenario.current',
         onset = 'scenario.onset',
-        parms = dict(rpmLimit = 3000.0,  rudderLimit = 20.0, 
+        parms = dict(rpmLimit = 3000.0,  rudderLimit = 20.0,
                      gs = 0.0025,  ghr = -0.25))
-    
+
     def __init__(self,  **kw):
         """Initialize instance.
-           
+
 
            inherited instance attributes
            .stamp = time stamp
@@ -359,26 +359,26 @@ class UsvMotionSimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(UsvMotionSimulator,self).__init__(**kw)  
+        super(UsvMotionSimulator,self).__init__(**kw)
 
 
 
         #used in reset to speed up processing
-        self.ionames = dict( speed = None, speedRate = None, 
+        self.ionames = dict( speed = None, speedRate = None,
                              heading = None, headingRate = None)
 
-    
+
     def initio(self, group, speed, speedRate,  velocity,
                  heading, headingRate, position,
                  rpm, rudder, current, onset, parms = None, **kw):
         """ Override since legacy interface
-            
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     rpmLimit = max rpm of motor
                     rudderLimit = max abs rudder angle
-                    gs = gain speed  where speed = gs * rpm 
+                    gs = gain speed  where speed = gs * rpm
                     ghr = gain heading rate where headingRate = ghr * rudder
 
               group.elapsed = share copy of time lapse for logging
@@ -419,13 +419,13 @@ class UsvMotionSimulator(deeding.LapseDeed):
 
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
-            parms = dict(rpmLimit = 3000.0, rudderLimit = 20.0, 
+            parms = dict(rpmLimit = 3000.0, rudderLimit = 20.0,
                          gs = 0.0025, ghr = -0.001)
 
         self.parm.create(**parms)
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
-        
+
         #outputs create share if not exist but force update of value
         self.speed = self.store.create(speed).update(value = 0.0)
         self.speedRate = self.store.create(speedRate).update(value = 0.0)
@@ -451,8 +451,8 @@ class UsvMotionSimulator(deeding.LapseDeed):
         self.onset.create(north = 0.0) #preserves order
         self.onset.create(east = 0.0)
         #init onset position where vehicle starts relative to 0,0 origin
-        self.position.update(north = self.onset.data.north, east = self.onset.data.east)        
-        
+        self.position.update(north = self.onset.data.north, east = self.onset.data.east)
+
 
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
@@ -505,7 +505,7 @@ class UsvMotionSimulator(deeding.LapseDeed):
         heading = headingLast +  self.lapse * headingRate
 
         #Position
-        #average heading over time lapse to calc position change must avg before wrap around 
+        #average heading over time lapse to calc position change must avg before wrap around
         headAvg = (heading + headingLast)/2.0
         #don't remember why want heading to be [0, 360] instead of [-180, 180]
         #if the latter we could use aiding.Wrap2()
@@ -514,14 +514,14 @@ class UsvMotionSimulator(deeding.LapseDeed):
             heading += 360.0
         self.heading.value = heading
 
-        #distance traveled 
+        #distance traveled
         horizontal = speed * self.lapse
 
         #heading angle convention  0 is north increasing clockwise
         #cartesian angle convention is 0 east increasing counter clockwise
         #cartesion angle = pi/2 - heading angle
         #cos(pi/2 - psi) = sin(psi)
-        #sin(pi/2 - psi) = cos(psi) 
+        #sin(pi/2 - psi) = cos(psi)
         north = self.position.data.north
         east = self.position.data.east
 
@@ -546,7 +546,7 @@ class UsvMotionSimulator(deeding.LapseDeed):
         print "speed = %0.3f, rpm = %0.3f heading = %0.3f rudder = %0.3f north = %0.3f east = %0.3f" %\
               (self.speed.value, self.rpm.value, self.heading.value, self.rudder.value)
         print "vel north = %0.3f vel east = %0.3f, pos north = %0.3f pos east = %0.3f" %\
-              (self.velocity.data.north, self.velocity.data.east, 
+              (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east)
 
 
@@ -559,14 +559,14 @@ class GpsSensorSimulator(deeding.LapseDeed):
         positionOut = 'gps.position', velocityOut = 'gps.velocity',
         error = 'gps.error',
         heading = 'heading.output', speed = 'state.speed',
-        positionIn = 'state.position', velocityIn = 'state.velocity', 
+        positionIn = 'state.position', velocityIn = 'state.velocity',
         scenario = 'scenario.gps',
-        parms = dict(noiseBand = 5.0,  noiseJitter = 2.5, 
-                     noiseVelocity = 0.1))    
+        parms = dict(noiseBand = 5.0,  noiseJitter = 2.5,
+                     noiseVelocity = 0.1))
 
     def __init__(self, **kw):
         """Initialize instance.
-           
+
            inherited instance attributes
            .stamp = time stamp
            .lapse = time lapse between updates of controller
@@ -575,26 +575,26 @@ class GpsSensorSimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(GpsSensorSimulator,self).__init__(**kw)  
-      
-                
+        super(GpsSensorSimulator,self).__init__(**kw)
+
+
     def initio(self, group, positionOut, velocityOut, error,
-                 heading, speed,  positionIn, velocityIn, 
+                 heading, speed,  positionIn, velocityIn,
                  scenario, parms = None, **kw):
         """ Override since legacy interface
-            
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     noiseBand = meters max error in position from noise simulated
                     noiseJitter = meters/second max delta position noise
-                    noiseVelocity = sigma of velocity noise 
+                    noiseVelocity = sigma of velocity noise
 
               group.elapsed = share copy of time lapse for logging
 
            positionOut = share path name output position meters north east GPS sim
            velocityOut = share path name output velocity m/s north east for GPS sim
-           error = share path name output position error 
+           error = share path name output position error
 
 
            heading = share path name input heading deg north =0 positive clock wise
@@ -625,7 +625,7 @@ class GpsSensorSimulator(deeding.LapseDeed):
 
         """
         self.group = group
-        
+
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
             parms = dict(noiseBand = 5.0, noiseJitter = 2.5, noiseVelocity = 0.1)
@@ -664,8 +664,8 @@ class GpsSensorSimulator(deeding.LapseDeed):
 
         self.scenario = self.store.create(scenario).create(dropout = 0)
 
-        #self.position.update(self.idealPosition.items()) #init position 
-        
+        #self.position.update(self.idealPosition.items()) #init position
+
 
     def restart(self):
         """Restart motion  simulator
@@ -690,7 +690,7 @@ class GpsSensorSimulator(deeding.LapseDeed):
 
         #not used speed & heading
         speed = self.speed.value
-        heading = self.heading.value 
+        heading = self.heading.value
 
         en = self.error.data.north
         ee = self.error.data.east
@@ -717,9 +717,9 @@ class GpsSensorSimulator(deeding.LapseDeed):
         evn = min(vsigma3, max(-vsigma3, random.gauss(0.0, vsigma)))
         eve = min(vsigma3, max(-vsigma3, random.gauss(0.0, vsigma)))
 
-        self.positionOut.update(north = self.positionIn.data.north + en, 
+        self.positionOut.update(north = self.positionIn.data.north + en,
                                 east = self.positionIn.data.east + ee)
-        self.velocityOut.update(north = self.velocityIn.data.north + evn, 
+        self.velocityOut.update(north = self.velocityIn.data.north + evn,
                                 east = self.velocityIn.data.east + eve)
         self.error.update(north = en, east = ee)
 
@@ -730,7 +730,7 @@ class GpsSensorSimulator(deeding.LapseDeed):
         """
         print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
         print "north = %0.3f east = %0.3f, vel north = %0.3f vel east = %0.3f" %\
-              (self.position.data.north, self.position.data.east, 
+              (self.position.data.north, self.position.data.east,
                self.velocity.data.north, self.velocity.data.east)
 
 
@@ -742,15 +742,15 @@ class DvlSensorSimulator(deeding.LapseDeed):
         group = 'simulator.sensor.dvl',
         velocity = 'dvl.velocity', currentOut = 'dvl.current',
         altitude = 'dvl.altitude',
-        heading = 'heading.output', speed = 'state.speed', 
+        heading = 'heading.output', speed = 'state.speed',
         currentIn = 'scenario.current',
         bottom = 'scenario.bottom',
         scenario = 'scenario.dvl',
         parms = dict(velSigma = 0.01, bias = 0.1, altSigma = 0.01))
-    
+
     def __init__(self, **kw):
         """Initialize instance.
-           
+
 
            inherited instance attributes
            .stamp = time stamp
@@ -760,14 +760,14 @@ class DvlSensorSimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(DvlSensorSimulator,self).__init__(**kw)  
+        super(DvlSensorSimulator,self).__init__(**kw)
 
 
     def initio(self, group, velocity, currentOut, altitude,
                  heading, speed, currentIn, bottom,
                  scenario, parms = None, **kw):
         """ Override since legacy interface
-            
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
@@ -841,7 +841,7 @@ class DvlSensorSimulator(deeding.LapseDeed):
         self.bottom = self.store.create(bottom).create(value = 0.0)
         self.scenario = self.store.create(scenario).create(dropout = 0)
 
-        
+
     def restart(self):
         """Restart motion  simulator
 
@@ -876,7 +876,7 @@ class DvlSensorSimulator(deeding.LapseDeed):
         asigma = self.parm.data.altSigma
 
         #transform to body forward starboard
-        cf, cs = aiding.RotateNEToFS(heading, cn, ce) 
+        cf, cs = aiding.RotateNEToFS(heading, cn, ce)
         vf = speed + cf
         vs = cs
 
@@ -885,7 +885,7 @@ class DvlSensorSimulator(deeding.LapseDeed):
         #vf += noise + bias * self.lapse
         #vs += noise + bias * self.lapse
 
-        vf += noise + bias 
+        vf += noise + bias
         vs += noise + bias
 
         noise = min(vsigma3, max(-vsigma3, random.gauss(0.0, vsigma)))
@@ -911,8 +911,8 @@ class DvlSensorSimulator(deeding.LapseDeed):
         format = "vel forward = %0.3f vel starboard = %0.3f"
         format += "cur forward = %0.3f cur starboard = %0.3f altitude = %0.3f"
         print format %\
-              (self.velocity.data.forward, self.velocity.data.starboard, 
-               self.current.data.forward, self.current.data.starboard, 
+              (self.velocity.data.forward, self.velocity.data.starboard,
+               self.current.data.forward, self.current.data.starboard,
                self.altitude.value)
 
 
@@ -922,14 +922,14 @@ class CompassSensorSimulator(deeding.LapseDeed):
     """
     Ioinits = odict(
         group = 'simulator.sensor.compass',
-        output = 'compass', 
+        output = 'compass',
         input = 'state.heading', depth = 'state.depth',
         scenario = 'scenario.magnetic',
         parms = dict(phase = 24.0, amp = 1.0, sigma = 0.1))
 
     def __init__(self, **kw):
         """Initialize instance.
-            
+
             inherited instance attributes
            .stamp = time stamp
            .lapse = time lapse between updates of controller
@@ -938,12 +938,12 @@ class CompassSensorSimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(CompassSensorSimulator,self).__init__(**kw)  
-    
+        super(CompassSensorSimulator,self).__init__(**kw)
+
 
     def initio(self, group, output,input, scenario, parms = None, **kw):
         """ Override since legacy interface
-            
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
@@ -954,7 +954,7 @@ class CompassSensorSimulator(deeding.LapseDeed):
 
               group.elapsed = share copy of time lapse for logging
 
-           output = share path name output magnetic heading degrees 
+           output = share path name output magnetic heading degrees
 
            input = share path name input heading true deg north =0 positive clock wise
               true = mag + declination
@@ -990,8 +990,8 @@ class CompassSensorSimulator(deeding.LapseDeed):
         #inputs
         self.input = self.store.create(input).create(value = 0.0)
         self.scenario = self.store.create(scenario).create(declination = 0.0)
-        
-        
+
+
     def restart(self):
         """Restart motion  simulator
 
@@ -1038,7 +1038,7 @@ class CompassSensorSimulator(deeding.LapseDeed):
         print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
         format = "heading = %0.3f phase = %0.3f amp = %0.3f sigma = %0.3f"
         print format %\
-              (self.output.value, self.parm.data.phase, 
+              (self.output.value, self.parm.data.phase,
                self.parm.data.amp, self.parm.data.sigma)
 
 
@@ -1047,10 +1047,10 @@ class LinearSalinitySimulator(deeding.LapseDeed):
        linear salinity simulator class
     """
     Ioinits = odict(
-        group = 'simulator.salinity.linear', 
+        group = 'simulator.salinity.linear',
         output = 'ctdsim', depth = 'state.depth',
         input = 'state.position',
-        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+        parms = dict(track = 0.0, north = 0.0, east = 0.0,
                      middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                      layer = 20.0, shift = 2.0))
 
@@ -1066,17 +1066,17 @@ class LinearSalinitySimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(LinearSalinitySimulator,self).__init__(**kw)  
+        super(LinearSalinitySimulator,self).__init__(**kw)
 
-    
+
     def initio(self, group, output,input, depth, parms = None, **kw):
         """ Override since legacy interface
-            
+
                        group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     track = heading of gradient middle
-                    north = north coord for gradient middle 
+                    north = north coord for gradient middle
                     east = east coord for gradient middle
                     middle = salinity at center of front
                     spread = total variation in salinity middle - spread/2 to middle + spread/2
@@ -1084,11 +1084,11 @@ class LinearSalinitySimulator(deeding.LapseDeed):
                     width = distance over which total variation occurs
                                 spread occurs over trackline - width/2 to trackline + width/2
                     layer = depth where center of gradient is at middle value
-                    shift = shift in center of gradient with depth            
+                    shift = shift in center of gradient with depth
 
               group.elapsed = share copy of time lapse for logging
 
-           output = share path name output ctd 
+           output = share path name output ctd
 
            input = share path name input position of vehicle
 
@@ -1121,13 +1121,13 @@ class LinearSalinitySimulator(deeding.LapseDeed):
         #parms
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
-            parms = dict(track = 15, north = 0.0, east = 0.0, middle = 32.0, 
+            parms = dict(track = 15, north = 0.0, east = 0.0, middle = 32.0,
                          spread  = 3.0, rising = True, width = 1000,
                          layer = 20.0, shift = 2.0)
 
         self.parm.create(**parms)
 
-        
+
     def restart(self):
         """Restart sensor  simulator
 
@@ -1162,7 +1162,7 @@ class LinearSalinitySimulator(deeding.LapseDeed):
         #generate distance of vehicle from center track
         d = aiding.DistancePointToTrack2D([east,north],track, [pe,pn])
         #shift center pos to right so shift d neg to left
-        d -= (self.depth.value - layer) * shift 
+        d -= (self.depth.value - layer) * shift
         d = max(- width/2.0, min( width/2.0, d)) #saturate
 
         if rising:  #sign of gradient rising from right to left
@@ -1185,8 +1185,8 @@ class LinearSalinitySimulator(deeding.LapseDeed):
         format += " middle = %0.3f spread = %0.3f, rising = %s, width = %0.3f"
         format += " layer = %0.3f shift = %0.3f"
         print format %\
-              (self.output.salinity, self.parm.data.track, 
-               self.parm.data.north, self.parm.data.east, self.parm.data.middle, 
+              (self.output.salinity, self.parm.data.track,
+               self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width,
                self.parm.data.layer, self.parm.data.shift)
 
@@ -1196,10 +1196,10 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
        salinity sensor simulator class
     """
     Ioinits = odict(
-        group = 'simulator.salinity.sinusoid', 
+        group = 'simulator.salinity.sinusoid',
         output = 'ctdsim',
         input = 'state.position', depth = 'state.depth',
-        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+        parms = dict(track = 0.0, north = 0.0, east = 0.0,
                      middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                      layer = 20.0, shift = 2.0))
 
@@ -1215,17 +1215,17 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(SinusoidSalinitySimulator,self).__init__(**kw)  
+        super(SinusoidSalinitySimulator,self).__init__(**kw)
 
-    
+
     def initio(self, group, output,input, parms = None, **kw):
         """ Override since legacy interface
-            
+
                        group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     track = heading of gradient center
-                    north = north coord for gradient center 
+                    north = north coord for gradient center
                     eath = east coord for gradient center
                     middle = salinity at center of front
                     spread = total variation in salinity = middle +- spread
@@ -1235,7 +1235,7 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
 
               group.elapsed = share copy of time lapse for logging
 
-           output = share path name output ctd 
+           output = share path name output ctd
 
            input = share path name input position of vehicle
 
@@ -1263,11 +1263,11 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
         #parms
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
-            parms = dict(track = 15, north = 0.0, east = 0.0, middle = 32.0, 
+            parms = dict(track = 15, north = 0.0, east = 0.0, middle = 32.0,
                          spread  = 3.0, rising = True, width = 1000)
 
         self.parm.create(**parms)
-        
+
 
     def restart(self):
         """Restart sensor  simulator
@@ -1298,7 +1298,7 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
         middle = self.parm.data.middle #salinity at center of front
         spread = self.parm.data.spread #salinity range = middle +- spread
         #direction of gradient True = rising from right to left across center
-        rising = self.parm.data.rising 
+        rising = self.parm.data.rising
         width = self.parm.data.width #spacial width of salinity front spread
 
         #generate signed distance of vehicle from center track (positive left)
@@ -1325,8 +1325,8 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
         format = "salinity = %0.3f track = %0.3f north = %0.3f east = %0.3f"
         format += " middle = %0.3f spread = %0.3f, rising = %s, width = %0.3f"
         print format %\
-              (self.output.salinity, self.parm.data.track, 
-               self.parm.data.north, self.parm.data.east, self.parm.data.middle, 
+              (self.output.salinity, self.parm.data.track,
+               self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width)
 
 
@@ -1336,13 +1336,13 @@ class GradientSimulator(deeding.LapseDeed):
        gradient simulator class
     """
     Ioinits = odict(
-        group = 'simulator.gradient.depth', 
-        output = 'ctdsim', field = 'depth', 
+        group = 'simulator.gradient.depth',
+        output = 'ctdsim', field = 'depth',
         position = 'state.position', depth = 'state.depth',
-        parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+        parms = dict(track = 0.0, north = 0.0, east = 0.0,
                      middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                      layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0))
-    
+
     def __init__(self, **kw):
         """Initialize instance.
 
@@ -1355,17 +1355,17 @@ class GradientSimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(GradientSimulator,self).__init__(**kw)  
+        super(GradientSimulator,self).__init__(**kw)
 
-    
+
     def initio(self, group, output, field, position, depth, parms = None, **kw):
         """ Override since legacy interface
-            
+
                        group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     track = heading of gradient middle
-                    north = north coord for gradient middle 
+                    north = north coord for gradient middle
                     east = east coord for gradient middle
                     middle = salinity at center of front
                     spread = total horizontal variation in output middle - spread/2 to middle + spread/2
@@ -1373,14 +1373,14 @@ class GradientSimulator(deeding.LapseDeed):
                     width = horisontal distance over which spread = total variation occurs
                                 spread occurs over trackline - width/2 to trackline + width/2
                     layer = depth where center of gradient is at middle value
-                    shift = shift in center of gradient with depth 
-                    span = total vertical variation 
+                    shift = shift in center of gradient with depth
+                    span = total vertical variation
                     height = vertical distance over which span occurs to saturation
-                    duct = type of vertical variation 
-                          -1 = cold at bottom, 0 = cold mid at layer, 1 = cold surface          
+                    duct = type of vertical variation
+                          -1 = cold at bottom, 0 = cold mid at layer, 1 = cold surface
               group.elapsed = share copy of time lapse for logging
 
-           output = share path name output ctd 
+           output = share path name output ctd
            field = field name of simulated output measurable
               also outputs depth field since filter needs depth
 
@@ -1418,12 +1418,12 @@ class GradientSimulator(deeding.LapseDeed):
         #parms
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
-            parms = dict(track = 15, north = 0.0, east = 0.0, middle = 32.0, 
+            parms = dict(track = 15, north = 0.0, east = 0.0, middle = 32.0,
                          spread  = 3.0, rising = True, width = 1000,
                          layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0 )
 
         self.parm.create(**parms)
-        
+
 
     def restart(self):
         """Restart gradient  simulator
@@ -1484,7 +1484,7 @@ class GradientSimulator(deeding.LapseDeed):
 
         #sign of gradient rising = true then rising from right to left
         # else falling from right to left
-        if not rising:  
+        if not rising:
             dh = - dh
 
         out = middle + (dh * spread/float(width)) + (dv * span/float(height))
@@ -1502,28 +1502,28 @@ class GradientSimulator(deeding.LapseDeed):
         format += " middle = %0.3f spread = %0.3f, rising = %s, width = %0.3f"
         format += " layer = %0.3f shift = %0.3f span = %0.3f height = %0.3f duct = %s"
         print format %\
-              (self.output[self.field], self.parm.data.track, 
-               self.parm.data.north, self.parm.data.east, self.parm.data.middle, 
+              (self.output[self.field], self.parm.data.track,
+               self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width,
                self.parm.data.layer, self.parm.data.shift, self.parm.data.span,
                self.parm.data.height, self.parm.data.duct)
 
 GradientSimulator.__register__('simulatorGradientTemperature', ioinits=odict(
-    group = 'simulator.gradient.temperature', 
-    output = 'ctdsim', field = 'temperature', 
+    group = 'simulator.gradient.temperature',
+    output = 'ctdsim', field = 'temperature',
     position = 'state.position', depth = 'state.depth',
-    parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+    parms = dict(track = 0.0, north = 0.0, east = 0.0,
                  middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                  layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0)) )
 
 GradientSimulator.__register__('simulatorGradientSalinity', ioinits=odict(
-    group = 'simulator.gradient.salinity', 
-    output = 'ctdsim', field = 'salinity', 
+    group = 'simulator.gradient.salinity',
+    output = 'ctdsim', field = 'salinity',
     position = 'state.position', depth = 'state.depth',
-    parms = dict(track = 0.0, north = 0.0, east = 0.0, 
+    parms = dict(track = 0.0, north = 0.0, east = 0.0,
                  middle = 32.0, spread = 4.0, rising = True, width = 500.0,
-                 layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0)) )    
-        
+                 layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0)) )
+
 
 def TestSalinity():
     """           """
@@ -1535,10 +1535,10 @@ def TestSalinity():
     store = storing.Store(name = 'Test')
 
     print "\nTesting Salinity Sensor Front Simulator"
-    sim = SalinitySensorSimulator(name = 'simulatorSensorSalinity', store = store, 
+    sim = SalinitySensorSimulator(name = 'simulatorSensorSalinity', store = store,
                                   group = 'simulator.sensor.salinity', output = 'ctd',
                                   input = 'state.position',
-                                  parms = dict(track = 45.0, north = 0.0, east = 0.0, 
+                                  parms = dict(track = 45.0, north = 0.0, east = 0.0,
                                                middle = 32.0, spread = 4.0, rising = True, width = 500.0))
 
     output = store.fetch('ctd').update(salinity = 32.0)
@@ -1570,18 +1570,18 @@ def TestMotion():
 
 
     print "\nTesting Motion Sim Controller"
-    simulator = UuvMotionSimulator(name = 'simulatorMotionTest', store = store, 
+    simulator = UuvMotionSimulator(name = 'simulatorMotionTest', store = store,
                                    group = 'simulator.motion.test',
                                    speed = 'state.speed', speedRate = 'state.speedRate',
                                    depth = 'state.depth', depthRate = 'state.depthRate',
-                                   pitch = 'state.pitch', pitchRate = 'state.pitchRate', 
+                                   pitch = 'state.pitch', pitchRate = 'state.pitchRate',
                                    altitude = 'state.altitude',
                                    heading = 'state.heading', headingRate = 'state.headingRate',
                                    position = 'state.position',
                                    rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
-                                   current = 'scenario.current', bottom = 'scenario.bottom', 
+                                   current = 'scenario.current', bottom = 'scenario.bottom',
                                    prevPosition = 'state.position',
-                                   parms = dict(rpmLimit = 1500.0, sternLimit = 20.0, rudderLimit = 20.0, 
+                                   parms = dict(rpmLimit = 1500.0, sternLimit = 20.0, rudderLimit = 20.0,
                                                 gs = 0.0025, gpr = -0.5, ghr = -0.5))
 
     store.expose()

@@ -1,7 +1,7 @@
 """completing.py  done action module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 
 import time
@@ -15,7 +15,7 @@ from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
-from . import storing 
+from . import storing
 from . import acting
 from . import tasking
 from . import framing
@@ -35,7 +35,7 @@ class Complete(acting.Actor):
         """
         parms = super(Complete, self).resolve( **kwa)
         parms['framer'] = framer = framing.resolveFramer(framer, who=self.name)
-        
+
         #if not isinstance(framer, framing.Framer): #maker sure framer not other tasker
             #raise excepting.ResolveError("ResolveError: Bad done framer name not for framer", framer, '')
 
@@ -45,7 +45,7 @@ class Complete(acting.Actor):
         parms['framer'] = framer #replace name with valid link
 
         return parms
-    
+
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -53,12 +53,12 @@ class Complete(acting.Actor):
             Reverting non cloned Framer links into name strings
             Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts with clones.
-            
+
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
         parms = super(Complete,self).cloneParms(parms, clones, **kw)
-        
+
         framer = parms.get('framer')
 
         if isinstance(framer, framing.Framer):
@@ -68,10 +68,10 @@ class Complete(acting.Actor):
                 parms['framer'] = framer.name # revert to name
         elif framer: # assume namestring
             if framer in clones:
-                parms['framer'] = clones[framer][1].name   
-        
+                parms['framer'] = clones[framer][1].name
+
         return parms
-           
+
 
 
 

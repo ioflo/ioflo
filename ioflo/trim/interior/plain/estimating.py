@@ -2,7 +2,7 @@
 
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import math
 import time
@@ -26,20 +26,20 @@ class NflPositionEstimator(deeding.LapseDeed):
        NonlinearFusion Position Estimator class
     """
     Ioinits = odict(
-        group = 'estimator.position.nlf', 
-        position = 'nlf.position', 
+        group = 'estimator.position.nlf',
+        position = 'nlf.position',
         drPosition = 'dr.position', drBias = 'dr.bias',
         speed = 'state.speed', heading = 'heading.output',
         current = 'dvl.current',
         dvlVelocity = 'dvl.velocity',
         gpsPosition = 'gps.position', gpsVelocity = 'gps.velocity',
         parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
-                     dvlStamp = 0.0, stale = 1.0, 
+                     dvlStamp = 0.0, stale = 1.0,
                      gpsPosStamp = 0.0, gpsVelStamp = 0.0))
 
     def __init__(self, **kw):
         """Initialize instance.
-           
+
            inherited instance attributes
            .stamp = time stamp
            .lapse = time lapse between updates of controller
@@ -48,8 +48,8 @@ class NflPositionEstimator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(NflPositionEstimator,self).__init__(**kw)  
-    
+        super(NflPositionEstimator,self).__init__(**kw)
+
     def initio(self, group, position, drPosition, drBias,
                  speed, heading, current, dvlVelocity, gpsPosition, gpsVelocity,
                  parms = None, **kw):
@@ -96,14 +96,14 @@ class NflPositionEstimator(deeding.LapseDeed):
            .gpsPosition = ref to input gps position
            .gpsVelocity = ref to input gps velocity
 
-        
+
         """
         self.group = group
-        
+
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
             parms = dict(upsilon = 5.0, scale = 2.0, gain = 0.01,
-                         dvlStamp = 0.0, stale = 1.0, 
+                         dvlStamp = 0.0, stale = 1.0,
                          gpsPosStamp = 0.0, gpsVelStamp = 0.0)
 
         self.parm.create(**parms)
@@ -145,10 +145,10 @@ class NflPositionEstimator(deeding.LapseDeed):
 
         self.gpsVelocity = self.store.create(gpsVelocity)
         self.gpsVelocity.create(north = 0.0)#preserves order
-        self.gpsVelocity.create(east = 0.0)        
+        self.gpsVelocity.create(east = 0.0)
 
     def restart(self):
-        """Restart 
+        """Restart
 
         """
         self.stamp = self.store.stamp
@@ -168,12 +168,12 @@ class NflPositionEstimator(deeding.LapseDeed):
         self.elapsed.value = self.lapse #store lapse for logging
 
         #check here because rate calc divide by lapse
-        #only finish update if lapse positive 
+        #only finish update if lapse positive
         if self.lapse <= 0.0: #lapse non positive so return
             return
 
         #Two DR estimates: one uses DVL, other uses HSC (heading water speed current)
-        #we need a DR estimate any time we get a GPS to make correction. 
+        #we need a DR estimate any time we get a GPS to make correction.
         #If we don't get new DVL data at same time that we get new gps then must use HSC
         #Also we don't want to go too long between DR estimates even if we
         #Don't get any DVL or GPS so we use HSC if last time since either new DVL
@@ -191,13 +191,13 @@ class NflPositionEstimator(deeding.LapseDeed):
         if (self.gpsPosition.stamp > self.parm.data.gpsPosStamp):
             newGPS = True #new gps fix since last time we used it
 
-        dvlAge = self.stamp - self.parm.data.dvlStamp 
+        dvlAge = self.stamp - self.parm.data.dvlStamp
         gpsAge = self.stamp - self.parm.data.gpsPosStamp
 
         if (min(dvlAge, gpsAge) >= self.parm.data.stale):
             staleNLF = True #dvl and gps data are stale
 
-        if not newDVL and (newGPS or staleNLF): 
+        if not newDVL and (newGPS or staleNLF):
             newHSC = True #need to compute hsc
 
         if not (newDVL or newGPS or newHSC): #nothing to do so return
@@ -274,7 +274,7 @@ class NflPositionEstimator(deeding.LapseDeed):
 
             self.parm.data.gpsPosStamp = self.stamp #update gps used last stamp
 
-        #update nlf position using best estimate (north, east) 
+        #update nlf position using best estimate (north, east)
         self.position.update(north = north, east = east)
 
 

@@ -1,7 +1,7 @@
 """goaling.py goal action module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import struct
@@ -18,7 +18,7 @@ from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
-from . import storing 
+from . import storing
 from . import acting
 
 from .consoling import getConsole
@@ -45,7 +45,7 @@ class Goal(acting.Actor):
         if 'preface' not in kw:
             kw['preface'] = 'Goal'
 
-        super(Goal,self).__init__(**kw)  
+        super(Goal,self).__init__(**kw)
 
     def expose(self):
         """
@@ -75,7 +75,7 @@ class DirectGoal(Goal):
         super(DirectGoal, self).__init__(**kw)  #.goal inited here
 
 
-    def action(self, goal, data, **kw): 
+    def action(self, goal, data, **kw):
         """Set goal to data dictionary"""
 
         console.profuse("Set {0} to {1}\n".format(goal.name, data))
@@ -104,7 +104,7 @@ class IndirectGoal(Goal):
         super(IndirectGoal, self).__init__(**kw)  #.goal inited here
 
 
-    def action(self, goal, goalFields, source, sourceFields, **kw): 
+    def action(self, goal, goalFields, source, sourceFields, **kw):
         """Set goalFields in goal from sourceFields in source"""
 
         console.profuse("Set {0} in {1} from {2} in {3}\n".format(

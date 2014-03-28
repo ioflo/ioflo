@@ -3,7 +3,7 @@
 """
 from __future__ import with_statement
 
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import re
@@ -304,7 +304,7 @@ class Builder(object):
 
                         #show hierarchy of each house's store
                         console.concise( "\nData Store for {0}\n".format(house.name))
-                        house.store.expose(values=(console._verbosity >= console.Wordage.verbose))
+                        house.store.expose(values=(console._verbosity >= console.Wordage.terse))
 
                 return True
 

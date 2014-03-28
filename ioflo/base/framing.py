@@ -1,7 +1,7 @@
 """framing.py hierarchical action framework module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import copy
 from collections import deque

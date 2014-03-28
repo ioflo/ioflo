@@ -1,23 +1,23 @@
 """Ordered dictionary class.
 
 
-Modified 2007, 2008 by Samuel M Smith 
+Modified 2007, 2008 by Samuel M Smith
 
 Modifications CopyRight 2007 by Samuel M smith
 
 Based on various ordered dict implementations found in the wild
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 
 class odict(dict):
     """ Dictionary whose keys maintain the order they are added to the dict. Not
         order they are updated.
-        
+
         Similar to the collections OrderedDict but with more flexible initialization
         and additional methods.
-        
+
         The first key added to the dictionary is the first key in .keys()
         Changing the value of a key does not affect the order of the key
 
@@ -26,7 +26,7 @@ class odict(dict):
     __slots__ = ['_keys']
 
 
-    def __new__(cls, *args, **kwargs): 
+    def __new__(cls, *args, **kwargs):
         self = dict.__new__(cls,*args, **kwargs)
         self._keys = []
         return self
@@ -46,24 +46,24 @@ class odict(dict):
                else:
                   for k, v in a:
                      d[k] = v
- 
+
             if pa is a sequence of duples (k,v) then ordering is preserved
             if pa is an ordered dictionary then ordering is preserved
             if pa is not an ordered dictionary then ordering is not preserved
- 
+
             odict(k1 = v1, k2 = v2, ...) creates new dictionary from
- 
+
             kwa = dictionary of keyword args, {k1: v1, k2 : v2, ...}
- 
+
             d = {}
             for k, v in kwa:
                d[k] = v
- 
+
             in this case key ordering is not preserved due to limitation of python
         """
         dict.__init__(self)
 
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k in a:
                     self[k] = a[k]
@@ -99,9 +99,9 @@ class odict(dict):
             self._keys.append(key)
 
     def __getnewargs__(self):
-        """Needed to force __new__ which creates _keys. 
+        """Needed to force __new__ which creates _keys.
            if empty odict then __getstate__ returns empty list which is logically false so
-           __setstate__ is not called. 
+           __setstate__ is not called.
         """
         return tuple()
 
@@ -134,7 +134,7 @@ class odict(dict):
            pa may be sequence of duples (k,v) or dict
            kwa is dict of keyword arguments
         """
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k in a:
                     if k not in self._keys:
@@ -207,10 +207,10 @@ class odict(dict):
         if other is self:
             #raise ValueError('other cannot be the same odict')
             pass #updating with self makes no changes
-        
+
         dict.update(self, other)
         keys = self._keys
-        
+
         for key in other:
             if key in keys:
                 keys.remove(key)
@@ -231,27 +231,27 @@ class odict(dict):
            pa may be sequence of duples (k,v) or dict
            kwa is dict of keyword arguments
         """
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k in a:
                     self[k] = a[k]
             else: #positional arg is sequence of duples (k,v)
                 for k, v in a:
                     self[k] = v
-        
+
         for k in kwa:
             self[k] = kwa[k]
 
     def values(self):
         return [self[key] for key in self._keys]
 
-    
-import optimize
-optimize.bind_all(odict)
+
+#from . import optimize
+#optimize.bind_all(odict)
 
 
 def TestPickle():
-    """tests ability of odict to be pickled and unpickled 
+    """tests ability of odict to be pickled and unpickled
 
 
        New-style types can provide a __getnewargs__() method that is used for protocol 2.
@@ -269,8 +269,8 @@ def TestPickle():
     pickle.dump(x,s,2)
     s.seek(0)
     y = pickle.load(s)
-    print x
-    print y
+    print(x)
+    print(y)
 
     #empty odict
     x = odict()
@@ -278,8 +278,8 @@ def TestPickle():
     pickle.dump(x,s,2)
     s.seek(0)
     y = pickle.load(s)
-    print x
-    print y
+    print(x)
+    print(y)
 
 
 def Test():
@@ -296,23 +296,23 @@ def Test():
         odct[k] = v
 
 
-    print "Intialized from sequence of duples 'seq' = %s" % seq
+    print("Intialized from sequence of duples 'seq' = %s" % seq)
     x = odict(seq)
-    print "   odict(seq) = %s" % x
+    print("   odict(seq) = %s" % x)
 
-    print "Initialized from unordered dictionary 'dct' = %s" % dct
+    print("Initialized from unordered dictionary 'dct' = %s" % dct)
     x = odict(dct)
-    print "   odict(dct) = %s" % x
+    print("   odict(dct) = %s" % x)
 
-    print "Initialized from ordered dictionary 'odct' = %s" % odct
+    print("Initialized from ordered dictionary 'odct' = %s" % odct)
     x = odict(odct)
-    print "   odict(odct) = %s" % x
+    print("   odict(odct) = %s" % x)
 
-    print "Initialized from keyword arguments 'b = 1, c = 2, a = 3'"
+    print("Initialized from keyword arguments 'b = 1, c = 2, a = 3'")
     x = odict(b = 1, c = 2, a = 3)
-    print "   odict(b = 1, c = 2, a = 3) = %s" % x
+    print("   odict(b = 1, c = 2, a = 3) = %s" % x)
 
-    print "Initialized from mixed arguments"
+    print("Initialized from mixed arguments")
     x = odict(odct, seq, [('e', 4)], d = 5)
-    print "   odict(odct, seq, d = 4) = %s" % x
+    print("   odict(odct, seq, d = 4) = %s" % x)
 

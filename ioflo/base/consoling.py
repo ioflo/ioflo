@@ -1,7 +1,7 @@
 """consoling.py classes for printing out to the console
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 #imports
 import sys
@@ -14,7 +14,7 @@ VERBIAGE_NAMES = ['mute', 'terse', 'concise', 'verbose', 'profuse' ]
 Verbiage = namedtuple('Verbiage', VERBIAGE_NAMES)
 verbiageNames = Verbiage._make(VERBIAGE_NAMES) #values same as keys UI friendly
 
-Consoles = {} #console instances created 
+Consoles = {} #console instances created
 
 class Console(object):
     """Manages output console messages typically stdout with various levels
@@ -64,7 +64,7 @@ class Console(object):
 
         if path != None:
             self._path = path
-            self.reopen()        
+            self.reopen()
 
     def reopen(self):
         """IF opened close THEN open self._file from self.path
@@ -95,7 +95,7 @@ class Console(object):
                 except (AttributeError):
                     pass
 
-        self._file = None        
+        self._file = None
 
     def flush(self):
         """ flush self._file"""
@@ -141,19 +141,19 @@ class Console(object):
     def ocfn(filename, openMode = 'r+'):
         """Atomically open or create file from filename.
 
-           If file already exists, Then open file using openMode 
+           If file already exists, Then open file using openMode
            Else create file using write update mode
            Returns file object
         """
         try:
-            newfd = os.open(filename, os.O_EXCL | os.O_CREAT | os.O_RDWR, 0664)
+            newfd = os.open(filename, os.O_EXCL | os.O_CREAT | os.O_RDWR, 436) # 436 == octal 0664
             newfile = os.fdopen(newfd,"w+")
         except OSError as ex:
             if ex.errno == errno.EEXIST:
                 newfile = open(filename, openMode)
             else:
-                raise 
-        return newfile     
+                raise
+        return newfile
 
 
 def getConsole(name='console', **kw):
@@ -165,7 +165,7 @@ def getConsole(name='console', **kw):
     console = Consoles.get(name)
     if not console:
         console = Console(name=name, **kw)
-        Consoles[console._name] = console      
+        Consoles[console._name] = console
         return console
 
     console.reinit(**kw)
@@ -222,7 +222,7 @@ def Test():
     console.verbose('See ya later alligator.\n')
     console.profuse('Not to soon baboon.\n')
     console.terse("{0}".format(Consoles))
-    console.close()    
+    console.close()
 
 
 if __name__ == "__main__":

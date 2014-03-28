@@ -1,7 +1,7 @@
 """ ioflo package
 
 """
-#print "\nPackage at%s" % __path__[0]
+#print "\nPackage at {0}".format( __path__[0])
 
 __version__ = "0.9.17"
 __author__ = "Samuel M. Smith"
@@ -17,4 +17,4 @@ console.profuse("{0} version {1}\n".format(__path__[0], __version__))
 __all__ = ['base', 'trim']
 
 for m in __all__:
-    exec "from . import %s" % m  #relative import
+    exec("from . import {0}".format(m))  #relative import

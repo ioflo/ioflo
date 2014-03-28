@@ -2,14 +2,14 @@
 
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 
 from .globaling import *
 from .odicting import odict
 
 from . import registering
-from . import storing 
+from . import storing
 
 from .consoling import getConsole
 console = getConsole()
@@ -28,7 +28,7 @@ class Tasker(registering.StoriedRegistry):
     """Task class, Base class for weightless threads
 
     """
-    Counter = 0  
+    Counter = 0
     Names = {}
 
     def __init__(self, period = 0.0, schedule=INACTIVE, **kw):
@@ -51,7 +51,7 @@ class Tasker(registering.StoriedRegistry):
             the .__class__.__name__ as the default preface to the name.
             To use a different default preface add this to the .__init__ method
             before the super call
-            
+
             if 'preface' not in kw:
                 kw['preface'] = 'MyDefaultPreface'
 
@@ -77,7 +77,7 @@ class Tasker(registering.StoriedRegistry):
 
         if schedule is not None:
             self.schedule = schedule
-        
+
 
     def remake(self):
         """Re make runner generator
@@ -100,12 +100,12 @@ class Tasker(registering.StoriedRegistry):
         """Resolves any by name links to other objects   """
         parms = odict()
         return parms
-    
+
     def start(self):
         """ready runner
 
         """
-        return self.runner.send(READY)   
+        return self.runner.send(READY)
 
     def start(self):
         """start runner
@@ -155,12 +155,12 @@ class Tasker(registering.StoriedRegistry):
                     StatusNames.get(self.status, 'Unknown')))
 
                 if control == RUN:
-                    if self.status == STARTED or self.status == RUNNING:          
+                    if self.status == STARTED or self.status == RUNNING:
                         console.profuse("     Running Tasker {0} ...\n".format(self.name))
                         self.status = RUNNING
                     else:
                         console.profuse("     Need to Start Tasker {0}\n".format(self.name))
-                        self.desire = START                     
+                        self.desire = START
 
                 elif control == READY:
                     console.profuse("     Readying Tasker {0} ...\n".format(self.name))
@@ -193,14 +193,14 @@ class Tasker(registering.StoriedRegistry):
                     self.status = ABORTED
                     console.profuse("     Aborting Tasker {0}, bad control = {1}\n".format(
                         self.name,  CommandNames[control]))
-                    break #break out of while loop. this will cause stopIteration         
+                    break #break out of while loop. this will cause stopIteration
 
                 self.stamp = self.store.stamp
 
         finally: #in case uncaught exception
             console.profuse("     Exception causing Abort Tasker {0} ...\n".format(self.name))
             self.desire = ABORT
-            self.status = ABORTED       
+            self.status = ABORTED
 
 
 def Test(real = False, verbose = False):

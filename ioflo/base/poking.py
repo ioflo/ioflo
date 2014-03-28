@@ -2,7 +2,7 @@
 
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import struct
@@ -20,7 +20,7 @@ from . import aiding
 from . import excepting
 from . import registering
 
-from . import storing 
+from . import storing
 from . import acting
 
 from .consoling import getConsole
@@ -59,15 +59,15 @@ class IndirectPoke(Poke):
        based on source and destination field lists
 
     """
-    def action(self, source, sourceFields, destination, destinationFields, **kw): 
+    def action(self, source, sourceFields, destination, destinationFields, **kw):
         """ Copy sourceFields in source to destinationFields in destination
 
             copy fields in order according to field lists
-              field list order is significant 
+              field list order is significant
                  a field of same name in source and destination will
-                 not be copied to each other unless appear in same place 
+                 not be copied to each other unless appear in same place
                  in both field lists
-                 
+
             parameters:
                 source = share to copy from
                 sourceFields = list of fields to copy from
@@ -86,7 +86,7 @@ class IndirectPoke(Poke):
         destination.update(data) #updates time stamp as well
 
         console.profuse("Copied {0} into {1}\n".format(
-                    data, destination.name))        
+                    data, destination.name))
         return None
 
 class DirectInc(Poke):
@@ -98,7 +98,7 @@ class DirectInc(Poke):
 
             if only one field then single increment
             if multiple fields then vector increment
-           
+
             parameters:
                 destination = share to increment
                 data = dict of field values to increment by
@@ -108,20 +108,20 @@ class DirectInc(Poke):
             for field in data:
                 dstData[field] = destination[field] + data[field]
             #update so time stamp updated, use dict
-            destination.update(dstData) 
+            destination.update(dstData)
 
         except TypeError, ex1: #in case value is not a number
-            console.profuse("Error in Inc: {0}\n".format(ex1))            
-            
+            console.profuse("Error in Inc: {0}\n".format(ex1))
+
         console.profuse("Inc {0} in {1} by {2} to {3}\n".format(
-                data.keys(), destination.name, data.values(), dstData.values()))        
+                data.keys(), destination.name, data.values(), dstData.values()))
 
 class IndirectInc(Poke):
     """Indirect Poke Class to copy values from one share to another
        based on source and destination field lists
 
     """
-    def action(self, destination, destinationFields, source, sourceFields, **kw): 
+    def action(self, destination, destinationFields, source, sourceFields, **kw):
         """ Increment destinationFields in destination by sourceFields in source
             parameters:
                 destination = share to increment
@@ -135,14 +135,14 @@ class IndirectInc(Poke):
             for dstField, srcField in izip(destinationFields, sourceFields):
                 data[dstField] = destination[dstField] + source[srcField]
             #update so time stamp updated, use dict
-            destination.update(data) 
+            destination.update(data)
 
         except TypeError, ex1:
-            console.profuse("Error in Inc: {0}\n".format(ex1))     
-        
+            console.profuse("Error in Inc: {0}\n".format(ex1))
+
         console.profuse("Inc {0} in {1} from {2} in {3} to {4}\n".format(
-            destinationFields, destination.name, sourceFields, source.name, data.values))         
-        
+            destinationFields, destination.name, sourceFields, source.name, data.values))
+
         return None
 
 

@@ -1,7 +1,7 @@
 """acting.py action module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import struct
@@ -248,7 +248,7 @@ class Actor(object): # old registering.StoriedRegistry
         self.name = name
         if store is not None:
             if  not isinstance(store, storing.Store):
-                raise ValueError("Not store %s" % store)
+                raise ValueError("Not store {0}".format(store))
             self.store = store
         self.act = act
 

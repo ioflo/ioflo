@@ -2,10 +2,9 @@
 
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 #imports
-import exceptions
 import pickle
 import pdb
 import string
@@ -27,7 +26,7 @@ console = getConsole()
 
 
 class NMEAParser(object):
-    """NMEA Serial String Parser Object   
+    """NMEA Serial String Parser Object
 
        NMEA-0183
 
@@ -86,7 +85,7 @@ class NMEAParser(object):
                  length of string <= 82
                  first char is $
                  no more than one checksum indicator * exists
-                 if checksum indicator 
+                 if checksum indicator
                     it is in correct position and valid
 
         """

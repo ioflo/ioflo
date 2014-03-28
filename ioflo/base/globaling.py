@@ -1,7 +1,11 @@
 """globaling.py module with global constang
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
+
+import sys
+if sys.version > '3':
+    long = int
 
 import math
 import re
@@ -9,7 +13,7 @@ import re
 
 #Globals
 #Constant Definitions
-TIME1970 = 2208988800L #offset secs between SNTP epoch=1900 & unix epoch=1970
+TIME1970 = long(2208988800) #offset secs between SNTP epoch=1900 & unix epoch=1970
 TWOPI = 2.0 * math.pi # two times pi
 DEGTORAD = math.pi / 180.0 # r = DEGTORAD * d
 RADTODEG = 180.0 / math.pi # d = RADTODEG * r
@@ -39,9 +43,9 @@ UPDATE = 3
 CHANGE = 4
 LIFO = 5
 FIFO = 6
-LogRuleNames = {NEVER : 'Never', ONCE : 'Once', ALWAYS : 'Always', 
+LogRuleNames = {NEVER : 'Never', ONCE : 'Once', ALWAYS : 'Always',
                 UPDATE : 'Update', CHANGE : 'Change', LIFO : 'Lifo', FIFO: 'Fifo',}
-LogRuleValues = {'Never' : NEVER, 'Once' : ONCE,  'Always' : ALWAYS, 
+LogRuleValues = {'Never' : NEVER, 'Once' : ONCE,  'Always' : ALWAYS,
                  'Update' : UPDATE, 'Change' : CHANGE, 'Lifo' : LIFO, 'Fifo' : FIFO,}
 
 #Task schedule context
@@ -73,7 +77,7 @@ BENTER = 7
 ActionContextValues = { 'native': NATIVE , 'enter':  ENTER, 'recur': RECUR,
                         'precur': PRECUR, 'exit': EXIT, 'renter': RENTER, 'rexit': REXIT,
                         'benter': BENTER}
-ActionContextNames = { NATIVE : 'native', ENTER : 'enter', RECUR : 'recur', 
+ActionContextNames = { NATIVE : 'native', ENTER : 'enter', RECUR : 'recur',
                        PRECUR : 'precur', EXIT : 'exit', RENTER : 'renter', REXIT : 'rexit',
                        BENTER : 'benter'}
 
@@ -86,7 +90,7 @@ REO_Identifier = re.compile(r'^[a-zA-Z_]\w*$') #valid python identifier
 REO_IdentPub = re.compile(r'^[a-zA-Z]\w*$') #valid python public identifier ie no leading underscore
 
 # regex objects to determine if string is valid store path
-# to use 
+# to use
 #if REO_Path.match(s):
 #  then s is valid path
 
@@ -96,12 +100,12 @@ REO_DotPath = re.compile(r'^([.][a-zA-Z_]\w*)+$')
 REO_PathDotPath = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)+$|^([.][a-zA-Z_]\w*)+$')
 
 #regex object to split hafscript command line
-REO_Chunks = re.compile(r'#.*|[^ "]+|"[^"]*"') 
+REO_Chunks = re.compile(r'#.*|[^ "]+|"[^"]*"')
 # Usage
 # chunks = REO_Chunks.findall(s)
 
 # to match each part
-REO_Quoted = re.compile(r'^"[^"]*"$')  
+REO_Quoted = re.compile(r'^"[^"]*"$')
 REO_Comment = re.compile(r'^#.*$')
 REO_Plain = re.compile(r'^[^ "]+$')
 #Usage
@@ -109,9 +113,9 @@ REO_Plain = re.compile(r'^[^ "]+$')
 #    s.strip('"')
 
 #regex object determine if lat or lon is in human readable form
-#REO_LATLONPOS = re.compile(r'^([0-9]+)[N,E,n,e]([0-9]+\.[0-9]+)$') 
-REO_LatLonNE = re.compile(r'^(\d+)[N,E,n,e](\d+\.\d+)$') 
-REO_LatLonSW = re.compile(r'^(\d+)[S,W,s,w](\d+\.\d+)$') 
+#REO_LATLONPOS = re.compile(r'^([0-9]+)[N,E,n,e]([0-9]+\.[0-9]+)$')
+REO_LatLonNE = re.compile(r'^(\d+)[N,E,n,e](\d+\.\d+)$')
+REO_LatLonSW = re.compile(r'^(\d+)[S,W,s,w](\d+\.\d+)$')
 #Usage
 # ll = REO_LatLonNE.findall(s) #returns list of tuples of groups [(deg,min)]
 # if ll:

@@ -1,7 +1,7 @@
 """detecting.py detector deed module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import math
 import time
@@ -30,25 +30,25 @@ class BoxPositionDetector(deeding.Deed):
         output = 'box', input = 'state.position',
         parms = dict(track = 0.0, north = 0.0, east = 0.0,
                      length = 10000, width = 2000, turn = 45.0))
-    
+
     def __init__(self, **kw):
         """Initialize instance.
            group is path name of group in store, group has following subgroups or shares:
            local outputs
 
-           
+
            inherited instance attributes
            .name
            .store
 
         """
         #call super class method
-        super(BoxPositionDetector,self).__init__(**kw)  
- 
-            
+        super(BoxPositionDetector,self).__init__(**kw)
+
+
     def initio(self, group, output, input, parms = None, **kw):
         """ Override since uses legacy interface
-            
+
             output
               inside   = vehicle is inside box (Booleans True (False))
               outtop  = vehicle is outside box above top highest priority
@@ -73,7 +73,7 @@ class BoxPositionDetector(deeding.Deed):
 
            .group = copy of group name
 
-           .output = ref to output 
+           .output = ref to output
               side state with boolean data fields
               .inside, .outtop, .outbottom, .outleft, .outright
               turn headings with data fields
@@ -86,7 +86,7 @@ class BoxPositionDetector(deeding.Deed):
 
         """
         self.group = group
-        
+
         #local outputs
         self.output = self.store.create(output)#create if not exist
         #order important for display purposes
@@ -107,7 +107,7 @@ class BoxPositionDetector(deeding.Deed):
         #parms
         self.parm = self.store.create(group + '.parm') #create if not exist
         if not parms:
-            parms = dict(track = 0.0, width = 1000, length = 10000, 
+            parms = dict(track = 0.0, width = 1000, length = 10000,
                          north = 0.0, east = 0.0, turn = 45.0)
 
         parms['turn'] = abs(aiding.Wrap2(parms['turn']))
@@ -117,8 +117,8 @@ class BoxPositionDetector(deeding.Deed):
         turnright = self.parm.data.track + self.parm.data.turn
 
         self.output.update(turnleft = turnleft, turnright = turnright)
-        
-        
+
+
     def action(self, **kw):
         """computes box detector output
 
@@ -137,7 +137,7 @@ class BoxPositionDetector(deeding.Deed):
         pe = self.input.data.east
 
         #get parameters
-        cbn = self.parm.data.north 
+        cbn = self.parm.data.north
         cbe = self.parm.data.east
         track = self.parm.data.track
         length = self.parm.data.length
@@ -149,7 +149,7 @@ class BoxPositionDetector(deeding.Deed):
         #rotate vehicle position to box by - track
         pn, pe = aiding.RotateFSToNE(heading = -track, forward = pn, starboard = pe)
 
-        #compute side tests 
+        #compute side tests
         self.output.update(inside = True)  #default inside until shown outside
 
         #topright to topleft
@@ -160,7 +160,7 @@ class BoxPositionDetector(deeding.Deed):
         rn = pn - cn #vehicle position relative to top left corner
         re = pe - ce
         #print cn,ce,sn,se,pn,pe,rn,re
-        side = se * rn - sn * re #2d perp product 
+        side = se * rn - sn * re #2d perp product
         if side >= 0.0:
             self.output.update(outtop = True, inside = False)
         else:
@@ -173,7 +173,7 @@ class BoxPositionDetector(deeding.Deed):
         se = - width
         rn = pn - cn #vehicle position relative to top left corner
         re = pe - ce
-        side = se * rn - sn * re #2d perp product 
+        side = se * rn - sn * re #2d perp product
         if side >= 0.0:
             self.output.update(outbottom = True, inside = False)
         else:
@@ -186,7 +186,7 @@ class BoxPositionDetector(deeding.Deed):
         se = 0.0
         rn = pn - cn #vehicle position relative to top left corner
         re = pe - ce
-        side = se * rn - sn * re #2d perp product 
+        side = se * rn - sn * re #2d perp product
         if side >= 0.0:
             self.output.update(outleft = True, inside = False)
         else:
@@ -199,7 +199,7 @@ class BoxPositionDetector(deeding.Deed):
         se = 0.0
         rn = pn - cn #vehicle position relative to top left corner
         re = pe - ce
-        side = se * rn - sn * re #2d perp product 
+        side = se * rn - sn * re #2d perp product
         if side >= 0.0:
             self.output.update(outright = True, inside = False)
         else:
@@ -221,21 +221,21 @@ class BoxPositionDetector(deeding.Deed):
         format = "box center bottom north = %0.3f east = %0.3f"
         print format % (self.parm.data.north, self.parm.data.east)
         format = "box track = %0.3f length = %0.3f width = %0.3f turn = %0.3f"
-        print format % (self.parm.data.track, self.parm.data.length, 
+        print format % (self.parm.data.track, self.parm.data.length,
                         self.parm.data.width, self.parm.data.turn)
         format = "turn left = %0.3f turn right  = %0.3f "
         print format % (self.output.data.turnleft, self.output.data.turnright)
         format = "position north = %0.3f east = %0.3f"
         print format % (self.input.data.north, self.input.data.east)
         format = "box inside = %s outside top = %s bottom = %s left = %s right = %s"
-        print format % (self.output.data.inside, 
+        print format % (self.output.data.inside,
                         self.output.data.outtop, self.output.data.outbottom,
                         self.output.data.outleft, self.output.data.outright)
 
 
 def TestBox():
     """           """
-    
+
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -243,7 +243,7 @@ def TestBox():
     store = storing.Store(name = 'Test')
 
     print "\nTesting Box Position Detector"
-    detector = BoxPositionDetector(name = 'detectorPositionBox', store = store, 
+    detector = BoxPositionDetector(name = 'detectorPositionBox', store = store,
                                    group = 'detector.position.box', input = 'state.position',
                                    parms = dict(track = 0.0, north = -50.0, east = 0.0,
                                                 length = 10000, width = 2000))

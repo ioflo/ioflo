@@ -1,10 +1,9 @@
 """plotting.py  wradia plotting module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 #imports
-import exceptions
 import pickle
 import pdb
 import string
@@ -20,7 +19,7 @@ from pylab import *
 
 #Function Definitions
 
-def PlotPosition(path = './test/logs/', name = "position.txt", 
+def PlotPosition(path = './test/logs/', name = "position.txt",
                  figNum = 1, figsize = (6,6)):
     """Function to automatically generate plot of vehicle path
        figsize is (width, height)
@@ -313,7 +312,7 @@ def PlotPositions(path = './test/logs/', name = "position.txt",
     draw()
     ion()
 
-def FilterByField(path = './test/logs/', filein = "data.txt", 
+def FilterByField(path = './test/logs/', filein = "data.txt",
                   fileout = 'datafilter.txt',
                   label = 'depth',  value = 5.0, tolerance = 0.5):
     """Function to select only those data points that are at the desired
@@ -333,7 +332,7 @@ def FilterByField(path = './test/logs/', filein = "data.txt",
     print chunks
 
     from .odicting import odict
-    indices = odict() 
+    indices = odict()
     indices[label] = None #label index
     #could have list of multiple field labels that have to exist
 
@@ -374,9 +373,9 @@ def BoxLineSegs(north = 0.0, east = 0.0, track = 0.0, length = 0.0, width = 0.0)
        Returns list of  segments of form [s1,s2,s3,s4]
        Each segment s is a list of two tuples of form [(x1, y1), (x2, y2)]
        So return looks like
-       [ [(x0,y0),(x1,y1)], 
-         [(x1,y1),(x2,y2)], 
-         [(x2,y2),(x3,y3)], 
+       [ [(x0,y0),(x1,y1)],
+         [(x1,y1),(x2,y2)],
+         [(x2,y2),(x3,y3)],
          [(x3,y3),(x0,y0)] ]
        where x is the east coord and y is the north coord
        north is box relative north coord  of center bottom
@@ -421,7 +420,7 @@ def BoxLineSegs(north = 0.0, east = 0.0, track = 0.0, length = 0.0, width = 0.0)
     return lines
 
 def PlotSalinity4(path = './test/logs/', name = "position.txt",
-                  depth = 5.0, tolerance = 0.5, 
+                  depth = 5.0, tolerance = 0.5,
                   north = 0.0, east = 0.0, track = 0.0, length = 0.0, width = 0.0,
                   figNum = 1, figsize = (6,6)):
     """Function to automatically generate plot of vehicle salinity vs position
@@ -499,7 +498,7 @@ def PlotSalinity4(path = './test/logs/', name = "position.txt",
     subplot(111)
 
 
-    plotTitle = "Salinity at Position\n" 
+    plotTitle = "Salinity at Position\n"
     title(plotTitle)
     xlabel('East (meters)')
     ylabel('North (meters)')
@@ -549,7 +548,7 @@ def PlotSalinity4(path = './test/logs/', name = "position.txt",
 
 
     #safety box
-    boxlines = BoxLineSegs(north = north, east = east, track = track, 
+    boxlines = BoxLineSegs(north = north, east = east, track = track,
                            length = length, width = width)
     LC = mpl.collections.LineCollection(boxlines)
     LC.set_linewidth(1)
@@ -659,7 +658,7 @@ def PlotSalinity3(path = './test/logs/', name = "position.txt",
     subplot(111)
 
 
-    plotTitle = "Salinity at Position\n" 
+    plotTitle = "Salinity at Position\n"
     title(plotTitle)
     xlabel('East (meters)')
     ylabel('North (meters)')
@@ -803,7 +802,7 @@ def PlotSalinity2(path = './test/logs/', name = "position.txt",
     subplot(111)
 
 
-    plotTitle = "Salinity at Position\n" 
+    plotTitle = "Salinity at Position\n"
     title(plotTitle)
     xlabel('East (meters)')
     ylabel('North (meters)')
@@ -939,7 +938,7 @@ def PlotSalinity(path = './test/logs/', name = "position.txt",
     subplot(111)
 
 
-    plotTitle = "Salinity at Position\n" 
+    plotTitle = "Salinity at Position\n"
     title(plotTitle)
     xlabel('East (meters)')
     ylabel('North (meters)')
@@ -1055,7 +1054,7 @@ def PlotTemp(path = './test/logs/', name = "position.txt",
     subplot(111)
 
 
-    plotTitle = "Temperature at Position\n" 
+    plotTitle = "Temperature at Position\n"
     title(plotTitle)
     xlabel('East (meters)')
     ylabel('North (meters)')
@@ -1109,7 +1108,7 @@ def PlotLoggeeVsTime(loggee = 'speed', units = '',
        figsize is (width, height)
        needs from pylab import *
 
-    """ 
+    """
     fullname = path + name
     fp = open(fullname, 'rU')
 
@@ -1178,7 +1177,7 @@ def PlotLoggeeVsTime(loggee = 'speed', units = '',
     l = array(data[1])
 
     plot(t,l, label = loggee)
-    #axis(ymin = 0.0, ymax = 3.5) 
+    #axis(ymin = 0.0, ymax = 3.5)
     legend(loc = 'lower right')
 
 
@@ -1206,7 +1205,7 @@ def PlotLoggeesVsTime(loggees = [], units = [],
        figsize is (width, height)
        needs from pylab import *
 
-    """ 
+    """
     fullname = path + name
     fp = open(fullname, 'rU')
 
@@ -1295,7 +1294,7 @@ def PlotLoggeesVsTime(loggees = [], units = [],
            frameon = False )
 
     for j, loggee in enumerate(loggees):
-        subplot(subplots,1,j+1)  #The subplot(numrows,numcols,subplotnum) 
+        subplot(subplots,1,j+1)  #The subplot(numrows,numcols,subplotnum)
 
         title("%s vs time\n" % (loggee))
         xlabel('Time (seconds)')
@@ -1344,7 +1343,7 @@ def PlotVehicleYawPlane(vs, figNum = 1):
 
        needs from pylab import *
 
-    """ 
+    """
     close(figNum)
     rc('figure.subplot', hspace= 0.5)
     rc('figure.subplot', bottom= 0.1)
@@ -1391,7 +1390,7 @@ def PlotVehiclePitchPlane(vs, figNum = 1):
 
        needs from pylab import *
 
-    """ 
+    """
     close(figNum)
     rc('figure.subplot', hspace= 0.4)
     rc('figure.subplot', bottom= 0.075)

@@ -1,26 +1,11 @@
 """housing.py framework entity module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
-#imports
-#import exceptions
-#import pickle
+
 import pdb
-#import string
-#import math
-#import types
-#import socket
-#import sys
-#import os
-#import termios
-#import tty
-#import time
-#import struct
-#import random
 import copy
-#from collections import deque
-
 
 from .globaling import *
 from .odicting import odict
@@ -54,27 +39,12 @@ Registries = odict(store = storing.Store,
                   tasker = tasking.Tasker,
                   log = logging.Log,)
 
-#Registries = odict(store = storing.Store,
-                  #tasker = tasking.Tasker,
-                  #log = logging.Log,
-                  #actor = acting.Actor,
-                  #poke = poking.Poke,
-                  #deed = deeding.Deed,
-                  #goal = goaling.Goal,
-                  #need = needing.Need,
-                  #trait = traiting.Trait,
-                  #fiat = fiating.Fiat,
-                  #want = wanting.Want,
-                  #complete = completing.Complete)
-
-
 def ClearRegistries():
     """Clear the registries in Registries
 
     """
     for value in Registries.values():
         value.Clear()
-
 
 #Class definitions
 

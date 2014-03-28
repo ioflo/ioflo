@@ -1,7 +1,7 @@
 """storing.py datashare module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import struct
@@ -26,14 +26,14 @@ class Node(odict):
     """ Special odict with name property to hold the pathname to the node
     """
     __slots__ = ('_name', ) # attribute supporting name property
-    
-    
+
+
     def __init__(self, *pa, **kwa):
         """ Initialize instance. name is empty """
         super(Node,self).__init__(*pa, **kwa)
-        
+
         self._name = ""
-    
+
     #property name
     def getName(self):
         """getter for name property """
@@ -44,14 +44,14 @@ class Node(odict):
         self._name = name
 
     name = property(fget = getName, fset = setName, doc = "Pathname to node.")
-    
+
     def byName(self, name):
         """ Sets name and returns self.
             Enables setting name as part of method chaining.
         """
         self.name = name
         return self
-    
+
 
 class Store(registering.Registry):
     """global data store to be shared amoungst all taskers.
@@ -62,13 +62,13 @@ class Store(registering.Registry):
        .name  = unique data store name
 
        instance attributes
-       .stamp = global time stamp for store 
+       .stamp = global time stamp for store
        .house = reference to house owning this store
        .shares = dictionary of shared data store items
        .realtime = share for realtime when .stamp is updated
 
     """
-    Counter = 0  
+    Counter = 0
     Names = {}
 
     def __init__(self, stamp = None, house = None, **kwa):
@@ -87,13 +87,13 @@ class Store(registering.Registry):
         self.stamp = stamp #must be None or number
         self.house = house
         self.shares = Node().byName('') #dictionary of data store shares indexed by name
-        
+
         #create node for meta data
         self.metaShr = self.createNode('.meta')
         #create share for stamp
-        self.timeShr = self.create('.time').update(value = self.stamp or 0.0)        
+        self.timeShr = self.create('.time').update(value = self.stamp or 0.0)
         #create share for realtime
-        self.realTimeShr = self.create('.realtime').update(value = time.time()) 
+        self.realTimeShr = self.create('.realtime').update(value = time.time())
 
     def changeStamp(self, stamp):
         """change time stamp for this store """
@@ -103,8 +103,8 @@ class Store(registering.Registry):
             self.realTimeShr.update(value=time.time())
         except TypeError:
             self.stamp = None
-            print "Error: Store %s, Change stamp to %s not a number" %\
-                  (self.name, self.stamp)
+            console.verbose("Error: Store {0}, Invalid stamp '{1}'\n".format(
+                    self.name, self.stamp))
             raise
 
     def advanceStamp(self, delta):
@@ -114,8 +114,8 @@ class Store(registering.Registry):
             self.timeShr.update(value=self.stamp)
             self.realTimeShr.update(value=time.time())
         except TypeError:
-            print "Error: Store %s, Can't advance stamp = %s by delta = %s" %\
-                  (self.name, self.stamp, delta)
+            console.verbose("Error: Store {0}, Can't advance stamp={1}"
+                            " by delta={2}\n".format(self.name, self.stamp, delta))
             raise
 
     def fetch(self, name):
@@ -142,7 +142,7 @@ class Store(registering.Registry):
         return nos #node or share
 
     def fetchShare(self, name):
-        """Retrieve from .shares a  share by its name 
+        """Retrieve from .shares a  share by its name
            return share or if not exist or if not a share (node by same name then
               return None
 
@@ -192,9 +192,9 @@ class Store(registering.Registry):
            If share already exists with same name then raises exception. Should use .change instead
            This is to prevent inadvertant adding of shares that clobber node hierarchy
 
-           for a single item list 
+           for a single item list
               the slice [0:-1] is empty
-              the slice [-1] = [0] is the single item 
+              the slice [-1] = [0] is the single item
         """
         if  not isinstance(share, Share):
             raise ValueError("Not Share %s" % share)
@@ -221,16 +221,16 @@ class Store(registering.Registry):
         console.profuse("     Added share {0} to store {1}\n".format(share.name, self.name))
 
         return share
-    
+
     def addNode(self, name):
         """Add node with pathname name to store
            Creates node hierarchy from name as needed
-           If node already exists with same name then raises exception. 
+           If node already exists with same name then raises exception.
            This is to prevent inadvertant adding of node that clobber node/share hierarchy
 
-           for a single item list 
+           for a single item list
               the slice [0:-1] is empty
-              the slice [-1] = [0] is the single item 
+              the slice [-1] = [0] is the single item
         """
         levels = name.strip('.').split('.') #strip leading and following '.' and split
         node = self.shares
@@ -245,11 +245,11 @@ class Store(registering.Registry):
 
         console.profuse("     Added node {0} to {1}\n".format(name, self.name))
 
-        return node    
+        return node
 
     def change(self, share):
         """change existing share with same name in store to share and change share's .store to self
-           if share and node hierachy do not exist then raises exception 
+           if share and node hierachy do not exist then raises exception
            this is to make it harder to inadvertantly mess up node hierarchy
         """
         if  not isinstance(share, Share):
@@ -261,7 +261,7 @@ class Store(registering.Registry):
             if not level:
                 raise ValueError("Empty level in '%s'" % share.name)
 
-            if level in node: 
+            if level in node:
                 node = node[level]
                 if isinstance(node, Share):
                     raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
@@ -280,8 +280,8 @@ class Store(registering.Registry):
         return share
 
     def create(self, name):
-        """Retrieve share with name if it exits  
-           otherwise create a share with  name 
+        """Retrieve share with name if it exits
+           otherwise create a share with  name
               and add to store
         """
         share = self.fetchShare(name)  #does share already exist
@@ -289,21 +289,21 @@ class Store(registering.Registry):
             return share
 
         return self.add(Share(name = name.strip('.')))
-    
+
     def createNode(self, name):
-        """Retrieve node with name if it exits  
+        """Retrieve node with name if it exits
            otherwise create a node with  name and add to store
         """
         node = self.fetchNode(name)  #does node already exist
         if node is not None: #must compare to none since empty container would also be false
             return node
 
-        return self.addNode(name=name)   
+        return self.addNode(name=name)
 
     def expose(self, values=False):
         """   """
-        print "Store name = %s, stamp = %s" % (self.name, self.stamp)
-        print "Nodes & Shares:"
+        console.terse("Store name= {0}, stamp= {1}\n".format(self.name, self.stamp))
+        console.terse("Nodes & Shares:\n")
         Store.ShowNode(self.shares, indent = 0, values=values)
 
 
@@ -311,41 +311,47 @@ class Store(registering.Registry):
     def ShowNode(node, indent = 0, values=False):
         if isinstance(node, dict):
             for key, value in node.items():
+                msg = ""
                 for i in range(indent):
-                    print "  ",
-                print ".%s " % key
+                    msg += "  "
+                msg += ".{0} ".format(key)
+                console.terse("{0}\n".format(msg))
                 Store.ShowNode(value, indent = indent + 1, values=values)
         else:
+            msg = ""
             for i in range(indent):
-                print "  ",
+                msg += "  "
             if values:
                 for key, val in node.items():
-                    print "%s=%s " % (key, val) ,                
+                    msg += "{0}={1} ".format(key, val)
+                console.terse("{0}\n".format(msg))
             else:
                 for key in node.keys():
-                    print "%s " % key,
-            print
+                    msg += "{0} ".format(key)
+                console.terse("{0}\n".format(msg))
+
+
 
 class Mark(object):
     """ Supports the UpdateNeed, ChangeNeed and Marker Actor
         UpdateNeed checks if associated share is update while in associated frame
         ChangeNeed checks if associated share data is changed while in associated frame
-        
-        
+
+
         stamp = last stamp of associated share
         data = copy of data of associated share
-        
+
     """
-    __slots__ = ('stamp', 'data',) 
-    
-    
+    __slots__ = ('stamp', 'data',)
+
+
     def __init__(self, *pa, **kwa):
         """ Initialize instance. """
         super(Mark,self).__init__(*pa, **kwa)
-        
+
         self.stamp = None
         self.data = None
-    
+
 
 class Share(object):
     """Shared item in data store
@@ -364,33 +370,33 @@ class Share(object):
         itervalues()
         keys()
         values()
-        
+
         instance attributes:
             .name = holds unique store path entry name of share '.' notation
             .store = data store holding share
             .stamp = time stamp of this share
-         
+
             ._owner used by owner property
             ._data used by data property and also by private accessor methods
             ._truth used by truth property
             ._unit used by unit property
-   
+
 
         properties are used so that time stamps etc are updated properly for logging
- 
+
         properties (properites are stored in class):
             .owner property holds a reference to owner of share (writer)
-            .data property holds data record 
+            .data property holds data record
                 one time stamp applies to the whole data structure
             .value property manages default single field value in data
             .truth property holds the confidence of the value/data. may be None, True, False, [0.0, 1.0]
                 truth should not be updated unless value/data is, they are coupled
                 thus log if changed on truth also uses last value
             .unit property hold units for fields
-            
+
 
     """
-    def __init__(self, name = '',store = None, 
+    def __init__(self, name = '',store = None,
                  value = None, data = None, truth = None, stamp = None,
                  unit = None, owner = None,  **kwa):
         """Initialize instance
@@ -408,15 +414,15 @@ class Share(object):
 
         self._data = Data() #new data object
         self._truth = None
-        self._unit = None 
+        self._unit = None
 
         self._owner = None
         self.stamp = None
-        
+
         if not isinstance(name,str): #name must be string
             name = ''
         self.name = name
-        
+
         self.changeStore(store = store)
         #if store is not none then
         #   should really make sure share.name is path name in store and is added to store
@@ -433,13 +439,14 @@ class Share(object):
                 stamp = float(stamp)
                 self.stamp = stamp
             except TypeError:
-                print "Error: Share %s bad initializer stamp = %s" % (self.name, stamp)
+                console.terse("Error: Share {0} bad initializer"
+                              " stamp= {1}\n".format(self.name, stamp))
 
         if unit is not None:
             self.changUnit(**unit)
         if owner is not None:
             self.owner = owner
-        
+
         self.marks = odict() #odict of marks
 
 
@@ -527,15 +534,15 @@ class Share(object):
     def values(self):
         """  """
         return [self[key] for key in self.keys()]
-    
+
     # store management
     def changeStore(self, store = None):
         """Replace .store """
-        if store is not None: 
+        if store is not None:
             if  not isinstance(store, Store):
                 raise ValueError("Not store %s" % store)
         self.store = store
-    
+
     #property owner
     def getOwner(self):
         """getter for  owner property """
@@ -551,7 +558,7 @@ class Share(object):
         """Force time stamp this share to store.stamp
            This is useful when share field is a collection that is modified
            in place, i.e. can't use update since update copies
-           so stampNow update the stamp. 
+           so stampNow update the stamp.
         """
         self.stamp = self.store.stamp
 
@@ -600,10 +607,10 @@ class Share(object):
     data = property(fget = getData, fset = setData, doc = "Data for this share")
 
     def change(self, *pa, **kwa):
-        """Change data fields without affecting stamp. 
+        """Change data fields without affecting stamp.
            Create if not already exist.
         """
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k, v in a.items():
                     setattr(self._data, k, v)
@@ -616,7 +623,7 @@ class Share(object):
         return self
 
     def update(self, *pa, **kwa):
-        """Update data fields of this share. 
+        """Update data fields of this share.
            create field if not already exist
            set stamp to store.stamp
         """
@@ -628,10 +635,10 @@ class Share(object):
 
     def create(self, *pa, **kwa):
         """Create and update fields if they do not already exist otherwise do nothing
-           This allows setting defaults only if they have not already been set 
+           This allows setting defaults only if they have not already been set
         """
         update = False  #do we need to update stamp
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k, v in a.items():
                     if not hasattr(self._data, k):
@@ -654,7 +661,7 @@ class Share(object):
         return self
 
     def fetch(self, field, default = None):
-        """Retrieve from .data the the value of attribute field or 
+        """Retrieve from .data the the value of attribute field or
            None if it does not exist
         """
         return self.get(field, default)
@@ -682,7 +689,7 @@ class Share(object):
         if self.unit is None:
             self.unit = Data()
 
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k, v in a.items():
                     setattr(self.unit, k, v)
@@ -699,7 +706,7 @@ class Share(object):
         if self.unit is None:
             self.unit = Data()
 
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k, v in a.items():
                     if not hasattr(self._unit, k):
@@ -723,19 +730,20 @@ class Share(object):
 
     def expose(self):
         """print out important attributes for debugging """
-        print "Name %s Store %s Stamp %s Value %s  Dict %s\nTruth %s Unit %s Owner %s " % \
+        print( "Name %s Store %s Stamp %s Value %s  Dict %s\nTruth %s Unit %s Owner %s " % \
               (self.name, self.store, self.stamp, self.value,  self.data, self.truth,
-               self.unit,  self.owner)
+               self.unit,  self.owner))
 
     def show(self):
         """print name and data files"""
-        print "Name %s Value %s" % (self.name, self.value)
+        console.terse("Name {0} Value {1}\n".format(self.name, self.value))
+        msg = ""
         for key, value in self.data.__dict__.items():
-            print "%s = %s" % (key, value),
-        print
+            msg += "{0} = (1)".format(key, value)
+        console.terse("{0}\n".format(msg))
 
 
-import optimize
+#import optimize
 
 
 #from types import ListType, TupleType
@@ -745,7 +753,7 @@ class Data(object):
 
     """
 
-    def __new__(cls, *pa, **kwa): 
+    def __new__(cls, *pa, **kwa):
         """Set up at instance creation """
         #self = object.__new__(cls, *pa, **kwa)
         self = object.__new__(cls)
@@ -760,7 +768,7 @@ class Data(object):
 
            Data(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args, {k1: v1, k2 : v2, ...}
         """
-        for a in pa: 
+        for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
                 for k, v in a.items():
                     setattr(self, k, v)
@@ -774,22 +782,22 @@ class Data(object):
     def __setattr__(self, key, value):
         """Convert setattr to setitem on self.__dict__
 
-           need to override __setattr__ because 
-           we shadowed .__dict__  in __new__ above and 
-           class's __setattr__  only uses .__dict__ descriptor's 
-           setter/getter  methods in  class where descripter created 
+           need to override __setattr__ because
+           we shadowed .__dict__  in __new__ above and
+           class's __setattr__  only uses .__dict__ descriptor's
+           setter/getter  methods in  class where descripter created
            not in subclass. This is odd behavior by python because
-           to be symmetric with how __getattr__ works python should check if 
+           to be symmetric with how __getattr__ works python should check if
            instance has .__dict__ and use that instead.
            By overriding __setattr__  we insure that when
            need to add to __dict__ we are using the instance version not
-           the descriptor version in class. what if we bind a descriptor? 
+           the descriptor version in class. what if we bind a descriptor?
            normally descriptors go in class.__dict__
            not instance .__dict__ Do we need to check assigned value for being
            as descriptor and pass on to class?
 
            Don't need __getattr__ override because __getattribute__ always
-           looks in instance.__dict__ as last resort if can't find in 
+           looks in instance.__dict__ as last resort if can't find in
            class.__dict__ descriptor or elsewhere
         """
         try: #see if super class already has attribute so don't shadow
@@ -802,49 +810,49 @@ class Data(object):
         else: #pass on to superclass
             super(Data,self).__setattr__(key,value)
 
-optimize.bind_all(Data)
+#optimize.bind_all(Data)
 
 def resolvePath(store, ipath, ival=None, iown=None, act=None):
     """ Returns resolved Share or Node instance from path
         path may be path name of share or node
         or reference toShare or Node instance
-        
+
         store is reference to current Store
         act is reference to associated act needed
-        
+
         If path is a pathname string and resolves to a Share and init is not None
         Then init is used to initialize the share values. Init should be a dict of
             fields and values
             If own is True then .update(init) is used
             Otherwise .create(init) is used
-            
+
         Assumes when applicable that the following have already bene resolved:
            act.frame
-           act.frame.framer 
+           act.frame.framer
            act.frame.framer.main
            act.frame.framer.main.framer
-        
+
         This is for resolving pathname strings into share and node references
         at resolve or run time.
-        
+
         It allows for substitution of frame, framer, main frame,
         or main framer relative names. So that lexically relative pathnames can
         be dynamically resolved in support of framer cloning.
         It assumes that any implied variants have been reconciled.
-        
+
         When path is a string (not a Node or Share reference) the following syntax
         is used:
-        
+
         A leading '.' dot indicates that the path name is fully reconciled and no
         contextual substitutions are to be applied.
-        
+
         Otherwise make subsitutions in pathname strings that begin with 'framer.' and
         have the special framer and/or frame names of 'me' or 'main'.
-        
+
         'me' indicates substitute the current framer or frame name respectively.
         'main' indicates substitute the current frame's main framer or main frame
         name respectively.
-    """    
+    """
     if not (isinstance(ipath, Share) or isinstance(ipath, Node)): # must be pathname
         if not ipath.startswith('.'): # not reconciled so do relative substitutions
             parts = ipath.split('.')
@@ -854,7 +862,7 @@ def resolvePath(store, ipath, ival=None, iown=None, act=None):
                             " to resolve relative pathname.", ipath, act)
                 if not act.frame:
                     raise excepting.ResolveError("ResolveError: Missing frame context"
-                        " to resolve relative pathname.", ipath, act)                
+                        " to resolve relative pathname.", ipath, act)
                 if parts[1] == 'me': # current framer
                     parts[1] = act.frame.framer.name
                 elif parts[1] == 'main': # current main framer
@@ -862,7 +870,7 @@ def resolvePath(store, ipath, ival=None, iown=None, act=None):
                         raise excepting.ResolveError("ResolveError: Missing main frame"
                             " context to resolve relative pathname.", ipath, act)
                     parts[1] = act.frame.framer.main.framer.name
-                
+
                 if (len(parts) >= 3):
                     if parts[2] == 'frame':
                         if parts[3] == 'me':
@@ -877,10 +885,10 @@ def resolvePath(store, ipath, ival=None, iown=None, act=None):
                                 parts[5:6] = nameToPath(act.actor.name).rstrip('.').split('.')
                     elif parts[2] == 'actor':
                         if parts[3] == 'me': # slice insert multiple parts
-                            parts[3:4] = nameToPath(act.actor.name).rstrip('.').split('.')                        
-            
+                            parts[3:4] = nameToPath(act.actor.name).rstrip('.').split('.')
+
             ipath = '.'.join(parts)
-        
+
         if ipath.endswith('.'): # Node not Share
             ipath = store.createNode(ipath.rstrip('.'))
         else: # Share
@@ -890,7 +898,7 @@ def resolvePath(store, ipath, ival=None, iown=None, act=None):
                     ipath.update(ival)
                 else:
                     ipath.create(ival)
-                
+
     return ipath
 
 ResolvePath = resolvePath # alias
@@ -904,56 +912,56 @@ def Test():
         Store.Clear()
 
         store = Store()
-        print "Store shares = %s" % store.shares
+        print("Store shares = %s" % store.shares)
 
         store.add(Share(name = 'autopilot.depth')).create(depth = 0.0)
-        print store.fetch('autopilot.depth').data.depth
+        print( store.fetch('autopilot.depth').data.depth)
         try:
-            print store.fetch('autopilot.depth').data.value
-        except AttributeError, e1:
-            print e1.message
-        print store.fetch('autopilot.depth').value
-        print "Store shares = %s" % store.shares
+            print( store.fetch('autopilot.depth').data.value)
+        except AttributeError as e1:
+            print( e1.message)
+        print( store.fetch('autopilot.depth').value)
+        print( "Store shares = %s" % store.shares)
 
         store.create('autopilot.heading').create(heading = 0.0)
-        print store.fetch('autopilot.heading').data.heading
+        print( store.fetch('autopilot.heading').data.heading)
         try:
-            print store.fetch('autopilot.heading').data.value
-        except AttributeError, e1:
-            print e1.message
-        print store.fetch('autopilot.heading').value
-        print "Store shares = %s" % store.shares
+            print( store.fetch('autopilot.heading').data.value)
+        except AttributeError as e1:
+            print( e1.message)
+        print( store.fetch('autopilot.heading').value)
+        print( "Store shares = %s" % store.shares)
 
         s = Share(store = store, name = 'autopilot.heading')
         s.create(value = 60.0)
         s.create(value = 50.0)
-        print s.data.value
-        print s.value
-        print s.data.value
-        print s.value
+        print( s.data.value)
+        print( s.value)
+        print( s.data.value)
+        print( s.value)
         store.change(s)
-        print "Store shares = %s" % store.shares
+        print( "Store shares = %s" % store.shares)
 
         try:
             store.add(Share(name = 'autopilot.depth'))
-        except ValueError, e1:
-            print e1.message
-        print "Store shares = %s" % store.shares
+        except ValueError as e1:
+            print( e1.message)
+        print( "Store shares = %s" % store.shares)
 
         try:
             store.change(Share(name = 'autopilot.speed'))
-        except ValueError, e1:
-            print e1.message
-        print "Store shares = %s" % store.shares
+        except ValueError as e1:
+            print( e1.message)
+        print( "Store shares = %s" % store.shares)
 
-        print "autopilot.heading = %s" % store.fetch('autopilot.heading')
-        print "autopilot = %s" % store.fetch('autopilot')
-        print "dog = %s" % store.fetch('dog')
+        print( "autopilot.heading = %s" % store.fetch('autopilot.heading'))
+        print( "autopilot = %s" % store.fetch('autopilot'))
+        print( "dog = %s" % store.fetch('dog'))
 
         store.expose()
 
-    except ValueError, e1:
-        print e1.message
+    except ValueError as e1:
+        print( e1.message)
 
     return store
 

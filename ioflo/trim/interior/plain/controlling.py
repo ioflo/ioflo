@@ -1,7 +1,7 @@
 """controlling.py controller deed module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import math
 import time
@@ -15,7 +15,7 @@ from ....base.globaling import *
 
 from ....base import aiding
 
-from ....base import storing 
+from ....base import storing
 from ....base import deeding
 
 from ....base.consoling import getConsole
@@ -28,11 +28,11 @@ class PidController(deeding.LapseDeed):
        PID Controller Class
 
     """
-    
+
     def __init__(self, **kw):
         """Initialize instance
 
-           
+
            inherited instance attributes
            .stamp = time stamp
            .lapse = time lapse between updates of controller
@@ -41,19 +41,19 @@ class PidController(deeding.LapseDeed):
 
         """
         #call super class method
-        super(PidController,self).__init__(**kw)  
+        super(PidController,self).__init__(**kw)
 
-        self.lapse = 0.0 #time lapse in seconds calculated on update 
-        
+        self.lapse = 0.0 #time lapse in seconds calculated on update
+
 
     def initio(self, group, output, input, rate, rsp, parms = None, **kw):
         """ Override default since legacy deed interface
-        
+
             group is path name of group in store, group has following subgroups or shares:
               group.parm = share for data structure of fixed parameters or coefficients
                  parm has the following fields:
                     wrap = where setpoint wraps around must be positive
-                    drsp = delta rsp needed to indicate change in rsp avoids rounding error 
+                    drsp = delta rsp needed to indicate change in rsp avoids rounding error
                     calcRate = True rate is time difference, False rate is rate sensor input
                     ger = error rate to rate conversion gain
                     gff = feedforward reference to controller gain
@@ -71,7 +71,7 @@ class PidController(deeding.LapseDeed):
               group.er = share of rate of change of error
               group.es = share of summation of error
 
-           output is path name of share for output/truth of arbiter 
+           output is path name of share for output/truth of arbiter
 
            input = path name of input controlled variable
            rate = path name to input sensed rate of change of controlled variable
@@ -94,12 +94,12 @@ class PidController(deeding.LapseDeed):
            .rsp = reference to input reference set point
 
         """
-        
+
         self.group = group
         self.parm = self.store.create(group + '.parm')#create if not exist
         if not parms:
             parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
-                         ger = 1.0, gff = 0.0, gpe = 0.0, gde = 0.0, gie = 0.0, 
+                         ger = 1.0, gff = 0.0, gpe = 0.0, gde = 0.0, gie = 0.0,
                          esmax = 0.0, esmin = 0.0, ovmax = 0.0, ovmin = 0.0)
         self.parm.create(**parms)
 
@@ -113,9 +113,9 @@ class PidController(deeding.LapseDeed):
 
         self.input = self.store.create(input).create(value = 0.0) #create if not exist
         self.rate = self.store.create(rate).create(value = 0.0)
-        self.rsp = self.store.create(rsp).create(value = 0.0)        
-        
-        
+        self.rsp = self.store.create(rsp).create(value = 0.0)
+
+
     def restart(self):
         """Restart controller   """
         self.es.value = 0.0 #reset integrator error sum to zero
@@ -140,7 +140,7 @@ class PidController(deeding.LapseDeed):
         if abs(rsp - prsp) > self.parm.data.drsp: #rsp changed
             self.prsp.value = rsp
             self.es.value = 0.0 #reset integrator
-        else: #to minimize noise use prsp in case changed a little 
+        else: #to minimize noise use prsp in case changed a little
             rsp = prsp
 
         pe = self.e.value #prior error
@@ -191,7 +191,7 @@ PidController.__register__('controllerPidSpeed', ioinits=odict(
                  esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0)) )
 
 PidController.__register__('controllerPidHeading', ioinits=odict(
-    group = 'controller.pid.heading', output = 'goal.rudder', 
+    group = 'controller.pid.heading', output = 'goal.rudder',
     input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
     parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
@@ -224,7 +224,7 @@ def TestPID():
 
 
     print "\nTesting PID Controller"
-    controller = PidController(name = 'controllerPIDTest', store = store, 
+    controller = PidController(name = 'controllerPIDTest', store = store,
                                group = 'controller.pid.test', output = 'goal.testoutput',
                                input = 'state.testinput', rate = 'state.testrate', rsp = 'goal.testrsp',
                                parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
@@ -287,7 +287,7 @@ def TestMotion():
     """
 
     """
-    
+
     #clear registries
     storing.Store.Clear()
     deeding.Deed.Clear()
@@ -296,18 +296,18 @@ def TestMotion():
 
 
     print "\nTesting Motion Sim Controller"
-    controller = MotionController(name = 'controllerMotionTest', store = store, 
+    controller = MotionController(name = 'controllerMotionTest', store = store,
                                   group = 'controller.motion.test',
                                   speed = 'state.speed', speedRate = 'state.speedRate',
                                   depth = 'state.depth', depthRate = 'state.depthRate',
-                                  pitch = 'state.pitch', pitchRate = 'state.pitchRate', 
+                                  pitch = 'state.pitch', pitchRate = 'state.pitchRate',
                                   altitude = 'state.altitude',
                                   heading = 'state.heading', headingRate = 'state.headingRate',
                                   position = 'state.position',
                                   rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
-                                  current = 'scenario.current', bottom = 'scenario.bottom', 
+                                  current = 'scenario.current', bottom = 'scenario.bottom',
                                   prevPosition = 'state.position',
-                                  parms = dict(rpmLimit = 1000.0, sternLimit = 20.0, rudderLimit = 20.0, 
+                                  parms = dict(rpmLimit = 1000.0, sternLimit = 20.0, rudderLimit = 20.0,
                                                gs = 0.0025, gpr = -0.5, ghr = -0.5))
 
     store.expose()
@@ -331,7 +331,7 @@ def Test():
     """Module Common self test
 
     """
-    
+
     #clear registries
     print "\nTesting Controllers\n"
     storing.Store.Clear()

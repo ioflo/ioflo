@@ -1,7 +1,7 @@
 """needing.py need action module
 
 """
-#print "module %s" % __name__
+#print "module {0}".format(__name__)
 
 import time
 import struct
@@ -15,7 +15,7 @@ from .odicting import odict
 from . import aiding
 from . import excepting
 from . import registering
-from . import storing 
+from . import storing
 from . import acting
 from . import tasking
 from . import framing
@@ -80,7 +80,7 @@ class AlwaysNeed(Need):
         """Always return true"""
 
         result = True
-        console.profuse("Need Always = {0}\n".format(result)) 
+        console.profuse("Need Always = {0}\n".format(result))
 
         return result
 
@@ -97,47 +97,47 @@ class DoneNeed(Need):
           tasker
     """
     def action(self, tasker, **kw):
-        """Check if  tasker done 
+        """Check if  tasker done
 
         """
         result = tasker.done
-        console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result)) 
+        console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result))
 
         return result
-    
+
     def resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as tasker parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(DoneNeed, self).resolve( **kwa) 
+        parms = super(DoneNeed, self).resolve( **kwa)
 
         if not isinstance(tasker, tasking.Tasker): # name of tasker so resolve
-            if tasker not in tasking.Tasker.Names: 
+            if tasker not in tasking.Tasker.Names:
                 raise excepting.ResolveError("ResolveError: Bad need done aux link", tasker, self.name)
             tasker = tasking.Tasker.Names[tasker] #replace tasker name with tasker
 
-        #if not tasker.schedule in [AUX, SLAVE]: 
+        #if not tasker.schedule in [AUX, SLAVE]:
             #raise excepting.ResolveError("ResolveError: Bad need done tasker not auxiliary or slave", tasker, self.name)
 
         parms['tasker'] = tasker #replace name with valid link
 
         return parms #return items are updated in original act parms
-    
-    
+
+
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
             Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts with clones.
-            
+
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
         parms = super(StatusNeed,self).cloneParms(parms, clones, **kw)
-        
+
         tasker = parms.get('tasker')
-        
+
         if isinstance(tasker, tasking.Tasker):
             if tasker.name in clones:
                 parms['tasker'] = clones[tasker.name][1].name
@@ -146,8 +146,8 @@ class DoneNeed(Need):
         elif tasker: # assume namestring
             if tasker in clones:
                 parms['tasker'] = clones[tasker][1].name
-        
-        return parms        
+
+        return parms
 
 class StatusNeed(Need):
     """StatusNeed Need
@@ -166,40 +166,40 @@ class StatusNeed(Need):
 
         result = (tasker.status == status)
         console.profuse("Need Tasker {0} status is {1} = {2}\n".format(
-            tasker.name, StatusNames[status], result)) 
+            tasker.name, StatusNames[status], result))
 
         return result
-    
+
     def resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(StatusNeed, self).resolve( **kwa) 
+        parms = super(StatusNeed, self).resolve( **kwa)
 
         if not isinstance(tasker, tasking.Tasker): #so name of tasker
-            if tasker not in tasking.Tasker.Names: 
+            if tasker not in tasking.Tasker.Names:
                 raise excepting.ResolveError("ResolveError: Bad need done tasker link", tasker, self.name)
             tasker = tasking.Tasker.Names[tasker] #replace tasker name with tasker
 
         parms['tasker'] = tasker #replace name with valid link
 
         return parms #return items are updated in original act parms
-    
-    
+
+
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
             Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts with clones.
-            
+
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
         parms = super(StatusNeed,self).cloneParms(parms, clones, **kw)
-        
+
         tasker = parms.get('tasker')
-        
+
         if isinstance(tasker, tasking.Tasker):
             if tasker.name in clones:
                 parms['tasker'] = clones[tasker.name][1].name
@@ -208,8 +208,8 @@ class StatusNeed(Need):
         elif tasker: # assume namestring
             if tasker in clones:
                 parms['tasker'] = clones[tasker][1].name
-        
-        return parms    
+
+        return parms
 
 class BooleanNeed(Need):
     """BooleanNeed Need
@@ -229,7 +229,7 @@ class BooleanNeed(Need):
         else:
             result = False
         console.profuse("Need Boolean, if {0}[{1}]: = {2}\n".format(
-            state.name, stateField, result)) 
+            state.name, stateField, result))
 
 
         return result
@@ -253,7 +253,7 @@ class DirectNeed(Need):
 
         result = self.Check(state[stateField], comparison, goal, tolerance)
         console.profuse("Need Direct, if {0}[{1}] {2} {3} +- {4}: = {5}\n".format(
-            state.name, stateField, comparison, goal, tolerance, result))     
+            state.name, stateField, comparison, goal, tolerance, result))
 
         return result
 
@@ -271,15 +271,15 @@ class IndirectNeed(Need):
               goal
               goalField
               tolerance
-        
+
         """
 
         result = self.Check(state[stateField], comparison, goal[goalField], tolerance)
         console.profuse("Need Indirect, if {0}[{1}] {2} {3}[{4}] +- %s: = {5}\n".format(
-            state.name, stateField, comparison, goal, goalField, tolerance, result))     
+            state.name, stateField, comparison, goal, goalField, tolerance, result))
 
         return result
-    
+
 class MarkerNeed(Need):
     """ MarkerNeed is base class for needs that insert markers on resolvelinks
         inherited attributes:
@@ -290,43 +290,43 @@ class MarkerNeed(Need):
             name        name of frame where marker is watching
             frame       only used in resolvelinks
             marker      only used in resolvelinks
-    
+
     """
     def resolve(self, share, frame, marker, **kwa):
         """ Resolves frame name link and then
            inserts marker as first enact in the resolved frame
-           
+
         """
-        parms = super(MarkerNeed, self).resolve( **kwa) 
-        
+        parms = super(MarkerNeed, self).resolve( **kwa)
+
         if not isinstance(frame, framing.Frame): # must be pathname
             if frame not in framing.Frame.Names:
                 msg = "ResolveError: Bad need update frame link"
                 raise excepting.ResolveError(msg, frame, self.name)
             parms['frame'] = frame = framing.Frame.Names[frame] #replace frame name with frame
-        
+
         if not share.marks.get(frame.name):
             share.marks[frame.name] = storing.Mark()
-            
+
         found = False
         for enact in frame.enacts:
-            if (isinstance(enact.actor, acting.Actor) and 
+            if (isinstance(enact.actor, acting.Actor) and
                     enact.actor.name is marker and
                     enact.parms['share'] is share and
                     enact.parms['name'] == frame.name):
                 found = True
                 break
-            
+
         if not found:
             if marker not in acting.Actor.Registry:
                 msg = "ResolveError: Bad need marker link"
                 raise excepting.ResolveError(msg, marker, self.name)
-            
+
             markerParms = dict(share=share, frame=frame.name)
             parms['marker'] = marker = acting.Act(  actor=marker,
                                                     registrar=acting.Actor,
                                                     parms=markerParms)
-            
+
             frame.insertEnact(marker)
             console.profuse("     Added {0} {1} with {2} in {3}\n".format(
                 'enact',
@@ -334,31 +334,31 @@ class MarkerNeed(Need):
                 marker.parms['share'].name,
                 marker.parms['frame']))
             marker.resolve()
-                
-        return parms #return items are updated in original act parms    
-    
+
+        return parms #return items are updated in original act parms
+
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
             Reverting non cloned Framer links into name strings
             Replacing any cloned framer links with the cloned name strings from clones
             Replacing any parms that are acts with clones.
-            
+
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
         parms = super(MarkerNeed,self).cloneParms(parms, clones, **kw)
-        
+
         share = parms.get('share')
         name = parms.get('name')
         frame = parms.get('frame')
         marker = parms.get('marker')
-            
-        if isinstance(frame, framing.Frame):
-            parms['frame'] = frame.name # revert to name 
 
-        return parms    
-    
+        if isinstance(frame, framing.Frame):
+            parms['frame'] = frame.name # revert to name
+
+        return parms
+
 class UpdateNeed(MarkerNeed):
     """ UpdateNeed Need
 
@@ -379,9 +379,9 @@ class UpdateNeed(MarkerNeed):
         mark = share.marks.get(frame.name) #get mark from mark frame name key
         if mark and mark.stamp != None:
             result = share.stamp >= mark.stamp #equals so catch updates on enter
-        
+
         console.profuse("Need Share {0} update in Frame {1} = {2}\n".format(
-            share.name, frame.name, result)) 
+            share.name, frame.name, result))
 
         return result
 
@@ -408,16 +408,16 @@ class ChangeNeed(MarkerNeed):
                 try:
                     if getattr(mark.data, field) != value:
                         result = True
-                        
+
                 except AttributeError as ex: # new attribute so changed
                     result = True
-                
+
                 if result: #stop checking on first change
                     break
-                         
-        
+
+
         console.profuse("Need Share {0} change in Frame {1} = {2}\n".format(
-            share.name, frame.name, result)) 
+            share.name, frame.name, result))
 
         return result
 
