@@ -1,7 +1,7 @@
 """filtering.py filter deed module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import math
 import time
@@ -139,10 +139,10 @@ class HeadingSensorFilter(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "Filter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp, self.lapse)
+        print("Filter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp, self.lapse))
         format = "heading = %0.3f phase = %0.3f amp = %0.3f"
-        print format %\
-              (self.output.value, self.parm.data.phase, self.parm.data.amp)
+        print(format %\
+              (self.output.value, self.parm.data.phase, self.parm.data.amp))
 
 
 class WindowedFilter(deeding.LapseDeed):
@@ -284,9 +284,9 @@ class WindowedFilter(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "WindowedFilter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("WindowedFilter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "output = %0.3f window = %0.3f frac = %0.3f"
-        print format % (self.output.value, self.parm.data.window, self.parm.data.frac)
+        print(format % (self.output.value, self.parm.data.window, self.parm.data.frac))
 
 
 WindowedFilter.__register__('filterSensorSalinity', ioinits=odict(
@@ -493,10 +493,10 @@ class MinCtdFilter(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "MinCTDFilter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("MinCTDFilter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "output = %0.3f depth = %0.3f slope = %0.3f north = %0.3f east = %0.3f "
-        print format % (self.output[self.field], self.output.data.depth, self.output.data.slope,
-                        self.output.data.north, self.output.data.east)
+        print(format % (self.output[self.field], self.output.data.depth, self.output.data.slope,
+                        self.output.data.north, self.output.data.east))
 
 
 
@@ -510,7 +510,7 @@ def TestTemperature():
 
     store = storing.Store(name = 'Test')
 
-    print "\nTesting Temperature Filter"
+    print("\nTesting Temperature Filter")
     filter = TemperatureSensorFilter(name = 'filterSensorTemp', store = store,
                                      group = 'filter.sensor.temperature', output = 'state.temperature',
                                      input = 'ctd', depth = 'state.depth',
@@ -524,13 +524,13 @@ def TestTemperature():
     filter.expose()
 
     for k in range(1, 300):
-        print
+        print("")
         store.advanceStamp(0.125)
         s = 10.0 + 2.0 * math.sin(math.pi * 2.0 * k/300.0)
         input = store.fetch('ctd').update(temperature = s)
         filter.update()
         filter.expose()
-        print s
+        print(s)
 
 
 
@@ -543,7 +543,7 @@ def TestSalinity():
 
     store = storing.Store(name = 'Test')
 
-    print "\nTesting Salinity Filter"
+    print("\nTesting Salinity Filter")
     filter = SalinitySensorFilter(name = 'filterSensorSalinity', store = store,
                                   group = 'filter.sensor.salinity', output = 'state.salinity',
                                   input = 'ctd.salinity',
@@ -554,7 +554,7 @@ def TestSalinity():
     filter.expose()
 
     for k in range(1, 300):
-        print
+        print("")
         store.advanceStamp(0.125)
         s = 32.0 + 2.0 * math.sin(math.pi * 2.0 * k/300.0)
         input = store.fetch('ctd.salinity').update(value = s)

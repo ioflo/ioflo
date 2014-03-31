@@ -1,7 +1,7 @@
 """needing.py need action module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import time
 import struct
@@ -25,21 +25,18 @@ console = getConsole()
 
 class Need(acting.Actor):
     """Need Class for conditions  such as entry or trans
-
     """
     Registry = odict()
 
     def expose(self):
         """
-
         """
-        print "Need %s " % (self.name)
+        print("Need %s " % (self.name))
 
     @staticmethod
     def Check(state, comparison, goal, tolerance):
         """Check state compared to goal with tolerance
            tolerance ignored unless comparison == or !=
-
         """
         if comparison == '==':
             try: #in case goal is string
@@ -67,14 +64,6 @@ class Need(acting.Actor):
 #special needs
 class AlwaysNeed(Need):
     """AlwaysNeed Need
-
-       inherited attributes:
-
-             .name = unique name for action instance
-             .store = shared data store
-
-       parameters:
-
     """
     def action(self, **kw):
         """Always return true"""
@@ -87,11 +76,6 @@ class AlwaysNeed(Need):
 
 class DoneNeed(Need):
     """DoneNeed Need
-
-       inherited attributes:
-
-             .name = unique name for action instance
-             .store = shared data store
 
        parameters:
           tasker
@@ -151,11 +135,6 @@ class DoneNeed(Need):
 
 class StatusNeed(Need):
     """StatusNeed Need
-
-       inherited attributes:
-
-             .name = unique name for action instance
-             .store = shared data store
 
        parameters:
           tasker
@@ -282,9 +261,7 @@ class IndirectNeed(Need):
 
 class MarkerNeed(Need):
     """ MarkerNeed is base class for needs that insert markers on resolvelinks
-        inherited attributes:
-            .name = unique name for action instance
-            .store = shared data store
+
         parms:
             share       share ref holding mark
             name        name of frame where marker is watching
@@ -362,10 +339,6 @@ class MarkerNeed(Need):
 class UpdateNeed(MarkerNeed):
     """ UpdateNeed Need
 
-        inherited attributes:
-            .name = unique name for action instance
-            .store = shared data store
-
         parameters:
             share = resolved share that is marked
             frame = resolved frame where marker is placed
@@ -387,9 +360,6 @@ class UpdateNeed(MarkerNeed):
 
 class ChangeNeed(MarkerNeed):
     """ChangeNeed Need
-       inherited attributes:
-            .name = unique name for action instance
-            .store = shared data store
 
        parameters:
             share

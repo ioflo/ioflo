@@ -3,7 +3,7 @@
 """
 from __future__ import with_statement
 
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import time
 import re
@@ -11,7 +11,10 @@ import importlib
 import os
 
 from collections import deque
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError: #python 3 zip is same as izip
+    izip = zip
 
 
 from .odicting import odict
@@ -55,28 +58,28 @@ def Convert2Num(text):
     try:
         value = int(text, 10)
         return value
-    except ValueError, ex1:
+    except ValueError as ex:
         pass
 
     try:
         value = int(text, 16)
         return value
-    except ValueError, ex1:
+    except ValueError as ex:
         pass
 
     try:
         value = float(text)
         return value
-    except ValueError, ex1:
+    except ValueError as ex:
         pass
 
     try:
         value = complex(text)
         return value
-    except ValueError, ex1:
+    except ValueError as ex:
         pass
 
-    raise ValueError, "Expected Number got '%s'" % (text)
+    raise ValueError("Expected Number got '{0}'".format(text))
 
     return None
 
@@ -102,7 +105,7 @@ def Convert2CoordNum(text):
     try:
         return (Convert2Num(text))
     except ValueError:
-        raise ValueError, "Expected CoordNum got '%s'" % (text)
+        raise ValueError("Expected CoordNum got '{0}'".format(text))
 
 
 def Convert2BoolCoordNum(text):
@@ -119,7 +122,7 @@ def Convert2BoolCoordNum(text):
     try:
         return (Convert2CoordNum(text))
     except ValueError:
-        raise ValueError, "Expected BoolCoordNum got '%s'" % (text)
+        raise ValueError("Expected BoolCoordNum got '{0}'".format(text))
 
     return None
 
@@ -136,7 +139,7 @@ def Convert2StrBoolCoordNum(text):
     try:
         return (Convert2BoolCoordNum(text))
     except ValueError:
-        raise ValueError, "Expected StrBoolNum got '%s'" % (text)
+        raise ValueError("Expected StrBoolNum got '{0}'".format(text))
 
     return None
 
@@ -271,8 +274,8 @@ class Builder(object):
                                 console.terse(lineView + '\n')
                                 return False
 
-                        except excepting.ParseError as ex1:
-                            console.terse("\n{0}\n\n".format(ex1))
+                        except excepting.ParseError as ex:
+                            console.terse("\n{0}\n\n".format(ex))
                             console.terse("Script line {0} in file {1}\n".format(
                                 self.currentCount, self.currentFile.name))
                             console.terse(lineView + '\n')
@@ -308,13 +311,13 @@ class Builder(object):
 
                 return True
 
-            except excepting.ResolveError, ex1:
-                console.terse("{0}\n".format(ex1))
+            except excepting.ResolveError as ex:
+                console.terse("{0}\n".format(ex))
                 return False
 
 
-        except IOError as ex1:
-            console.terse("Error opening mission file  {0}\n".format(ex1))
+        except IOError as ex:
+            console.terse("Error opening mission file  {0}\n".format(ex))
             return False
 
         finally:
@@ -364,12 +367,11 @@ class Builder(object):
             console.terse("Loading from file {0}.\n".format(self.currentFile.name))
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         return True
@@ -417,12 +419,11 @@ class Builder(object):
                 self.initPathToData(path, data)
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command, )
             raise excepting.ParseError(msg, tokens, index)
 
         msg = "   Built House '{0}' with meta:\n".format(self.currentHouse.name)
@@ -543,12 +544,11 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         return True
@@ -666,12 +666,11 @@ class Builder(object):
                     raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if kind: # Create new instance from kind class with name
@@ -844,12 +843,11 @@ class Builder(object):
                     raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         prefix += '/' + self.currentHouse.name #extra slashes are ignored
@@ -938,9 +936,9 @@ class Builder(object):
                     index +=1
 
                     if option not in ['active', 'inactive', 'slave']:
-                        print "Error building %s. Bad logger scheduled option got %s. index = %d tokens = %s" %\
-                              (command, option, index, tokens)
-                        return False
+                        msg = "Error building %s. Bad logger scheduled option got %s." %\
+                              (command, option)
+                        raise excepting.ParseError(msg, tokens, index)
 
                     schedule = ScheduleValues[option] #replace text with value
 
@@ -948,9 +946,9 @@ class Builder(object):
                     order = tokens[index]
                     index +=1
                     if order not in OrderValues:
-                        print "Error building %s. Bad order got %s. index = %d tokens = %s" %\
-                              (command, order, index, tokens)
-                        return False
+                        msg = "Error building %s. Bad order got %s." %\
+                              (command, order)
+                        raise excepting.ParseError(msg, tokens, index)
                     order = OrderValues[order] #convert to order value
 
                 elif connective == 'flush':
@@ -958,16 +956,16 @@ class Builder(object):
                     index +=1
 
                 else:
-                    print "Error building %s. Bad connective got %s. index = %d tokens = %s" %\
-                          (command, connective, index, tokens)
-                    return False
+                    msg = "Error building %s. Bad connective got %s." %\
+                          (command, connective)
+                    raise excepting.ParseError(msg, tokens, index)
 
             prefix += '/' + self.currentHouse.name #extra slashes are ignored
 
             if name in logging.Logger.Names:
-                print "Error building %s. Task %s already exists. index = %d tokens = %s" %\
-                      (command, name, index, tokens)
-                return False
+                msg = "Error building %s. Task %s already exists." %\
+                      (command, name)
+                raise excepting.ParseError(msg, tokens, index)
 
             logger = logging.Logger(name = name, store = self.currentStore,
                                     period = period, flushPeriod = interval,
@@ -992,14 +990,12 @@ class Builder(object):
                 logger.name, logger.period,  ScheduleNames[logger.schedule]))
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command, )
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         return True
 
@@ -1019,14 +1015,12 @@ class Builder(object):
            log autopilot (text, binary, console) to './logs/' on (never, once, update, change, always)
         """
         if not self.currentLogger:
-            print "Error building %s. No current logger. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current logger." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentStore:
-            print "Error building %s. No current store. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current store." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         try:
             kind = 'text'
@@ -1046,9 +1040,9 @@ class Builder(object):
                     index +=1
 
                     if kind not in ['text', 'binary']:
-                        print "Error building %s. Bad kind = %s. index = %d tokens = %s" %\
-                              (command, kind, index, tokens)
-                        return False
+                        msg = "Error building %s. Bad kind = %s." %\
+                              (command, kind)
+                        raise excepting.ParseError(msg, tokens, index)
 
                 elif connective == 'to':
                     fileName = tokens[index]
@@ -1059,21 +1053,21 @@ class Builder(object):
                     index +=1
 
                     if rule not in LogRuleValues:
-                        print "Error building %s. Bad rule = %s. index = %d tokens = %s" %\
-                              (command, rule, index, tokens)
-                        return False
+                        msg = "Error building %s. Bad rule = %s." %\
+                              (command, rule)
+                        raise excepting.ParseError(msg, tokens, index)
 
                     rule = LogRuleValues[rule]
 
                 else:
-                    print "Error building %s. Bad connective got %s. index = %d tokens = %s" %\
-                          (command, connective, index, tokens)
-                    return False
+                    msg = "Error building %s. Bad connective got %s." %\
+                          (command, connective)
+                    raise excepting.ParseError(msg, tokens, index)
 
             if name in logging.Log.Names:
-                print "Error building %s. Log %s already exists. index = %d tokens = %s" %\
-                      (command, name, index, tokens)
-                return False
+                msg = "Error building %s. Log %s already exists." %\
+                      (command, name)
+                raise excepting.ParseError(msg, tokens, index)
 
             log = logging.Log(name = name, store = self.currentStore, kind = kind,
                               fileName = fileName, rule = rule)
@@ -1084,14 +1078,12 @@ class Builder(object):
                 name, kind, fileName, LogRuleNames[rule]))
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command, )
+            raise excepting.ParseError(msg, tokens, index)
 
         return True
 
@@ -1101,14 +1093,12 @@ class Builder(object):
            loggee tag sharepath tag sharepath ...
         """
         if not self.currentLog:
-            print "Error building %s. No current log. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current log." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentStore:
-            print "Error building %s. No current store. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current store." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         try:
             while index < len(tokens):
@@ -1119,14 +1109,13 @@ class Builder(object):
 
                 share = self.currentStore.create(path) #create so no errors at runtime
                 if not isinstance(share, storing.Share): #verify path ends in share not node
-                    print "Error building %s. Loggee path not Share. path = %s tokens = %s" %\
-                          (command, path, tokens)
-                    return False
+                    msg = "Error building %s. Loggee path %s not Share." % (command, path)
+                    raise excepting.ParseError(msg, tokens, index)
 
                 if tag in self.currentLog.loggees:
-                    print "Error building %s. Loggee %s already exists in Log %s. index = %d tokens = %s" %\
-                          (command, tag, self.currentLog.name, index, tokens)
-                    return False
+                    msg = "Error building %s. Loggee %s already exists in Log %s." %\
+                          (command, tag, self.currentLog.name)
+                    raise excepting.ParseError(msg, tokens, index)
 
                 self.currentLog.addLoggee(tag = tag, loggee = share)
 
@@ -1134,14 +1123,12 @@ class Builder(object):
                     share.name, tag, self.currentLog.loggees))
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         return True
 
@@ -1155,14 +1142,12 @@ class Builder(object):
            framework framername
         """
         if not self.currentHouse:
-            print "Error building %s. No current house. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current house." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentStore:
-            print "Error building %s. No current store. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current store." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         try:
             name = tokens[index]
@@ -1189,9 +1174,9 @@ class Builder(object):
                     index +=1
 
                     if option not in ScheduleValues:
-                        print "Error building %s. Bad scheduled option got %s. index = %d tokens = %s" %\
-                              (command, option, index, tokens)
-                        return False
+                        msg = "Error building %s. Bad scheduled option got %s." %\
+                                (command, option)
+                        raise excepting.ParseError(msg, tokens, index)
 
                     schedule = ScheduleValues[option] #replace text with value
 
@@ -1199,9 +1184,9 @@ class Builder(object):
                     order = tokens[index]
                     index +=1
                     if order not in OrderValues:
-                        print "Error building %s. Bad order got %s. index = %d tokens = %s" %\
-                              (command, order, index, tokens)
-                        return False
+                        msg = "Error building %s. Bad order got %s." %\
+                                (command, order,)
+                        raise excepting.ParseError(msg, tokens, index)
                     order = OrderValues[order] #convert to order value
 
                 elif connective == 'first':
@@ -1211,14 +1196,14 @@ class Builder(object):
                     self.verifyName(frame, command, tokens, index)
 
                 else:
-                    print "Error building %s. Bad connective got %s. index = %d tokens = %s" %\
-                          (command, connective, index, tokens)
-                    return False
+                    msg = "Error building %s. Bad connective got %s." %\
+                            (command, connective)
+                    raise excepting.ParseError(msg, tokens, index)
 
             if name in framing.Framer.Names:
-                print "Error building %s. Framer or Task %s already exists. index = %d tokens = %s" %\
-                      (command, name, index, tokens)
-                return False
+                msg = "Error building %s. Framer or Task %s already exists." %\
+                        (command, name)
+                raise excepting.ParseError(msg, tokens, index)
             else:
                 framer = framing.Framer(name = name, store = self.currentStore,
                                         period = period)
@@ -1252,14 +1237,12 @@ class Builder(object):
 
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         return True
 
@@ -1269,9 +1252,8 @@ class Builder(object):
            first framename
         """
         if not self.currentFramer:
-            print "Error building %s. No current framer. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current framer." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         try:
             name = tokens[index]
@@ -1285,14 +1267,12 @@ class Builder(object):
                 name, self.currentFramer.name))
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         return True
 
@@ -1307,14 +1287,12 @@ class Builder(object):
 
         """
         if not self.currentStore:
-            print "Error building %s. No current store. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current store." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if not self.currentFramer:
-            print "Error building %s. No current framer. index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. No current framer." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         try:
             name = tokens[index]
@@ -1332,28 +1310,25 @@ class Builder(object):
                     over = tokens[index]
                     index +=1
                 else:
-                    print "Error building %s. Bad connective got %s. index = %d tokens = %s" %\
-                          (command, connective, index, tokens)
-                    return False
+                    msg = "Error building %s. Bad connective got %s." % (command, connective)
+                    raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if name in ReservedFrameNames:
-            print "Error building %s in Framer %s. Frame name %s reserved. index = %d tokens = %s" %\
-                  (command, self.currentFramer.name, name, index, tokens)
-            return False
+            msg = "Error building %s in Framer %s. Frame name %s reserved." %\
+                    (command, self.currentFramer.name, name)
+            raise excepting.ParseError(msg, tokens, index)
         elif name in framing.Frame.Names: #could use Registry Retrieve function
-            print "Error building %s in Framer %s. Frame %s already exists. index = %d tokens = %s" %\
-                  (command, self.currentFramer.name, name, index, tokens)
-            return False
+            msg = "Error building %s in Framer %s. Frame %s already exists." %\
+                    (command, self.currentFramer.name, name)
+            raise excepting.ParseError(msg, tokens, index)
         else:
             frame = framing.Frame(name = name, store = self.currentStore,
                                   framer = self.currentFramer)
@@ -1392,14 +1367,12 @@ class Builder(object):
             self.verifyName(over, command, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         self.currentFrame.over = over #need to resolve and attach later
 
@@ -1423,14 +1396,12 @@ class Builder(object):
             self.verifyName(under, command, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         unders = self.currentFrame.unders
 
@@ -1477,14 +1448,12 @@ class Builder(object):
                 next = None
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         self.currentFrame.next = next
 
@@ -1539,14 +1508,12 @@ class Builder(object):
                         index += 1 #otherwise eat token
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if connective: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
@@ -1581,9 +1548,9 @@ class Builder(object):
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
         if not self.currentFramer.schedule in [AUX,  SLAVE]:
-            print "Error building %s. Framer is '%s' not auxiliary or slave. index = %d tokens = %s" %\
-                  (command, self.currentFramer.schedule, index, tokens)
-            return False
+            msg = "Error building %s. Framer is '%s' not auxiliary or slave." %\
+                    (command, self.currentFramer.schedule)
+            raise excepting.ParseError(msg, tokens, index)
 
 
         try:
@@ -1591,9 +1558,9 @@ class Builder(object):
             framer = self.currentFramer
             actorName = 'complete' + kind.capitalize()
             if actorName not in completing.Complete.Registry:
-                print "Error building complete %s. No actor named %s. index = %d tokens = %s" %\
-                      (kind, actorName, index, tokens)
-                return False
+                msg = "Error building complete %s. No actor named %s." %\
+                        (kind, actorName)
+                raise excepting.ParseError(msg, tokens, index)
 
             parms = {}
             parms['framer'] = framer #resolve later if needed
@@ -1602,23 +1569,20 @@ class Builder(object):
                                  parms=parms,)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         context = self.currentContext
         if context == NATIVE:
             context = ENTER #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Created done complete {0} with {1}\n".format(act.actor, act.parms))
 
@@ -1636,19 +1600,17 @@ class Builder(object):
             index +=1
 
             if isinstance(value, str):
-                print "Error building %s. invalid timeout %s. index = %d tokens = %s" %\
-                      (command, value, index, tokens)
-                return (None, index)
+                msg = "Error building %s. invalid timeout %s." %\
+                      (command, value)
+                raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         # build need act for transact
         need = self.makeImplicitDirectFramerNeed( name="elapsed",
@@ -1689,19 +1651,17 @@ class Builder(object):
             index +=1
 
             if isinstance(value, str):
-                print "Error building %s. invalid repeat %s. index = %d tokens = %s" %\
-                      (command, value, index, tokens)
-                return (None, index)
+                msg = "Error building %s. invalid repeat %s." %\
+                      (command, value)
+                raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         # build need act for transact
         need = self.makeImplicitDirectFramerNeed( name="recurred",
@@ -1836,9 +1796,8 @@ class Builder(object):
             context = ENTER #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -1874,17 +1833,16 @@ class Builder(object):
             dstPath, index = self.parseIndirect(tokens, index, variant = '')
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if self.currentStore.fetchShare(dstPath) is None:
-            print "     Warning: Put into non-existent share %s ... creating anyway" %\
-                  (dstPath)
+            console.profuse( "     Warning: Put into non-existent share '{0}' "
+                             "... creating anyway\n".format(dstPath))
         dst = self.currentStore.create(dstPath)
 
         dataFields, dstFields = self.prepareDataDstFields(data, dataFields, dst, dstFields, tokens, index)
@@ -1915,9 +1873,8 @@ class Builder(object):
             context = ENTER #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -1947,8 +1904,8 @@ class Builder(object):
             dstFields, index = self.parseFields(tokens, index)
             dstPath, index = self.parseIndirect(tokens, index, variant = '')
             if self.currentStore.fetchShare(dstPath) is None:
-                print "     Warning: Inc of non-existent share %s ... creating anyway" %\
-                      ( dstPath)
+                console.profuse("     Warning: Inc of non-existent share '{0}'"
+                                " ... creating anyway".format(dstPath))
             dst = self.currentStore.create(dstPath)
 
             connective = tokens[index]
@@ -1993,12 +1950,11 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         context = self.currentContext
@@ -2006,9 +1962,8 @@ class Builder(object):
             context = ENTER #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -2044,22 +1999,21 @@ class Builder(object):
             dstPath, index = self.parseIndirect(tokens, index, variant = '')
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if self.currentStore.fetchShare(srcPath) is None:
-            print "     Warning: Copy from non-existent share %s ... creating anyway" %\
-                  (srcPath)
+            console.profuse("     Warning: Copy from non-existent share %s "
+                            "... creating anyway".format(srcPath))
         src = self.currentStore.create(srcPath)
 
         if self.currentStore.fetchShare(dstPath) is None:
-            print "     Warning: Copy into non-existent share %s ... creating anyway" %\
-                  (dstPath)
+            console.profuse("     Warning: Copy into non-existent share '{0}'"
+                                " ... creating anyway".format(dstPath))
         dst = self.currentStore.create(dstPath)
 
         srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
@@ -2089,9 +2043,8 @@ class Builder(object):
             context = ENTER #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -2132,8 +2085,8 @@ class Builder(object):
                 dstPath, index = self.parseIndirect(tokens, index, variant = 'goal')
 
                 if self.currentStore.fetchShare(dstPath) is None:
-                    print "     Warning: Nonexistent goal share %s ... creating anyway" %\
-                          ( dstPath)
+                    console.profuse("     Warning: Set non-existent goal share '{0}'"
+                                " ... creating anyway".format(dstPath))
                 dst = self.currentStore.create(dstPath)
 
                 #required connective
@@ -2157,8 +2110,8 @@ class Builder(object):
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
 
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Copy from non-existent share %s ... creating anyway" %\
-                              (srcPath)
+                        console.profuse("     Warning: Copy from non-existent share %s "
+                                        "... creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
 
                     srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
@@ -2174,12 +2127,11 @@ class Builder(object):
                 return False
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         context = self.currentContext
@@ -2187,9 +2139,8 @@ class Builder(object):
             context = ENTER #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -2246,12 +2197,11 @@ class Builder(object):
 
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if not needs and connective: #if but no needs
@@ -2324,12 +2274,11 @@ class Builder(object):
                     index += 1 #otherwise eat token
 
         except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens" % (command)
+            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens after index" %\
-                (command)
+            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
         if not needs: # no needs
@@ -2431,8 +2380,8 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Do 'by' non-existent share %s ... creating anyway" %\
-                              (srcPath)
+                        console.profuse("     Warning: Do 'by' non-existent "
+                                        "share %s ... creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
@@ -2446,8 +2395,8 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Do 'from' non-existent share %s ... creating anyway" %\
-                              (srcPath)
+                        console.profuse("     Warning: Do 'from' non-existent"
+                                        " share '{0}' ... creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
@@ -2461,22 +2410,20 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parsePath(tokens, index)
                     if self.currentStore.fetchShare(srcPath) is None:
-                        print "     Warning: Do 'for' non-existent share %s ... creating anyway" %\
-                              (srcPath)
+                        console.profuse("     Warning: Do 'for' non-existent "
+                                        "share '{0}' ... creating anyway".format(srcPath))
                     src = self.currentStore.create(srcPath)
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
                         ioinits[field] = src[field]
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if not kind:
             msg = "ParseError: Building verb '%s'. Missing kind for Deed." %\
@@ -2501,9 +2448,8 @@ class Builder(object):
             context = RECUR #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -2528,9 +2474,8 @@ class Builder(object):
             control = tokens[index]
             index +=1
             if control not in ['start', 'run', 'stop']:
-                print "Error building %s. Bad control = %s. index = %d tokens = %s" %\
-                      (command, control, index, tokens)
-                return False
+                msg = "Error building {0}. Bad control = {1}.".format(command, control)
+                raise excepting.ParseError(msg, tokens, index)
 
             taskers = []
             while index < len(tokens):
@@ -2545,15 +2490,13 @@ class Builder(object):
                 taskers.append(tasker) #resolve later
 
             if not taskers:
-                print "Error building %s %s. No taskers. index = %d tokens = %s" %\
-                      (command, control, index, tokens)
-                return False
+                msg = "Error building %s %s. No taskers." % (command, control)
+                raise excepting.ParseError(msg, tokens, index)
 
             actorName = 'want' + control.capitalize()
             if actorName not in wanting.Want.Registry:
-                print "Error building  %s. No actor named %s. index = %d tokens = %s" %\
-                      (command, actorName, index, tokens)
-                return False
+                msg = "Error building  %s. No actor named %s." % (command, actorName)
+                raise excepting.ParseError(msg, tokens, index)
 
             parms = {}
             parms['taskers'] = taskers #resolve later
@@ -2562,23 +2505,20 @@ class Builder(object):
                                 parms=parms, )
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         context = self.currentContext
         if context == NATIVE:
             context = ENTER #what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} want '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -2599,14 +2539,12 @@ class Builder(object):
             self.verifyName(tasker, command, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         native = BENTER
         self.makeFiat(tasker, 'ready', native, command, tokens, index)
@@ -2627,14 +2565,12 @@ class Builder(object):
             self.verifyName(tasker, command, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         native = ENTER
         self.makeFiat(tasker, 'start', native, command, tokens, index)
@@ -2655,14 +2591,12 @@ class Builder(object):
             self.verifyName(tasker, command, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         native = EXIT
         self.makeFiat(tasker, 'stop', native, command, tokens, index)
@@ -2683,14 +2617,12 @@ class Builder(object):
             self.verifyName(tasker, command, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         native = RECUR
         self.makeFiat(tasker, 'run', native, command, tokens, index)
@@ -2711,14 +2643,12 @@ class Builder(object):
             self.verifyName(tasker, command, tokens, index)
 
         except IndexError:
-            print "Error building %s. Not enough tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Not enough tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         if index != len(tokens):
-            print "Error building %s. Unused tokens, index = %d tokens = %s" %\
-                  (command, index, tokens)
-            return False
+            msg = "Error building %s. Unused tokens." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
 
         native = ENTER
         self.makeFiat(tasker, 'abort', native, command, tokens, index)
@@ -2727,39 +2657,35 @@ class Builder(object):
 
     def buildUse(self, command, tokens, index):
         """
-
+        Not implemented yet
         """
-        for token in tokens:
-            print token,
-        print
+        msg = " ".join(tokens)
+        console.concise("{0}\n")
         return True
 
 
     def buildFlo(self, command, tokens, index):
         """
-
+        Not implemented yet
         """
-        for token in tokens:
-            print token,
-        print
+        msg = " ".join(tokens)
+        console.concise("{0}\n")
         return True
 
     def buildTake(self, command, tokens, index):
         """
-
+        Not implemented yet
         """
-        for token in tokens:
-            print token,
-        print
+        msg = " ".join(tokens)
+        console.concise("{0}\n")
         return True
 
     def buildGive(self, command, tokens, index):
         """
-
+        Not implemented yet
         """
-        for token in tokens:
-            print token,
-        print
+        msg = " ".join(tokens)
+        console.concise("{0}\n")
         return True
 
 
@@ -2874,8 +2800,8 @@ class Builder(object):
             srcPath, index = self.parseIndirect(tokens, index, variant = '')
 
             if self.currentStore.fetchShare(srcPath) is None:
-                print "     Warning: Copy from non-existent share %s ... creating anyway" %\
-                      (srcPath)
+                console.profuse("     Warning: Copy from non-existent"
+                                " share %s ... creating anyway".format(srcPath))
             src = self.currentStore.create(srcPath)
 
             srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
@@ -3352,9 +3278,8 @@ class Builder(object):
         """
         actorName = 'fiat' +  kind.capitalize()
         if actorName not in fiating.Fiat.Registry:
-            print "Error building fiat %s. No actor named %s. index = %d tokens = %s" %\
-                  (kind, actorName, index, tokens)
-            return False
+            msg = "Error building fiat %s. No actor named %s." % (kind, actorName)
+            raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
         parms['tasker'] = name #resolve later
@@ -3367,9 +3292,8 @@ class Builder(object):
             context = native #The native context for this command
 
         if not self.currentFrame.addByContext(act, context):
-            print "Error building %s. Bad context '%s'. index = %d tokens = %s" %\
-                  (command, context, index, tokens)
-            return False
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
 
         console.profuse("     Added {0} fiat '{1}' with parms '{2}'\n".format(
             ActionContextNames[context], act.actor, act.parms))
@@ -3858,8 +3782,8 @@ class Builder(object):
         stateField, index = self.parseField(tokens, index)
         statePath, index = self.parseIndirect(tokens, index, variant = 'state')
         if self.currentStore.fetchShare(statePath) is None:
-            print "     Warning: State '%s' non-existent ... creating anyway" %\
-                  (statePath)
+            console.profuse("     Warning: State '{0}' non-existent "
+                            "... creating anyway".format(statePath))
         state = self.currentStore.create(statePath)
 
         if not stateField: #default rules for field
@@ -3874,8 +3798,8 @@ class Builder(object):
                 stateField = 'value'
 
         if stateField not in state:
-            print "     Warning: Non-existent field '%s' in state %s ... creating anyway" %\
-                  (stateField, state.name)
+            console.profuse("     Warning: Non-existent field '{0}' in state {1}"
+                            " ... creating anyway".format(stateField, state.name))
             state[stateField] = 0.0 #create
 
         return (state, statePath, stateField, index)
@@ -3924,13 +3848,13 @@ class Builder(object):
                 goalField = stateField #goal field is the same as the given state field
 
                 if self.currentStore.fetchShare(goalPath) is None:
-                    print "     Warning: Goal '%s' non-existent ... creating anyway" %\
-                          (goalPath)
+                    console.profuse("     Warning: Goal '{0}' non-existent "
+                                    "... creating anyway".format(goalPath))
                 goal = self.currentStore.create(goalPath)
 
                 if goalField not in goal:
-                    print "     Warning: Non-existent field '%s' in goal %s ... creating anyway" %\
-                          (goalField, goal.name)
+                    console.profuse("     Warning: Non-existent field '{0}' in goal"
+                            " {1} ... creating anyway".format(goalField, goal.name))
                     goal[goalField] = 0.0 #create
 
             else: #not 'goal' so parse as indirect
@@ -3939,8 +3863,8 @@ class Builder(object):
                 goalField, index = self.parseField(tokens, index)
                 goalPath, index =  self.parseIndirect(tokens, index, variant = 'goal')
                 if self.currentStore.fetchShare(goalPath) is None:
-                    print "     Warning: Goal '%s' non-existent ... creating anyway" %\
-                          (goalPath)
+                    console.profuse("     Warning: Goal '%s' non-existent ... "
+                                    "creating anyway".format(goalPath))
                 goal = self.currentStore.create(goalPath)
 
                 if not goalField: #default rules for field
@@ -3954,8 +3878,8 @@ class Builder(object):
                         goalField = 'value'
 
                 if goalField not in goal:
-                    print "     Warning: Non-existent field '%s' in goal %s ... creating anyway" %\
-                          (goalField, goal.name)
+                    console.profuse("     Warning: Non-existent field '{0}' in goal"
+                            " {1} ... creating anyway".format(goalField, goal.name))
                     goal[goalField] = 0.0 #create
 
 
@@ -4028,20 +3952,21 @@ class Builder(object):
 
         for dstField, srcField in izip(dstFields, srcFields):
             if (dstField != srcField) and (srcField != 'value'):
-                print "     Warning: Field names mismatch. '%s' in %s from '%s' in %s  ... creating anyway" %\
-                      (dstField, dst.name, srcField, src.name)
+                console.profuse("     Warning: Field names mismatch. '{0}' in {1} "
+                                "from '{2}' in {3}  ... creating anyway".format(
+                                    dstField, dst.name, srcField, src.name))
 
         #create any non existent source or destination fields
         for field in srcFields: #use source fields for source data
             if field not in src:
-                print "     Warning: Transfer from non-existent field '%s' in share %s ... creating anyway" %\
-                      (field, src.name)
+                console.profuse("     Warning: Transfer from non-existent field '{0}' "
+                        "in share {1} ... creating anyway".format(field, src.name))
                 src[field] = 0.0 #create
 
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
-                print "     Warning: Transfer into non-existent field '%s' in share %s ... creating anyway" %\
-                      (field, dst.name)
+                console.profuse("     Warning: Transfer into non-existent field '{0}' "
+                        "in share {1} ... creating anyway".format(field, dst.name))
                 dst[field] = 0.0 #create
 
         return (srcFields, dstFields)
@@ -4073,14 +3998,15 @@ class Builder(object):
 
         for dstField, dataField in izip(dstFields, dataFields):
             if (dstField != dataField) and (dataField != 'value'):
-                print "     Warning: Field names mismatch. '%s' in %s from '%s' ... creating anyway" %\
-                      (dstField, dst.name, dataField)
+                console.profuse("     Warning: Field names mismatch. '{0}' in {1} "
+                                "from '{2}' ... creating anyway".format(
+                                  dstField, dst.name, dataField))
 
         #create any non existent destination fields
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
-                print "     Warning: Transfer into non-existent field '%s' in share %s ... creating anyway" %\
-                      (field, dst.name)
+                console.profuse("     Warning: Transfer into non-existent field '{0}' in "
+                       "share {1} ... creating anyway".format(field, dst.name))
                 dst[field] = 0 #create
 
         return (dataFields, dstFields)
@@ -4169,9 +4095,8 @@ def DebugShareFields(store, name):
 
     share = store.fetch(name)
     if share is not None:
-        print '++++++++ Debug share fields++++++++'
-        print share.name
-        print share.items
+        console.terse("++++++++ Debug share fields++++++++\n{0} = {1}\n".format(
+                share.name, share.items))
 
 
 def Test(fileName = None, verbose = False):
@@ -4224,7 +4149,6 @@ def Test(fileName = None, verbose = False):
 
     b = Builder()
     if b.build(fileName = fileName):
-        print
         houses = b.houses
         for house in houses:
             house.store.changeStamp(0.0)
@@ -4237,12 +4161,9 @@ def Test(fileName = None, verbose = False):
         done = False
         while not done:
             done = True
-            #print "***********"
-
             for house in houses:
                 actives = []
                 for framer in house.actives:
-                    #print
                     #status = framer.status
                     desire = framer.desire
                     if desire != None:
@@ -4251,17 +4172,15 @@ def Test(fileName = None, verbose = False):
                         control = RUN
 
                     status = framer.runner.send(control)
-                    #print "Framer %s control %s resulting status = %s" %\
-                    #            (framer.name, ControlNames[control],StatusNames[status])
+                    console.terse("Framer {0} control {1} resulting status = {2}\n".format(
+                            framer.name, ControlNames[control], StatusNames[status]))
                     if not (status == STOPPED or status == ABORTED):
                         actives.append(framer)
                         done = False
 
                 house.actives = actives
-                #print
                 for tasker in house.taskers:
                     status = tasker.runner.send(RUN)
-                    #print "    Task %s status = %s" % (tasker.name, StatusNames[status])
                 house.store.advanceStamp(0.125)
 
 

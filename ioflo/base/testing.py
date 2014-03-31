@@ -2,7 +2,7 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 
 import cProfile
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         if x[0] == '-r':
             real = True
         if x[0] == '-h':
-            print usage
+            print(usage)
             help = True
 
     if not help:

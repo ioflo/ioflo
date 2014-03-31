@@ -2,13 +2,16 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import time
 import struct
 
 from collections import deque
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError: # python3
+    izip = zip
 import inspect
 
 
@@ -107,13 +110,11 @@ class DirectInc(Poke):
             dstData = odict()
             for field in data:
                 dstData[field] = destination[field] + data[field]
-            #update so time stamp updated, use dict
-            destination.update(dstData)
-
-        except TypeError, ex1: #in case value is not a number
-            console.profuse("Error in Inc: {0}\n".format(ex1))
-
-        console.profuse("Inc {0} in {1} by {2} to {3}\n".format(
+            destination.update(dstData) #update so time stamp updated, use dict
+        except TypeError as ex: #in case value is not a number
+            console.terse("Error in Inc: {0}\n".format(ex))
+        else:
+            console.profuse("Inc {0} in {1} by {2} to {3}\n".format(
                 data.keys(), destination.name, data.values(), dstData.values()))
 
 class IndirectInc(Poke):
@@ -134,17 +135,12 @@ class IndirectInc(Poke):
             data = odict()
             for dstField, srcField in izip(destinationFields, sourceFields):
                 data[dstField] = destination[dstField] + source[srcField]
-            #update so time stamp updated, use dict
-            destination.update(data)
-
-        except TypeError, ex1:
-            console.profuse("Error in Inc: {0}\n".format(ex1))
-
-        console.profuse("Inc {0} in {1} from {2} in {3} to {4}\n".format(
-            destinationFields, destination.name, sourceFields, source.name, data.values))
-
-        return None
-
+            destination.update(data) #update so time stamp updated, use dict
+        except TypeError as ex:
+            console.terse("Error in Inc: {0}\n".format(ex1))
+        else:
+            console.profuse("Inc {0} in {1} from {2} in {3} to {4}\n".format(
+                destinationFields, destination.name, sourceFields, source.name, data.values))
 
 def Test():
     """Module Common self test

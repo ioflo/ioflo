@@ -1,13 +1,13 @@
 """serving.py IP socket server module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import sys
 import os
 import time
 import datetime
-import cStringIO
+import io
 
 from collections import deque
 
@@ -90,22 +90,25 @@ class Server(tasking.Tasker):
         """
 
         dt = datetime.datetime.now()
-        self.path = "%s_%s_%04d%02d%02d_%02d%02d%02d" % \
-            (prefix, self.name,
-             dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+        self.path = "{0}_{1}_{2:04d}{3:02d}{4:02d}_{5:02d}{6:02d}{7:02d}".format(
+                                prefix, self.name, dt.year, dt.month, dt.day, dt.hour,
+                                dt.minute, dt.second)
+        #self.path = "%s_%s_%04d%02d%02d_%02d%02d%02d" % \
+            #(prefix, self.name,
+             #dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
         try:
             self.path = os.path.abspath(self.path) #convert to proper absolute path
-            os.makedirs(self.path)
+            if not os.path.exists(self.path):
+                os.makedirs(self.path)
 
-        except OSError, ex1:
-            print "Error: creating server log directory %s \n" % (ex1)
+        except OSError as ex:
+            console.terse("Error: creating server log directory '{0}'\n".format(ex))
             return False
 
+        console.concise("     Created Server {0} Log Directory = '{1}'\n".format(self.name, self.path))
 
-        print "     Created Server %s Log Directory = %s" % (self.name, self.path)
-
-        self.logPath = "%s/%s%s" % (self.path,'log','.txt')
+        self.logPath = os.path.join(self.path, "{0}.txt".format('log'))
         self.logPath = os.path.abspath(self.logPath) #convert to proper absolute path
 
         return True
@@ -122,8 +125,6 @@ class Server(tasking.Tasker):
         if not self.server.reopen():
             return False
 
-
-
         return True
 
     def close(self):
@@ -138,12 +139,12 @@ class Server(tasking.Tasker):
         try:
             self.logFile = open(self.logPath, 'a+')
 
-        except IOError, ex1:
-            print "Error: creating server log file %s \n" % (ex1)
+        except IOError as ex:
+            console.terse("Error: creating server log file '{0}\n".format(ex))
             self.logFile = None
             return False
 
-        print "     Created Server Log file %s " % (self.logPath)
+        console.concise("     Created Server Log file {0}\n".format(self.logPath))
 
         return True
 
@@ -166,10 +167,10 @@ class Server(tasking.Tasker):
         stamp = self.store.stamp #self.stamp is last time run so don't use
         try:
             self.logFile.write("%0.4f\t%s\n" % (float(stamp), msg))
-        except TypeError, ex1: #if stamp is not a number then type error
-            print ex1
-        except ValueError, ex1: #if self.logFile already closed then ValueError
-            print ex1
+        except TypeError as ex: #if stamp is not a number then type error
+            console.terse("{0}\n".format(ex))
+        except ValueError as ex: #if self.logFile already closed then ValueError
+            console.terse("{0}\n".format(ex))
 
 
     def makeRunner(self):
@@ -267,8 +268,8 @@ def TestOpenStuff():
     s1 = ServerTask(store = storing.Store())
     s2 = ServerTask(store = storing.Store())
 
-    print s1.server.reopen()
-    print s2.server.reopen()
+    print(s1.server.reopen())
+    print(s2.server.reopen())
 
 
 def Test(verbose = False):
@@ -287,7 +288,7 @@ def Test(verbose = False):
 
     s.store.expose()
 
-    print "ready to go"
+    print("ready to go")
     status = s.start()
 
     while (not (status == STOPPED or status == ABORTED)):
@@ -295,7 +296,7 @@ def Test(verbose = False):
             status = s.run()
 
         except KeyboardInterrupt: #CNTL-C shutdown skedder
-            print "    Keyboard Interrupt manual shutdown of taskers ..."
+            print("    Keyboard Interrupt manual shutdown of taskers ...")
             s.server.close()
 
 

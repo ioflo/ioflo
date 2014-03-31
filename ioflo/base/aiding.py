@@ -1,7 +1,7 @@
 """aiding.py constants and basic functions
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import math
 import types
@@ -25,6 +25,42 @@ from .odicting import odict
 
 from .consoling import getConsole
 console = getConsole()
+
+def metaclassify(metaclass):
+    """
+    Class decorator for creating a class with a metaclass.
+    This enables the same syntax to work in both python2 and python3
+    python3 does not support
+        class name(object):
+            __metaclass__ mymetaclass
+    python2 does not support
+        class name(metaclass=mymetaclass):
+
+    Borrowed from six.py add_metaclass decorator
+
+    Usage:
+    @metaclassify(Meta)
+    class MyClass(object):
+        pass
+    That code produces a class equivalent to:
+
+    on Python 3
+    class MyClass(object, metaclass=Meta):
+        pass
+
+    on Python 2
+    class MyClass(object):
+        __metaclass__ = MyMeta
+    """
+    def wrapper(cls):
+        originals = cls.__dict__.copy()
+        originals.pop('__dict__', None)
+        originals.pop('__weakref__', None)
+        for slots_var in originals.get('__slots__', ()):
+            originals.pop(slots_var)
+        return metaclass(cls.__name__, cls.__bases__, originals)
+    return wrapper
+
 
 class Fifo(deque):  #new-style class to add put get methods
     """ Extends deque to support more convenient FIFO queue access
@@ -898,12 +934,13 @@ def Just(n, seq):
 just = Just #alias
 
 from abc import ABCMeta,  abstractmethod
+@metaclassify(ABCMeta)
 class NonStringIterable:
     """ Check for iterable that is not a string
         Works in python 2.6 to 3.x with isinstance(x, NonStringIterable)
 
     """
-    __metaclass__ = ABCMeta
+    #__metaclass__ = ABCMeta
 
     @abstractmethod
     def __iter__(self):

@@ -2,7 +2,7 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 
 from .globaling import *
@@ -290,7 +290,7 @@ def TestOut():
     """
 
     m = MonitorOut(store = storing.Store())
-    print "ready to go"
+    print("ready to go")
     status = m.start()
 
     while (not (status == STOPPED or status == ABORTED)):
@@ -309,7 +309,7 @@ def Test():
     import storing
 
     m = Monitor(store = storing.Store())
-    print "ready to go"
+    print("ready to go")
     status = m.start()
 
     while (not (status == STOPPED or status == ABORTED)):
@@ -317,7 +317,7 @@ def Test():
             status = m.run()
 
         except KeyboardInterrupt: #CNTL-C shutdown skedder
-            print "    Keyboard Interrupt manual shutdown of taskers ..."
+            print("    Keyboard Interrupt manual shutdown of taskers ...")
             m.server.close()
 
 

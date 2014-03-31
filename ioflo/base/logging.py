@@ -2,14 +2,15 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import sys
 import os
 import time
 import datetime
 import copy
-import cStringIO
+import io
+
 
 from collections import deque, MutableSequence, MutableMapping
 
@@ -128,8 +129,6 @@ class Logger(tasking.Tasker):
         """creates log directory path
            creates physical directories on disk
         """
-
-
         try:
             #if repened too quickly could be same so we make a do until kludge
             path = self.path
@@ -137,20 +136,22 @@ class Logger(tasking.Tasker):
             i = 0
             while path == self.path: #do until keep trying until different
                 dt = datetime.datetime.now()
-                path = "%s_%s_%04d%02d%02d_%02d%02d%02d" % \
-                    (prefix, self.name,
-                     dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second + i)
+                path = "{0}_{1}_{2:04d}{3:02d}{4:02d}_{5:02d}{6:02d}{7:02d}".format(
+                        prefix, self.name, dt.year, dt.month, dt.day, dt.hour,
+                        dt.minute, dt.second + i)
                 path = os.path.abspath(path) #convert to proper absolute path
                 i +=1
 
-            os.makedirs(path)
+            if not os.path.exists(path):
+                os.makedirs(path)
 
-        except OSError, ex1:
-            print "Error: creating log directory %s \n" % (ex1)
+        except OSError as ex:
+            console.terse("Error: creating log directory '{0}'\n".format(ex))
             return False
 
         self.path = path
-        print "     Created Logger %s Directory = %s" % (self.name, self.path)
+        console.concise("     Created Logger {0} Directory= '{1}'\n".format(
+                self.name, self.path))
 
         return True
 
@@ -307,12 +308,12 @@ class Log(registering.StoriedRegistry):
         try:
             self.file = open(self.path, 'a+')
 
-        except IOError, ex1:
-            print "Error: creating log file %s \n" % (ex1)
+        except IOError as ex:
+            console.terse("Error: creating log file '{0}'\n".format(ex))
             self.file = None
             return False
 
-        print "     Created Log file %s " % (self.path)
+        console.concise("     Created Log file '{0}'\n".format(self.path))
 
         return True
 
@@ -360,26 +361,26 @@ class Log(registering.StoriedRegistry):
         console.profuse("     Preparing formats for Log {0}\n".format(self.name))
 
         #build header
-        cf = cStringIO.StringIO()
-        cf.write(self.kind)
-        cf.write('\t')
-        cf.write(LogRuleNames[self.rule])
-        cf.write('\t')
-        cf.write(self.fileName)
-        cf.write('\n')
-        cf.write('_time')
+        cf = io.StringIO()
+        cf.write(unicode(self.kind))
+        cf.write(u'\t')
+        cf.write(unicode(LogRuleNames[self.rule]))
+        cf.write(u'\t')
+        cf.write(unicode(self.fileName))
+        cf.write(u'\n')
+        cf.write(u'_time')
         for tag, loggee in self.loggees.items():
             if len(loggee) > 1:
                 for field in loggee:
-                    cf.write('\t')
-                    cf.write(tag)
-                    cf.write('.')
-                    cf.write(field)
+                    cf.write(u'\t')
+                    cf.write(unicode(tag))
+                    cf.write(u'.')
+                    cf.write(unicode(field))
             else:
-                cf.write('\t')
-                cf.write(tag)
+                cf.write(u'\t')
+                cf.write(unicode(tag))
 
-        cf.write('\n')
+        cf.write(u'\n')
         self.header = cf.getvalue()
         cf.close()
 
@@ -420,12 +421,12 @@ class Log(registering.StoriedRegistry):
         self.stamp = self.store.stamp
 
         #should be different if binary kind
-        cf = cStringIO.StringIO() #use string io faster than concatenation
+        cf = io.StringIO() #use string io faster than concatenation
         try:
             text = self.formats['_time'] % self.stamp
         except TypeError:
             text = '%s' % self.stamp
-        cf.write(text)
+        cf.write(unicode(text))
 
         for tag, loggee in self.loggees.items():
             if loggee: #len non zero
@@ -434,17 +435,17 @@ class Log(registering.StoriedRegistry):
                         text = self.formats[tag][field] % value
                     except TypeError:
                         text = '%s' % value
-                    cf.write(text)
+                    cf.write(unicode(text))
 
             else: #no items so just write tab
-                cf.write('\t')
+                cf.write(u'\t')
 
-        cf.write('\n')
+        cf.write(u'\n')
 
         try:
             self.file.write(cf.getvalue())
-        except ValueError, ex1: #if self.file already closed then ValueError
-            print ex1
+        except ValueError as ex: #if self.file already closed then ValueError
+            console.terse("{0}\n".format(ex))
 
         cf.close()
 
@@ -460,7 +461,7 @@ class Log(registering.StoriedRegistry):
         self.stamp = self.store.stamp
 
         #should be different if binary kind
-        cf = cStringIO.StringIO() #use string io faster than concatenation
+        cf = io.StringIO() #use string io faster than concatenation
         try:
             stamp = self.formats['_time'] % self.stamp
         except TypeError:
@@ -492,12 +493,12 @@ class Log(registering.StoriedRegistry):
                         text = self.formats[tag][field] % (element, )
                     except TypeError:
                         text = '%s' % element
-                    cf.write("%s\t%s\n" % (stamp, text))
+                    cf.write(u"%s\t%s\n" % (stamp, text))
 
         try:
             self.file.write(cf.getvalue())
-        except ValueError, ex1: #if self.file already closed then ValueError
-            print ex1
+        except ValueError as ex: #if self.file already closed then ValueError
+            console.terse("{0}\n".format(ex))
 
         cf.close()
 
@@ -613,7 +614,7 @@ def TestLog(rule = UPDATE):
     log.resolve()
     log.prepare()
 
-    print "logging log %s to file %s" % (log.name, log.fileName)
+    print("logging log %s to file %s" % (log.name, log.fileName))
     log() #log
     for i in range(20):
         store.advanceStamp(0.125)

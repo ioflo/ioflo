@@ -1,7 +1,7 @@
 """consoling.py classes for printing out to the console
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 #imports
 import sys

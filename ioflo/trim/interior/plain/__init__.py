@@ -1,7 +1,7 @@
 """ plain package
 
 """
-#print "\nPackage at {0}".format( __path__[0])
+#print("\nPackage at {0}".format( __path__[0]))
 
 __all__ = [ 'controlling', 'detecting', 'estimating',
             'filtering',  'simulating' ]

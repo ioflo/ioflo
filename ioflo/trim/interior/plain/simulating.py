@@ -2,7 +2,7 @@
    simulates the motion of UUV or USV etc
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import math
 import time
@@ -322,14 +322,14 @@ class UuvMotionSimulator(deeding.LapseDeed):
            prints out motion state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
-        print "speed = %0.3f, rpm = %0.3f depth = %0.3f  pitch = %0.3f stern plane = %0.3f" %\
-              (self.speed.value, self.rpm.value, self.depth.value, self.pitch.value, self.stern.value)
-        print "heading = %0.3f rudder = %0.3f" %\
-              (self.heading.value, self.rudder.value)
-        print "vel north = %0.3f vel east = %0.3f, pos north = %0.3f pos east = %0.3f" %\
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
+        print("speed = %0.3f, rpm = %0.3f depth = %0.3f  pitch = %0.3f stern plane = %0.3f" %\
+              (self.speed.value, self.rpm.value, self.depth.value, self.pitch.value, self.stern.value))
+        print("heading = %0.3f rudder = %0.3f" %\
+              (self.heading.value, self.rudder.value))
+        print("vel north = %0.3f vel east = %0.3f, pos north = %0.3f pos east = %0.3f" %\
               (self.velocity.data.north, self.velocity.data.east,
-               self.position.data.north, self.position.data.east)
+               self.position.data.north, self.position.data.east))
 
 class UsvMotionSimulator(deeding.LapseDeed):
     """USVMotionSimulator LapseDeed Deed Class
@@ -542,12 +542,12 @@ class UsvMotionSimulator(deeding.LapseDeed):
            prints out motion state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
-        print "speed = %0.3f, rpm = %0.3f heading = %0.3f rudder = %0.3f north = %0.3f east = %0.3f" %\
-              (self.speed.value, self.rpm.value, self.heading.value, self.rudder.value)
-        print "vel north = %0.3f vel east = %0.3f, pos north = %0.3f pos east = %0.3f" %\
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
+        print("speed = %0.3f, rpm = %0.3f heading = %0.3f rudder = %0.3f north = %0.3f east = %0.3f" %\
+              (self.speed.value, self.rpm.value, self.heading.value, self.rudder.value))
+        print("vel north = %0.3f vel east = %0.3f, pos north = %0.3f pos east = %0.3f" %\
               (self.velocity.data.north, self.velocity.data.east,
-               self.position.data.north, self.position.data.east)
+               self.position.data.north, self.position.data.east))
 
 
 class GpsSensorSimulator(deeding.LapseDeed):
@@ -728,10 +728,10 @@ class GpsSensorSimulator(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
-        print "north = %0.3f east = %0.3f, vel north = %0.3f vel east = %0.3f" %\
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
+        print("north = %0.3f east = %0.3f, vel north = %0.3f vel east = %0.3f" %\
               (self.position.data.north, self.position.data.east,
-               self.velocity.data.north, self.velocity.data.east)
+               self.velocity.data.north, self.velocity.data.east))
 
 
 class DvlSensorSimulator(deeding.LapseDeed):
@@ -907,14 +907,13 @@ class DvlSensorSimulator(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "vel forward = %0.3f vel starboard = %0.3f"
         format += "cur forward = %0.3f cur starboard = %0.3f altitude = %0.3f"
-        print format %\
+        print(format %\
               (self.velocity.data.forward, self.velocity.data.starboard,
                self.current.data.forward, self.current.data.starboard,
-               self.altitude.value)
-
+               self.altitude.value))
 
 class CompassSensorSimulator(deeding.LapseDeed):
     """CompassSensorSimulator LapseDeed Deed Class
@@ -1035,11 +1034,11 @@ class CompassSensorSimulator(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "heading = %0.3f phase = %0.3f amp = %0.3f sigma = %0.3f"
-        print format %\
+        print(format %\
               (self.output.value, self.parm.data.phase,
-               self.parm.data.amp, self.parm.data.sigma)
+               self.parm.data.amp, self.parm.data.sigma))
 
 
 class LinearSalinitySimulator(deeding.LapseDeed):
@@ -1180,15 +1179,15 @@ class LinearSalinitySimulator(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "salinity = %0.3f track = %0.3f north = %0.3f east = %0.3f"
         format += " middle = %0.3f spread = %0.3f, rising = %s, width = %0.3f"
         format += " layer = %0.3f shift = %0.3f"
-        print format %\
+        print(format %\
               (self.output.salinity, self.parm.data.track,
                self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width,
-               self.parm.data.layer, self.parm.data.shift)
+               self.parm.data.layer, self.parm.data.shift))
 
 
 class SinusoidSalinitySimulator(deeding.LapseDeed):
@@ -1321,13 +1320,13 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "salinity = %0.3f track = %0.3f north = %0.3f east = %0.3f"
         format += " middle = %0.3f spread = %0.3f, rising = %s, width = %0.3f"
-        print format %\
+        print(format %\
               (self.output.salinity, self.parm.data.track,
                self.parm.data.north, self.parm.data.east, self.parm.data.middle,
-               self.parm.data.spread, self.parm.data.rising, self.parm.data.width)
+               self.parm.data.spread, self.parm.data.rising, self.parm.data.width))
 
 
 
@@ -1497,16 +1496,16 @@ class GradientSimulator(deeding.LapseDeed):
            prints out gradient state
 
         """
-        print "Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("Simulator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "output = %0.3f track = %0.3f north = %0.3f east = %0.3f"
         format += " middle = %0.3f spread = %0.3f, rising = %s, width = %0.3f"
         format += " layer = %0.3f shift = %0.3f span = %0.3f height = %0.3f duct = %s"
-        print format %\
+        print(format %\
               (self.output[self.field], self.parm.data.track,
                self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width,
                self.parm.data.layer, self.parm.data.shift, self.parm.data.span,
-               self.parm.data.height, self.parm.data.duct)
+               self.parm.data.height, self.parm.data.duct))
 
 GradientSimulator.__register__('simulatorGradientTemperature', ioinits=odict(
     group = 'simulator.gradient.temperature',
@@ -1534,7 +1533,7 @@ def TestSalinity():
 
     store = storing.Store(name = 'Test')
 
-    print "\nTesting Salinity Sensor Front Simulator"
+    print("\nTesting Salinity Sensor Front Simulator")
     sim = SalinitySensorSimulator(name = 'simulatorSensorSalinity', store = store,
                                   group = 'simulator.sensor.salinity', output = 'ctd',
                                   input = 'state.position',
@@ -1546,7 +1545,7 @@ def TestSalinity():
     sim.expose()
 
     for k in range(1, 100):
-        print
+        print("")
         store.advanceStamp(0.125)
 
         input = store.fetch('state.position').update(north = k * -50.0, east = 0.0)
@@ -1569,7 +1568,7 @@ def TestMotion():
     #CreateActions(store)
 
 
-    print "\nTesting Motion Sim Controller"
+    print("\nTesting Motion Sim Controller")
     simulator = UuvMotionSimulator(name = 'simulatorMotionTest', store = store,
                                    group = 'simulator.motion.test',
                                    speed = 'state.speed', speedRate = 'state.speedRate',
@@ -1607,7 +1606,7 @@ def Test():
     """
 
     #clear registries
-    print "\nTesting Controllers\n"
+    print("\nTesting Controllers\n")
     storing.Store.Clear()
     deeding.Deed.Clear()
 
@@ -1633,7 +1632,7 @@ def Test():
     simulatorMotionUuv.expose()
 
     while (store.stamp <= duration):
-        print
+        print("")
         controllerPidSpeed.action()
         controllerPidHeading.action()
         controllerPidDepth.action()

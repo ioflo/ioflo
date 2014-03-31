@@ -1,7 +1,7 @@
 """acting.py action module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import time
 import struct
@@ -225,11 +225,12 @@ def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=Non
         return inner
     return implicit
 
+@aiding.metaclassify(registering.RegisterType) # python2or3 compatible
 class Actor(object): # old registering.StoriedRegistry
     """ Actor Base Class
         Has Actor specific Registry of classes
     """
-    __metaclass__ = registering.RegisterType
+    #__metaclass__ = registering.RegisterType
     Registry = odict() # Actor Registry
     Inits = odict() # class defaults support for
     Ioinits = odict() # class defaults

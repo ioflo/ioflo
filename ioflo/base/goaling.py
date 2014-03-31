@@ -1,13 +1,16 @@
 """goaling.py goal action module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import time
 import struct
 
 from collections import deque
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError: # python3
+    izip = zip
 
 import inspect
 
@@ -51,7 +54,7 @@ class Goal(acting.Actor):
         """
 
         """
-        print "Goal %s" % (self.name)
+        print("Goal %s" % (self.name))
 
 
 #Direct goal
@@ -61,10 +64,6 @@ class DirectGoal(Goal):
     """
     def __init__(self, **kw):
         """Initialization method for instance.
-
-           inherited attributes:
-              .name = unique name for action instance
-              .store = shared data store
 
            parameters:
               goal = share of goal
@@ -89,10 +88,6 @@ class IndirectGoal(Goal):
     """
     def __init__(self, **kw):
         """Initialization method for instance.
-
-           inherited attributes:
-              .name = unique name for action instance
-              .store = shared data store
 
            parameters:
               goal = share of goal

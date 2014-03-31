@@ -1,7 +1,7 @@
 """plotting.py  wradia plotting module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 #imports
 import pickle

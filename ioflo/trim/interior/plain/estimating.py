@@ -2,7 +2,7 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import math
 import time
@@ -283,10 +283,10 @@ class NflPositionEstimator(deeding.LapseDeed):
            prints out sensor state
 
         """
-        print "Estimator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse)
+        print("Estimator %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "north = %0.3f east = %0.3f"
-        print format %\
-              (self.position.data.north, self.position.data.east)
+        print(format %\
+              (self.position.data.north, self.position.data.east))
 
 
 

@@ -2,7 +2,7 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 
 from .globaling import *
@@ -94,7 +94,7 @@ class Tasker(registering.StoriedRegistry):
         """
 
         """
-        print "     Task %s status = %s" % (self.name, StatusNames[self.status])
+        print("     Task %s status = %s" % (self.name, StatusNames[self.status]))
 
     def resolve(self, **kwa):
         """Resolves any by name links to other objects   """
@@ -214,11 +214,11 @@ def Test(real = False, verbose = False):
 
     housing.ClearRegistries()
 
-    print housing.Registries
-    print
-    print housing.Registries["tasker"].Names
-    print housing.Registries["tasker"].Counter
-    print
+    print(housing.Registries)
+    print("")
+    print(housing.Registries["tasker"].Names)
+    print(housing.Registries["tasker"].Counter)
+    print("")
 
     house = housing.House()
 
@@ -250,11 +250,11 @@ def TestProfile(real = False, verbose = False):
 
     housing.ClearRegistries()
 
-    print housing.Registries
-    print
-    print housing.Registries["tasker"].Names
-    print housing.Registries["tasker"].Counter
-    print
+    print(housing.Registries)
+    print("")
+    print(housing.Registries["tasker"].Names)
+    print(housing.Registries["tasker"].Counter)
+    print("")
 
     house = housing.House()
 

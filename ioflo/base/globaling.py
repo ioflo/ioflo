@@ -1,7 +1,7 @@
 """globaling.py module with global constang
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import sys
 if sys.version > '3':

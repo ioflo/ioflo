@@ -1,7 +1,7 @@
 """arbiting.py arbiter deed module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import time
 import struct
@@ -111,14 +111,15 @@ class ArbiterDeed(deeding.Deed):
         """prints out arbiter parameters
 
         """
-        print "Arbiter %s" % self.name
-        print "   group = %s  outval = %s outcnf = %s defval = %s defcnf = %s" %\
+        msg = "Arbiter %s\n" % self.name
+        msg += "   group = %s  outval = %s outcnf = %s defval = %s defcnf = %s\n" %\
               (self.group, self.output.value, self.output.truth, self.default.value, self.default.truth)
-        print "   inputs = "
+        msg += "   inputs = \n"
         for tag, input in self.inputs.items():
-            print "      tag = %s, input = %s, sel = %s, imp = %s," %\
+            msg += "      tag = %s, input = %s, sel = %s, imp = %s,\n" %\
                   (tag, input.name, self.insels.fetch(tag), self.inimps.fetch(tag))
-            print "      input value = %s input truth = %s" % (input.value, input.truth)
+            msg += "      input value = %s input truth = %s\n" % (input.value, input.truth)
+        console.terse(msg)
 
     def update(self):
         """update should be overridden by subclass
@@ -131,8 +132,7 @@ class ArbiterDeed(deeding.Deed):
         """action is to update arbiter
 
         """
-        print "Updating arbiter %s" % self.name
-
+        console.profuse("Updating arbiter {0}\n".format(self.name))
         self.update()
 
 
@@ -390,7 +390,7 @@ def Test():
     inputs['four'] = ('inputs.in4', True, 0.5)
     inputs['five'] = ('inputs.in5', True, 0.2)
 
-    print "\nTesting SwitchArbiter"
+    print("\nTesting SwitchArbiter")
     group = 'arbiters.switch'
     output = 'switch.output'
     arbiter = SwitchArbiter(name = 'Switch', store = store, output = output,
@@ -405,7 +405,7 @@ def Test():
     arbiter.update()
     arbiter.expose()
 
-    print "\nTesting PriorityArbiter"
+    print("\nTesting PriorityArbiter")
     group = 'arbiters.priority'
     output = 'priority.output'
     arbiter = PriorityArbiter(name = 'Priority', store = store, output = output,
@@ -431,7 +431,7 @@ def Test():
     arbiter.expose()
 
 
-    print "\nTesting TrustedArbiter"
+    print("\nTesting TrustedArbiter")
     group = 'arbiters.trusted'
     output = 'trusted.output'
     arbiter = TrustedArbiter(name = 'Trusted', store = store, output = output,
@@ -458,7 +458,7 @@ def Test():
     arbiter.expose()
 
 
-    print "\nTesting WeightedArbiter"
+    print("\nTesting WeightedArbiter")
     group = 'arbiters.weighted'
     output = 'weighted.output'
     arbiter = WeightedArbiter(name = 'Weighted', store = store, output = output,

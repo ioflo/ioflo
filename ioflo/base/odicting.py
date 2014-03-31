@@ -8,7 +8,7 @@ Modifications CopyRight 2007 by Samuel M smith
 Based on various ordered dict implementations found in the wild
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 
 class odict(dict):

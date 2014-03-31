@@ -1,7 +1,7 @@
 """detecting.py detector deed module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import math
 import time
@@ -217,20 +217,20 @@ class BoxPositionDetector(deeding.Deed):
            prints out detector state
 
         """
-        print "Detector %s" % (self.name)
+        print("Detector %s" % (self.name))
         format = "box center bottom north = %0.3f east = %0.3f"
-        print format % (self.parm.data.north, self.parm.data.east)
+        print(format % (self.parm.data.north, self.parm.data.east))
         format = "box track = %0.3f length = %0.3f width = %0.3f turn = %0.3f"
-        print format % (self.parm.data.track, self.parm.data.length,
-                        self.parm.data.width, self.parm.data.turn)
+        print(format % (self.parm.data.track, self.parm.data.length,
+                        self.parm.data.width, self.parm.data.turn))
         format = "turn left = %0.3f turn right  = %0.3f "
-        print format % (self.output.data.turnleft, self.output.data.turnright)
+        print(format % (self.output.data.turnleft, self.output.data.turnright))
         format = "position north = %0.3f east = %0.3f"
-        print format % (self.input.data.north, self.input.data.east)
+        print(format % (self.input.data.north, self.input.data.east))
         format = "box inside = %s outside top = %s bottom = %s left = %s right = %s"
-        print format % (self.output.data.inside,
+        print(format % (self.output.data.inside,
                         self.output.data.outtop, self.output.data.outbottom,
-                        self.output.data.outleft, self.output.data.outright)
+                        self.output.data.outleft, self.output.data.outright))
 
 
 def TestBox():
@@ -242,7 +242,7 @@ def TestBox():
 
     store = storing.Store(name = 'Test')
 
-    print "\nTesting Box Position Detector"
+    print("\nTesting Box Position Detector")
     detector = BoxPositionDetector(name = 'detectorPositionBox', store = store,
                                    group = 'detector.position.box', input = 'state.position',
                                    parms = dict(track = 0.0, north = -50.0, east = 0.0,
@@ -252,19 +252,19 @@ def TestBox():
     store.expose()
     detector.expose()
 
-    print
+    print("")
     input = store.fetch('state.position').update(north = 9950.0, east = 0.0)
     detector.action()
     detector.expose()
-    print
+    print("")
     input = store.fetch('state.position').update(north = 9949.0, east = 0.0)
     detector.action()
     detector.expose()
-    print
+    print("")
     input = store.fetch('state.position').update(north = 9951, east = 0.0)
     detector.action()
     detector.expose()
-    print
+    print("")
     input = store.fetch('state.position').update(north = 9900.0, east = 500.0)
     detector.action()
     detector.expose()

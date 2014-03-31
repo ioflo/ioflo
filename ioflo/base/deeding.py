@@ -2,7 +2,7 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import time
 import struct
@@ -101,7 +101,7 @@ class SinceDeed(Deed):
 
     def expose(self):
         """     """
-        print "Deed %s stamp = %s" % (self.name, self.stamp)
+        print("Deed %s stamp = %s" % (self.name, self.stamp))
 
 class LapseDeed(Deed):
     """ LapseDeed
@@ -153,7 +153,7 @@ class LapseDeed(Deed):
 
     def expose(self):
         """     """
-        print "Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse)
+        print("Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse))
 
     def resolve(self, **kwa):
         """ Create enact with RestarterActor to restart this Actor """

@@ -1,7 +1,7 @@
 """controlling.py controller deed module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import math
 import time
@@ -178,10 +178,10 @@ class PidController(deeding.LapseDeed):
            prints out controller state
 
         """
-        print "Controller PID %s stamp = %s lapse = %0.3f input = %0.3f set point = %0.3f " %\
-              (self.name, self.stamp, self.lapse, self.input.value, self.rsp.value)
-        print "    error = %0.3f errorRate = %0.3f errorSum = %0.3f output = %0.3f truth = %s" %\
-              (self.e.value, self.er.value, self.es.value, self.output.value, self.output.truth)
+        print("Controller PID %s stamp = %s lapse = %0.3f input = %0.3f set point = %0.3f " %\
+              (self.name, self.stamp, self.lapse, self.input.value, self.rsp.value))
+        print("    error = %0.3f errorRate = %0.3f errorSum = %0.3f output = %0.3f truth = %s" %\
+              (self.e.value, self.er.value, self.es.value, self.output.value, self.output.truth))
 
 PidController.__register__('controllerPidSpeed', ioinits=odict(
     group = 'controller.pid.speed', output = 'goal.rpm',
@@ -223,7 +223,7 @@ def TestPID():
 
 
 
-    print "\nTesting PID Controller"
+    print("\nTesting PID Controller")
     controller = PidController(name = 'controllerPIDTest', store = store,
                                group = 'controller.pid.test', output = 'goal.testoutput',
                                input = 'state.testinput', rate = 'state.testrate', rsp = 'goal.testrsp',
@@ -245,7 +245,7 @@ def TestPID():
     controller.update()
     controller.expose()
 
-    print "\nTesting Speed PID Controller"
+    print("\nTesting Speed PID Controller")
     input = store.fetch('state.speed').update(value = 0.0)
     rate = store.fetch('state.speedRate').update(value = 0.0)
     rsp = store.fetch('goal.speed').update(value = 2.0)
@@ -254,7 +254,7 @@ def TestPID():
     controllerPIDSpeed.update()
     controllerPIDSpeed.expose()
 
-    print "\nTesting Heading PID Controller"
+    print("\nTesting Heading PID Controller")
     input = store.fetch('state.heading').update(value = 0.0)
     rate = store.fetch('state.headingRate').update(value = 0.0)
     rsp = store.fetch('goal.heading').update(value = 45.0)
@@ -263,7 +263,7 @@ def TestPID():
     controllerPIDHeading.update()
     controllerPIDHeading.expose()
 
-    print "\nTesting Depth PID Controller"
+    print("\nTesting Depth PID Controller")
     input = store.fetch('state.depth').update(value = 0.0)
     rate = store.fetch('state.depthRate').update(value = 0.0)
     rsp = store.fetch('goal.depth').update(value = 5.0)
@@ -272,7 +272,7 @@ def TestPID():
     controllerPIDDepth.update()
     controllerPIDDepth.expose()
 
-    print "\nTesting Pitch PID Controller"
+    print("\nTesting Pitch PID Controller")
     input = store.fetch('state.pitch').update(value = 0.0)
     rate = store.fetch('state.pitchRate').update(value = 0.0)
     rsp = store.fetch('goal.pitch').update(value = 5.0)
@@ -295,7 +295,7 @@ def TestMotion():
     store = storing.Store(name = 'Test')
 
 
-    print "\nTesting Motion Sim Controller"
+    print("\nTesting Motion Sim Controller")
     controller = MotionController(name = 'controllerMotionTest', store = store,
                                   group = 'controller.motion.test',
                                   speed = 'state.speed', speedRate = 'state.speedRate',
@@ -333,7 +333,7 @@ def Test():
     """
 
     #clear registries
-    print "\nTesting Controllers\n"
+    print("\nTesting Controllers\n")
     storing.Store.Clear()
     deeding.Deed.Clear()
 
@@ -359,7 +359,7 @@ def Test():
     controllerMotionVehicle.expose()
 
     while (store.stamp <= duration):
-        print
+        print("")
         controllerPidSpeed.action()
         controllerPidHeading.action()
         controllerPidDepth.action()

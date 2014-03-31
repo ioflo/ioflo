@@ -19,7 +19,7 @@ def getPlanFiles(planDirPath=PLAN_DIR_PATH):
     planFiles = []
     for fname in os.listdir(os.path.abspath(planDirPath)):
         root, ext = os.path.splitext(fname)
-        if ext != '.flo' or root.startswith('__'):
+        if ext != '.flo' or root.startswith('__') or root.startswith('gps'):
             continue
 
         planFiles.append(os.path.abspath(os.path.join(planDirPath, fname)))

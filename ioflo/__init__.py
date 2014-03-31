@@ -1,7 +1,7 @@
 """ ioflo package
 
 """
-#print "\nPackage at {0}".format( __path__[0])
+#print("\nPackage at {0}".format( __path__[0]))
 
 __version__ = "0.9.17"
 __author__ = "Samuel M. Smith"

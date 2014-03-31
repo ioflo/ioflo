@@ -2,7 +2,8 @@
 
 
 """
-#print "module {0}".format(__name__)
+#print( "module {0}".format(__name__))
+
 import sys
 import os
 import time
@@ -273,16 +274,16 @@ class Skedder(object):
                             more = True
 
                     if not ready: #no pending taskers so done
-                        print "No ready taskers. Shutting down skedder ..."
+                        console.terse("No ready taskers. Shutting down skedder ...\n")
                         break
 
                     if not more: #all taskers stopped or aborted
-                        print "No running or started taskers. Shutting down skedder ..."
+                        console.terse("No running or started taskers. Shutting down skedder ...\n")
                         break
 
                     #update time stamps
                     if self.real:
-                        ("     Time remaining skedder = {0:0.4f}\n".format(self.timer.remaining))
+                        console.profuse("     Time remaining skedder = {0:0.4f}\n".format(self.timer.remaining))
                         while not self.timer.expired:
                             time.sleep(self.timer.remaining)
                         self.timer.repeat()
@@ -293,19 +294,18 @@ class Skedder(object):
                         house.store.changeStamp(stamp)
 
                 except KeyboardInterrupt: #CNTL-C shutdown skedder
-                    print "KeyboardInterrupt forcing shutdown of Skedder ..."
-
+                    console.terse("KeyboardInterrupt forcing shutdown of Skedder ...\n")
                     break
 
                 except SystemExit: #User know why shutting down
-                    print "SystemExit forcing shutdown of Skedder ..."
+                    console.terse("SystemExit forcing shutdown of Skedder ...\n")
                     raise
 
                 except Exception: #Let user know what exception caused shutdoen
-                    print "Surprise exception forcing shutdown of Skedder ..."
+                    console.terse("Surprise exception forcing shutdown of Skedder ...\n")
                     raise
 
-            print "Total elapsed real time = %0.4f" % self.elapsed.elapsed
+            console.terse("Total elapsed real time = {0:0.4f}\n".format(self.elapsed.elapsed))
 
         finally: #finally clause always runs regardless of exception or not
             #Abort any running taskers to reclaim resources
@@ -313,15 +313,15 @@ class Skedder(object):
             #if last run tasker exited due to exception then try finally clause in
             #its generator is responsible for releasing resources
 
-            print "Aborting all ready Taskers ..."
+            console.terse("Aborting all ready Taskers ...\n")
             for i in xrange(len(ready)): #run each ready tasker once
                 tasker,retime,period = ready.popleft() #pop it off
 
                 try:
                     status = tasker.runner.send(ABORT)
-                    print "       Tasker '%s' aborted" % tasker.name
+                    console.terse("Tasker '{0}' aborted\n".format(tasker.name))
                 except StopIteration: #generator returned instead of yielded
-                    print "       Tasker '%s' generator already exited" % tasker.name
+                    console.terse("Tasker '{0}' generator already exited\n".format(tasker.name))
 
                 #tasker.runner.close() #kill generator
 
@@ -342,11 +342,11 @@ def Test(real = False, verbose = False):
 
     housing.ClearRegistries()
 
-    print housing.Registries
-    print
-    print housing.Registries["tasker"].Names
-    print housing.Registries["tasker"].Counter
-    print
+    print(housing.Registries)
+    print("")
+    print(housing.Registries["tasker"].Names)
+    print(housing.Registries["tasker"].Counter)
+    print("")
 
     house = housing.House()
 
@@ -377,11 +377,11 @@ def TestProfile(real = False, verbose = False):
 
     housing.ClearRegistries()
 
-    print housing.Registries
-    print
-    print housing.Registries["tasker"].Names
-    print housing.Registries["tasker"].Counter
-    print
+    print(housing.Registries)
+    print("")
+    print(housing.Registries["tasker"].Names)
+    print(housing.Registries["tasker"].Counter)
+    print("")
 
     house = housing.House()
 

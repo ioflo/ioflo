@@ -1,11 +1,10 @@
 """framing.py hierarchical action framework module
 
 """
-#print "module {0}".format(__name__)
+#print("module {0}".format(__name__))
 
 import copy
 from collections import deque
-from itertools import izip
 
 from .odicting import odict
 from .globaling import *
@@ -198,7 +197,7 @@ class Framer(tasking.Tasker):
         """Convert all the name strings for links to references to instance
            by that name
         """
-        print "     Resolving framer %s" % (self.name)
+        console.terse("     Resolving framer {0}\n".format(self.name))
 
         self.assignFrameRegistry() #needed by act links below
 
@@ -218,7 +217,7 @@ class Framer(tasking.Tasker):
     def traceOutlines(self):
         """Trace and assign outlines for each frame in framer
         """
-        print "     Tracing outlines for framer %s" % (self.name)
+        console.terse("     Tracing outlines for framer {0}\n".format(self.name))
 
         self.assignFrameRegistry()
 
@@ -405,41 +404,34 @@ class Framer(tasking.Tasker):
     def showHierarchy(self):
         """Prints out Framework Hierachy for this framer
         """
-        print "\nFramework Hierarchy for %s:" % self.name
+        console.terse("\nFramework Hierarchy for {0}:\n".format(self.name))
         names = self.frameNames
 
         #top layer are nodes with no over but a unders
         tops = [ x for x in names.itervalues() if ((not x.over) and x.unders)]
-        print "Tops: ",
-        for x in tops:
-            print "%s " % x.name,
+        console.terse("Tops: {0}\n".format(" ".join([x.name for x in tops])))
 
         # bottom nodes with over but no unders
         bottoms = [x for x in names.itervalues() if ((x.over) and (not x.unders))]
-        print "\nBottoms: ",
-        for x in bottoms:
-            print "%s " % x.name,
+        console.terse("Bottoms: {0}\n".format(" ".join([x.name for x in bottoms])))
 
         # loose node have no over and no unders
         loose = [x for x in names.itervalues() if ((not x.over) and (not x.unders))]
-        print "\nLoose: ",
-        for x in loose:
-            print "%s " % x.name,
+        console.terse("Loose: {0}\n".format(" ".join([x.name for x in loose])))
 
-        print "\nHierarchy: ",
+        console.terse("Hierarchy: \n")
         upper = tops
         lower = []
         count = 0
         while upper:
-            print "\nLevel %d: " % count,
+            lframes = []
             for u in upper: #
                 path = u.name
                 over = u.over
                 while (over):
                     path = over.name + ">" + path
                     over = over.over
-
-                print "%s " % (path),
+                lframes.append(path)
 
             lower = []
             for u in upper: # get next level
@@ -447,8 +439,9 @@ class Framer(tasking.Tasker):
                     lower.append(b)
             upper = lower
             count += 1
+            console.terse("Level {0}: {1}\n".format(count, " ".join(lframes)))
 
-        print ""
+        console.terse("\n")
 
 
     def makeRunner(self):
@@ -524,8 +517,8 @@ class Framer(tasking.Tasker):
 
                         if self.checkStart(): #checks enters
                             console.terse("   Starting Framer '{0}' ...\n".format(self.name))
-                            msg = "To: %s<%s at %s" % (self.name, self.first.human, self.store.stamp)
-                            print msg
+                            msg = "To: %s<%s at %s\n" % (self.name, self.first.human, self.store.stamp)
+                            console.terse(msg)
                             self.desire = RUN
                             self.enterAll() #activates, resets .done state also .desire may change here
                             self.recur() #.desire may change here
@@ -552,7 +545,7 @@ class Framer(tasking.Tasker):
                         msg = "   Stopping Framer '{0}' in {1} at {2:0.3f}\n".format(
                             self.name,self.active.name,self.store.stamp)
                         self.desire = STOP
-                        console.terse( msg)
+                        console.terse(msg)
                         self.exitAll()  #self.desire may change, self.done = True set in exitAll()
                         console.profuse("   Stopped Framer '{0}'\n".format(self.name))
                         self.status = STOPPED
@@ -574,13 +567,13 @@ class Framer(tasking.Tasker):
                         self.name, ControlNames.get(control, "Unknown")))
 
                     if status == RUNNING or status == STARTED:
-                        msg = "   Aborting %s in %s at %0.3f" %\
+                        msg = "   Aborting %s in %s at %0.3f\n" %\
                             (self.name, self.active.name, self.store.stamp)
-                        print msg
+                        console.terse(msg)
                     elif status == STOPPED or status == READIED:
-                        msg = "   Aborting %s at %0.3f" %\
+                        msg = "   Aborting %s at %0.3f\n" %\
                             (self.name, self.store.stamp)
-                        print msg
+                        console.terse(msg)
                     elif status == ABORTED:
                         console.profuse("   Framer '{0}', aleady Aborted\n".format(self.name))
 
@@ -611,8 +604,6 @@ class Framer(tasking.Tasker):
         l = min(len(nears), len(fars))
         for i in xrange(l):
             if (nears[i] is far) or (nears[i] is not fars[i]): #first effective uncommon member
-                #print "Found it at nears[%d] = %s" % (i, nears[i])
-                #(exits, enters, reexens)
                 return (nears[i:], fars[i:], nears[:i])
 
         #should never get here since far is in far.outline
@@ -773,8 +764,8 @@ class Frame(registering.StoriedRegistry):
         else:
             framername = ''
 
-        print "name = %s, framer = %s, over = %s, under = %s" % \
-              (self.name, framername, self.over, self.under)
+        print("name = %s, framer = %s, over = %s, under = %s" % \
+              (self.name, framername, self.over, self.under))
 
     def getUnder(self):
         """getter for under property
@@ -1100,8 +1091,8 @@ class Frame(registering.StoriedRegistry):
             act() #call entryAction
 
         for aux in self.auxes:
-            msg = "To: %s<%s at %s" % (aux.name, aux.first.human, aux.store.stamp)
-            print msg
+            msg = "To: %s<%s at %s\n" % (aux.name, aux.first.human, aux.store.stamp)
+            console.terse(msg)
 
             aux.main = self  #assign aux's main to this frame
             aux.enterAll() #starts at aux.first frame
@@ -1382,12 +1373,11 @@ def TestFrame():
         fr2.runner.send(START)
 
         for i in xrange(3):
-            print ""
             status = fr2.runner.send(RUN)
 
 
-    except excepting.ParameterError, ex1:
-        print ex1
+    except excepting.ParameterError as ex:
+        console.terse(ex)
         raise
 
     return f1
