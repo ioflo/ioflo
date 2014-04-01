@@ -1,6 +1,16 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+20140401
+---------
+
+v0.9.18
+
+Addes preliminary support for Python3 compatibility
+
+
 ---------
 20140326
 ---------
