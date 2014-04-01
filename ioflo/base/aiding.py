@@ -1726,7 +1726,7 @@ def Blend3(d = 0.0, u = 1.0, s = 0.05):
 
     return b
 
-def PackByte(fmt = '8',fields = [0x0000]):
+def PackByte(fmt = b'8',fields = [0x0000]):
     """Packs fields sequence into one byte using fmt string.
 
        Each fields element is a bit field and each
@@ -1744,14 +1744,14 @@ def PackByte(fmt = '8',fields = [0x0000]):
        example
        PackByte("1322",(True,4,0,3)). returns 0xc3
     """
-
+    fmt = bytes(fmt)
     byte = 0x00
     bfp = 8 #bit field position
     bu = 0 #bits used
 
     for i in range(len(fmt)):
         bits = 0x00
-        bfl = int(fmt[i])
+        bfl = int(fmt[i:i+1])
 
         if not (0 < bfl <= 8):
             raise ValueError("Bit field length in fmt must be > 0 and <= 8")
@@ -1779,7 +1779,7 @@ def PackByte(fmt = '8',fields = [0x0000]):
 
 packByte = PackByte # alias
 
-def UnpackByte(fmt = '11111111', byte = 0x00, boolean = True):
+def UnpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
     """unpacks source byte into tuple of bit fields given by fmt string.
 
        Each char of fmt is a bit field length.
@@ -1799,14 +1799,14 @@ def UnpackByte(fmt = '11111111', byte = 0x00, boolean = True):
        UnpackByte("1322",0xc3, False ) returns (1,4,0,3)
        UnpackByte("1322",0xc3, True ) returns (True,4,0,3)
     """
-
+    fmt = bytes(fmt)
     fields = [] #list of bit fields
     bfp = 8 #bit field position
     bu = 0 #bits used
     byte &= 0xff #get low order byte
 
     for i in range(len(fmt)):
-        bfl = int(fmt[i])
+        bfl = int(fmt[i:i+1])
 
         if not (0 < bfl <= 8):
             raise ValueError("Bit field length in fmt must be > 0 and <= 8")
@@ -1840,7 +1840,7 @@ def Hexize(s = ''):
     """
     h = ''
     for i in range(len(s)):
-        h += ("%02x" % ord(s[i]))
+        h += ("%02x" % ord(s[i:i+1]))
     return h
 
 hexize = Hexize # alias
