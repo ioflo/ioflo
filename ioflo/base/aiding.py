@@ -3,6 +3,9 @@
 """
 #print("module {0}".format(__name__))
 
+from __future__ import division
+
+import sys
 import math
 import types
 import socket
@@ -25,6 +28,13 @@ from .odicting import odict
 
 from .consoling import getConsole
 console = getConsole()
+
+if sys.version < '3':
+    def b(x):
+        return x
+else:
+    def b(x):
+        return x.encode('ISO-8859-1')
 
 def metaclassify(metaclass):
     """
@@ -1716,11 +1726,11 @@ def Blend3(d = 0.0, u = 1.0, s = 0.05):
 
     return b
 
-def PackByte(format = '8',fields = [0x0000]):
-    """Packs fields sequence into one byte using format string.
+def PackByte(fmt = '8',fields = [0x0000]):
+    """Packs fields sequence into one byte using fmt string.
 
        Each fields element is a bit field and each
-       char in format is the corresponding bit field length.
+       char in fmt is the corresponding bit field length.
        Assumes unsigned fields values.
        Assumes network big endian so first fields element is high order bits.
        Format string is number of bits per bit field
@@ -1728,8 +1738,8 @@ def PackByte(format = '8',fields = [0x0000]):
           that is,   nonzero is True and packs as a 1
        for 2-8 length bit fields the field element is truncated
        to the number of low order bits in the bit field
-       if sum of number of bits in format less than 8 last bits are padded
-       if sum of number of bits in format greater than 8 returns exception
+       if sum of number of bits in fmt less than 8 last bits are padded
+       if sum of number of bits in fmt greater than 8 returns exception
        to pad just use 0 value in source.
        example
        PackByte("1322",(True,4,0,3)). returns 0xc3
@@ -1739,16 +1749,16 @@ def PackByte(format = '8',fields = [0x0000]):
     bfp = 8 #bit field position
     bu = 0 #bits used
 
-    for i in range(len(format)):
+    for i in range(len(fmt)):
         bits = 0x00
-        bfl = int(format[i])
+        bfl = int(fmt[i])
 
         if not (0 < bfl <= 8):
-            raise ValueError("Bit field length in format must be > 0 and <= 8")
+            raise ValueError("Bit field length in fmt must be > 0 and <= 8")
 
         bu += bfl
         if bu > 8:
-            raise ValueError("Sum of bit field lengths in format must be <= 8")
+            raise ValueError("Sum of bit field lengths in fmt must be <= 8")
 
         if bfl == 1:
             if fields[i]:
@@ -1769,20 +1779,20 @@ def PackByte(format = '8',fields = [0x0000]):
 
 packByte = PackByte # alias
 
-def UnpackByte(format = '11111111', byte = 0x00, boolean = True):
-    """unpacks source byte into tuple of bit fields given by format string.
+def UnpackByte(fmt = '11111111', byte = 0x00, boolean = True):
+    """unpacks source byte into tuple of bit fields given by fmt string.
 
-       Each char of format is a bit field length.
+       Each char of fmt is a bit field length.
        returns unsigned fields values.
-       Assumes network big endian so first format is high order bits.
+       Assumes network big endian so first fmt is high order bits.
        Format string is number of bits per bit field
        If boolean parameter is True then return boolean values for
           bit fields of length 1
 
-       if sum of number of bits in format less than 8 then remaining
+       if sum of number of bits in fmt less than 8 then remaining
        bits returned as additional element in result.
 
-       if sum of number of bits in format greater than 8 returns exception
+       if sum of number of bits in fmt greater than 8 returns exception
        only low order byte of byte is used.
 
        example
@@ -1795,15 +1805,15 @@ def UnpackByte(format = '11111111', byte = 0x00, boolean = True):
     bu = 0 #bits used
     byte &= 0xff #get low order byte
 
-    for i in range(len(format)):
-        bfl = int(format[i])
+    for i in range(len(fmt)):
+        bfl = int(fmt[i])
 
         if not (0 < bfl <= 8):
-            raise ValueError("Bit field length in format must be > 0 and <= 8")
+            raise ValueError("Bit field length in fmt must be > 0 and <= 8")
 
         bu += bfl
         if bu > 8:
-            raise ValueError("Sum of bit field lengths in format must be <= 8")
+            raise ValueError("Sum of bit field lengths in fmt must be <= 8")
 
         mask = (2**bfl - 1) << (bfp - bfl) #make mask
         bits = byte & mask #mask off other bits

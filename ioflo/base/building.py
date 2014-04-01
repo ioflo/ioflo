@@ -1,7 +1,7 @@
 """building.py build frameworks from mission files
 
 """
-from __future__ import with_statement
+from __future__ import division
 
 #print("module {0}".format(__name__))
 

@@ -3,6 +3,8 @@
 """
 #print("\nPackage at {0}".format( __path__[0]))
 
+from __future__ import division
+
 __version__ = "0.9.17"
 __author__ = "Samuel M. Smith"
 __license__ =  "MIT"
