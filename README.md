@@ -175,12 +175,14 @@ Aborting all ready taskers ...
 
 ```
 
-## Documentation
+### Documentation
 
-![Overview](http://ioflo.com/documentation/architecture-overview/)
+http://ioflo.com/documentation/architecture-overview/
 
-![FloScriptGuild](http://ioflo.com/documentation/user-guide/)
+http://ioflo.com/documentation/user-guide/
 
-## MIT License
+#### MIT License
 
-### Python2.6, Python2.7, Python3.4
+#### Python 2.6
+#### Python 2.7
+#### Python 3.4
