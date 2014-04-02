@@ -4166,7 +4166,7 @@ def Test(fileName = None, verbose = False):
                 for framer in house.actives:
                     #status = framer.status
                     desire = framer.desire
-                    if desire != None:
+                    if desire is not None:
                         control = desire
                     else:
                         control = RUN

@@ -5,6 +5,8 @@
 #print( "module {0}".format(__name__))
 
 import sys
+if sys.version > '3':
+    xrange = range
 import os
 import time
 from collections import deque

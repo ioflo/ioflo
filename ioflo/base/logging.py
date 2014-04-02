@@ -5,6 +5,13 @@
 #print("module {0}".format(__name__))
 
 import sys
+if sys.version < '3':
+    def b(x):
+        return x
+else:
+    def b(x):
+        return x.encode('ISO-8859-1')
+    xrange = range
 import os
 import time
 import datetime
@@ -16,6 +23,7 @@ from collections import deque, MutableSequence, MutableMapping
 
 from .globaling import *
 from .odicting import odict
+from .aiding import u
 
 from . import excepting
 from . import registering
@@ -212,8 +220,13 @@ class Logger(tasking.Tasker):
 
                 self.stamp = self.store.stamp
 
+        except Exception as ex:
+            console.terse("{0}\n".format(ex))
+            console.terse("     Exception in Logger {0} in {1}\n".format(
+                    self.name, self.store.house.name))
+            raise
+
         finally:
-            console.terse("     Exception Causing Abort Logger {0}\n".format(self.name))
             self.close() #close all log files
             self.desire = ABORT
             self.status = ABORTED
@@ -362,23 +375,23 @@ class Log(registering.StoriedRegistry):
 
         #build header
         cf = io.StringIO()
-        cf.write(unicode(self.kind))
+        cf.write(u(self.kind))
         cf.write(u'\t')
-        cf.write(unicode(LogRuleNames[self.rule]))
+        cf.write(u(LogRuleNames[self.rule]))
         cf.write(u'\t')
-        cf.write(unicode(self.fileName))
+        cf.write(u(self.fileName))
         cf.write(u'\n')
         cf.write(u'_time')
         for tag, loggee in self.loggees.items():
             if len(loggee) > 1:
                 for field in loggee:
                     cf.write(u'\t')
-                    cf.write(unicode(tag))
+                    cf.write(u(tag))
                     cf.write(u'.')
-                    cf.write(unicode(field))
+                    cf.write(u(field))
             else:
                 cf.write(u'\t')
-                cf.write(unicode(tag))
+                cf.write(u(tag))
 
         cf.write(u'\n')
         self.header = cf.getvalue()
@@ -426,7 +439,7 @@ class Log(registering.StoriedRegistry):
             text = self.formats['_time'] % self.stamp
         except TypeError:
             text = '%s' % self.stamp
-        cf.write(unicode(text))
+        cf.write(u(text))
 
         for tag, loggee in self.loggees.items():
             if loggee: #len non zero
@@ -435,7 +448,7 @@ class Log(registering.StoriedRegistry):
                         text = self.formats[tag][field] % value
                     except TypeError:
                         text = '%s' % value
-                    cf.write(unicode(text))
+                    cf.write(u(text))
 
             else: #no items so just write tab
                 cf.write(u'\t')
@@ -543,7 +556,7 @@ class Log(registering.StoriedRegistry):
             return
 
         for loggee in self.loggees.values():
-            if loggee.stamp > self.stamp:  #any number is > None
+            if loggee.stamp is not None and loggee.stamp > self.stamp:  #any number is > None
                 self.log()
                 return  #first update triggers log once per cycle
 

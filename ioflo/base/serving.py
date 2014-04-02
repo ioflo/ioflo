@@ -16,6 +16,7 @@ from .odicting import odict
 from .globaling import *
 
 from . import aiding
+#from .aiding import b
 from . import tasking
 
 from .consoling import getConsole
@@ -199,7 +200,7 @@ class Server(tasking.Tasker):
                         if sa:
                             shost, sport = sa
 
-                        output = ''
+                        output = b''
                         result = self.server.send(output, self.dha)
                         self.status = RUNNING
 

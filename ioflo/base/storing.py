@@ -893,7 +893,7 @@ def resolvePath(store, ipath, ival=None, iown=None, act=None):
             ipath = store.createNode(ipath.rstrip('.'))
         else: # Share
             ipath = store.create(ipath)
-            if ival != None:
+            if ival is not None:
                 if iown:
                     ipath.update(ival)
                 else:

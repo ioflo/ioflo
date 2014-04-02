@@ -1,3 +1,7 @@
+import sys
+if sys.version > '3':
+    xrange = range
+
 import ioflo
 from ioflo.base import aiding
 

@@ -20,7 +20,7 @@ def main():
     args = ioflo.app.run.parseArgs()
 
     if args.version:
-        print "ioflo version {0}".format(ioflo.__version__)
+        print("ioflo version {0}".format(ioflo.__version__))
         sys.exit(0)
 
     ioflo.app.run.run(  name=args.name,

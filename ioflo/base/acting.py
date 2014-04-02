@@ -361,7 +361,7 @@ class Actor(object): # old registering.StoriedRegistry
         iois = odict()
 
         for key, val in kwa.items():
-            if val == None:
+            if val is None:
                 continue
 
             if isinstance(val, basestring):
@@ -511,7 +511,7 @@ class Actor(object): # old registering.StoriedRegistry
                 ipath = self.store.createNode(ipath.rstrip('.'))
             else: # Share
                 ipath = self.store.create(ipath)
-                if ival != None:
+                if ival is not None:
                     if iown:
                         ipath.update(ival)
                     else:

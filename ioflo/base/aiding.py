@@ -6,6 +6,23 @@
 from __future__ import division
 
 import sys
+if sys.version > '3':
+    xrange = range
+
+if sys.version < '3':
+    def b(x):
+        return x
+
+    def u(x):
+        return unicode(x)
+else:
+    def b(x):
+        return x.encode('ISO-8859-1')
+
+    def u(x):
+        return x
+
+
 import math
 import types
 import socket
@@ -29,12 +46,7 @@ from .odicting import odict
 from .consoling import getConsole
 console = getConsole()
 
-if sys.version < '3':
-    def b(x):
-        return x
-else:
-    def b(x):
-        return x.encode('ISO-8859-1')
+
 
 def metaclassify(metaclass):
     """
@@ -165,12 +177,12 @@ class Timer(object):
             If start arg is missing then restarts at current time
             If duration arg is missing then restarts for current duration
         """
-        if start != None:
+        if start is not None:
             self.start = abs(start) #must be non negative
         else: #use current time
             self.start = time.time()
 
-        if duration != None:
+        if duration is not None:
             self.duration = abs(duration) #must be non negative
         #Otherwise keep old duration
 
@@ -193,7 +205,7 @@ class Timer(object):
             effectively doubling the time
 
         """
-        if extension == None: #otherwise extend by .duration or double
+        if extension is None: #otherwise extend by .duration or double
             extension = self.duration
 
         duration = self.duration + extension
@@ -243,7 +255,7 @@ class StoreTimer(object):
     remaining = property(getRemaining, doc = 'Remaining time.')
 
     def getExpired(self):
-        if (self.store.stamp >= self.stop):
+        if (self.store.stamp is not None and self.store.stamp >= self.stop):
             return True
         else:
             return False
@@ -255,12 +267,12 @@ class StoreTimer(object):
             If start arg is missing then restarts at current time
             If duration arg is missing then restarts for current duration
         """
-        if start != None:
+        if start is not None:
             self.start = abs(start) #must be non negative
         else: #use current time
             self.start = self.store.stamp
 
-        if duration != None:
+        if duration is not None:
             self.duration = abs(duration) #must be non negative
         #Otherwise keep old duration
 
@@ -283,7 +295,7 @@ class StoreTimer(object):
             effectively doubling the time
 
         """
-        if extension == None: #otherwise extend by .duration or double
+        if extension is None: #otherwise extend by .duration or double
             extension = self.duration
 
         duration = self.duration + extension
@@ -617,22 +629,22 @@ class SocketUdpNb(object):
             else:
                 raise #re raise exception ex1
 
-    def send(self,data, da):
+    def send(self, data, da):
         """Perform non blocking send on  socket.
 
-           data is string
+           data is string in python2 and bytes in python3
            da is destination address tuple (destHost, destPort)
 
         """
         try:
-            result = self.ss.sendto(data,da) #result is number of bytes sent
+            result = self.ss.sendto(data, da) #result is number of bytes sent
         except socket.error as ex:
             emsg = "socket.error = {0}\n".format(ex)
             console.terse(emsg)
             result = 0
             raise
 
-        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha),result))
+        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
 
         if self.log and self.txLog:
             self.txLog.write("%s %s bytes\n%s\n" %
@@ -796,22 +808,22 @@ class SocketUxdNb(object):
             else:
                 raise #re raise exception ex1
 
-    def send(self,data, da):
+    def send(self, data, da):
         """Perform non blocking send on  socket.
 
-           data is string
+           data is string in python2 and bytes in python3
            da is destination address tuple (destHost, destPort)
 
         """
         try:
-            result = self.ss.sendto(data,da) #result is number of bytes sent
+            result = self.ss.sendto(data, da) #result is number of bytes sent
         except socket.error as ex:
             emsg = "socket.error = {0}\n".format(ex)
             console.terse(emsg)
             result = 0
             raise
 
-        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha),result))
+        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
 
         if self.log and self.txLog:
             self.txLog.write("%s %s bytes\n%s\n" %
@@ -1726,7 +1738,7 @@ def Blend3(d = 0.0, u = 1.0, s = 0.05):
 
     return b
 
-def PackByte(fmt = b'8',fields = [0x0000]):
+def PackByte(fmt = b'8', fields = [0x0000]):
     """Packs fields sequence into one byte using fmt string.
 
        Each fields element is a bit field and each
@@ -1832,11 +1844,11 @@ def UnpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
 
 unpackByte = UnpackByte # alias
 
-def Hexize(s = ''):
-    """Converts string s into hex format
-       Where each char (byte) in string s is expanded into the 2 charater hex
+def Hexize(s = b''):
+    """Converts bytes s into hex format
+       Where each char (byte) in bytes s is expanded into the 2 charater hex
        equivalent of the decimal value of each byte
-       returns the expanded hex version of the string
+       returns the expanded hex version of the bytes as string
     """
     h = ''
     for i in range(len(s)):
@@ -1846,15 +1858,15 @@ def Hexize(s = ''):
 hexize = Hexize # alias
 
 def Binize(h = ''):
-    """Converts string h from hex format into the binary equivalent string by
+    """Converts string h from hex format into the binary equivalent bytes by
        compressing every two hex characters into 1 byte that is the binary equivalent
        If h does not have an even number of characters then a 0 is first prepended
        to h
-       returns the packed binary  version of the string
+       returns the packed binary  version of the string as bytes
     """
     #remove any non hex characters, any char that is not in '0123456789ABCDEF'
-    b = h #make copy so iteration not change
-    for c in b:
+    hh = h #make copy so iteration not change
+    for c in hh:
         if c not in string.hexdigits:
             h = h.replace(c,'') #delete characters
 
@@ -1889,7 +1901,7 @@ def Dec2BinStr(n, count=24):
 dec2BinStr = Dec2BinStr # alias
 
 def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
-    """prints elements of string s in hex notation.
+    """prints elements of bytes string s in hex notation.
 
        chunk is number of bytes per chunk
        0 means no chunking
@@ -1917,7 +1929,7 @@ def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
     cc = 0
     ps = ''
     for i in range(len(s)):
-        ps += ("%02x" % ord(s[i]))
+        ps += ("%02x" % ord(s[i:i+1]))
         #add space or dot if not end of line or end of string
         if ((i + 1) % line) and ((i+1) % slen):
             if not ((i + 1) % chunk): #end of chunk
@@ -1940,22 +1952,25 @@ def PrintDecimal(s):
     """
     ps = ''
     for i in range(len(s)):
-        ps = ps + ("%03d." % ord(s[i]))
+        ps = ps + ("%03d." % ord(s[i:i+1]))
     ps = ps[0:-1] #strip trailing .
     print(ps)
 
 printDecimal = PrintDecimal # alias
 
 def CRC16(inpkt):
-    """Generates 16 bit crc compatible with ANSI 709.1 and 852
-
-       needs struct module
+    """ Returns 16 bit crc or inpkt packed binary string
+        compatible with ANSI 709.1 and 852
+        inpkt is bytes in python3 or str in python2
+        needs struct module
     """
+    inpkt = bytearray(inpkt)
     poly = 0x1021  # Generator Polynomial
     crc = 0xffff
     for element in inpkt :
         i = 0
-        byte = ord(element)
+        #byte = ord(element)
+        byte = element
         while i < 8 :
             crcbit = 0x0
             if (crc & 0x8000):
@@ -1976,16 +1991,19 @@ def CRC16(inpkt):
 crc16 = CRC16 # alias
 
 def CRC64(inpkt) :
-    """ Generates 64 bit crc of inpkt binary packed string inpkt
-       returns two 32 bit numbers for top and bottom of 64 bit crc
+    """ Returns 64 bit crc of inpkt binary packed string inpkt
+        inpkt is bytes in python3 or str in python2
+        returns tuple of two 32 bit numbers for top and bottom of 64 bit crc
     """
+    inpkt = bytearray(inpkt)
     polytop = 0x42f0e1eb
     polybot = 0xa9ea3693
     crctop  = 0xffffffff
     crcbot  = 0xffffffff
     for element in inpkt :
         i = 0
-        byte = ord(element)
+        #byte = ord(element)
+        byte = element
         while i < 8 :
             topbit = 0x0
             if (crctop & 0x80000000):
@@ -2009,7 +2027,7 @@ def CRC64(inpkt) :
             i += 1
     crctop = crctop ^ 0xffffffff
     crcbot = crcbot ^ 0xffffffff
-    return [crctop,crcbot]
+    return (crctop, crcbot)
 
 crc64 = CRC64 # alias
 

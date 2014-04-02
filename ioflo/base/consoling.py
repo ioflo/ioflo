@@ -46,8 +46,8 @@ class Console(object):
 
         """
         self._name = name or self._Name
-        self._verbosity = int(verbosity) if verbosity != None else self._Verbosity
-        self._flushy = flushy if flushy != None else self._Flushy
+        self._verbosity = int(verbosity) if verbosity is not None else self._Verbosity
+        self._flushy = flushy if flushy is not None else self._Flushy
         self._path = path or self._Path
         self._file = None
 
@@ -56,13 +56,13 @@ class Console(object):
     def reinit(self, verbosity=None, flushy=None, path=None):
         """ Selectively reinit non None arguments"""
 
-        if verbosity != None:
+        if verbosity is not None:
             self._verbosity = int(verbosity)
 
-        if flushy != None:
+        if flushy is not None:
             self._flushy = flushy
 
-        if path != None:
+        if path is not None:
             self._path = path
             self.reopen()
 

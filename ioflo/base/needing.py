@@ -350,7 +350,7 @@ class UpdateNeed(MarkerNeed):
         """
         result = False
         mark = share.marks.get(frame.name) #get mark from mark frame name key
-        if mark and mark.stamp != None:
+        if mark and mark.stamp is not None and share.stamp is not None:
             result = share.stamp >= mark.stamp #equals so catch updates on enter
 
         console.profuse("Need Share {0} update in Frame {1} = {2}\n".format(
@@ -373,7 +373,7 @@ class ChangeNeed(MarkerNeed):
         """
         result = False
         mark = share.marks.get(frame.name) #get mark from mark frame name key
-        if mark and mark.data != None:
+        if mark and mark.data is not None:
             for field, value in share.items():
                 try:
                     if getattr(mark.data, field) != value:

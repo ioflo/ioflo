@@ -338,7 +338,7 @@ def FilterByField(path = './test/logs/', filein = "data.txt",
 
     for i, chunk in enumerate(chunks): #gets first occurrence
         for key, index in indices.items():
-            if (key in chunk) and (index == None):
+            if (key in chunk) and (index is None):
                 indices[key] = i #index
 
     for key, index in indices.items():
@@ -448,13 +448,13 @@ def PlotSalinity4(path = './test/logs/', name = "position.txt",
     print chunks
 
     for i, chunk in enumerate(chunks): #gets first occurrence
-        if ('north' in chunk) and (ni == None):
+        if ('north' in chunk) and (ni is None):
             ni = i
-        elif ('east' in chunk) and (ei == None):
+        elif ('east' in chunk) and (ei is None):
             ei = i
-        elif ('salinity') in chunk  and (si == None) :
+        elif ('salinity') in chunk  and (si is None) :
             si = i
-        elif ('depth') in chunk  and (di == None) :
+        elif ('depth') in chunk  and (di is None) :
             di = i
 
     print "ni = %d ei = %d si = %d di = %d" % (ni,ei,si, di)
@@ -608,13 +608,13 @@ def PlotSalinity3(path = './test/logs/', name = "position.txt",
     print chunks
 
     for i, chunk in enumerate(chunks): #gets first occurrence
-        if ('north' in chunk) and (ni == None):
+        if ('north' in chunk) and (ni is None):
             ni = i
-        elif ('east' in chunk) and (ei == None):
+        elif ('east' in chunk) and (ei is None):
             ei = i
-        elif ('salinity') in chunk  and (si == None) :
+        elif ('salinity') in chunk  and (si is None) :
             si = i
-        elif ('depth') in chunk  and (di == None) :
+        elif ('depth') in chunk  and (di is None) :
             di = i
 
     print "ni = %d ei = %d si = %d di = %d" % (ni,ei,si, di)
@@ -757,11 +757,11 @@ def PlotSalinity2(path = './test/logs/', name = "position.txt",
     print chunks
 
     for i, chunk in enumerate(chunks): #gets first occurrence
-        if ('north' in chunk) and (ni == None):
+        if ('north' in chunk) and (ni is None):
             ni = i
-        elif ('east' in chunk) and (ei == None):
+        elif ('east' in chunk) and (ei is None):
             ei = i
-        elif ('salinity') in chunk  and (si == None) :
+        elif ('salinity') in chunk  and (si is None) :
             si = i
 
     if (ni is None) or (ei is None) or (si is None) :
@@ -893,11 +893,11 @@ def PlotSalinity(path = './test/logs/', name = "position.txt",
     print chunks
 
     for i, chunk in enumerate(chunks): #gets first occurrence
-        if ('north' in chunk) and (ni == None):
+        if ('north' in chunk) and (ni is None):
             ni = i
-        elif ('east' in chunk) and (ei == None):
+        elif ('east' in chunk) and (ei is None):
             ei = i
-        elif ('salinity') in chunk  and (si == None) :
+        elif ('salinity') in chunk  and (si is None) :
             si = i
 
     if (ni is None) or (ei is None) or (si is None) :
@@ -1006,7 +1006,7 @@ def PlotTemp(path = './test/logs/', name = "position.txt",
     print chunks
 
     for i, chunk in enumerate(chunks): #gets first occurrence
-        if ('north' in chunk) and (ni == None):
+        if ('north' in chunk) and (ni is None):
             ni = i
         elif ('east' in chunk) and (ei is None):
             ei = i
@@ -1125,9 +1125,9 @@ def PlotLoggeeVsTime(loggee = 'speed', units = '',
     print chunks
 
     for i, chunk in enumerate(chunks): #gets first occurrence
-        if ('_time' in chunk) and (ti == None):
+        if ('_time' in chunk) and (ti is None):
             ti = i
-        elif (loggee in chunk) and (li == None):
+        elif (loggee in chunk) and (li is None):
             li = i
 
 
@@ -1224,11 +1224,11 @@ def PlotLoggeesVsTime(loggees = [], units = [],
     #print chunks
 
     for i, chunk in enumerate(chunks): #gets first occurrence
-        if ('_time' in chunk) and (ti == None):
+        if ('_time' in chunk) and (ti is None):
             ti = i
         else:
             for j, loggee in enumerate(loggees):
-                if (loggee in chunk) and (lis[j] == None):
+                if (loggee in chunk) and (lis[j] is None):
                     lis[j] = i
 
     if (ti is None):
