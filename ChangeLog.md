@@ -1,6 +1,14 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+20140401
+---------
+
+v0.9.19
+
+Now running in Python3 basic test missions. Probably some corner conditions
+
 
 ---------
 20140401
