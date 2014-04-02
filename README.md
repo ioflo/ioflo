@@ -69,7 +69,7 @@ house box1
    framer vehiclesim be active first vehicle_run
       frame vehicle_run
          do simulator motion uuv
-   
+
    framer mission be active first northleg
       frame northleg
          set elapsed to 20.0
@@ -77,24 +77,24 @@ house box1
          set depth to 5.0
          set speed to 2.5
          go next if elapsed >= goal
-      
+
       frame eastleg
          set heading to 90.0
          go next if elapsed >= goal
-      
+
       frame southleg
          set heading to 180.0
          go next if elapsed >= goal
-      
+
       frame westleg
          set heading to 270.0
          go next if elapsed >= goal
-      
-      frame mission_stop  
+
+      frame mission_stop
          bid stop vehiclesim
          bid stop autopilot
          bid stop me
-   
+
    framer autopilot be active first autopilot_run
       frame autopilot_run
          do controller pid speed
@@ -175,62 +175,12 @@ Aborting all ready taskers ...
 
 ```
 
+## Documentation
 
-* Automated reasoning engine
+![Overview](http://ioflo.com/documentation/architecture-overview/)
 
-* Automation operating system
+![FloScriptGuild](http://ioflo.com/documentation/user-guide/)
 
-* Flow based component programming frameowork
+## MIT License
 
-* Hierarchical action framework
-
-* Concurrent micro-threading framework
-
-* Comprehensive pub/sub framework
-
-* Dependency injection framework
-
-* Contectual Computation Engine
-
-
-
-
-![FloScript](docs/images/floscript_logo.png?raw=true)
-
-# FloScript
-
-* Convenient, user friedly configuration language for ioflo
-
-* Hierachical
-
-* Expressive
-
-* Extensible
-
-* Scalable
-
-* Practicle
-
-
-### Apache v2 license
-
-# Quick Start
-
-
-# Introduction
-
-
-![SysArch](docs/images/IofloSysArch.png?raw=true)
-
-![ArchParts](docs/images/IofloArchParts.png?raw=true)
-
-![Contexts](docs/images/IofloContexts.png?raw=true)
-
-![Envelope](docs/images/IofloReliableEnvelope.png?raw=true)
-
-
-
-
-
-![ORecurse](docs/images/ioflo_o_recurse.png?raw=true)
-
+### Python2.6, Python2.7, Python3.4
