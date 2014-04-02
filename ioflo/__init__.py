@@ -5,7 +5,7 @@
 
 from __future__ import division
 
-__version__ = "0.9.18"
+__version__ = "0.9.19"
 __author__ = "Samuel M. Smith"
 __license__ =  "MIT"
 
