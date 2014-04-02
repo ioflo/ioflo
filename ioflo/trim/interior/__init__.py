@@ -2,10 +2,10 @@
 
 """
 #print("\nPackage at {0}".format( __path__[0]))
+import importlib
 
 __all__ = ['plain', 'fancy']
 
 for m in __all__:
-    exec("from . import {0}".format(m)) #relative import
-    #print "Imported {0}".format(globals().get(m,''))
+    importlib.import_module(".{0}".format(m), package='ioflo.trim.interior')
 
