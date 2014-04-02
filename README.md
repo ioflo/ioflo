@@ -181,8 +181,12 @@ http://ioflo.com/documentation/architecture-overview/
 
 http://ioflo.com/documentation/user-guide/
 
-#### MIT License
+#### License
+MIT
 
-#### Python 2.6
-#### Python 2.7
-#### Python 3.4
+#### Supported Python Versions
+Python 2.6
+
+Python 2.7
+
+Python 3.4
