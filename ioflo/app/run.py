@@ -36,7 +36,7 @@ def parseArgs():
             help="Skedder name.")
     p.add_argument('-f','--filename',
             action='store',
-            default='../plan/box1.flo',
+            required=True,
             help="File path to FloScript file.")
     p.add_argument('-b','--behaviors',
             action='store',
@@ -69,7 +69,7 @@ def parseArgs():
     return args
 
 def run(    name="skedder",
-            filename="../plan/box1.flo",
+            filename="",
             period=0.2,
             realtime=False,
             verbose=0,

@@ -31,7 +31,7 @@ def main():
                         behaviors=args.behaviors,
                         username=args.username,
                         password=args.password,
-                        statistics=args.statistics, )
+                        statistics=args.statistics)
 
 if __name__ == '__main__':
     main()
