@@ -2,6 +2,7 @@
 #print "\Module at%s" % __path__[0]
 
 import argparse
+import os
 
 from ..base import skedding, consoling
 
@@ -52,10 +53,13 @@ def parseArgs():
             default='',
             help="Password.")
     p.add_argument('-S','--statistics',
-            action='store_const',
+            action='store',
+            nargs='?',
             const=True,
             default=False,
-            help="Profile and compute performance statistics.")
+            help=("Profile and compute performance statistics. "
+            "Put statistics into file path given by optional argument. "
+            "Default statistics file path is /tmp/ioflo/profile/NAME. "))
     args = p.parse_args()
 
     if args.verbose in consoling.VERBIAGE_NAMES:
@@ -69,14 +73,19 @@ def parseArgs():
     return args
 
 def run(    name="skedder",
-            filename="",
-            period=0.2,
-            realtime=False,
-            verbose=0,
+            period=0.1,
+            stamp=0.0,
+            real=False,
+            filepath="",
             behaviors=None,
             username="",
             password="",
-            statistics = False):
+            mode=None,
+            houses=None,
+            metas=None,
+            preloads=None,
+            verbose=0,
+            statistics = ''):
     """ Run Skedder"""
     console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbose])
     console.terse( "\n----------------------\n")
@@ -84,11 +93,16 @@ def run(    name="skedder",
 
     skedder = skedding.Skedder(name=name,
                                period=period,
-                               real=realtime,
-                               filepath=filename,
+                               real=real,
+                               stamp=stamp,
+                               filepath=filepath,
                                behaviors=behaviors,
                                username=username,
-                               password=password, )
+                               password=password,
+                               mode=mode,
+                               houses=houses,
+                               metas=metas,
+                               preloads=preloads)
     if skedder.build():
         console.terse( "\n----------------------\n")
         console.terse( "Starting mission plan '{0}' from file:\n    {1}\n".format(
@@ -98,9 +112,19 @@ def run(    name="skedder",
         else:
             import cProfile
             import pstats
+            if isinstance(statistics, bool): #use default
+                statistics = os.path.join('/tmp', 'ioflo', 'profiles', 'name')
+            try:
+                statfilepath = os.path.abspath(os.path.expanduser(statistics))
+                if not os.path.exists(statfilepath):
+                    os.makedirs(os.path.dirname(statfilepath))
+            except OSError as ex:
+                console.terse("Error: creating server profile statistics file"
+                              " '{0}'\n{1}'\n".format(statfilepath, ex))
+                raise
 
-            cProfile.runctx('skedder.run()',globals(),locals(), './profiles/skedder')
-            p = pstats.Stats('./profiles/skedder')
+            cProfile.runctx('skedder.run()', globals(), locals(), statfilepath)
+            p = pstats.Stats(statfilepath)
             p.sort_stats('time').print_stats()
             p.print_callers()
             p.print_callees()
@@ -114,55 +138,56 @@ def run(    name="skedder",
     return skedder
 
 Run = run # alias for backwards compat
+start = run # alias for backwards compat
 
-def start(
-            name="skedder",
-            period=0.1,
-            stamp=0.0,
-            real=False,
-            filepath="",
-            behaviors=None,
-            username="",
-            password="",
-            mode=None,
-            houses=None,
-            metas=None,
-            preloads=None,
-            verbose=0,
-        ):
-    """ Start Skedder, build and run """
-    console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbose])
-    console.terse( "\n----------------------\n")
-    console.terse( "Building Skedder '{0}' ...\n".format(name))
+#def start(
+            #name="skedder",
+            #period=0.1,
+            #stamp=0.0,
+            #real=False,
+            #filepath="",
+            #behaviors=None,
+            #username="",
+            #password="",
+            #mode=None,
+            #houses=None,
+            #metas=None,
+            #preloads=None,
+            #verbose=0,
+        #):
+    #""" Start Skedder, build and run """
+    #console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbose])
+    #console.terse( "\n----------------------\n")
+    #console.terse( "Building Skedder '{0}' ...\n".format(name))
 
-    if not filepath:
-        console.terse( "\n\n**********************************\n")
-        console.terse("Empty filepath. Aborting!!!")
-        return
+    #if not filepath:
+        #console.terse( "\n\n**********************************\n")
+        #console.terse("Empty filepath. Aborting!!!")
+        #return
 
-    skedder = skedding.Skedder(name=name,
-                               period=period,
-                               stamp=stamp,
-                               real=real,
-                               filepath=filepath,
-                               behaviors=behaviors,
-                               username=username,
-                               password=password,
-                               mode=mode,
-                               houses=houses,
-                               metas=metas,
-                               preloads=preloads, )
-    if skedder.build():
-        console.terse( "\n----------------------\n")
-        console.terse( "\n\nStarting mission plan '{0}' ... from file {1}\n".format(
-                skedder.plan, skedder.filepath))
-        skedder.run()
-    else:
-        console.terse( "\n\n**********************************\n")
-        console.terse( "Failure building mission from file:\n{0}\n".format(
-                 skedder.filepath))
-        console.terse( "************************************\n\n")
+    #skedder = skedding.Skedder(name=name,
+                               #period=period,
+                               #stamp=stamp,
+                               #real=real,
+                               #filepath=filepath,
+                               #behaviors=behaviors,
+                               #username=username,
+                               #password=password,
+                               #mode=mode,
+                               #houses=houses,
+                               #metas=metas,
+                               #preloads=preloads, )
+    #if skedder.build():
+        #console.terse( "\n----------------------\n")
+        #console.terse( "\n\nStarting mission plan '{0}' ... from file {1}\n".format(
+                #skedder.plan, skedder.filepath))
+        #skedder.run()
+    #else:
+        #console.terse( "\n\n**********************************\n")
+        #console.terse( "Failure building mission from file:\n{0}\n".format(
+                 #skedder.filepath))
+        #console.terse( "************************************\n\n")
 
-    console.terse( "\n----------------------\n")
-    return skedder
+    #console.terse( "\n----------------------\n")
+    #return skedder
 

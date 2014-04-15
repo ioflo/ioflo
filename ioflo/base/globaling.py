@@ -6,6 +6,12 @@
 import sys
 if sys.version > '3':
     long = int
+    basestring = (str, bytes)
+    unicode = str
+else:
+    long = long
+    basestring = basestring
+    unicode = unicode
 
 import math
 import re
@@ -122,14 +128,5 @@ REO_LatLonSW = re.compile(r'^(\d+)[S,W,s,w](\d+\.\d+)$')
 #   deg = float(ll[0][0])
 #   min = float(ll[0][1])
 #   fracdeg = deg + min/60.0
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-if __name__ == "__main__":
-    Test()
 
 
