@@ -2,6 +2,25 @@
 CHANGE LOG
 -------------------
 ---------
+20140415
+---------
+
+v0.9.21
+
+Refactored ioflo.app.run.run profiling and parameters
+Now ioflo.app.run.start is just and alias for ioflo.app.run.run
+
+
+---------
+201404XX
+---------
+
+v0.9.20
+
+Everything seems to be running in Python3
+
+
+---------
 20140401
 ---------
 
