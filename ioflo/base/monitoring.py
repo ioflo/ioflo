@@ -74,7 +74,6 @@ class Monitor(tasking.Tasker):
         self.server.close()
         self.console.close() #close file descriptor to console
 
-
     def makeRunner(self):
         """generator factory function to create generator to run this monitor
         """
@@ -176,7 +175,6 @@ class MonitorOut(Monitor):
        Usage:
     """
 
-
     def __init__(self, host = '', port = 60000, dhost = '10.0.2.162', dport = 23456, **kw):
         """Initialize instance.
 
@@ -198,11 +196,7 @@ class MonitorOut(Monitor):
            .server = non blocking udp socket server object
            .dha = destination address (host, port)
         """
-
         super(MonitorOut,self).__init__(host = host, port = port, dhost = dhost, dport = dport, **kw)
-
-
-
 
     def makeRunner(self):
         """generator factory function to create generator to run this monitor
@@ -281,49 +275,4 @@ class MonitorOut(Monitor):
                 self.done = True
                 break #break out of while loop. this will cause stopIteration
 
-
-def TestOut():
-    """Module self test
-
-
-
-    """
-
-    m = MonitorOut(store = storing.Store())
-    print("ready to go")
-    status = m.start()
-
-    while (not (status == STOPPED or status == ABORTED)):
-        status = m.run()
-
-    #status = m.stop()
-
-
-
-def Test():
-    """Module self test
-
-
-
-    """
-    import storing
-
-    m = Monitor(store = storing.Store())
-    print("ready to go")
-    status = m.start()
-
-    while (not (status == STOPPED or status == ABORTED)):
-        try:
-            status = m.run()
-
-        except KeyboardInterrupt: #CNTL-C shutdown skedder
-            print("    Keyboard Interrupt manual shutdown of taskers ...")
-            m.server.close()
-
-
-            break
-
-
-if __name__ == "__main__":
-    Test()
 

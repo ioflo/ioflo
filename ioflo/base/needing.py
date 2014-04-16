@@ -9,7 +9,6 @@ from collections import deque
 import inspect
 
 
-
 from .globaling import *
 from .odicting import odict
 from . import aiding
@@ -61,28 +60,21 @@ class Need(acting.Actor):
 
         return result
 
-#special needs
-class AlwaysNeed(Need):
-    """AlwaysNeed Need
-    """
+class NeedAlways(Need):
+    """NeedAlways Need  Special Need"""
     def action(self, **kw):
         """Always return true"""
-
         result = True
         console.profuse("Need Always = {0}\n".format(result))
-
         return result
 
-
-class DoneNeed(Need):
-    """DoneNeed Need
-
-       parameters:
-          tasker
-    """
+class NeedDone(Need):
+    """NeedDone Need Special Need"""
     def action(self, tasker, **kw):
-        """Check if  tasker done
-
+        """
+        Check if  tasker done
+        parameters:
+            tasker
         """
         result = tasker.done
         console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result))
@@ -93,7 +85,7 @@ class DoneNeed(Need):
         """Resolves value (tasker) link that is passed in as tasker parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(DoneNeed, self).resolve( **kwa)
+        parms = super(NeedDone, self).resolve( **kwa)
 
         if not isinstance(tasker, tasking.Tasker): # name of tasker so resolve
             if tasker not in tasking.Tasker.Names:
@@ -107,7 +99,6 @@ class DoneNeed(Need):
 
         return parms #return items are updated in original act parms
 
-
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
             Reverting any Frame links to name strings,
@@ -118,7 +109,7 @@ class DoneNeed(Need):
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
-        parms = super(StatusNeed,self).cloneParms(parms, clones, **kw)
+        parms = super(NeedStatus,self).cloneParms(parms, clones, **kw)
 
         tasker = parms.get('tasker')
 
@@ -133,15 +124,15 @@ class DoneNeed(Need):
 
         return parms
 
-class StatusNeed(Need):
-    """StatusNeed Need
-
-       parameters:
+class NeedStatus(Need):
+    """NeedStatus Need Special Need """
+    def action(self, tasker, status, **kw):
+        """
+        Check if  tasker done
+        parameters:
           tasker
           status
-    """
-    def action(self, tasker, status, **kw):
-        """Check if  tasker done """
+        """
 
         result = (tasker.status == status)
         console.profuse("Need Tasker {0} status is {1} = {2}\n".format(
@@ -153,7 +144,7 @@ class StatusNeed(Need):
         """Resolves value (tasker) link that is passed in as parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(StatusNeed, self).resolve( **kwa)
+        parms = super(NeedStatus, self).resolve( **kwa)
 
         if not isinstance(tasker, tasking.Tasker): #so name of tasker
             if tasker not in tasking.Tasker.Names:
@@ -163,7 +154,6 @@ class StatusNeed(Need):
         parms['tasker'] = tasker #replace name with valid link
 
         return parms #return items are updated in original act parms
-
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -175,7 +165,7 @@ class StatusNeed(Need):
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
-        parms = super(StatusNeed,self).cloneParms(parms, clones, **kw)
+        parms = super(NeedStatus,self).cloneParms(parms, clones, **kw)
 
         tasker = parms.get('tasker')
 
@@ -190,8 +180,8 @@ class StatusNeed(Need):
 
         return parms
 
-class BooleanNeed(Need):
-    """BooleanNeed Need
+class NeedBoolean(Need):
+    """NeedBoolean Need Special Need
 
        if state
     """
@@ -202,7 +192,6 @@ class BooleanNeed(Need):
               stateField = field key
 
         """
-
         if state[stateField]:
             result = True
         else:
@@ -210,11 +199,10 @@ class BooleanNeed(Need):
         console.profuse("Need Boolean, if {0}[{1}]: = {2}\n".format(
             state.name, stateField, result))
 
-
         return result
 
-class DirectNeed(Need):
-    """DirectNeed Need
+class NeedDirect(Need):
+    """NeedDirect Need
 
        if state comparison goal [+- tolerance]
     """
@@ -236,8 +224,8 @@ class DirectNeed(Need):
 
         return result
 
-class IndirectNeed(Need):
-    """IndirectNeed Need
+class NeedIndirect(Need):
+    """NeedIndirect Need
 
        if state comparison goal [+- tolerance]
     """
@@ -259,8 +247,16 @@ class IndirectNeed(Need):
 
         return result
 
-class MarkerNeed(Need):
-    """ MarkerNeed is base class for needs that insert markers on resolvelinks
+class NeedMarker(Need):
+    """
+    NeedMarker is base class for needs that insert markers on resolvelinks
+    Special Need
+
+    """
+    def resolve(self, share, frame, marker, **kwa):
+        """
+        Resolves frame name link and then
+           inserts marker as first enact in the resolved frame
 
         parms:
             share       share ref holding mark
@@ -268,13 +264,8 @@ class MarkerNeed(Need):
             frame       only used in resolvelinks
             marker      only used in resolvelinks
 
-    """
-    def resolve(self, share, frame, marker, **kwa):
-        """ Resolves frame name link and then
-           inserts marker as first enact in the resolved frame
-
         """
-        parms = super(MarkerNeed, self).resolve( **kwa)
+        parms = super(NeedMarker, self).resolve( **kwa)
 
         if not isinstance(frame, framing.Frame): # must be pathname
             if frame not in framing.Frame.Names:
@@ -324,7 +315,7 @@ class MarkerNeed(Need):
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
-        parms = super(MarkerNeed,self).cloneParms(parms, clones, **kw)
+        parms = super(NeedMarker,self).cloneParms(parms, clones, **kw)
 
         share = parms.get('share')
         name = parms.get('name')
@@ -336,17 +327,17 @@ class MarkerNeed(Need):
 
         return parms
 
-class UpdateNeed(MarkerNeed):
-    """ UpdateNeed Need
+class NeedUpdate(NeedMarker):
+    """ NeedUpdate Need Special Need """
+    def action(self, share, frame, **kw):
+        """
+        Check if share updated while in frame/mark denoted by name key if any
+            Default is False
 
         parameters:
             share = resolved share that is marked
             frame = resolved frame where marker is placed
             marker = marker kind name
-    """
-    def action(self, share, frame, **kw):
-        """ Check if share updated while in frame/mark denoted by name key if any
-            Default is False
         """
         result = False
         mark = share.marks.get(frame.name) #get mark from mark frame name key
@@ -358,18 +349,17 @@ class UpdateNeed(MarkerNeed):
 
         return result
 
-class ChangeNeed(MarkerNeed):
-    """ChangeNeed Need
-
-       parameters:
+class NeedChange(NeedMarker):
+    """NeedChange Need Special Need"""
+    def action(self, share, frame, **kw):
+        """
+        Check if share data changed while in frame/mark denoted by name key if any
+            Default is False
+        parameters:
             share
             name
             frame       only used in resolvelinks
             marker      only used in resolvelinks
-    """
-    def action(self, share, frame, **kw):
-        """ Check if share data changed while in frame/mark denoted by name key if any
-            Default is False
         """
         result = False
         mark = share.marks.get(frame.name) #get mark from mark frame name key
@@ -390,13 +380,3 @@ class ChangeNeed(MarkerNeed):
             share.name, frame.name, result))
 
         return result
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    test()

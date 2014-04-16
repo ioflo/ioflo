@@ -15,19 +15,7 @@ from ....base import framing
 from ....base.consoling import getConsole
 console = getConsole()
 
-
-def CreateInstances(store):
-    """ Create action instances. Recreate with each new house after clear registry
-
-        init protocol:  inode  and (ipath, ival, iown)
-    """
-    ClonerFramer(name='clonerFramer', store=store).ioinits.update(
-        index=('index', 0, True))
-
-    ClonerFramer(name='framerCloner', store=store).ioinits.update(
-        index=('index', 0, True))
-
-class ClonerFramer(deeding.ParamDeed):
+class FramerCloner(deeding.ParamDeed):
     """ CloneDeed creates a new aux framer as clone of given framer and adds
         it to the auxes of a given frame. Default is current frame.
 
@@ -44,10 +32,10 @@ class ClonerFramer(deeding.ParamDeed):
     def __init__(self, **kwa):
         """Initialize Instance """
         if 'preface' not in kwa:
-            kwa['preface'] = 'ClonerFramer'
+            kwa['preface'] = 'FramerCloner'
 
         #call super class method
-        super(ClonerFramer,self).__init__(**kwa)
+        super(FramerCloner,self).__init__(**kwa)
 
     def cloneParms(self, parms, clones, **kwa):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -59,7 +47,7 @@ class ClonerFramer(deeding.ParamDeed):
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
-        parms = super(ClonerFramer,self).cloneParms(parms, clones, **kwa)
+        parms = super(FramerCloner,self).cloneParms(parms, clones, **kwa)
 
         framer = parms.get('framer')
         frame = parms.get('frame')
@@ -84,7 +72,7 @@ class ClonerFramer(deeding.ParamDeed):
             since framer may not be current framer at build time
         """
         parms = {}
-        parms.update(super(ClonerFramer,self).resolveLinks(_act, **kwa))
+        parms.update(super(FramerCloner,self).resolveLinks(_act, **kwa))
 
         parms['framer'] = framing.resolveFramer(framer, who=self.name)
         parms['frame'] = framing.resolveFrame(frame, who=self.name)
@@ -100,13 +88,3 @@ class ClonerFramer(deeding.ParamDeed):
         index.value += 1
 
         return None
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    Test()

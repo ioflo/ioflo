@@ -15,7 +15,6 @@ import time
 import copy
 from collections import deque #double ended que, pronounced deck
 
-
 from .globaling import *
 
 from . import aiding
@@ -23,7 +22,6 @@ from . import excepting
 
 from .consoling import getConsole
 console = getConsole()
-
 
 class NMEAParser(object):
     """NMEA Serial String Parser Object
@@ -72,7 +70,7 @@ class NMEAParser(object):
 
     def __init__(self):
         """Initialize instance   """
-
+        pass
 
     def validate(self,sentence):
         """   Validates NMEA string and strips off leading $ and trailing optional
@@ -122,32 +120,12 @@ class NMEAParser(object):
 
         return sentence
 
-
-
     def parse(self, sentence):
         """parse nemea sentence """
 
         chunks = sentence.split(',') #chunks are comma delimited
 
-
-
     def validateFile(self, fname):
         fp = open(fname,'r')
-
         valid = True
-
         fp.close()
-
-#Function Definitions
-
-
-def Test(verbose = True):
-    """tests core code.
-
-
-    """
-    pass
-
-if __name__ == "__main__":
-    #module test routines
-    Test()

@@ -30,9 +30,7 @@ from .consoling import getConsole
 console = getConsole()
 
 class Poke(acting.Actor):
-    """Poke Class to put values into explicit shares
-
-    """
+    """Poke Class to put values into explicit shares"""
     Registry = odict()
 
     def action(self, share, data, **kw):
@@ -41,11 +39,8 @@ class Poke(acting.Actor):
 
         share.update(data)
 
-
-class DirectPoke(Poke):
-    """Direct Poke Class to put direct data values into destination share
-
-    """
+class PokeDirect(Poke):
+    """Class to put direct data values into destination share"""
     def action(self, data, destination, **kw):
         """ Put data into share
             parameters:
@@ -57,8 +52,9 @@ class DirectPoke(Poke):
         destination.update(data)
 
 
-class IndirectPoke(Poke):
-    """Indirect Poke Class to copy values from one share to another
+class PokeIndirect(Poke):
+    """
+    Class to copy values from one share to another
        based on source and destination field lists
 
     """
@@ -92,10 +88,8 @@ class IndirectPoke(Poke):
                     data, destination.name))
         return None
 
-class DirectInc(Poke):
-    """Direct Poke Class to put direct data values into destination share
-
-    """
+class IncDirect(Poke):
+    """Class to incremate destination share by direct data values"""
     def action(self, destination, data, **kw):
         """ Increment destinationFields in destination by values in data
 
@@ -117,8 +111,9 @@ class DirectInc(Poke):
             console.profuse("Inc {0} in {1} by {2} to {3}\n".format(
                 data.keys(), destination.name, data.values(), dstData.values()))
 
-class IndirectInc(Poke):
-    """Indirect Poke Class to copy values from one share to another
+class IncIndirect(Poke):
+    """
+    Class to increment values in one share with values from another share
        based on source and destination field lists
 
     """
@@ -141,14 +136,3 @@ class IndirectInc(Poke):
         else:
             console.profuse("Inc {0} in {1} from {2} in {3} to {4}\n".format(
                 destinationFields, destination.name, sourceFields, source.name, data.values))
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    test()
-

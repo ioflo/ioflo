@@ -1463,17 +1463,3 @@ def Nudge(dh = 0.0, dv = 0.0):
 
     setp(a,position = s)
 
-
-
-def Test():
-    """tests core code.
-
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    #module test routines
-    Test()
-

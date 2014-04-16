@@ -26,12 +26,9 @@ console = getConsole()
 
 
 class Want(acting.Actor):
-    """Wnat Class for requesting control via skedder using .desire attribute
+    """
+    Class for requesting control via skedder using .desire attribute
        of explicit peer tasker generators
-
-       inherited attributes
-          .name = unique name for actor instance
-          .store = shared data store
 
     """
     Registry = odict()
@@ -77,7 +74,7 @@ class Want(acting.Actor):
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
-        parms = super(StatusNeed,self).cloneParms(parms, clones, **kw)
+        parms = super(Want, self).cloneParms(parms, clones, **kw)
         taskers = parms.get('taskers')
         links = []
         for tasker in taskers:
@@ -95,8 +92,8 @@ class Want(acting.Actor):
 
         return parms
 
-class StartWant(Want):
-    """StartWant Want
+class WantStart(Want):
+    """WantStart Want
        bid start tasker [taskers ...]
        bid start all
        bid stort me #won't do anything
@@ -109,8 +106,8 @@ class StartWant(Want):
 
         return None
 
-class StopWant(Want):
-    """StopWant Want
+class WantStop(Want):
+    """WantStop Want
        bid stop tasker [tasker ...]
        bid stop all
        bid stop me
@@ -124,8 +121,8 @@ class StopWant(Want):
 
         return None
 
-class RunWant(Want):
-    """RunWant Want
+class WantRun(Want):
+    """WantRun Want
        bid run tasker [taskers ...]
        bid run all
        bid run me #won't do anything
@@ -137,13 +134,3 @@ class RunWant(Want):
             console.profuse( "Bid run {0}\n".format(tasker.name))
 
         return None
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-if __name__ == "__main__":
-    test()
-

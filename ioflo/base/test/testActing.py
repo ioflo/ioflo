@@ -25,7 +25,7 @@ def test():
     #depthDeed = DepthDeed(name = 'doDepth', store = store)
     #depthDeed(depth = 3.0)
 
-    #depthTrait = DepthTrait(name = 'useDepth', store = store)
+    #depthTrait = TraitDepth(name = 'useDepth', store = store)
     #depthTrait(depth = 4.0)
 
     #depthSpec = DepthSpec(name = 'optDepth', store = store)
@@ -35,10 +35,10 @@ def test():
     f = framing.Frame(store = store)
     fr.startFrame = f
 
-    #startFiat = StartFiat(name = 'tellStart', store = store)
+    #startFiat = FiatStart(name = 'tellStart', store = store)
     #startFiat(framer = fr)
 
-    #startWant = StartWant(name = 'askStart', store = store)
+    #startWant = WantStart(name = 'askStart', store = store)
     #startWant(framer = fr)
 
     #poke = Poke(name = 'put', store = store)

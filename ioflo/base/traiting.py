@@ -28,8 +28,8 @@ class Trait(acting.Actor):
     """
     Registry = odict()
 
-class DepthTrait(Trait):
-    """DepthTrait Trait
+class TraitDepth(Trait):
+    """TraitDepth Trait
 
     """
 
@@ -39,16 +39,3 @@ class DepthTrait(Trait):
         console.profuse( "Use depth of {0:0.3f}\n".format(value))
 
         return None
-
-
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    test()
-

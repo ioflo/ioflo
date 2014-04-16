@@ -202,7 +202,7 @@ def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=Non
         msg = "Base class '{0}' not subclass of Actor".format(base)
         raise excepting.RegisterError(msg)
 
-    name = aiding.reverseCamel(name, lower=False)
+    #name = aiding.reverseCamel(name, lower=False)
 
     attrs = odict()
     if registry:
@@ -925,16 +925,16 @@ class Marker(Actor):
 
         return parms
 
-class UpdateMarker(Marker):
-    """ UpdateMarker Class
+class MarkerUpdate(Marker):
+    """ MarkerUpdate Class
 
-        UpdateMarker is a special actor that acts on a share to mark the update by
+        MarkerUpdate is a special actor that acts on a share to mark the update by
             saving a copy of the last stamp
 
-        UpdateMarker works with UpdateNeed which does the comparison against the marked stamp.
+        MarkerUpdate works with NeedUpdate which does the comparison against the marked stamp.
 
-        Builder at parse time when it encounters an UpdateNeed,
-        creates the mark in the share and creates the appropriate UpdateMarker
+        Builder at parse time when it encounters an NeedUpdate,
+        creates the mark in the share and creates the appropriate MarkerUpdate
     """
     def action(self, share, frame, **kwa):
         """ Update mark in share
@@ -953,17 +953,17 @@ class UpdateMarker(Marker):
 
     def expose(self):
         """   """
-        console.terse("UpdateMarker {0}\n".format(self.name))
+        console.terse("MarkerUpdate {0}\n".format(self.name))
 
-class ChangeMarker(Marker):
-    """ ChangeMarker Class
+class MarkerChange(Marker):
+    """ MarkerChange Class
 
-        ChangeMarker is a special actor that acts on a share to mark save a copy
+        MarkerChange is a special actor that acts on a share to mark save a copy
         of the data in the mark for the share.
 
-        ChangeMarker works with ChangeNeed which does the comparison with the mark
+        MarkerChange works with NeedChange which does the comparison with the mark
 
-        Builder at parse time when it encounters a ChangeNeed,
+        Builder at parse time when it encounters a NeedChange,
         creates the mark in the share and creates the appropriate marker
     """
     def action(self, share, frame, **kwa):
@@ -983,5 +983,5 @@ class ChangeMarker(Marker):
 
     def expose(self):
         """   """
-        console.terse("ChangeMarker {0}\n".format(self.name))
+        console.terse("MarkerChange {0}\n".format(self.name))
 

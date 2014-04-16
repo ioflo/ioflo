@@ -75,8 +75,8 @@ class Complete(acting.Actor):
 
 
 
-class DoneComplete(Complete):
-    """DoneComplete Complete
+class CompleteDone(Complete):
+    """CompleteDone Complete
 
     """
     def action(self, framer = None, **kw):

@@ -2691,7 +2691,7 @@ class Builder(object):
 
 #------------------
     def makeDirectInc(self, destination, data):
-        """Make DirectInc act
+        """Make IncDirect act
 
            method must be wrapped in appropriate try excepts
         """
@@ -2720,7 +2720,7 @@ class Builder(object):
         return act
 
     def makeIndirectInc(self, destination, destinationFields, source, sourceFields):
-        """Make IndirectInc act
+        """Make IncIndirect act
 
            method must be wrapped in appropriate try excepts
         """
@@ -3067,7 +3067,7 @@ class Builder(object):
         return (self.makeMarkerNeed(kind, tokens, index))
 
     def makeMarkerNeed(self, kind, tokens, index):
-        """ Support method to make either UpdateNeed or ChangeNeed
+        """ Support method to make either NeedUpdate or NeedChange
             as determined by kind
         """
         frame = "" # name of marked frame

@@ -73,15 +73,13 @@ class Fiat(acting.Actor):
 
         return parms
 
-
-
-class ReadyFiat(Fiat):
-    """ReadyFiat Fiat
+class FiatReady(Fiat):
+    """FiatReady Fiat
 
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(ReadyFiat,self).__init__(**kw)
+        super(FiatReady,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """ready control for explicit slave tasker"""
@@ -90,13 +88,13 @@ class ReadyFiat(Fiat):
         status = tasker.runner.send(READY)
         return (status == READIED)
 
-class StartFiat(Fiat):
-    """StartFiat Fiat
+class FiatStart(Fiat):
+    """FiatStart Fiat
 
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(StartFiat,self).__init__(**kw)
+        super(FiatStart,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """start control for explicit slave tasker"""
@@ -105,13 +103,13 @@ class StartFiat(Fiat):
         status = tasker.runner.send(START)
         return (status == STARTED)
 
-class StopFiat(Fiat):
-    """StopFiat Fiat
+class FiatStop(Fiat):
+    """FiatStop Fiat
 
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(StopFiat,self).__init__(**kw)
+        super(FiatStop,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """stop control for explicit slave framer"""
@@ -120,13 +118,13 @@ class StopFiat(Fiat):
         status = tasker.runner.send(STOP)
         return (status == STOPPED)
 
-class RunFiat(Fiat):
-    """RunFiat Fiat
+class FiatRun(Fiat):
+    """FiatRun Fiat
 
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(RunFiat,self).__init__(**kw)
+        super(FiatRun,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """run control for explicit slave tasker"""
@@ -135,13 +133,13 @@ class RunFiat(Fiat):
         status = tasker.runner.send(RUN)
         return (status == RUNNING)
 
-class AbortFiat(Fiat):
-    """RunFiat Fiat
+class FiatAbort(Fiat):
+    """FiatAbort Fiat
 
     """
     def __init__(self, **kw):
         """Initialization method for instance."""
-        super(AbortFiat,self).__init__(**kw)
+        super(FiatAbort,self).__init__(**kw)
 
     def action(self, tasker, **kw):
         """abort control for explicit slave tasker"""
@@ -149,14 +147,3 @@ class AbortFiat(Fiat):
         console.profuse("Abort {0}\n".format(tasker.name))
         status = tasker.runner.send(ABORT)
         return (status == ABORTED)
-
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    test()

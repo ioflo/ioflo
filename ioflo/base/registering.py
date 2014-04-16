@@ -21,7 +21,8 @@ class RegisterType(type):
         super(RegisterType, cls).__init__(name, bases, attrs)
         if not hasattr(cls, 'Registry'):
             cls.Registry = odict()
-        rname = reverseCamel(name)
+        #rname = reverseCamel(name)
+        rname = name
         cls.__register__(   rname,
                             inits=getattr(cls, 'Inits', None),
                             ioinits=getattr(cls, 'Ioinits', None),

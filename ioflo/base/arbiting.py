@@ -18,8 +18,8 @@ console = getConsole()
 
 
 #Arbiter Class
-class ArbiterDeed(deeding.Deed):
-    """ArbiterDeed Deed Class
+class Arbiter(deeding.Deed):
+    """Arbiter Deed Class
        Generic Arbiter Class for Arbiters should be subclassed
 
     """
@@ -75,7 +75,7 @@ class ArbiterDeed(deeding.Deed):
            .store
 
         """
-        super(ArbiterDeed,self).__init__(**kw)
+        super(Arbiter,self).__init__(**kw)
 
         #create it if it does not already exist
         self.output = self.store.create(output).create(value = 0.0)
@@ -163,8 +163,8 @@ class ArbiterDeed(deeding.Deed):
         return truth
 
 #Switch Arbiter Class
-class SwitchArbiter(ArbiterDeed):
-    """SwitchArbiter ArbiterDeed Deed Class
+class ArbiterSwitch(Arbiter):
+    """ArbiterSwitch Arbiter Deed Class
 
 
     """
@@ -196,8 +196,8 @@ class SwitchArbiter(ArbiterDeed):
         self.output.stamp = stamp
 
 #Priority Arbiter Class
-class PriorityArbiter(ArbiterDeed):
-    """PriorityArbiter ArbiterDeed Deed Class
+class ArbiterPriority(Arbiter):
+    """ArbiterPriority Arbiter Deed Class
 
 
     """
@@ -243,8 +243,8 @@ class PriorityArbiter(ArbiterDeed):
             self.output.stamp = stamp
 
 #Trusted Arbiter Class
-class TrustedArbiter(ArbiterDeed):
-    """TrustedArbiter ArbiterDeed Deed Class
+class ArbiterTrusted(Arbiter):
+    """ArbiterTrusted Arbiter Deed Class
 
 
     """
@@ -296,8 +296,8 @@ class TrustedArbiter(ArbiterDeed):
             self.output.stamp = stamp
 
 #Weighted Arbiter Class
-class WeightedArbiter(ArbiterDeed):
-    """WeightedArbiter ArbiterDeed Deed Class
+class ArbiterWeighted(Arbiter):
+    """ArbiterWeighted Arbiter Deed Class
 
 
     """
@@ -361,128 +361,4 @@ class WeightedArbiter(ArbiterDeed):
             self.output.value = self.default.value
             self.output.truth = self.default.truth
             self.output.stamp = stamp
-
-
-
-
-
-def Test():
-    """Module Common self test
-
-    """
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-
-
-    in1 = store.create('inputs.in1').create(value = 1.0).truth = 0.5
-    in2 = store.create('inputs.in2').create(value = 2.0).truth = False
-    in3 = store.create('inputs.in3').create(value = 3.0).truth = None
-    in4 = store.create('inputs.in4').create(value = 4.0).truth = True
-    in5 = store.create('inputs.in5').create(value = 5.0).truth = 1.0
-
-    inputs = odict()
-    inputs['one'] = ('inputs.in1', True, 0.1)
-    inputs['two'] = ('inputs.in2', True, 0.5)
-    inputs['three'] = ('inputs.in3', True, 0.3)
-    inputs['four'] = ('inputs.in4', True, 0.5)
-    inputs['five'] = ('inputs.in5', True, 0.2)
-
-    print("\nTesting SwitchArbiter")
-    group = 'arbiters.switch'
-    output = 'switch.output'
-    arbiter = SwitchArbiter(name = 'Switch', store = store, output = output,
-                            group = group, inputs = inputs)
-    arbiter.expose()
-    store.expose()
-
-    arbiter.update()
-    arbiter.expose()
-
-    arbiter.insels.data.one = False
-    arbiter.update()
-    arbiter.expose()
-
-    print("\nTesting PriorityArbiter")
-    group = 'arbiters.priority'
-    output = 'priority.output'
-    arbiter = PriorityArbiter(name = 'Priority', store = store, output = output,
-                              group = group, inputs = inputs)
-    arbiter.expose()
-    store.expose()
-
-    arbiter.update()
-    arbiter.expose()
-
-    in2.truth = True
-    arbiter.insels.data.one = False
-    arbiter.update()
-    arbiter.expose()
-
-    in1.truth = 0.5
-    in2.truth = 0.6
-    in3.truth = 0.4
-    in4.truth = 0.2
-    in5.truth = 0.3
-    arbiter.default.truth = 0.7
-    arbiter.update()
-    arbiter.expose()
-
-
-    print("\nTesting TrustedArbiter")
-    group = 'arbiters.trusted'
-    output = 'trusted.output'
-    arbiter = TrustedArbiter(name = 'Trusted', store = store, output = output,
-                             group = group, inputs = inputs)
-    arbiter.expose()
-    store.expose()
-
-    arbiter.update()
-    arbiter.expose()
-
-    in4.truth = 0.7
-    arbiter.insels.data.one = False
-    arbiter.update()
-    arbiter.expose()
-
-    in5.truth = True
-    #arbiter.default.truth = 0.7
-    arbiter.update()
-    arbiter.expose()
-
-    in5.truth = False
-    arbiter.default.truth = 0.8
-    arbiter.update()
-    arbiter.expose()
-
-
-    print("\nTesting WeightedArbiter")
-    group = 'arbiters.weighted'
-    output = 'weighted.output'
-    arbiter = WeightedArbiter(name = 'Weighted', store = store, output = output,
-                              group = group, inputs = inputs)
-    arbiter.expose()
-    store.expose()
-
-    arbiter.update()
-    arbiter.expose()
-
-    in4.truth = 0.7
-    arbiter.insels.data.one = False
-    arbiter.update()
-    arbiter.expose()
-
-    in5.truth = True
-    arbiter.update()
-    arbiter.expose()
-
-    arbiter.default.truth = 0.8
-    arbiter.update()
-    arbiter.expose()
-
-
-if __name__ == "__main__":
-    test()
 

@@ -176,16 +176,3 @@ class House(registering.StoriedRegistry):
                 clone.name, self.name))
 
         return clonee # return primary clone of framer
-
-def Test():
-    """Module Common self test
-
-    """
-
-    house = House()
-
-
-
-
-if __name__ == "__main__":
-    Test()
