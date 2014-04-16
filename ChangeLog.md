@@ -1,6 +1,30 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+20140416
+---------
+
+v0.9.30
+
+Changed Class naming convention for Actors/Deed Registery to get rid of
+reverse camel convention. This was causing confusion to new users and it was the
+result of a now obsolete historical convention in the way IoFlo managed behavior
+registration for FloScript.
+
+Unfortunately this change breaks any FloScripts/behaviors (sub classes of Actor or Deed)
+that were created using the old convention. The FloScripts do not need to be changed
+but the ClassNames need to be changed so they will be found.
+
+The new Convention is to use Cap Camel Case for the Class Name but the order
+of the camel case segments is not reversed to generate the FloScript do verb name
+as previously.  Also when using .__register__ the name parameter argument value
+should be captital camel case not lower camel case.
+
+So everything is consistent now
+
+
 ---------
 20140415
 ---------
