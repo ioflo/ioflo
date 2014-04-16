@@ -20,7 +20,7 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-class SimulatorMotionUuv(deeding.LapseDeed):
+class SimulatorMotionUuv(deeding.DeedLapse):
     """UUV motion simulator class
     """
     Ioinits=odict(
@@ -317,7 +317,7 @@ class SimulatorMotionUuv(deeding.LapseDeed):
               (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east))
 
-class SimulatorMotionUsv(deeding.LapseDeed):
+class SimulatorMotionUsv(deeding.DeedLapse):
     """USV motion simulator class
     """
     Ioinits=odict(
@@ -517,7 +517,7 @@ class SimulatorMotionUsv(deeding.LapseDeed):
               (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east))
 
-class SimulatorSensorGps(deeding.LapseDeed):
+class SimulatorSensorGps(deeding.DeedLapse):
     """GPS sensor simulator class
     """
     Ioinits=odict(
@@ -688,8 +688,8 @@ class SimulatorSensorGps(deeding.LapseDeed):
               (self.position.data.north, self.position.data.east,
                self.velocity.data.north, self.velocity.data.east))
 
-class SimulatorSensorDvl(deeding.LapseDeed):
-    """DVLSensorSimulator LapseDeed Deed Class
+class SimulatorSensorDvl(deeding.DeedLapse):
+    """DVLSensorSimulator DeedLapse Deed Class
        DVL sensor simulator class
     """
     Ioinits=odict(
@@ -859,7 +859,7 @@ class SimulatorSensorDvl(deeding.LapseDeed):
                self.current.data.forward, self.current.data.starboard,
                self.altitude.value))
 
-class SimulatorSensorCompass(deeding.LapseDeed):
+class SimulatorSensorCompass(deeding.DeedLapse):
     """compass sensor simulator class
     """
     Ioinits = odict(
@@ -972,7 +972,7 @@ class SimulatorSensorCompass(deeding.LapseDeed):
               (self.output.value, self.parm.data.phase,
                self.parm.data.amp, self.parm.data.sigma))
 
-class SimulatorSalinityLinear(deeding.LapseDeed):
+class SimulatorSalinityLinear(deeding.DeedLapse):
     """linear salinity simulator class
     """
     Ioinits = odict(
@@ -1117,7 +1117,7 @@ class SimulatorSalinityLinear(deeding.LapseDeed):
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width,
                self.parm.data.layer, self.parm.data.shift))
 
-class SimulatorSalinitySinusoid(deeding.LapseDeed):
+class SimulatorSalinitySinusoid(deeding.DeedLapse):
     """salinity sensor simulator class
     """
     Ioinits = odict(
@@ -1244,7 +1244,7 @@ class SimulatorSalinitySinusoid(deeding.LapseDeed):
                self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width))
 
-class SimulatorGradient(deeding.LapseDeed):
+class SimulatorGradient(deeding.DeedLapse):
     """gradient simulator class
     """
     Ioinits = odict(

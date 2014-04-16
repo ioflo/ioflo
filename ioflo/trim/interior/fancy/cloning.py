@@ -15,7 +15,7 @@ from ....base import framing
 from ....base.consoling import getConsole
 console = getConsole()
 
-class FramerCloner(deeding.ParamDeed):
+class FramerCloner(deeding.DeedParam):
     """ CloneDeed creates a new aux framer as clone of given framer and adds
         it to the auxes of a given frame. Default is current frame.
 

@@ -23,8 +23,8 @@ console = getConsole()
 
 
 #Class definitions
-class ControllerPid(deeding.LapseDeed):
-    """PIDController LapseDeed Deed Class
+class ControllerPid(deeding.DeedLapse):
+    """PIDController DeedLapse Deed Class
        PID Controller Class
 
     """

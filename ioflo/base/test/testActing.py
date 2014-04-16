@@ -71,7 +71,7 @@ def testActorify():
 
 def testDeedify():
 
-    @deeding.deedify("blackSmith")
+    @deeding.deedify("BlackSmith")
     def hammer(self, x=1, z=2):
         """ hammer is a function"""
         print self

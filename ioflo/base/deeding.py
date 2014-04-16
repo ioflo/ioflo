@@ -74,12 +74,12 @@ class Deed(acting.Actor):
     Registry = odict()
     _Parametric = False # convert iois into attributes
 
-class ParamDeed(Deed):
+class DeedParam(Deed):
     """ Iois are converted to parms not attributes """
     _Parametric = True # convert iois into parms
 
-class SinceDeed(Deed):
-    """ SinceDeed
+class DeedSince(Deed):
+    """ DeedSince
         Generic Super Class acts if input updated Since last time ran
         knows time of current iteration and last time processed input
 
@@ -91,20 +91,20 @@ class SinceDeed(Deed):
     """
     def __init__(self, **kw):
         """Initialize Instance """
-        super(SinceDeed,self).__init__( **kw)
+        super(DeedSince,self).__init__( **kw)
         self.stamp = None
 
     def action(self, **kw):
         """Should call this on superclass  as first step of subclass action method  """
-        console.profuse("Actioning SinceDeed  {0}\n".format(self.name))
+        console.profuse("Actioning DeedSince  {0}\n".format(self.name))
         self.stamp = self.store.stamp
 
     def expose(self):
         """     """
         print("Deed %s stamp = %s" % (self.name, self.stamp))
 
-class LapseDeed(Deed):
-    """ LapseDeed
+class DeedLapse(Deed):
+    """ DeedLapse
         Generic base class for Deeds that need to
         keep track of lapsed time between iterations.
         Should be subclassed
@@ -118,7 +118,7 @@ class LapseDeed(Deed):
     """
     def __init__(self, **kwa):
         """Initialize Instance """
-        super(LapseDeed,self).__init__( **kwa)
+        super(DeedLapse,self).__init__( **kwa)
 
         self.stamp = None
         self.lapse = 0.0 #elapsed time in seconds between updates calculated on update
@@ -128,7 +128,7 @@ class LapseDeed(Deed):
             Override in subclass
             This is called by restarter action in enter context
         """
-        console.profuse("Restarting LapseDeed  {0}\n".format(self.name))
+        console.profuse("Restarting DeedLapse  {0}\n".format(self.name))
 
     def updateLapse(self):
         """Calculates a new time lapse based on stamp or if stamp is None then use store stamp
@@ -148,7 +148,7 @@ class LapseDeed(Deed):
 
     def action(self, **kwa):
         """    """
-        console.profuse("Actioning LapseDeed  {0}\n".format(self.name))
+        console.profuse("Actioning DeedLapse  {0}\n".format(self.name))
         self.updateLapse()
 
     def expose(self):
@@ -157,7 +157,7 @@ class LapseDeed(Deed):
 
     def resolve(self, **kwa):
         """ Create enact with RestarterActor to restart this Actor """
-        parms = super(LapseDeed, self).resolve( **kwa)
+        parms = super(DeedLapse, self).resolve( **kwa)
 
         kind = 'Restarter'
         restartAct = acting.Act( actor=kind,

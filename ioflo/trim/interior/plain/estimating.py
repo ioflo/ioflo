@@ -21,7 +21,7 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-class EstimatorPositionNfl(deeding.LapseDeed):
+class EstimatorPositionNfl(deeding.DeedLapse):
     """Estimator Position NonlinearFusion class
     """
     Ioinits = odict(

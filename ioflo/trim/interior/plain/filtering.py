@@ -20,7 +20,7 @@ from ....base.consoling import getConsole
 console = getConsole()
 
 
-class FilterSensorHeading(deeding.LapseDeed):
+class FilterSensorHeading(deeding.DeedLapse):
     """Class """
     Ioinits = odict(
         group = 'filter.sensor.heading',
@@ -138,7 +138,7 @@ class FilterSensorHeading(deeding.LapseDeed):
         print(format %\
               (self.output.value, self.parm.data.phase, self.parm.data.amp))
 
-class FilterWindowed(deeding.LapseDeed):
+class FilterWindowed(deeding.DeedLapse):
     """Class """
     Ioinits = odict(
         group = 'filter.sensor.generic', output = 'state.generic',
@@ -295,7 +295,7 @@ FilterWindowed.__register__('FilterSensorTemperature', ioinits=odict(
                  layer = 40.0, tolerance = 5.0)) )
 
 
-class FilterCtdMin(deeding.LapseDeed):
+class FilterCtdMin(deeding.DeedLapse):
     """Filter Ctd Minimum temperature
     """
     Ioinits = odict(
