@@ -31,10 +31,10 @@ def main():
     for plan in plans:
         name, ext = os.path.splitext(os.path.basename(plan))
         ioflo.app.run.run(  name=name,
-                            filename=plan,
+                            filepath=plan,
                             period=0.0625,
                             verbose=2,
-                            realtime=False,)
+                            real=False,)
 
 if __name__ == '__main__':
     main()
