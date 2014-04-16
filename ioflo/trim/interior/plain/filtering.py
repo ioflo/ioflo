@@ -276,19 +276,19 @@ class FilterWindowed(deeding.LapseDeed):
         print(format % (self.output.value, self.parm.data.window, self.parm.data.frac))
 
 
-FilterWindowed.__register__('filterSensorSalinity', ioinits=odict(
+FilterWindowed.__register__('FilterSensorSalinity', ioinits=odict(
     group = 'filter.sensor.salinity', output = 'state.salinity',
     input = 'ctd', field = 'salinity', depth = 'state.depth',
     parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
                  layer = 40.0, tolerance = 5.0)) )
 
-FilterWindowed.__register__('filterSensorSalinitysim', ioinits=odict(
+FilterWindowed.__register__('FilterSensorSalinitysim', ioinits=odict(
     group = 'filter.sensor.salinitysim', output = 'state.salinity',
     input = 'ctdsim', field = 'salinity', depth = 'state.depth',
     parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
                  layer = 40.0, tolerance = 5.0)) )
 
-FilterWindowed.__register__('filterSensorTemperature', ioinits=odict(
+FilterWindowed.__register__('FilterSensorTemperature', ioinits=odict(
     group = 'filter.sensor.temperature', output = 'state.temperature',
     input = 'ctd', field = 'temperature', depth = 'state.depth',
     parms = dict(window = 60.0, frac = 0.9, preload = 10.0,

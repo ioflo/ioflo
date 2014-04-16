@@ -37,6 +37,7 @@ class RegisterType(type):
             msg = "Entry '{0}' already exists in registry of {1}".format(rname, cls)
             raise excepting.RegisterError(msg)
         cls.Registry[rname] = (cls, inits, ioinits, parms)
+        console.terse("Registered: '{0}'\n".format(rname))
         return cls
 
     def __fetch__(cls, rname):

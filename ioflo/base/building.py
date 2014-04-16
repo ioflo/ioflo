@@ -325,7 +325,6 @@ class Builder(object):
                 if not f.closed:
                     f.close()
 
-
     def dispatch(self, tokens):
         """Converts command into build method name  and calls it"""
 
@@ -341,7 +340,6 @@ class Builder(object):
             return(getattr(self, commandMethod )(command, tokens, index))
         else:
             return self.buildGeneric(command, tokens, index)
-
 
     def buildGeneric(self, command, tokens, index):
         """Called with no build method exists for a command """
@@ -375,7 +373,6 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         return True
-
 
     #House specific builders
     def buildHouse(self, command, tokens, index):
@@ -454,7 +451,7 @@ class Builder(object):
         share.update(data)
         return share
 
-        #Store specific builders
+    #Store specific builders
 
     def buildInit(self, command, tokens, index):
         """Initialize share in current store
@@ -614,8 +611,8 @@ class Builder(object):
                         parts.append(tokens[index])
                         index += 1 #eat token
 
-                    #kind = "".join(part.capitalize() for part in parts)
-                    kind =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+                    kind = "".join(part.capitalize() for part in parts) #camel case
+                    #kind =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
                     if not kind:
                         msg = "ParseError: Building verb '%s'. Missing kind for connective 'as'" % (command)
                         raise excepting.ParseError(msg, tokens, index)
@@ -1519,7 +1516,7 @@ class Builder(object):
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later
             parms = dict(needs = needs, main = self.currentFrame, aux = aux, human = human)
-            act = acting.Act(   actor='suspender',
+            act = acting.Act(   actor='Suspender',
                                 registrar=acting.Actor,
                                 parms=parms, )
 
@@ -1556,7 +1553,7 @@ class Builder(object):
         try:
             kind = 'Done'
             framer = self.currentFramer
-            actorName = 'complete' + kind.capitalize()
+            actorName = 'Complete' + kind.capitalize()
             if actorName not in completing.Complete.Registry:
                 msg = "Error building complete %s. No actor named %s." %\
                         (kind, actorName)
@@ -1625,7 +1622,7 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Act(   actor='transiter',
+        act = acting.Act(   actor='Transiter',
                             registrar=acting.Actor,
                             parms=parms, )
         self.currentFrame.addPreact(act) #add transact as preact
@@ -1676,7 +1673,7 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Act(    actor='transiter',
+        act = acting.Act(    actor='Transiter',
                              registrar=acting.Actor,
                              parms=parms,)
 
@@ -1787,7 +1784,7 @@ class Builder(object):
             message = ''
 
         parms = dict(message = message)
-        act = acting.Act(    actor='printer',
+        act = acting.Act(    actor='Printer',
                              registrar=acting.Actor,
                              parms=parms,)
 
@@ -1851,7 +1848,7 @@ class Builder(object):
         for dstField, dataField in izip(dstFields, dataFields):
             dstData[dstField] = data[dataField]
 
-        actorName = 'poke' + 'Direct' #capitalize second word
+        actorName = 'Poke' + 'Direct' #capitalize second word
 
         if actorName not in poking.Poke.Registry:
             msg = "ParseError: Can't find actor named '%s'" % (actorName)
@@ -2018,7 +2015,7 @@ class Builder(object):
 
         srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
 
-        actorName = 'poke' + 'Indirect' #capitalize second word
+        actorName = 'Poke' + 'Indirect' #capitalize second word
 
         if actorName not in poking.Poke.Registry:
             msg = "ParseError: Can't find actor named '%s'" % (actorName)
@@ -2213,7 +2210,7 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         #resolve far link later
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
-        act = acting.Act(   actor='transiter',
+        act = acting.Act(   actor='Transiter',
                             registrar=acting.Actor,
                             parms=parms, )
 
@@ -2344,7 +2341,7 @@ class Builder(object):
                 index += 1 #eat token
 
             if parts:
-                kind = "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+                kind = "".join([part.capitalize() for part in parts]) #camel case
 
             while index < len(tokens): #options
                 connective = tokens[index]
@@ -2358,7 +2355,7 @@ class Builder(object):
                         parts.append(tokens[index])
                         index += 1 #eat token
 
-                    name =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
+                    name =  "".join([part.capitalize() for part in parts]) #camel case
                     if not name:
                         msg = "ParseError: Building verb '%s'. Missing name for connective 'as'" % (command)
                         raise excepting.ParseError(msg, tokens, index)
@@ -2493,7 +2490,7 @@ class Builder(object):
                 msg = "Error building %s %s. No taskers." % (command, control)
                 raise excepting.ParseError(msg, tokens, index)
 
-            actorName = 'want' + control.capitalize()
+            actorName = 'Want' + control.capitalize()
             if actorName not in wanting.Want.Registry:
                 msg = "Error building  %s. No actor named %s." % (command, actorName)
                 raise excepting.ParseError(msg, tokens, index)
@@ -2695,7 +2692,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
         """
-        actorName = 'inc' + 'Direct' #capitalize second word
+        actorName = 'Inc' + 'Direct' #capitalize second word
 
         if actorName not in poking.Poke.Registry:
             msg = "ParseError: Can't find actor named '%s'" % (actorName)
@@ -2724,7 +2721,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
         """
-        actorName = 'inc' + 'Indirect' #capitalize second word
+        actorName = 'Inc' + 'Indirect' #capitalize second word
 
         if actorName not in poking.Poke.Registry:
             msg = "ParseError: Goal can't find actor named '%s'" % (actorName)
@@ -2820,7 +2817,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
         """
-        actorName = 'goal' + 'Direct' #capitalize second word
+        actorName = 'Goal' + 'Direct' #capitalize second word
 
         if actorName not in goaling.Goal.Registry:
             msg = "ParseError: Goal can't find actor named '%s'" % (actorName)
@@ -2846,7 +2843,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
         """
-        actorName = 'goal' + 'Indirect' #capitalize second word
+        actorName = 'Goal' + 'Indirect' #capitalize second word
 
         if actorName not in goaling.Goal.Registry:
             msg = "ParseError: Goal can't find actor named '%s'" % (actorName)
@@ -2968,7 +2965,7 @@ class Builder(object):
 
            always
         """
-        actorName = 'need' + kind.capitalize()
+        actorName = 'Need' + kind.capitalize()
 
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
@@ -2990,7 +2987,7 @@ class Builder(object):
         """
         tasker = tokens[index]
         index += 1
-        actorName = 'need' + kind.capitalize()
+        actorName = 'Need' + kind.capitalize()
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
                 (  kind, actorName)
@@ -3029,7 +3026,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
         status = StatusValues[status.capitalize()] #replace name with value
 
-        actorName = 'need' + kind.capitalize()
+        actorName = 'Need' + kind.capitalize()
 
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
@@ -3087,9 +3084,9 @@ class Builder(object):
             #share.marks[name] = storing.Mark()
 
         # assign marker type actual marker Act created in need's resolve
-        marker = 'marker' + kind.capitalize()
+        marker = 'Marker' + kind.capitalize()
 
-        actorName = 'need' + kind.capitalize()
+        actorName = 'Need' + kind.capitalize()
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
                 (kind, actorName)
@@ -3191,7 +3188,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
         """
-        actorName = 'need' + 'Boolean' #capitalize second word
+        actorName = 'Need' + 'Boolean' #capitalize second word
 
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need can't find actor named '%s'" % (actorName)
@@ -3211,13 +3208,12 @@ class Builder(object):
 
         return act
 
-
     def makeDirectNeed(self, state, stateField, comparison, goal, tolerance):
         """Make directNeed act
 
            method must be wrapped in appropriate try excepts
         """
-        actorName = 'need' + 'Direct' #capitalize second word
+        actorName = 'Need' + 'Direct' #capitalize second word
 
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need can't find actor named '%s'" % (actorName)
@@ -3244,7 +3240,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
         """
-        actorName = 'need' + 'Indirect' #capitalize second word
+        actorName = 'Need' + 'Indirect' #capitalize second word
 
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need can't find actor named '%s'" % (actorName)
@@ -3276,7 +3272,7 @@ class Builder(object):
            make a fiat action given the tasker name and fiat kind
 
         """
-        actorName = 'fiat' +  kind.capitalize()
+        actorName = 'Fiat' +  kind.capitalize()
         if actorName not in fiating.Fiat.Registry:
             msg = "Error building fiat %s. No actor named %s." % (kind, actorName)
             raise excepting.ParseError(msg, tokens, index)

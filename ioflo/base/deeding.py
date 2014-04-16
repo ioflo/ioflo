@@ -159,7 +159,7 @@ class LapseDeed(Deed):
         """ Create enact with RestarterActor to restart this Actor """
         parms = super(LapseDeed, self).resolve( **kwa)
 
-        kind = 'restarter'
+        kind = 'Restarter'
         restartAct = acting.Act( actor=kind,
                                  registrar=acting.Actor,
                                  parms=odict(act=self.act),

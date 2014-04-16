@@ -183,28 +183,28 @@ class ControllerPid(deeding.LapseDeed):
         print("    error = %0.3f errorRate = %0.3f errorSum = %0.3f output = %0.3f truth = %s" %\
               (self.e.value, self.er.value, self.es.value, self.output.value, self.output.truth))
 
-ControllerPid.__register__('controllerPidSpeed', ioinits=odict(
+ControllerPid.__register__('ControllerPidSpeed', ioinits=odict(
     group = 'controller.pid.speed', output = 'goal.rpm',
     input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
     parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
                  esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0)) )
 
-ControllerPid.__register__('controllerPidHeading', ioinits=odict(
+ControllerPid.__register__('ControllerPidHeading', ioinits=odict(
     group = 'controller.pid.heading', output = 'goal.rudder',
     input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
     parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
                  esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0)) )
 
-ControllerPid.__register__('controllerPidDepth', ioinits=odict(
+ControllerPid.__register__('ControllerPidDepth', ioinits=odict(
     group = 'controller.pid.depth', output = 'goal.pitch',
     input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
     parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
                  esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0)) )
 
-ControllerPid.__register__('controllerPidPitch', ioinits=odict(
+ControllerPid.__register__('ControllerPidPitch', ioinits=odict(
     group = 'controller.pid.pitch', output = 'goal.stern',
     input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
     parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,

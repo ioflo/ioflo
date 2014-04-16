@@ -33,7 +33,7 @@ def main():
         ioflo.app.run.run(  name=name,
                             filepath=plan,
                             period=0.0625,
-                            verbose=2,
+                            verbose=1,
                             real=False,)
 
 if __name__ == '__main__':

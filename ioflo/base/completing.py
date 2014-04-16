@@ -72,9 +72,6 @@ class Complete(acting.Actor):
 
         return parms
 
-
-
-
 class CompleteDone(Complete):
     """CompleteDone Complete
 
@@ -87,14 +84,3 @@ class CompleteDone(Complete):
         console.profuse("    Done {0}\n".format(framer.name))
 
         return None
-
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-if __name__ == "__main__":
-    test()
-

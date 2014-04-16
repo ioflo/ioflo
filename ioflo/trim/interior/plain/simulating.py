@@ -1408,7 +1408,7 @@ class SimulatorGradient(deeding.LapseDeed):
                self.parm.data.layer, self.parm.data.shift, self.parm.data.span,
                self.parm.data.height, self.parm.data.duct))
 
-SimulatorGradient.__register__('simulatorGradientTemperature', ioinits=odict(
+SimulatorGradient.__register__('SimulatorGradientTemperature', ioinits=odict(
     group = 'simulator.gradient.temperature',
     output = 'ctdsim', field = 'temperature',
     position = 'state.position', depth = 'state.depth',
@@ -1416,7 +1416,7 @@ SimulatorGradient.__register__('simulatorGradientTemperature', ioinits=odict(
                  middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                  layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0)) )
 
-SimulatorGradient.__register__('simulatorGradientSalinity', ioinits=odict(
+SimulatorGradient.__register__('SimulatorGradientSalinity', ioinits=odict(
     group = 'simulator.gradient.salinity',
     output = 'ctdsim', field = 'salinity',
     position = 'state.position', depth = 'state.depth',
