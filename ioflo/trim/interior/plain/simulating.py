@@ -20,9 +20,8 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-class UuvMotionSimulator(deeding.LapseDeed):
-    """UUVMotionsimulator LapseDeed Deed Class
-       UUV motion simulator class
+class SimulatorMotionUuv(deeding.LapseDeed):
+    """UUV motion simulator class
     """
     Ioinits=odict(
         group = 'simulator.motion.uuv',
@@ -41,14 +40,6 @@ class UuvMotionSimulator(deeding.LapseDeed):
 
     def __init__(self, **kw):
         """Initialize instance.
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
-
            because of Center of buoyancy Center of gravity separation when pitched
            the relationship between sternPlane and pitch rate is usually nonlinear
            uses poor linear approx
@@ -56,7 +47,7 @@ class UuvMotionSimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(UuvMotionSimulator,self).__init__(**kw)
+        super(SimulatorMotionUuv,self).__init__(**kw)
 
         #used in reset to speed up processing
         self.ionames = dict( speed = None, speedRate = None, bottom = None,
@@ -186,14 +177,12 @@ class UuvMotionSimulator(deeding.LapseDeed):
         self.origin.create(lat = 0.0) #preserves order
         self.origin.create(lon = 0.0)
 
-
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
         """
         for key, value in kwa.iteritems():
             if key in self.ionames:
                 getattr(self, key).value = value
-
 
     def restart(self):
         """Restart motion  simulator
@@ -212,11 +201,10 @@ class UuvMotionSimulator(deeding.LapseDeed):
             #init location to origin lat lon
             self.location.update(lat = self.origin.data.lat, lon = self.origin.data.lon)
 
-
     def action(self, **kw):
         """Updates simulated motion state of vehicle
         """
-        super(UuvMotionSimulator,self).action(**kw) #lapse updated here
+        super(SimulatorMotionUuv,self).action(**kw) #lapse updated here
 
         self.elapsed.value = self.lapse #store lapse for logging
 
@@ -250,7 +238,6 @@ class UuvMotionSimulator(deeding.LapseDeed):
         #pitchrate a function of stern (gpr) and restoring force cbcg (gpp) as a function of pitch
         pitchRate = self.parm.data.gpr * stern + self.parm.data.gpp * pitchLast
         self.pitchRate.value = pitchRate
-
 
         pitch = pitchLast + self.lapse * pitchRate
         self.pitch.value = pitch
@@ -316,7 +303,6 @@ class UuvMotionSimulator(deeding.LapseDeed):
         lat, lon = aiding.SphereLLByDNDEToLL(self.location.data.lat,self.location.data.lon,deltaNorth,deltaEast)
         self.location.update(lat = lat, lon = lon)
 
-
     def expose(self):
         """
            prints out motion state
@@ -331,9 +317,8 @@ class UuvMotionSimulator(deeding.LapseDeed):
               (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east))
 
-class UsvMotionSimulator(deeding.LapseDeed):
-    """USVMotionSimulator LapseDeed Deed Class
-       USV motion simulator class
+class SimulatorMotionUsv(deeding.LapseDeed):
+    """USV motion simulator class
     """
     Ioinits=odict(
         group = 'simulator.motion.usv',
@@ -349,24 +334,13 @@ class UsvMotionSimulator(deeding.LapseDeed):
 
     def __init__(self,  **kw):
         """Initialize instance.
-
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
         #call super class method
-        super(UsvMotionSimulator,self).__init__(**kw)
-
-
+        super(SimulatorMotionUsv,self).__init__(**kw)
 
         #used in reset to speed up processing
         self.ionames = dict( speed = None, speedRate = None,
                              heading = None, headingRate = None)
-
 
     def initio(self, group, speed, speedRate,  velocity,
                  heading, headingRate, position,
@@ -453,14 +427,12 @@ class UsvMotionSimulator(deeding.LapseDeed):
         #init onset position where vehicle starts relative to 0,0 origin
         self.position.update(north = self.onset.data.north, east = self.onset.data.east)
 
-
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
         """
         for key, value in kwa.iteritems():
             if key in self.ionames:
                 getattr(self, key).value = value
-
 
     def restart(self):
         """Restart motion  simulator
@@ -470,12 +442,10 @@ class UsvMotionSimulator(deeding.LapseDeed):
         self.lapse = 0.0
         #self.position.update(self.onset.items())
 
-
-
     def action(self, **kw):
         """Updates simulated motion state of vehicle
         """
-        super(UsvMotionSimulator,self).action(**kw) #lapse updated here
+        super(SimulatorMotionUsv,self).action(**kw) #lapse updated here
 
         #self.elapsed.updateJointly(value = self.lapse, stamp = stamp) #store lapse for logging
         self.elapsed.value = self.lapse
@@ -535,8 +505,6 @@ class UsvMotionSimulator(deeding.LapseDeed):
 
         self.position.update(north = north + deltaNorth, east = east + deltaEast)
 
-
-
     def expose(self):
         """
            prints out motion state
@@ -549,10 +517,8 @@ class UsvMotionSimulator(deeding.LapseDeed):
               (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east))
 
-
-class GpsSensorSimulator(deeding.LapseDeed):
-    """GPSSensorSimulator LapseDeed Deed Class
-       GPS sensor simulator class
+class SimulatorSensorGps(deeding.LapseDeed):
+    """GPS sensor simulator class
     """
     Ioinits=odict(
         group = 'simulator.sensor.gps',
@@ -566,17 +532,9 @@ class GpsSensorSimulator(deeding.LapseDeed):
 
     def __init__(self, **kw):
         """Initialize instance.
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
         #call super class method
-        super(GpsSensorSimulator,self).__init__(**kw)
-
+        super(SimulatorSensorGps,self).__init__(**kw)
 
     def initio(self, group, positionOut, velocityOut, error,
                  heading, speed,  positionIn, velocityIn,
@@ -663,9 +621,7 @@ class GpsSensorSimulator(deeding.LapseDeed):
         self.velocityIn.create(east = 0.0)
 
         self.scenario = self.store.create(scenario).create(dropout = 0)
-
         #self.position.update(self.idealPosition.items()) #init position
-
 
     def restart(self):
         """Restart motion  simulator
@@ -677,7 +633,7 @@ class GpsSensorSimulator(deeding.LapseDeed):
     def action(self, **kw):
         """Updates simulated motion state of vehicle
         """
-        super(GpsSensorSimulator,self).action(**kw) #lapse updated here
+        super(SimulatorSensorGps,self).action(**kw) #lapse updated here
 
         #self.elapsed.updateJointly(value = self.lapse, stamp = stamp) #store lapse for logging
         self.elapsed.value = self.lapse
@@ -712,7 +668,6 @@ class GpsSensorSimulator(deeding.LapseDeed):
         #ee = min(band, max(-band, 0.8 * ee + 0.2 * random.gauss(0.0, jitter)))
         #ee = min(band, max(-band, 0.9 * errorEast + 0.1 * random.uniform(-jitter, jitter)))
 
-
         vsigma3 = 3.0 * vsigma
         evn = min(vsigma3, max(-vsigma3, random.gauss(0.0, vsigma)))
         eve = min(vsigma3, max(-vsigma3, random.gauss(0.0, vsigma)))
@@ -733,8 +688,7 @@ class GpsSensorSimulator(deeding.LapseDeed):
               (self.position.data.north, self.position.data.east,
                self.velocity.data.north, self.velocity.data.east))
 
-
-class DvlSensorSimulator(deeding.LapseDeed):
+class SimulatorSensorDvl(deeding.LapseDeed):
     """DVLSensorSimulator LapseDeed Deed Class
        DVL sensor simulator class
     """
@@ -750,18 +704,9 @@ class DvlSensorSimulator(deeding.LapseDeed):
 
     def __init__(self, **kw):
         """Initialize instance.
-
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
         #call super class method
-        super(DvlSensorSimulator,self).__init__(**kw)
-
+        super(SimulatorSensorDvl,self).__init__(**kw)
 
     def initio(self, group, velocity, currentOut, altitude,
                  heading, speed, currentIn, bottom,
@@ -852,7 +797,7 @@ class DvlSensorSimulator(deeding.LapseDeed):
     def action(self, **kw):
         """Updates simulated motion state of vehicle
         """
-        super(DvlSensorSimulator,self).action(**kw) #lapse updated here
+        super(SimulatorSensorDvl,self).action(**kw) #lapse updated here
 
         #self.elapsed.updateJointly(value = self.lapse, stamp = stamp) #store lapse for logging
         self.elapsed.value = self.lapse
@@ -901,7 +846,6 @@ class DvlSensorSimulator(deeding.LapseDeed):
         self.currentOut.update(forward = cf, starboard = cs, north = cn, east = ce)
         self.altitude.value = alt
 
-
     def expose(self):
         """
            prints out sensor state
@@ -915,9 +859,8 @@ class DvlSensorSimulator(deeding.LapseDeed):
                self.current.data.forward, self.current.data.starboard,
                self.altitude.value))
 
-class CompassSensorSimulator(deeding.LapseDeed):
-    """CompassSensorSimulator LapseDeed Deed Class
-       compass sensor simulator class
+class SimulatorSensorCompass(deeding.LapseDeed):
+    """compass sensor simulator class
     """
     Ioinits = odict(
         group = 'simulator.sensor.compass',
@@ -928,17 +871,9 @@ class CompassSensorSimulator(deeding.LapseDeed):
 
     def __init__(self, **kw):
         """Initialize instance.
-
-            inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
         #call super class method
-        super(CompassSensorSimulator,self).__init__(**kw)
-
+        super(SimulatorSensorCompass,self).__init__(**kw)
 
     def initio(self, group, output,input, scenario, parms = None, **kw):
         """ Override since legacy interface
@@ -969,7 +904,6 @@ class CompassSensorSimulator(deeding.LapseDeed):
            .input = ref to heading share
            .scenario = ref to input scenario declination
 
-
         """
         self.group = group
 
@@ -990,7 +924,6 @@ class CompassSensorSimulator(deeding.LapseDeed):
         self.input = self.store.create(input).create(value = 0.0)
         self.scenario = self.store.create(scenario).create(declination = 0.0)
 
-
     def restart(self):
         """Restart motion  simulator
 
@@ -1001,7 +934,7 @@ class CompassSensorSimulator(deeding.LapseDeed):
     def action(self, **kw):
         """Updates simulated sensor
         """
-        super(CompassSensorSimulator,self).action(**kw) #lapse updated here
+        super(SimulatorSensorCompass,self).action(**kw) #lapse updated here
 
         #self.elapsed.updateJointly(value = self.lapse, stamp = stamp) #store lapse for logging
         self.elapsed.value = self.lapse
@@ -1028,7 +961,6 @@ class CompassSensorSimulator(deeding.LapseDeed):
 
         self.output.value = heading
 
-
     def expose(self):
         """
            prints out sensor state
@@ -1040,10 +972,8 @@ class CompassSensorSimulator(deeding.LapseDeed):
               (self.output.value, self.parm.data.phase,
                self.parm.data.amp, self.parm.data.sigma))
 
-
-class LinearSalinitySimulator(deeding.LapseDeed):
-    """LinearSalinitySimulator LapseDeed Deed Class
-       linear salinity simulator class
+class SimulatorSalinityLinear(deeding.LapseDeed):
+    """linear salinity simulator class
     """
     Ioinits = odict(
         group = 'simulator.salinity.linear',
@@ -1065,7 +995,7 @@ class LinearSalinitySimulator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(LinearSalinitySimulator,self).__init__(**kw)
+        super(SimulatorSalinityLinear,self).__init__(**kw)
 
 
     def initio(self, group, output,input, depth, parms = None, **kw):
@@ -1126,7 +1056,6 @@ class LinearSalinitySimulator(deeding.LapseDeed):
 
         self.parm.create(**parms)
 
-
     def restart(self):
         """Restart sensor  simulator
 
@@ -1137,7 +1066,7 @@ class LinearSalinitySimulator(deeding.LapseDeed):
     def action(self, **kw):
         """Updates simulated sensor
         """
-        super(LinearSalinitySimulator,self).action(**kw) #lapse updated here
+        super(SimulatorSalinityLinear,self).action(**kw) #lapse updated here
 
         #self.elapsed.updateJointly(value = self.lapse, stamp = stamp) #store lapse for logging
         self.elapsed.value = self.lapse
@@ -1173,7 +1102,6 @@ class LinearSalinitySimulator(deeding.LapseDeed):
 
         self.output.update(salinity = salinity)
 
-
     def expose(self):
         """
            prints out sensor state
@@ -1189,10 +1117,8 @@ class LinearSalinitySimulator(deeding.LapseDeed):
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width,
                self.parm.data.layer, self.parm.data.shift))
 
-
-class SinusoidSalinitySimulator(deeding.LapseDeed):
-    """SinusoidSalinitySimulator LapseDeed Deed Class
-       salinity sensor simulator class
+class SimulatorSalinitySinusoid(deeding.LapseDeed):
+    """salinity sensor simulator class
     """
     Ioinits = odict(
         group = 'simulator.salinity.sinusoid',
@@ -1205,17 +1131,9 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
 
     def __init__(self, **kw):
         """Initialize instance.
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
         #call super class method
-        super(SinusoidSalinitySimulator,self).__init__(**kw)
-
+        super(SimulatorSalinitySinusoid,self).__init__(**kw)
 
     def initio(self, group, output,input, parms = None, **kw):
         """ Override since legacy interface
@@ -1267,7 +1185,6 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
 
         self.parm.create(**parms)
 
-
     def restart(self):
         """Restart sensor  simulator
 
@@ -1278,7 +1195,7 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
     def action(self, **kw):
         """Updates simulated sensor
         """
-        super(SinusoidSalinitySimulator,self).action(**kw) #lapse updated here
+        super(SimulatorSalinitySinusoid,self).action(**kw) #lapse updated here
 
         #self.elapsed.updateJointly(value = self.lapse, stamp = stamp) #store lapse for logging
         self.elapsed.value = self.lapse
@@ -1314,7 +1231,6 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
 
         self.output.update(salinity = salinity)
 
-
     def expose(self):
         """
            prints out sensor state
@@ -1328,11 +1244,8 @@ class SinusoidSalinitySimulator(deeding.LapseDeed):
                self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width))
 
-
-
-class GradientSimulator(deeding.LapseDeed):
-    """GradientSimulator LapseDeed Deed Class
-       gradient simulator class
+class SimulatorGradient(deeding.LapseDeed):
+    """gradient simulator class
     """
     Ioinits = odict(
         group = 'simulator.gradient.depth',
@@ -1344,18 +1257,9 @@ class GradientSimulator(deeding.LapseDeed):
 
     def __init__(self, **kw):
         """Initialize instance.
-
-
-           inherited instance attributes
-           .stamp = time stamp
-           .lapse = time lapse between updates of controller
-           .name
-           .store
-
         """
         #call super class method
-        super(GradientSimulator,self).__init__(**kw)
-
+        super(SimulatorGradient,self).__init__(**kw)
 
     def initio(self, group, output, field, position, depth, parms = None, **kw):
         """ Override since legacy interface
@@ -1423,7 +1327,6 @@ class GradientSimulator(deeding.LapseDeed):
 
         self.parm.create(**parms)
 
-
     def restart(self):
         """Restart gradient  simulator
 
@@ -1431,11 +1334,10 @@ class GradientSimulator(deeding.LapseDeed):
         self.stamp = self.store.stamp
         self.lapse = 0.0
 
-
     def action(self, **kw):
         """Updates simulated sensor
         """
-        super(GradientSimulator,self).action(**kw) #lapse updated here
+        super(SimulatorGradient,self).action(**kw) #lapse updated here
 
         #self.elapsed.updateJointly(value = self.lapse, stamp = stamp) #store lapse for logging
         self.elapsed.value = self.lapse
@@ -1490,7 +1392,6 @@ class GradientSimulator(deeding.LapseDeed):
 
         self.output.update({self.field : out, 'depth' : self.depth.value})
 
-
     def expose(self):
         """
            prints out gradient state
@@ -1507,7 +1408,7 @@ class GradientSimulator(deeding.LapseDeed):
                self.parm.data.layer, self.parm.data.shift, self.parm.data.span,
                self.parm.data.height, self.parm.data.duct))
 
-GradientSimulator.__register__('simulatorGradientTemperature', ioinits=odict(
+SimulatorGradient.__register__('simulatorGradientTemperature', ioinits=odict(
     group = 'simulator.gradient.temperature',
     output = 'ctdsim', field = 'temperature',
     position = 'state.position', depth = 'state.depth',
@@ -1515,135 +1416,11 @@ GradientSimulator.__register__('simulatorGradientTemperature', ioinits=odict(
                  middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                  layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0)) )
 
-GradientSimulator.__register__('simulatorGradientSalinity', ioinits=odict(
+SimulatorGradient.__register__('simulatorGradientSalinity', ioinits=odict(
     group = 'simulator.gradient.salinity',
     output = 'ctdsim', field = 'salinity',
     position = 'state.position', depth = 'state.depth',
     parms = dict(track = 0.0, north = 0.0, east = 0.0,
                  middle = 32.0, spread = 4.0, rising = True, width = 500.0,
                  layer = 20.0, shift = 2.0, span = 10.0, height = 20.0, duct = 0)) )
-
-
-def TestSalinity():
-    """           """
-
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-
-    print("\nTesting Salinity Sensor Front Simulator")
-    sim = SalinitySensorSimulator(name = 'simulatorSensorSalinity', store = store,
-                                  group = 'simulator.sensor.salinity', output = 'ctd',
-                                  input = 'state.position',
-                                  parms = dict(track = 45.0, north = 0.0, east = 0.0,
-                                               middle = 32.0, spread = 4.0, rising = True, width = 500.0))
-
-    output = store.fetch('ctd').update(salinity = 32.0)
-    store.expose()
-    sim.expose()
-
-    for k in range(1, 100):
-        print("")
-        store.advanceStamp(0.125)
-
-        input = store.fetch('state.position').update(north = k * -50.0, east = 0.0)
-        sim.update()
-        sim.expose()
-
-
-
-
-
-def TestMotion():
-    """
-
-    """
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-    #CreateActions(store)
-
-
-    print("\nTesting Motion Sim Controller")
-    simulator = UuvMotionSimulator(name = 'simulatorMotionTest', store = store,
-                                   group = 'simulator.motion.test',
-                                   speed = 'state.speed', speedRate = 'state.speedRate',
-                                   depth = 'state.depth', depthRate = 'state.depthRate',
-                                   pitch = 'state.pitch', pitchRate = 'state.pitchRate',
-                                   altitude = 'state.altitude',
-                                   heading = 'state.heading', headingRate = 'state.headingRate',
-                                   position = 'state.position',
-                                   rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
-                                   current = 'scenario.current', bottom = 'scenario.bottom',
-                                   prevPosition = 'state.position',
-                                   parms = dict(rpmLimit = 1500.0, sternLimit = 20.0, rudderLimit = 20.0,
-                                                gs = 0.0025, gpr = -0.5, ghr = -0.5))
-
-    store.expose()
-
-    rpm = store.fetch('goal.rpm').update(value = 500.0)
-    stern = store.fetch('goal.stern').update(value = 0.0)
-    rudder = store.fetch('goal.rudder').update(value = 0.0)
-    current = store.fetch('scenario.current').update(north = 0.0, east = 0.0)
-    bottom = store.fetch('scenario.bottom').update(value =  50.0)
-    prevPosition = store.fetch('scenario.startposition').update(north = 0.0, east = 0.0)
-
-    simulator.restart()
-    simulator.expose()
-    store.advanceStamp(0.125)
-    simulator.update()
-    simulator.expose()
-
-
-
-def Test():
-    """Module Common self test
-
-    """
-
-    #clear registries
-    print("\nTesting Controllers\n")
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-    store.expose()
-
-
-    current = store.fetch('scenario.current').update(north = 0.0, east = 0.0)
-    bottom = store.fetch('scenario.bottom').update(value =  50.0)
-    prevPosition = store.fetch('state.position').update(north = 0.0, east = 0.0)
-
-    headinggoal =  store.fetch('goal.heading').update(value = 45.0)
-    depthgoal =  store.fetch('goal.depth').update(value = 5.0)
-    speedgoal =  store.fetch('goal.speed').update(value = 2.0)
-    duration = 10.0
-
-    simulatorMotionUuv.restart()
-
-    controllerPidSpeed.expose()
-    controllerPidHeading.expose()
-    controllerPidDepth.expose()
-    controllerPidPitch.expose()
-    simulatorMotionUuv.expose()
-
-    while (store.stamp <= duration):
-        print("")
-        controllerPidSpeed.action()
-        controllerPidHeading.action()
-        controllerPidDepth.action()
-        controllerPidPitch.action()
-        simulatorMotionUuv.action()
-        simulatorMotionUuv.expose()
-
-        store.advanceStamp(0.125)
-
-
-
-if __name__ == "__main__":
-    Test()
 

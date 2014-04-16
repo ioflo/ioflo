@@ -19,11 +19,10 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-class BoxPositionDetector(deeding.Deed):
-    """BoxPositionDetector  Class
-       Box Positiion Detector  class
-       Detects if vehicle position is in box or out
-       output share indicates which side in or out
+class DetectorPositionBox(deeding.Deed):
+    """
+    Detects if vehicle position is in box or out
+    output share indicates which side in or out
     """
     Ioinits = odict(
         group = 'detector.position.box',
@@ -43,7 +42,7 @@ class BoxPositionDetector(deeding.Deed):
 
         """
         #call super class method
-        super(BoxPositionDetector,self).__init__(**kw)
+        super(DetectorPositionBox,self).__init__(**kw)
 
 
     def initio(self, group, output, input, parms = None, **kw):
@@ -232,79 +231,4 @@ class BoxPositionDetector(deeding.Deed):
                         self.output.data.outtop, self.output.data.outbottom,
                         self.output.data.outleft, self.output.data.outright))
 
-
-def TestBox():
-    """           """
-
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-
-    print("\nTesting Box Position Detector")
-    detector = BoxPositionDetector(name = 'detectorPositionBox', store = store,
-                                   group = 'detector.position.box', input = 'state.position',
-                                   parms = dict(track = 0.0, north = -50.0, east = 0.0,
-                                                length = 10000, width = 2000))
-
-
-    store.expose()
-    detector.expose()
-
-    print("")
-    input = store.fetch('state.position').update(north = 9950.0, east = 0.0)
-    detector.action()
-    detector.expose()
-    print("")
-    input = store.fetch('state.position').update(north = 9949.0, east = 0.0)
-    detector.action()
-    detector.expose()
-    print("")
-    input = store.fetch('state.position').update(north = 9951, east = 0.0)
-    detector.action()
-    detector.expose()
-    print("")
-    input = store.fetch('state.position').update(north = 9900.0, east = 500.0)
-    detector.action()
-    detector.expose()
-
-    input = store.fetch('state.position').update(north = 1000.0, east = 2000.0)
-    detector.action()
-    detector.expose()
-
-    input = store.fetch('state.position').update(north = 1000.0, east = -2000.0)
-    detector.action()
-    detector.expose()
-
-    input = store.fetch('state.position').update(north = 11000.0, east = 500.0)
-    detector.action()
-    detector.expose()
-
-    input = store.fetch('state.position').update(north = 11000.0, east = 2000.0)
-    detector.action()
-    detector.expose()
-
-    input = store.fetch('state.position').update(north = 11000.0, east = -2000.0)
-    detector.action()
-    detector.expose()
-
-    input = store.fetch('state.position').update(north = -1000.0, east = 2000.0)
-    detector.action()
-    detector.expose()
-
-    input = store.fetch('state.position').update(north = -1000.0, east = -2000.0)
-    detector.action()
-    detector.expose()
-
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    Test()
 

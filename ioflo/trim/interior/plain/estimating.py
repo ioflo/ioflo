@@ -21,9 +21,8 @@ from ....base import deeding
 from ....base.consoling import getConsole
 console = getConsole()
 
-class NflPositionEstimator(deeding.LapseDeed):
-    """NLFPositionEstimator LapseDeed Deed Class
-       NonlinearFusion Position Estimator class
+class EstimatorPositionNfl(deeding.LapseDeed):
+    """Estimator Position NonlinearFusion class
     """
     Ioinits = odict(
         group = 'estimator.position.nlf',
@@ -48,7 +47,7 @@ class NflPositionEstimator(deeding.LapseDeed):
 
         """
         #call super class method
-        super(NflPositionEstimator,self).__init__(**kw)
+        super(EstimatorPositionNfl,self).__init__(**kw)
 
     def initio(self, group, position, drPosition, drBias,
                  speed, heading, current, dvlVelocity, gpsPosition, gpsVelocity,
@@ -161,7 +160,7 @@ class NflPositionEstimator(deeding.LapseDeed):
     def action(self, **kw):
         """Updates estimater
         """
-        super(NflPositionEstimator,self).action(**kw) #.lapse & .stamp updated here
+        super(EstimatorPositionNfl,self).action(**kw) #.lapse & .stamp updated here
         #.lapse is time since last run
         #.stamp is current time
 
@@ -287,16 +286,3 @@ class NflPositionEstimator(deeding.LapseDeed):
         format = "north = %0.3f east = %0.3f"
         print(format %\
               (self.position.data.north, self.position.data.east))
-
-
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-
-if __name__ == "__main__":
-    Test()
-

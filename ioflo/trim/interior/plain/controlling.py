@@ -23,7 +23,7 @@ console = getConsole()
 
 
 #Class definitions
-class PidController(deeding.LapseDeed):
+class ControllerPid(deeding.LapseDeed):
     """PIDController LapseDeed Deed Class
        PID Controller Class
 
@@ -41,7 +41,7 @@ class PidController(deeding.LapseDeed):
 
         """
         #call super class method
-        super(PidController,self).__init__(**kw)
+        super(ControllerPid,self).__init__(**kw)
 
         self.lapse = 0.0 #time lapse in seconds calculated on update
 
@@ -125,7 +125,7 @@ class PidController(deeding.LapseDeed):
         """update will use inputs from store
            assumes all inputs come from deeds that use value as their output attribute name
         """
-        super(PidController,self).action(**kw) #computes lapse here
+        super(ControllerPid,self).action(**kw) #computes lapse here
 
         self.elapsed.value = self.lapse  #update share
 
@@ -183,193 +183,31 @@ class PidController(deeding.LapseDeed):
         print("    error = %0.3f errorRate = %0.3f errorSum = %0.3f output = %0.3f truth = %s" %\
               (self.e.value, self.er.value, self.es.value, self.output.value, self.output.truth))
 
-PidController.__register__('controllerPidSpeed', ioinits=odict(
+ControllerPid.__register__('controllerPidSpeed', ioinits=odict(
     group = 'controller.pid.speed', output = 'goal.rpm',
     input = 'state.speed', rate = 'state.speedRate', rsp = 'goal.speed',
     parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 400.0, gpe = 0.0, gde = 0.0, gie = 0.0,
                  esmax = 0.0, esmin = 0.0, ovmax = 1500.0, ovmin = 0.0)) )
 
-PidController.__register__('controllerPidHeading', ioinits=odict(
+ControllerPid.__register__('controllerPidHeading', ioinits=odict(
     group = 'controller.pid.heading', output = 'goal.rudder',
     input = 'state.heading', rate = 'state.headingRate', rsp = 'goal.heading',
     parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
                  esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0)) )
 
-PidController.__register__('controllerPidDepth', ioinits=odict(
+ControllerPid.__register__('controllerPidDepth', ioinits=odict(
     group = 'controller.pid.depth', output = 'goal.pitch',
     input = 'state.depth', rate = 'state.depthRate', rsp = 'goal.depth',
     parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 0.0, gpe = 8.0, gde = 0.0, gie = 1.0,
                  esmax = 5.0, esmin = -5.0, ovmax = 10.0, ovmin = -10.0)) )
 
-PidController.__register__('controllerPidPitch', ioinits=odict(
+ControllerPid.__register__('controllerPidPitch', ioinits=odict(
     group = 'controller.pid.pitch', output = 'goal.stern',
     input = 'state.pitch', rate = 'state.pitchRate', rsp = 'goal.pitch',
     parms = dict(wrap = 180.0, drsp = 0.01, calcRate = True,
                  ger = 1.0, gff = 0.0, gpe = 2.0, gde = 0.0, gie = 0.0,
                  esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0)) )
 
-def TestPID():
-    """
-
-    """
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-
-
-
-    print("\nTesting PID Controller")
-    controller = PidController(name = 'controllerPIDTest', store = store,
-                               group = 'controller.pid.test', output = 'goal.testoutput',
-                               input = 'state.testinput', rate = 'state.testrate', rsp = 'goal.testrsp',
-                               parms = dict(wrap = 0.0, drsp = 0.01, calcRate = True,
-                                            ger = 1.0, gff = 0.0, gpe = 3.0, gde = 0.0, gie = 0.0,
-                                            esmax = 0.0, esmin = 0.0, ovmax = 20.0, ovmin = -20.0))
-
-
-    store.expose()
-
-    input = store.fetch('state.testinput').update(value = 0.0)
-    rate = store.fetch('state.testrate').update(value = 0.0)
-    rsp = store.fetch('goal.testrsp').update(value = 45.0)
-    controller.update()
-    controller.expose()
-
-    input.value = 22.5
-    store.advanceStamp(0.125)
-    controller.update()
-    controller.expose()
-
-    print("\nTesting Speed PID Controller")
-    input = store.fetch('state.speed').update(value = 0.0)
-    rate = store.fetch('state.speedRate').update(value = 0.0)
-    rsp = store.fetch('goal.speed').update(value = 2.0)
-    controllerPIDSpeed.expose()
-    store.advanceStamp(0.125)
-    controllerPIDSpeed.update()
-    controllerPIDSpeed.expose()
-
-    print("\nTesting Heading PID Controller")
-    input = store.fetch('state.heading').update(value = 0.0)
-    rate = store.fetch('state.headingRate').update(value = 0.0)
-    rsp = store.fetch('goal.heading').update(value = 45.0)
-    controllerPIDHeading.expose()
-    store.advanceStamp(0.125)
-    controllerPIDHeading.update()
-    controllerPIDHeading.expose()
-
-    print("\nTesting Depth PID Controller")
-    input = store.fetch('state.depth').update(value = 0.0)
-    rate = store.fetch('state.depthRate').update(value = 0.0)
-    rsp = store.fetch('goal.depth').update(value = 5.0)
-    controllerPIDDepth.expose()
-    store.advanceStamp(0.125)
-    controllerPIDDepth.update()
-    controllerPIDDepth.expose()
-
-    print("\nTesting Pitch PID Controller")
-    input = store.fetch('state.pitch').update(value = 0.0)
-    rate = store.fetch('state.pitchRate').update(value = 0.0)
-    rsp = store.fetch('goal.pitch').update(value = 5.0)
-    controllerPIDPitch.expose()
-    store.advanceStamp(0.125)
-    controllerPIDPitch.update()
-    controllerPIDPitch.expose()
-
-
-
-def TestMotion():
-    """
-
-    """
-
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-
-
-    print("\nTesting Motion Sim Controller")
-    controller = MotionController(name = 'controllerMotionTest', store = store,
-                                  group = 'controller.motion.test',
-                                  speed = 'state.speed', speedRate = 'state.speedRate',
-                                  depth = 'state.depth', depthRate = 'state.depthRate',
-                                  pitch = 'state.pitch', pitchRate = 'state.pitchRate',
-                                  altitude = 'state.altitude',
-                                  heading = 'state.heading', headingRate = 'state.headingRate',
-                                  position = 'state.position',
-                                  rpm = 'goal.rpm', stern = 'goal.stern', rudder = 'goal.rudder',
-                                  current = 'scenario.current', bottom = 'scenario.bottom',
-                                  prevPosition = 'state.position',
-                                  parms = dict(rpmLimit = 1000.0, sternLimit = 20.0, rudderLimit = 20.0,
-                                               gs = 0.0025, gpr = -0.5, ghr = -0.5))
-
-    store.expose()
-
-    rpm = store.fetch('goal.rpm').update(value = 500.0)
-    stern = store.fetch('goal.stern').update(value = 0.0)
-    rudder = store.fetch('goal.rudder').update(value = 0.0)
-    current = store.fetch('scenario.current').update(north = 0.0, east = 0.0)
-    bottom = store.fetch('scenario.bottom').update(value =  50.0)
-    prevPosition = store.fetch('scenario.startposition').update(north = 0.0, east = 0.0)
-
-    controller.restart()
-    controller.expose()
-    store.advanceStamp(0.125)
-    controller.update()
-    controller.expose()
-
-
-
-def Test():
-    """Module Common self test
-
-    """
-
-    #clear registries
-    print("\nTesting Controllers\n")
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-    store.expose()
-
-
-    current = store.fetch('scenario.current').update(north = 0.0, east = 0.0)
-    bottom = store.fetch('scenario.bottom').update(value =  50.0)
-    prevPosition = store.fetch('state.position').update(north = 0.0, east = 0.0)
-
-    headinggoal =  store.fetch('goal.heading').update(value = 45.0)
-    depthgoal =  store.fetch('goal.depth').update(value = 5.0)
-    speedgoal =  store.fetch('goal.speed').update(value = 2.0)
-    duration = 10.0
-
-    controllerMotionVehicle.restart()
-
-    controllerPidSpeed.expose()
-    controllerPidHeading.expose()
-    controllerPidDepth.expose()
-    controllerPidPitch.expose()
-    controllerMotionVehicle.expose()
-
-    while (store.stamp <= duration):
-        print("")
-        controllerPidSpeed.action()
-        controllerPidHeading.action()
-        controllerPidDepth.action()
-        controllerPidPitch.action()
-        controllerMotionVehicle.action()
-        controllerMotionVehicle.expose()
-
-        store.advanceStamp(0.125)
-
-
-
-if __name__ == "__main__":
-    Test()

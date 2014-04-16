@@ -20,10 +20,8 @@ from ....base.consoling import getConsole
 console = getConsole()
 
 
-class HeadingSensorFilter(deeding.LapseDeed):
-    """HeadingSensorFilter LapseDeed Deed Class
-       Heading Sensor Filter  class
-    """
+class FilterSensorHeading(deeding.LapseDeed):
+    """Class """
     Ioinits = odict(
         group = 'filter.sensor.heading',
         output = 'heading.output',
@@ -43,8 +41,7 @@ class HeadingSensorFilter(deeding.LapseDeed):
 
         """
         #call super class method
-        super(HeadingSensorFilter,self).__init__(**kw)
-
+        super(FilterSensorHeading,self).__init__(**kw)
 
     def initio(self, group, output, input, scenario, parms = None, **kw):
         """ Override since legacy init interface
@@ -99,12 +96,10 @@ class HeadingSensorFilter(deeding.LapseDeed):
         self.stamp = self.store.stamp
         self.lapse = 0.0
 
-
-
     def action(self, **kw):
         """Updates
         """
-        super(HeadingSensorFilter,self).action(**kw) #.lapse & .stamp updated here
+        super(FilterSensorHeading,self).action(**kw) #.lapse & .stamp updated here
         #.lapse is time since last run
         #.stamp is current time
 
@@ -133,7 +128,6 @@ class HeadingSensorFilter(deeding.LapseDeed):
 
         self.output.value = heading
 
-
     def expose(self):
         """
            prints out sensor state
@@ -144,11 +138,8 @@ class HeadingSensorFilter(deeding.LapseDeed):
         print(format %\
               (self.output.value, self.parm.data.phase, self.parm.data.amp))
 
-
-class WindowedFilter(deeding.LapseDeed):
-    """WindowedFilter LapseDeed Deed Class
-       Windowed Filter  class
-    """
+class FilterWindowed(deeding.LapseDeed):
+    """Class """
     Ioinits = odict(
         group = 'filter.sensor.generic', output = 'state.generic',
         input = 'ctd', field = 'generic', depth = 'state.depth',
@@ -166,8 +157,7 @@ class WindowedFilter(deeding.LapseDeed):
 
         """
         #call super class method
-        super(WindowedFilter,self).__init__(**kw)
-
+        super(FilterWindowed,self).__init__(**kw)
 
     def initio(self, group, output, input, field, depth, parms = None, **kw):
         """ Override since legacy init interface
@@ -216,7 +206,6 @@ class WindowedFilter(deeding.LapseDeed):
 
         self.elapsed = self.store.create(group + '.elapsed').create(value = 0.0)#create if not exist
 
-
         #outputs
         preload = self.parm.data.preload #set initial output to preload
         self.output = self.store.create(output).update(value = preload)
@@ -238,7 +227,6 @@ class WindowedFilter(deeding.LapseDeed):
             preload = self.parm.data.preload #set initial output to preload
             self.output.value = preload
 
-
     def action(self, **kw):
         """Updates filter
         """
@@ -254,7 +242,7 @@ class WindowedFilter(deeding.LapseDeed):
             return
 
         #.lapse is time since last run and .stamp is current time
-        super(WindowedFilter,self).action(**kw) #.lapse & .stamp updated here
+        super(FilterWindowed,self).action(**kw) #.lapse & .stamp updated here
         self.elapsed.value = self.lapse #store lapse for logging
 
         raw = self.input[self.field] #new raw sensor salinity
@@ -278,39 +266,37 @@ class WindowedFilter(deeding.LapseDeed):
 
         self.output.value = new
 
-
     def expose(self):
         """
            prints out sensor state
 
         """
-        print("WindowedFilter %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
+        print("FilterWindowed %s stamp = %s  lapse = %0.3f" % (self.name, self.stamp,self.lapse))
         format = "output = %0.3f window = %0.3f frac = %0.3f"
         print(format % (self.output.value, self.parm.data.window, self.parm.data.frac))
 
 
-WindowedFilter.__register__('filterSensorSalinity', ioinits=odict(
+FilterWindowed.__register__('filterSensorSalinity', ioinits=odict(
     group = 'filter.sensor.salinity', output = 'state.salinity',
     input = 'ctd', field = 'salinity', depth = 'state.depth',
     parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
                  layer = 40.0, tolerance = 5.0)) )
 
-WindowedFilter.__register__('filterSensorSalinitysim', ioinits=odict(
+FilterWindowed.__register__('filterSensorSalinitysim', ioinits=odict(
     group = 'filter.sensor.salinitysim', output = 'state.salinity',
     input = 'ctdsim', field = 'salinity', depth = 'state.depth',
     parms = dict(window = 60.0, frac = 0.9, preload = 30.0,
                  layer = 40.0, tolerance = 5.0)) )
 
-WindowedFilter.__register__('filterSensorTemperature', ioinits=odict(
+FilterWindowed.__register__('filterSensorTemperature', ioinits=odict(
     group = 'filter.sensor.temperature', output = 'state.temperature',
     input = 'ctd', field = 'temperature', depth = 'state.depth',
     parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
                  layer = 40.0, tolerance = 5.0)) )
 
 
-class MinCtdFilter(deeding.LapseDeed):
-    """MinCTDFilter LapseDeed Deed Class
-       Min CTDFilter  class
+class FilterCtdMin(deeding.LapseDeed):
+    """Filter Ctd Minimum temperature
     """
     Ioinits = odict(
         group = 'filter.min.temperature', outputs = 'state.mintemps',
@@ -331,7 +317,7 @@ class MinCtdFilter(deeding.LapseDeed):
 
         """
         #call super class method
-        super(MinCtdFilter,self).__init__(**kw)
+        super(FilterCtdMin,self).__init__(**kw)
 
 
     def initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
@@ -459,7 +445,7 @@ class MinCtdFilter(deeding.LapseDeed):
         """
 
         #.lapse is time since last run and .stamp is current time
-        super(MinCtdFilter,self).action(**kw) #.lapse & .stamp updated here
+        super(FilterCtdMin,self).action(**kw) #.lapse & .stamp updated here
         self.elapsed.value = self.lapse #store lapse for logging
 
         if self.input.stamp is None:
@@ -497,78 +483,4 @@ class MinCtdFilter(deeding.LapseDeed):
         format = "output = %0.3f depth = %0.3f slope = %0.3f north = %0.3f east = %0.3f "
         print(format % (self.output[self.field], self.output.data.depth, self.output.data.slope,
                         self.output.data.north, self.output.data.east))
-
-
-
-def TestTemperature():
-    """           """
-
-
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-
-    print("\nTesting Temperature Filter")
-    filter = TemperatureSensorFilter(name = 'filterSensorTemp', store = store,
-                                     group = 'filter.sensor.temperature', output = 'state.temperature',
-                                     input = 'ctd', depth = 'state.depth',
-                                     parms = dict(window = 60.0, frac = 0.9, preload = 10.0,
-                                                  layer = 40.0, tolerance = 5.0))
-
-
-    output = store.fetch('state.temperature').update(value = 10.0)
-    output = store.fetch('state.depth').update(value = 40.0)
-    store.expose()
-    filter.expose()
-
-    for k in range(1, 300):
-        print("")
-        store.advanceStamp(0.125)
-        s = 10.0 + 2.0 * math.sin(math.pi * 2.0 * k/300.0)
-        input = store.fetch('ctd').update(temperature = s)
-        filter.update()
-        filter.expose()
-        print(s)
-
-
-
-def TestSalinity():
-    """           """
-
-    #clear registries
-    storing.Store.Clear()
-    deeding.Deed.Clear()
-
-    store = storing.Store(name = 'Test')
-
-    print("\nTesting Salinity Filter")
-    filter = SalinitySensorFilter(name = 'filterSensorSalinity', store = store,
-                                  group = 'filter.sensor.salinity', output = 'state.salinity',
-                                  input = 'ctd.salinity',
-                                  parms = dict(window = 60.0, frac = 0.9))
-
-    output = store.fetch('state.salinity').update(value = 32.0)
-    store.expose()
-    filter.expose()
-
-    for k in range(1, 300):
-        print("")
-        store.advanceStamp(0.125)
-        s = 32.0 + 2.0 * math.sin(math.pi * 2.0 * k/300.0)
-        input = store.fetch('ctd.salinity').update(value = s)
-        filter.update()
-        filter.expose()
-
-
-
-def Test():
-    """Module Common self test
-
-    """
-    pass
-
-if __name__ == "__main__":
-    Test()
 
