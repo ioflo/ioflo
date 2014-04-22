@@ -10,7 +10,7 @@ __all__ = ['globaling', 'aiding', 'excepting', 'interfacing',
            'tasking', 'framing', 'logging', 'serving', 'monitoring',
            'acting', 'poking', 'goaling', 'needing', 'traiting',
            'fiating', 'wanting','completing','deeding', 'arbiting',
-           'housing', 'building',  'testing']
+           'housing', 'building']
 
 
 for m in __all__:
