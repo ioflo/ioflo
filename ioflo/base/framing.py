@@ -367,7 +367,7 @@ class Framer(tasking.Tasker):
             if frame.precur(): #transition or cond aux was successful so stop evaluating
                 return True
 
-    def exitAll(self):
+    def exitAll(self, abort=False):
         """sets exits to .actives and reverses so in bottom up order
            calls exitActions for frames in exits list
 
@@ -380,10 +380,10 @@ class Framer(tasking.Tasker):
             self.name))
 
         exits = self.actives[:]  #make copy of self.actives so can reverse it
-        #exits.reverse() #reverse (in place)  so in bottom up order
         self.exit(exits) #exits is reversed in place in exit()
         self.deactivate()
-        self.done = True
+        if not abort:
+            self.done = True
 
     def exit(self, exits = []):
         """calls exitActions for frames in exits list
@@ -548,7 +548,8 @@ class Framer(tasking.Tasker):
                             self.name,self.active.name,self.store.stamp)
                         self.desire = STOP
                         console.terse(msg)
-                        self.exitAll()  #self.desire may change, self.done = True set in exitAll()
+                        #self.done = False set in exitAll(abort=True) when abort == True
+                        self.exitAll(abort=True)  #self.desire may change,
                         console.profuse("   Stopped Framer '{0}'\n".format(self.name))
                         self.status = STOPPED
 
@@ -572,6 +573,7 @@ class Framer(tasking.Tasker):
                         msg = "   Aborting %s in %s at %0.3f\n" %\
                             (self.name, self.active.name, self.store.stamp)
                         console.terse(msg)
+                        self.exitAll()  #self.desire may change, self.done = True set in exitAll()
                     elif status == STOPPED or status == READIED:
                         msg = "   Aborting %s at %0.3f\n" %\
                             (self.name, self.store.stamp)

@@ -148,30 +148,30 @@ class Timer(object):
         """ Initialization method for instance.
             duration in seconds (fractional)
         """
-        self.restart(start = time.time(), duration = duration)
+        self.restart(start=time.time(), duration=duration)
 
     def getElapsed(self): #for property
         """ Computes elapsed time in seconds (fractional) since start.
             if zero then hasn't started yet
         """
         return abs(time.time() - self.start)
-    elapsed = property(getElapsed, doc = 'Elapsed time.')
+    elapsed = property(getElapsed, doc='Elapsed time.')
 
     def getRemaining(self):# for property
         """ Returns time remaining in seconds (fractional) before expires.
             returns zero if it has already expired
         """
         return max(0.0, self.stop - time.time())
-    remaining = property(getRemaining, doc = 'Remaining time.')
+    remaining = property(getRemaining, doc='Remaining time.')
 
     def getExpired(self):
         if (time.time() >= self.stop):
             return True
         else:
             return False
-    expired = property(getExpired, doc = 'True if expired, False otherwise')
+    expired = property(getExpired, doc='True if expired, False otherwise')
 
-    def restart(self,start = None, duration = None):
+    def restart(self,start=None, duration=None):
         """ Starts timer at start time secs for duration secs.
             (fractional from epoc)
             If start arg is missing then restarts at current time
@@ -194,9 +194,9 @@ class Timer(object):
         """ Restarts timer at stop so no time lost
 
         """
-        return self.restart(start = self.stop)
+        return self.restart(start=self.stop)
 
-    def extend(self, extension = None):
+    def extend(self, extension=None):
         """ Extends timer duration for additional extension seconds (fractional).
             Useful so as not to lose time when  need more/less time on timer
 
@@ -210,7 +210,7 @@ class Timer(object):
 
         duration = self.duration + extension
 
-        return self.restart(start = self.start, duration = duration)
+        return self.restart(start=self.start, duration=duration)
 
 class StoreTimer(object):
     """ Class to manage realtive Store based time.
@@ -238,30 +238,30 @@ class StoreTimer(object):
         """
         self.store = store
         start = self.store.stamp if self.store.stamp is not None else 0.0
-        self.restart(start = start, duration = duration)
+        self.restart(start=start, duration=duration)
 
     def getElapsed(self): #for property
         """ Computes elapsed time in seconds (fractional) since start.
             if zero then hasn't started yet
         """
         return abs(self.store.stamp - self.start)
-    elapsed = property(getElapsed, doc = 'Elapsed time.')
+    elapsed = property(getElapsed, doc='Elapsed time.')
 
     def getRemaining(self):# for property
         """ Returns time remaining in seconds (fractional) before expires.
             returns zero if it has already expired
         """
         return max(0.0, self.stop - self.store.stamp)
-    remaining = property(getRemaining, doc = 'Remaining time.')
+    remaining = property(getRemaining, doc='Remaining time.')
 
     def getExpired(self):
         if (self.store.stamp is not None and self.store.stamp >= self.stop):
             return True
         else:
             return False
-    expired = property(getExpired, doc = 'True if expired, False otherwise')
+    expired = property(getExpired, doc='True if expired, False otherwise')
 
-    def restart(self, start = None, duration = None):
+    def restart(self, start=None, duration=None):
         """ Starts timer at start time secs for duration secs.
             (fractional from epoc)
             If start arg is missing then restarts at current time
@@ -286,7 +286,7 @@ class StoreTimer(object):
         """
         return self.restart(start = self.stop)
 
-    def extend(self, extension = None):
+    def extend(self, extension=None):
         """ Extends timer duration for additional extension seconds (fractional).
             Useful so as not to lose time when  need more/less time on timer
 
@@ -300,7 +300,7 @@ class StoreTimer(object):
 
         duration = self.duration + extension
 
-        return self.restart(start = self.start, duration = duration)
+        return self.restart(start=self.start, duration=duration)
 
 class SerialNB(object):
     """ Class to manage non blocking reads from serial port.
@@ -627,6 +627,8 @@ class SocketUdpNb(object):
             if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
                 return ('',None) #receive has nothing empty string for data
             else:
+                emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
+                console.terse(emsg)                
                 raise #re raise exception ex1
 
     def send(self, data, da):
@@ -639,7 +641,7 @@ class SocketUdpNb(object):
         try:
             result = self.ss.sendto(data, da) #result is number of bytes sent
         except socket.error as ex:
-            emsg = "socket.error = {0}\n".format(ex)
+            emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
             console.terse(emsg)
             result = 0
             raise
@@ -806,6 +808,8 @@ class SocketUxdNb(object):
             if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
                 return ('',None) #receive has nothing empty string for data
             else:
+                emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
+                console.terse(emsg)                  
                 raise #re raise exception ex1
 
     def send(self, data, da):
@@ -818,7 +822,7 @@ class SocketUxdNb(object):
         try:
             result = self.ss.sendto(data, da) #result is number of bytes sent
         except socket.error as ex:
-            emsg = "socket.error = {0}\n".format(ex)
+            emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
             console.terse(emsg)
             result = 0
             raise
