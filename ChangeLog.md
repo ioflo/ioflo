@@ -3,6 +3,19 @@ CHANGE LOG
 -------------------
 
 ---------
+20140605
+---------
+
+v0.9.32
+
+Added exitAll() to framer microthread abort
+
+More verbose socket error messages for servers
+
+Some lint like cleanup of parameters
+
+
+---------
 20140416
 ---------
 
