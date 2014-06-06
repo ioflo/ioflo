@@ -2,6 +2,19 @@
 CHANGE LOG
 -------------------
 
+
+---------
+20140605
+---------
+
+v0.9.34
+
+fixed command line version
+ioflo -V
+to work properly
+
+
+
 ---------
 20140605
 ---------
