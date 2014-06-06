@@ -23,6 +23,10 @@ def main():
         print("ioflo version {0}".format(ioflo.__version__))
         sys.exit(0)
 
+    if not  args.filename:
+        print("Floscript filename missing")
+        sys.exit(0)
+
     ioflo.app.run.run(  name=args.name,
                         period = float(args.period),
                         real = args.realtime,
