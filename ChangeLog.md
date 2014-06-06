@@ -7,7 +7,7 @@ CHANGE LOG
 20140605
 ---------
 
-v0.9.34
+v0.9.35
 
 fixed command line version
 ioflo -V
