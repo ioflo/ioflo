@@ -37,7 +37,7 @@ def parseArgs():
             help="Skedder name.")
     p.add_argument('-f','--filename',
             action='store',
-            default='',
+            required=True,
             help="File path to FloScript file.")
     p.add_argument('-b','--behaviors',
             action='store',
