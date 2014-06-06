@@ -4,6 +4,7 @@
 import argparse
 import os
 
+from .. import __version__
 from ..base import skedding, consoling
 
 def parseArgs():
@@ -12,6 +13,10 @@ def parseArgs():
     d = "Runs ioflo. "
     d += "Example: ioflo -f filename -p period -v level -r -h -b 'mybehaviors.py'\n"
     p = argparse.ArgumentParser(description = d)
+    p.add_argument('-V','--version',
+            action='version',
+            version=__version__,
+            help="Prints out version of ioflo.")
     p.add_argument('-v','--verbose',
             action='store',
             default='concise',
@@ -26,11 +31,6 @@ def parseArgs():
             const=True,
             default=False,
             help="Run skedder at realtime.")
-    p.add_argument('-V','--version',
-            action='store_const',
-            const=True,
-            default=False,
-            help="Prints out version of ioflo.")
     p.add_argument('-n','--name',
             action='store',
             default='skedder',
