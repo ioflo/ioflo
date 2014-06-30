@@ -1,6 +1,17 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+20140605
+---------
+
+v0.9.36
+
+Added console log file path capability
+app.run.run now has parameter consolepath that specifies files path to log
+console messages instead of stdout
+
+ioflo script now has command line parameter -c --console for same
 
 
 ---------

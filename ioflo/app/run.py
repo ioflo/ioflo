@@ -22,6 +22,10 @@ def parseArgs():
             default='concise',
             choices=['0', '1', '2', '3', '4'].extend(consoling.VERBIAGE_NAMES),
             help="Verbosity level.")
+    p.add_argument('-c','--console',
+            action='store',
+            required=True,
+            help="File path name to console log file.")
     p.add_argument('-p','--period',
             action='store',
             default='0.125',
@@ -67,7 +71,8 @@ def parseArgs():
     else:
         verbosage = int(args.verbose)
 
-    console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbosage])
+    console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbosage],
+                                   path=args.console)
     console.profuse( "ioflo arguments: \n{0}".format(args))
     args.verbose = verbosage #converted value
     return args
@@ -85,9 +90,11 @@ def run(    name="skedder",
             metas=None,
             preloads=None,
             verbose=0,
+            consolepath="",
             statistics = ''):
     """ Run Skedder"""
-    console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbose])
+    console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbose],
+                                   path=consolepath)
     console.terse( "\n----------------------\n")
     console.terse( "Building Skeddar '{0}' ...\n".format(name))
 

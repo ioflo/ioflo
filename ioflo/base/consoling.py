@@ -6,6 +6,7 @@
 #imports
 import sys
 import os
+import errno
 from collections import namedtuple
 
 
@@ -74,7 +75,7 @@ class Console(object):
 
         if self._path:
             try:
-                self._path = os.path.abspath(self._path)
+                self._path = os.path.abspath(os.path.expanduser(self._path))
                 self._file = Console.ocfn(self._path, 'w+') #open or create file
                 self._file.seek(0, os.SEEK_END) # append but not forced
             except IOError as ex:
