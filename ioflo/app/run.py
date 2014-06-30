@@ -24,7 +24,7 @@ def parseArgs():
             help="Verbosity level.")
     p.add_argument('-c','--console',
             action='store',
-            required=True,
+            default='',
             help="File path name to console log file.")
     p.add_argument('-p','--period',
             action='store',
