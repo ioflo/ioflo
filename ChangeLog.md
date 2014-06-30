@@ -5,6 +5,18 @@ CHANGE LOG
 20140605
 ---------
 
+v0.9.37
+
+change console log file to append mode so multiple can write to it without
+overwiting
+
+
+
+
+---------
+20140605
+---------
+
 v0.9.36
 
 Added console log file path capability
