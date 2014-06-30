@@ -31,19 +31,23 @@ $ sudo pip install ioflo
 $ ioflo -h
 ```
 ```text
-usage: ioflo [-h] [-v VERBOSE] [-p PERIOD] [-r] [-V] [-n NAME] [-f FILENAME]
-             [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME] [-P PASSWORD]
+usage: ioflo [-h] [-V] [-v VERBOSE] -c CONSOLE [-p PERIOD] [-r] [-n NAME] -f
+             FILENAME [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME]
+             [-P PASSWORD] [-S [STATISTICS]]
 
-Runs ioflo. Example: python go -f filename -p period -v level -r -h -b 'mybehaviors.py'
+Runs ioflo. Example: ioflo -f filename -p period -v level -r -h -b
+'mybehaviors.py'
 
 optional arguments:
   -h, --help            show this help message and exit
+  -V, --version         Prints out version of ioflo.
   -v VERBOSE, --verbose VERBOSE
                         Verbosity level.
+  -c CONSOLE, --console CONSOLE
+                        File path name to console log file.
   -p PERIOD, --period PERIOD
                         Period per skedder run in seconds.
   -r, --realtime        Run skedder at realtime.
-  -V, --version         Prints out version of ioflo.
   -n NAME, --name NAME  Skedder name.
   -f FILENAME, --filename FILENAME
                         File path to FloScript file.
@@ -53,7 +57,11 @@ optional arguments:
                         Username.
   -P PASSWORD, --password PASSWORD
                         Password.
-
+  -S [STATISTICS], --statistics [STATISTICS]
+                        Profile and compute performance statistics. Put
+                        statistics into file path given by optional argument.
+                        Default statistics file path is
+                        /tmp/ioflo/profile/NAME.
 ```
 
 Example:
