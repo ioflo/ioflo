@@ -75,8 +75,17 @@ class Console(object):
 
         if self._path:
             try:
-                self._path = os.path.abspath(self._path)
-                self._file = Console.ocfn(self._path, 'w+') #open or create file
+                self._path = os.path.abspath(os.path.expanduser(self._path))
+                dirpath = os.path.dirname(self._path)
+                if not os.path.exists(dirpath):
+                    try:
+                        os.makedirs(dirpath)
+                    except OSError as ex:
+                        msg = ("Error creating console file directory {0}. "
+                               "{1}\n".format(dirpath, ex))
+                        sys.stderr.write(msg)
+                        return False
+                self._file = Console.ocfn(self._path, 'a+') # open or create file
                 self._file.seek(0, os.SEEK_END) # append but not forced
             except IOError as ex:
                 msg = "Error opening console file {0}. {1}\n".format(self._path, ex)
@@ -148,7 +157,7 @@ class Console(object):
         """
         try:
             newfd = os.open(filename, os.O_EXCL | os.O_CREAT | os.O_RDWR, 436) # 436 == octal 0664
-            newfile = os.fdopen(newfd,"w+")
+            newfile = os.fdopen(newfd, openMode)
         except OSError as ex:
             if ex.errno == errno.EEXIST:
                 newfile = open(filename, openMode)
