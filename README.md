@@ -31,17 +31,20 @@ $ sudo pip install ioflo
 $ ioflo -h
 ```
 ```text
-usage: ioflo [-h] [-V] [-v VERBOSE] [-p PERIOD] [-r] [-n NAME] -f FILENAME
-             [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME] [-P PASSWORD]
-             [-S [STATISTICS]]
+usage: ioflo [-h] [-V] [-v VERBOSE] -c CONSOLE [-p PERIOD] [-r] [-n NAME] -f
+             FILENAME [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME]
+             [-P PASSWORD] [-S [STATISTICS]]
 
-Runs ioflo. Example: ioflo -f filename -p period -v level -r -h -b 'mybehaviors.py'
+Runs ioflo. Example: ioflo -f filename -p period -v level -r -h -b
+'mybehaviors.py'
 
 optional arguments:
   -h, --help            show this help message and exit
   -V, --version         Prints out version of ioflo.
   -v VERBOSE, --verbose VERBOSE
                         Verbosity level.
+  -c CONSOLE, --console CONSOLE
+                        File path name to console log file.
   -p PERIOD, --period PERIOD
                         Period per skedder run in seconds.
   -r, --realtime        Run skedder at realtime.
