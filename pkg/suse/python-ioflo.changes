@@ -1,0 +1,62 @@
+-------------------------------------------------------------------
+Tue Jul  1 19:12:17 UTC 2014 - aboe76@gmail.com
+
+- Updated to v0.9.38
+- change console log file cli parameter to not be required
+- change console log file to append mode so multiple can write to it without overwiting
+- Added console log file path capability app.run.run now has parameter consolepath that 
+specifies files path to log console messages instead of stdout
+- ioflo script now has command line parameter -c --console for same
+
+-------------------------------------------------------------------
+Sat Jun 14 11:39:23 UTC 2014 - aboe76@gmail.com
+
+- Updated to v0.9.35
+- fixed command line version ioflo -V to work properly
+- Added exitAll() to framer microthread abort
+- More verbose socket error messages for servers
+- Some lint like cleanup of parameters
+
+-------------------------------------------------------------------
+Mon Jun  9 10:22:00 UTC 2014 - aboe76@gmail.com
+
+- Updated to version v0.9.31
+  - Changed Class naming convention for Actors/Deed Registery to get rid of reverse camel convention. This was causing confusion to new users and it was the result of a now obsolete historical convention in the way IoFlo managed behavior registration for FloScript.
+    Unfortunately this change breaks any FloScripts/behaviors (sub classes of Actor or Deed) that were created using the old convention. The FloScripts do not need to be changed but the ClassNames need to be changed so they will be found.
+    The new Convention is to use Cap Camel Case for the Class Name but the order of the camel case segments is not reversed to generate the FloScript do verb name as previously. Also when using .register the name parameter argument value should be captital camel case not lower camel case.
+    So everything is consistent now
+
+-------------------------------------------------------------------
+Sat Apr 12 06:07:43 UTC 2014 - aboe76@gmail.com
+
+- Updated to version v0.9.20
+  + Upstream fixed rpmlint issues
+
+-------------------------------------------------------------------
+Thu Apr 10 19:15:37 UTC 2014 - aboe76@gmail.com
+
+- Updated to version v0.9.19
+  - Now running in Python3 basic test missions. Probably some corner conditions
+  - Addes preliminary support for Python3 compatibility
+
+-------------------------------------------------------------------
+Mon Mar 31 18:49:49 UTC 2014 - aboe76@gmail.com
+
+- Updated to version v0.9.17
+  - Increases Udp and Uxd socket buffer sizes if they are too small for the server setting.
+
+-------------------------------------------------------------------
+Mon Mar 31 18:41:45 UTC 2014 - aboe76@gmail.com
+
+- Updated spec file suse/sles needs python-importlib
+
+-------------------------------------------------------------------
+Sat Mar 29 20:01:37 UTC 2014 - aboe76@gmail.com
+
+- Improved spec file after review
+
+-------------------------------------------------------------------
+Fri Mar 21 23:17:00 UTC 2014 - aboe76@gmail.com
+
+- initial version v0.9.16
+
