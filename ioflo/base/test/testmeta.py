@@ -19,13 +19,13 @@ def Run(fileName = None, period = 0.2, real = False,
         fileName = "../../app/plan/meta.flo"
 
 
-    print "Building ..."
+    print("Building ...")
     skedder = tasking.Skedder(name = "TestTasker",
                               period = period,
                               real = real,
                               filepath = fileName)
     if skedder.build():
-        print "\n\nStarting mission from file %s...\n" % (fileName)
+        print("\n\nStarting mission from file %s...\n" % (fileName))
         if not profiling:
             skedder.run()
         else:
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         #print help info and exit
         sys.stderr.write(str(opts) + "usage\n") #joins list items with space separator
 
-        print usage
+        print(usage)
 
         sys.exit(2)
 
@@ -85,10 +85,10 @@ if __name__ == "__main__":
         if x[0] == '-r':
             real = True
         if x[0] == '-h':
-            print usage
+            print(usage)
             help = True
 
     if not help:
-        print "fileName = %s, period = %0.3f verbose = %d real = %s" %\
-              (filename, period, verbose, real)
+        print("fileName = %s, period = %0.3f verbose = %d real = %s" %\
+              (filename, period, verbose, real))
         Run(fileName = filename, period = period, verbose = verbose, real = real)

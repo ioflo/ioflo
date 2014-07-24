@@ -1,5 +1,5 @@
 """ support for ioflo CLI """
-#print "\Module at%s" % __path__[0]
+#print("\Module at%s" % __path__[0])
 
 import argparse
 import os

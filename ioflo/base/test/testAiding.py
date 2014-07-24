@@ -13,7 +13,7 @@ console = getConsole()
 def TestConsoleNB():
     """Class ConsoleNB self test"""
     try:
-        print "Testing ConsoleNB"
+        print("Testing ConsoleNB")
         console = ConsoleNB()
         console.open()
 
@@ -29,20 +29,20 @@ def TestConsoleNB():
 def TestSocketUdpNB():
     """Class SocketUdpNb self test """
     try:
-        print "Testing SocketUdpNb"
+        print("Testing SocketUdpNb")
         serverA = aiding.SocketUdpNb(port = 6101)
         serverA.reopen()
         serverB = aiding.SocketUdpNb(port = 6102)
         serverB.reopen()
 
         serverA.send("A sends to B",serverB.ha)
-        print serverB.receive()
+        print(serverB.receive())
         serverA.send("A sends to A",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverB.send("B sends to A",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverB.send("B sends to B",serverB.ha)
-        print serverB.receive()
+        print(serverB.receive())
 
     finally:
         serverA.close()
@@ -52,7 +52,7 @@ def TestSocketUxdNB():
     """Class SocketUxdNb self test """
     console.reinit(verbosity=console.Wordage.verbose)
     try:
-        print "Testing SocketUxdNb"
+        print("Testing SocketUxdNb")
         serverA = aiding.SocketUxdNb(ha = '/tmp/local/uxdA', umask=0x077)
         serverA.reopen()
         serverB = aiding.SocketUxdNb(ha = '/tmp/local/uxdB', umask=0x077)
@@ -61,38 +61,38 @@ def TestSocketUxdNB():
         serverC.reopen()
 
         serverA.send("A sends to B",serverB.ha)
-        print serverB.receive()
+        print(serverB.receive())
         serverA.send("A sends to C",serverC.ha)
-        print serverC.receive()
+        print(serverC.receive())
         serverA.send("A sends to A",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverB.send("B sends to A",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverC.send("C sends to A",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverB.send("B sends to B",serverB.ha)
-        print serverB.receive()
+        print(serverB.receive())
         serverC.send("C sends to C",serverC.ha)
-        print serverC.receive()
+        print(serverC.receive())
 
         serverA.send("A sends to B again",serverB.ha)
-        print serverB.receive()
+        print(serverB.receive())
         serverA.send("A sends to C again",serverC.ha)
-        print serverC.receive()
+        print(serverC.receive())
         serverA.send("A sends to A again",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverB.send("B sends to A again",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverC.send("C sends to A again",serverA.ha)
-        print serverA.receive()
+        print(serverA.receive())
         serverB.send("B sends to B again",serverB.ha)
-        print serverB.receive()
+        print(serverB.receive())
         serverC.send("C sends to C again",serverC.ha)
-        print serverC.receive()
+        print(serverC.receive())
 
-        print serverA.receive()
-        print serverB.receive()
-        print serverC.receive()
+        print(serverA.receive())
+        print(serverB.receive())
+        print(serverC.receive())
 
 
     finally:
@@ -112,7 +112,7 @@ def TestBlend0(u = .25, s = .75, steps = 10):
     for x in xrange(-(steps + 1), steps + 2, 1):
         d = x * ss
         b = Blend0(d,u,s)
-        print d, b
+        print(d, b)
 
 def Test():
     """Module self test

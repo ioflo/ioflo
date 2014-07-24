@@ -354,7 +354,7 @@ class SerialNB(object):
             iflag, oflag, cflag, lflag, ispeed, ospeed, cc = range(7)
 
             settings = termios.tcgetattr(self.fd)
-            #print settings
+            #print(settings)
 
             #ignore carriage returns on input
             settings[iflag] = (settings[iflag] | (termios.IGNCR)) #ignore cr
@@ -383,7 +383,7 @@ class SerialNB(object):
                 settings[ospeed] = speed
 
             termios.tcsetattr(self.fd, termios.TCSANOW, settings)
-            #print settings
+            #print(settings)
 
     def close(self):
         """Closes fd.
@@ -628,7 +628,7 @@ class SocketUdpNb(object):
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
-                console.terse(emsg)                
+                console.terse(emsg)
                 raise #re raise exception ex1
 
     def send(self, data, da):
@@ -809,7 +809,7 @@ class SocketUxdNb(object):
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
-                console.terse(emsg)                  
+                console.terse(emsg)
                 raise #re raise exception ex1
 
     def send(self, data, da):
