@@ -120,7 +120,10 @@ rm -rf %{buildroot}
 %endif
 
 %changelog
-* Fri Jun 20 2014 Erik Johnson <erik@saltstack.com> - 0.9.38-1
+* Thu Jul 24 2014 Erik Johnson <erik@saltstack.com> - 0.9.39-1
+- Updated to 0.9.39
+
+* Wed Jul 23 2014 Erik Johnson <erik@saltstack.com> - 0.9.38-1
 - Updated to 0.9.38
 
 * Fri Jun 20 2014 Erik Johnson <erik@saltstack.com> - 0.9.35-1
