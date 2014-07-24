@@ -730,7 +730,7 @@ class Share(object):
 
     def expose(self):
         """print out important attributes for debugging """
-        print( "Name %s Store %s Stamp %s Value %s  Dict %s\nTruth %s Unit %s Owner %s " % \
+        print("Name %s Store %s Stamp %s Value %s  Dict %s\nTruth %s Unit %s Owner %s " % \
               (self.name, self.store, self.stamp, self.value,  self.data, self.truth,
                self.unit,  self.owner))
 

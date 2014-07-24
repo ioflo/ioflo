@@ -259,10 +259,10 @@ class FilterWindowed(deeding.DeedLapse):
         w = max( 1.0, window / self.lapse) #get window size in samples
         equiv = min(1.0, w * frac) #get equivalence time = sample k at which iir = ma filter
         g = 1.0 - (1.0 - frac) ** (1.0/equiv) #get gain for equivalence
-        #print "w = %0.4f equiv = %0.4f g = %0.4f" % (w,equiv,g)
+        #print("w = %0.4f equiv = %0.4f g = %0.4f" % (w,equiv,g))
 
         new = (1.0 - g) * old + g * raw
-        #print "sNew = %0.4f sOld = %0.4f sRaw = %0.4f" % (sNew,sOld,sRaw)
+        #print("sNew = %0.4f sOld = %0.4f sRaw = %0.4f" % (sNew,sOld,sRaw))
 
         self.output.value = new
 

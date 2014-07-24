@@ -158,7 +158,7 @@ class DetectorPositionBox(deeding.Deed):
         se = width
         rn = pn - cn #vehicle position relative to top left corner
         re = pe - ce
-        #print cn,ce,sn,se,pn,pe,rn,re
+        #print(cn,ce,sn,se,pn,pe,rn,re)
         side = se * rn - sn * re #2d perp product
         if side >= 0.0:
             self.output.update(outtop = True, inside = False)
@@ -204,8 +204,8 @@ class DetectorPositionBox(deeding.Deed):
         else:
             self.output.update(outright = False)
 
-        #print "cn = %0.3f ce = %0.3f sn = %0.3f se = %0.3f rn = %0.3f re = %0.3f side = %0.3f" %\
-        #   (cn,ce,sn,se,rn,re,side)
+        #print("cn = %0.3f ce = %0.3f sn = %0.3f se = %0.3f rn = %0.3f re = %0.3f side = %0.3f" %\
+        #   (cn,ce,sn,se,rn,re,side))
 
         if console._verbosity >= console.Wordage.profuse:
             self.expose()

@@ -10,7 +10,7 @@ def TestRegister():
             self.store = store
 
 
-    print A.Registry
+    print(A.Registry)
 
 
 def TestMetaclassify():
@@ -22,7 +22,7 @@ def TestMetaclassify():
             self.store = store
 
 
-    print A.Registry
+    print(A.Registry)
 
 
 if __name__ == "__main__":
