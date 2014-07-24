@@ -3,6 +3,15 @@ CHANGE LOG
 -------------------
 
 ---------
+20140724
+---------
+
+v0.9.39
+
+Cleanup some non python3 compatible print statement in tests
+Lint cleanup
+
+---------
 20140630
 ---------
 
