@@ -2,10 +2,6 @@
 %global with_python3 1
 %else
 
-%if 0%{?rhel} == 5
-%global with_python26 1
-%endif
-
 %if (0%{?rhel} < 7 || 0%{?fedora} < 13)
 %global pybasever 2.6
 %endif
@@ -20,8 +16,8 @@
 
 Name:           python-%{srcname}
 Version:        0.9.39
-Release:        1%{?dist}
-Summary:        Flow-based programing interface
+Release:        2%{?dist}
+Summary:        Flow-based programming interface
 
 Group:          Development/Libraries
 License:        MIT
@@ -31,10 +27,12 @@ Source0:        http://pypi.python.org/packages/source/i/%{srcname}/%{srcname}-%
 BuildRoot:      %{_tmppath}/%{srcname}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 
-%if 0%{?with_python26}
+%if 0%{?rhel} == 5
+BuildRequires:  python26
 BuildRequires:  python26-devel
 BuildRequires:  python26-distribute
 BuildRequires:  python26-importlib
+Requires:       python26
 Requires:       python26-importlib
 %else
 
@@ -52,15 +50,6 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 %endif
 
-# We don't want to provide private python extension libs
-%{?filter_setup:
-%filter_provides_in %{python2_sitearch}/.*\.so$
-%if 0%{?with_python3}
-%filter_provides_in %{python3_sitearch}/.*\.so$
-%endif
-%filter_setup
-}
-
 %description
 Ioflo is a flow-based programming automated reasoning engine and automation
 operation system, written in Python.
@@ -68,10 +57,22 @@ operation system, written in Python.
 
 %if 0%{?with_python3}
 %package -n python3-%{srcname}
-Summary:  Flow-based programing interface
+Summary:  Flow-based programming interface
 Group:    Development/Libraries
 
 %description -n python3-%{srcname}
+Ioflo is a flow-based programming automated reasoning engine and automation
+operation system, written in Python.
+%endif
+
+%if 0%{?rhel} == 5
+%package -n python26-%{srcname}
+Summary:  Flow-based programming interface
+Group:    Development/Libraries
+Requires: python26
+Requires: python26-importlib
+
+%description -n python26-%{srcname}
 Ioflo is a flow-based programming automated reasoning engine and automation
 operation system, written in Python.
 %endif
@@ -96,30 +97,44 @@ popd
 
 %install
 rm -rf %{buildroot}
-%{__python2} setup.py install --skip-build --root %{buildroot}
 
 %if 0%{?with_python3}
 pushd %{py3dir}
 %{__python3} setup.py install --skip-build --root %{buildroot}
+sed -i -e '1d' %{buildroot}%{python3_sitelib}/%{srcname}/app/test/example.py
+sed -i -e '1d' %{buildroot}%{python3_sitelib}/%{srcname}/app/test/testStart.py
 popd
 %endif
 
+%{__python2} setup.py install --skip-build --root %{buildroot}
+sed -i -e '1d' %{buildroot}%{python2_sitelib}/%{srcname}/app/test/example.py
+sed -i -e '1d' %{buildroot}%{python2_sitelib}/%{srcname}/app/test/testStart.py
+
 %clean
 rm -rf %{buildroot}
-
-%files
-%defattr(-,root,root,-)
-%{python2_sitelib}/*
-%{_bindir}/%{srcname}
 
 %if 0%{?with_python3}
 %files -n python3-%{srcname}
 %defattr(-,root,root,-)
 %{python3_sitelib}/*
+%endif
+
+%if 0%{?rhel} == 5
+%files -n python26-%{srcname}
+%defattr(-,root,root,-)
+%{python2_sitelib}/*
+%{_bindir}/%{srcname}
+%else
+%files
+%defattr(-,root,root,-)
+%{python2_sitelib}/*
 %{_bindir}/%{srcname}
 %endif
 
 %changelog
+* Thu Aug 14 2014 Erik Johnson <erik@saltstack.com> - 0.9.39-2
+- Fix dual deployment of ioflo executable
+
 * Thu Jul 24 2014 Erik Johnson <erik@saltstack.com> - 0.9.39-1
 - Updated to 0.9.39
 
