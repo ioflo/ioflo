@@ -805,7 +805,7 @@ class SocketLocalNb(object):
 
         if self.ms:   # This is a Windows Mailslot
             try:
-                packed = win32file.ReadFile(self.ms, 65535)
+                packed = win32file.ReadFile(self.ms, self.bs)
                 datatuple = msgpack.unpackb(packed[1])
                 sa = datatuple[0]
                 data = datatuple[1]
