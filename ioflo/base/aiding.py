@@ -27,17 +27,24 @@ import math
 import types
 import socket
 import os
+import sys
 import errno
 import time
 import struct
 import re
 import string
+import msgpack
 from collections import deque
 
 try:
     import simplejson as json
 except ImportError:
     import json
+
+try:
+    import win32file
+except ImportError:
+    pass
 
 # Import ioflo libs
 from .globaling import *
@@ -496,6 +503,7 @@ class ConsoleNB(object):
         """
         return(os.write(self.fd, data))
 
+
 class SocketUdpNb(object):
     """Class to manage non blocking reads and writes from UDP socket.
 
@@ -624,7 +632,9 @@ class SocketUdpNb(object):
 
             return (data,sa)
         except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+            # EAGAIN -> Resource temporarily unavailable on os x
+            # EWOULDBLOCK -> Nothing to read on Windows
+            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
@@ -654,32 +664,241 @@ class SocketUdpNb(object):
 
         return result
 
-class SocketUxdNb(object):
-    """Class to manage non blocking reads and writes from UXD (unix domain) socket.
 
-       Opens non blocking socket
-       Use instance method close to close socket
-
-       Needs socket module
-    """
-
+class SocketLocalNb(object):
+    '''
+    Creates a local abstracted socket that will be a non-blocking Unix domain
+    socket on Unices and a Windows mailslot on Win32.
+    '''
     def __init__(self, ha=None, bufsize = 1024, path = '', log = False, umask=None):
         """Initialization method for instance.
 
-           ha = host address duple (host, port)
-           host = '' equivalant to any interface on host
-           port = socket port
+           ha = host address (path to socket)
            bs = buffer size
         """
-        self.ha = ha # uxd host address string name
         self.bs = bufsize
-        self.ss = None #server's socket needs to be opened
 
         self.path = path #path to directory where log files go must end in /
         self.txLog = None #transmit log
         self.rxLog = None #receive log
         self.log = log
         self.umask = umask
+
+	self.ss = None  # server's uxd socket needs to be opened
+	self.ms = None  # Mailslot needs to be created and opened
+
+	if sys.platform == 'win32':
+	    self.ha = ha
+	    self.mailslotpath = '\\\\.\\mailslot'+self.ha.replace('/', '\\')
+        else:
+	    self.ha = ha # uxd fs path name or mailslot path
+	    
+
+    def open(self):
+        '''
+        opens socket/mailslot in non-blocking mode
+        '''
+
+        # make sure the server socket or the mailslot vars are empty
+        self.ss = None
+        self.ms = None
+
+	if sys.platform == 'win32':
+            try:
+                self.ms = win32file.CreateMailslot(self.mailslotpath, self.bs, 0, None)
+                # ha = path to mailslot
+                # 0 = MaxMessageSize, 0 for unlimited
+                # 0 = ReadTimeout, 0 to not block
+                # None = SecurityAttributes, none for nothing special
+            except win32file.error as ex:
+                console.terse('mailslot.error = {0}'.format(ex))
+                return False
+        else:
+            # if socket not closed properly, binding socket gets error
+            # socket.error: (48, 'Address already in use')
+            #create socket ss = server socket
+            self.ss = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+
+            # make socket address reusable.
+            # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+            # TIME_WAIT state, without waiting for its natural timeout to expire.
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+                self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+            if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+                self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+            self.ss.setblocking(0) #non blocking socket
+
+            oldumask = None
+            if self.umask is not None: # change umask for the uxd file
+                oldumask = os.umask(self.umask) # set new and return old
+
+            #bind to Host Address Port
+            try:
+                self.ss.bind(self.ha)
+            except socket.error as ex:
+                if not ex.errno == errno.ENOENT: # No such file or directory
+                    console.terse("socket.error = {0}\n".format(ex))
+                    return False
+                try:
+                    os.makedirs(os.path.dirname(self.ha))
+                except OSError as ex:
+                    console.terse("OSError = {0}\n".format(ex))
+                    return False
+                try:
+                    self.ss.bind(self.ha)
+                except socket.error as ex:
+                    console.terse("socket.error = {0}\n".format(ex))
+                    return False
+
+            if oldumask is not None: # restore old umask
+                os.umask(oldumask)
+
+            self.ha = self.ss.getsockname() #get resolved ha after bind
+
+
+        if self.log:
+            if not self.openLogs():
+                return False
+
+        return True
+
+    def reopen(self):
+        '''
+        Close and reopen the socket/mailslot
+        '''
+        self.close()
+        return self.open()
+
+    def close(self):
+        '''
+        Close the socket/mailslot
+        '''
+        if self.ss:
+            self.ss.close()   # Close socket
+            self.ss = None
+
+            try:
+                os.unlink(self.ha)
+            except OSError:
+                if os.path.exists(self.ha):
+                    raise
+
+        if self.ms:
+            try:
+                win32file.CloseHandle(self.ms)
+            except win32file.error:
+                # Just in case Windows decides to throw an error
+                # if the handle is already gone for some reason
+                pass
+            self.ms = None
+
+    def receive(self):
+        '''
+        Perform a non-blocking read on the mailslot
+
+        Returns tuple of form (data, sa)
+        if no data, returns ('', None)
+          but always returns a tuple with 2 elements
+
+        '''
+
+        if self.ms:   # This is a Windows Mailslot
+            try:
+                packed = win32file.ReadFile(self.ms, 65535)
+                datatuple = msgpack.unpackb(packed[1])
+                sa = datatuple[0]
+                data = datatuple[1]
+
+                message = "Server at {0} received {1} from {2}\n".format(
+                    self.ha, data, sa)
+
+                console.profuse(message)
+
+                if self.log and self.rxLog:
+                    self.rxLog.write("%s\n%s\n" % (sa, repr(data)))
+
+                return (data, sa)
+
+            except win32file.error:
+                return ('', None)
+
+        if self.ss:    # This is a UXD socket
+            try:
+                #sa = source address tuple (sourcehost, sourceport)
+                data, sa = self.ss.recvfrom(self.bs)
+
+                message = "Server at {0} received {1} from {2}\n".format(
+                    str(self.ha),data, str(sa))
+                console.profuse(message)
+
+                if self.log and self.rxLog:
+                    self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
+
+                return (data,sa)
+            except socket.error as ex: # 2.6 socket.error is subclass of IOError
+                # EAGAIN -> Resource temporarily unavailable on os x
+                # EWOULDBLOCK -> Nothing to read on Windows
+                if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
+                    return ('',None) #receive has nothing empty string for data
+                else:
+                    emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
+                    console.terse(emsg)
+                    raise #re raise exception ex1
+
+    def send(self, data, da):
+        """Perform non blocking send on  socket.
+
+           data is string in python2 and bytes in python3
+           da is destination address tuple (destHost, destPort)
+
+        """
+        if self.ms:    # this is a Windows mailslot
+
+	    mailslotpath = '\\\\.\\mailslot'+da.replace('/', '\\')
+            try:
+                f = win32file.CreateFile(mailslotpath,
+                                         win32file.GENERIC_WRITE,
+                                         win32file.FILE_SHARE_READ,
+                                         None, win32file.OPEN_ALWAYS, 0, None)
+            except win32file.error as ex:
+                emsg = 'mailslot.error = {0}: opening mailslot from {1} to {2}\n'.format(
+                    ex, self.ha, da)
+                console.terse(emsg)
+                result = 0
+                raise
+
+            try:
+                datatuple = (self.ha, data)
+                packed = msgpack.packb(datatuple)
+                result = win32file.WriteFile(f, packed)
+                console.profuse("Server at {0} sent {1} bytes\n".format(self.ha,
+                                                                        result))
+            except win32file.error as ex:
+                emsg = 'mailslot.error = {0}: sending from {1} to {2}\n'.format(ex, self.ha, destmailslot)
+                console.terse(emsg)
+                result = 0
+                raise
+
+            finally:
+                win32file.CloseHandle(f)
+
+        if self.ss:
+            try:
+                result = self.ss.sendto(data, da) #result is number of bytes sent
+            except socket.error as ex:
+                emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
+                console.terse(emsg)
+                result = 0
+                raise
+
+        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
+
+        if self.log and self.txLog:
+            self.txLog.write("%s %s bytes\n%s\n" %
+                             (str(da), str(result), repr(data)))
+
+        return result
 
     def openLogs(self, path = ''):
         """Open log files
@@ -712,128 +931,6 @@ class SocketUxdNb(object):
         if self.rxLog and not self.rxLog.closed:
             self.rxLog.close()
 
-    def open(self):
-        """Opens socket in non blocking mode.
-
-           if socket not closed properly, binding socket gets error
-              socket.error: (48, 'Address already in use')
-        """
-        #create socket ss = server socket
-        self.ss = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-
-        # make socket address reusable.
-        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
-        # TIME_WAIT state, without waiting for its natural timeout to expire.
-        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
-        self.ss.setblocking(0) #non blocking socket
-
-        oldumask = None
-        if self.umask is not None: # change umask for the uxd file
-            oldumask = os.umask(self.umask) # set new and return old
-
-        #bind to Host Address Port
-        try:
-            self.ss.bind(self.ha)
-        except socket.error as ex:
-            if not ex.errno == errno.ENOENT: # No such file or directory
-                console.terse("socket.error = {0}\n".format(ex))
-                return False
-            try:
-                os.makedirs(os.path.dirname(self.ha))
-            except OSError as ex:
-                console.terse("OSError = {0}\n".format(ex))
-                return False
-            try:
-                self.ss.bind(self.ha)
-            except socket.error as ex:
-                console.terse("socket.error = {0}\n".format(ex))
-                return False
-
-        if oldumask is not None: # restore old umask
-            os.umask(oldumask)
-
-        self.ha = self.ss.getsockname() #get resolved ha after bind
-
-        if self.log:
-            if not self.openLogs():
-                return False
-
-        return True
-
-    def reopen(self):
-        """     """
-        self.close()
-        return self.open()
-
-    def close(self):
-        """Closes  socket.
-
-        """
-        if self.ss:
-            self.ss.close() #close socket
-            self.ss = None
-
-        try:
-            os.unlink(self.ha)
-        except OSError:
-            if os.path.exists(self.ha):
-                raise
-
-        self.closeLogs()
-
-    def receive(self):
-        """Perform non blocking read on  socket.
-
-           returns tuple of form (data, sa)
-           if no data then returns ('',None)
-           but always returns a tuple with two elements
-        """
-        try:
-            #sa = source address tuple (sourcehost, sourceport)
-            data, sa = self.ss.recvfrom(self.bs)
-
-            message = "Server at {0} received {1} from {2}\n".format(
-                str(self.ha),data, str(sa))
-            console.profuse(message)
-
-            if self.log and self.rxLog:
-                self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
-
-            return (data,sa)
-        except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
-                return ('',None) #receive has nothing empty string for data
-            else:
-                emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
-                console.terse(emsg)
-                raise #re raise exception ex1
-
-    def send(self, data, da):
-        """Perform non blocking send on  socket.
-
-           data is string in python2 and bytes in python3
-           da is destination address tuple (destHost, destPort)
-
-        """
-        try:
-            result = self.ss.sendto(data, da) #result is number of bytes sent
-        except socket.error as ex:
-            emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
-            console.terse(emsg)
-            result = 0
-            raise
-
-        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
-
-        if self.log and self.txLog:
-            self.txLog.write("%s %s bytes\n%s\n" %
-                             (str(da), str(result), repr(data)))
-
-        return result
 
 #Utility Functions
 
