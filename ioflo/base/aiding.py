@@ -33,7 +33,6 @@ import time
 import struct
 import re
 import string
-import msgpack
 from collections import deque
 
 try:
@@ -665,10 +664,10 @@ class SocketUdpNb(object):
         return result
 
 
-class SocketLocalNb(object):
+class SocketUxdNb(object):
     '''
     Creates a local abstracted socket that will be a non-blocking Unix domain
-    socket on Unices and a Windows mailslot on Win32.
+    socket
     '''
     def __init__(self, ha=None, bufsize = 1024, path = '', log = False, umask=None):
         """Initialization method for instance.
@@ -684,15 +683,10 @@ class SocketLocalNb(object):
         self.log = log
         self.umask = umask
 
-	self.ss = None  # server's uxd socket needs to be opened
-	self.ms = None  # Mailslot needs to be created and opened
+        self.ss = None  # server's uxd socket needs to be opened
 
-	if sys.platform == 'win32':
-	    self.ha = ha
-	    self.mailslotpath = '\\\\.\\mailslot'+self.ha.replace('/', '\\')
-        else:
-	    self.ha = ha # uxd fs path name or mailslot path
-	    
+        self.ha = ha # uxd fs path name
+
 
     def open(self):
         '''
@@ -703,58 +697,47 @@ class SocketLocalNb(object):
         self.ss = None
         self.ms = None
 
-	if sys.platform == 'win32':
-            try:
-                self.ms = win32file.CreateMailslot(self.mailslotpath, self.bs, 0, None)
-                # ha = path to mailslot
-                # 0 = MaxMessageSize, 0 for unlimited
-                # 0 = ReadTimeout, 0 to not block
-                # None = SecurityAttributes, none for nothing special
-            except win32file.error as ex:
-                console.terse('mailslot.error = {0}'.format(ex))
+        # if socket not closed properly, binding socket gets error
+        # socket.error: (48, 'Address already in use')
+        #create socket ss = server socket
+        self.ss = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+
+        # make socket address reusable.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
+        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+        self.ss.setblocking(0) #non blocking socket
+
+        oldumask = None
+        if self.umask is not None: # change umask for the uxd file
+            oldumask = os.umask(self.umask) # set new and return old
+
+        #bind to Host Address Port
+        try:
+            self.ss.bind(self.ha)
+        except socket.error as ex:
+            if not ex.errno == errno.ENOENT: # No such file or directory
+                console.terse("socket.error = {0}\n".format(ex))
                 return False
-        else:
-            # if socket not closed properly, binding socket gets error
-            # socket.error: (48, 'Address already in use')
-            #create socket ss = server socket
-            self.ss = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-
-            # make socket address reusable.
-            # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
-            # TIME_WAIT state, without waiting for its natural timeout to expire.
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
-                self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-            if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
-                self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
-            self.ss.setblocking(0) #non blocking socket
-
-            oldumask = None
-            if self.umask is not None: # change umask for the uxd file
-                oldumask = os.umask(self.umask) # set new and return old
-
-            #bind to Host Address Port
+            try:
+                os.makedirs(os.path.dirname(self.ha))
+            except OSError as ex:
+                console.terse("OSError = {0}\n".format(ex))
+                return False
             try:
                 self.ss.bind(self.ha)
             except socket.error as ex:
-                if not ex.errno == errno.ENOENT: # No such file or directory
-                    console.terse("socket.error = {0}\n".format(ex))
-                    return False
-                try:
-                    os.makedirs(os.path.dirname(self.ha))
-                except OSError as ex:
-                    console.terse("OSError = {0}\n".format(ex))
-                    return False
-                try:
-                    self.ss.bind(self.ha)
-                except socket.error as ex:
-                    console.terse("socket.error = {0}\n".format(ex))
-                    return False
+                console.terse("socket.error = {0}\n".format(ex))
+                return False
 
-            if oldumask is not None: # restore old umask
-                os.umask(oldumask)
+        if oldumask is not None: # restore old umask
+            os.umask(oldumask)
 
-            self.ha = self.ss.getsockname() #get resolved ha after bind
+        self.ha = self.ss.getsockname() #get resolved ha after bind
 
 
         if self.log:
@@ -795,33 +778,13 @@ class SocketLocalNb(object):
 
     def receive(self):
         '''
-        Perform a non-blocking read on the mailslot
+        Perform a non-blocking read on the socket
 
         Returns tuple of form (data, sa)
         if no data, returns ('', None)
           but always returns a tuple with 2 elements
 
         '''
-
-        if self.ms:   # This is a Windows Mailslot
-            try:
-                packed = win32file.ReadFile(self.ms, self.bs)
-                datatuple = msgpack.unpackb(packed[1])
-                sa = datatuple[0]
-                data = datatuple[1]
-
-                message = "Server at {0} received {1} from {2}\n".format(
-                    self.ha, data, sa)
-
-                console.profuse(message)
-
-                if self.log and self.rxLog:
-                    self.rxLog.write("%s\n%s\n" % (sa, repr(data)))
-
-                return (data, sa)
-
-            except win32file.error:
-                return ('', None)
 
         if self.ss:    # This is a UXD socket
             try:
@@ -853,36 +816,6 @@ class SocketLocalNb(object):
            da is destination address tuple (destHost, destPort)
 
         """
-        if self.ms:    # this is a Windows mailslot
-
-	    mailslotpath = '\\\\.\\mailslot'+da.replace('/', '\\')
-            try:
-                f = win32file.CreateFile(mailslotpath,
-                                         win32file.GENERIC_WRITE,
-                                         win32file.FILE_SHARE_READ,
-                                         None, win32file.OPEN_ALWAYS, 0, None)
-            except win32file.error as ex:
-                emsg = 'mailslot.error = {0}: opening mailslot from {1} to {2}\n'.format(
-                    ex, self.ha, da)
-                console.terse(emsg)
-                result = 0
-                raise
-
-            try:
-                datatuple = (self.ha, data)
-                packed = msgpack.packb(datatuple)
-                result = win32file.WriteFile(f, packed)
-                console.profuse("Server at {0} sent {1} bytes\n".format(self.ha,
-                                                                        result))
-            except win32file.error as ex:
-                emsg = 'mailslot.error = {0}: sending from {1} to {2}\n'.format(ex, self.ha, destmailslot)
-                console.terse(emsg)
-                result = 0
-                raise
-
-            finally:
-                win32file.CloseHandle(f)
-
         if self.ss:
             try:
                 result = self.ss.sendto(data, da) #result is number of bytes sent
@@ -897,6 +830,173 @@ class SocketLocalNb(object):
         if self.log and self.txLog:
             self.txLog.write("%s %s bytes\n%s\n" %
                              (str(da), str(result), repr(data)))
+
+        return result
+
+    def openLogs(self, path = ''):
+        """Open log files
+
+        """
+        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
+        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.txLog = open(name, 'w+')
+        except IOError:
+            self.txLog = None
+            self.log = False
+            return False
+        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.rxLog = open(name, 'w+')
+        except IOError:
+            self.rxLog = None
+            self.log = False
+            return False
+
+        return True
+
+    def closeLogs(self):
+        """Close log files
+
+        """
+        if self.txLog and not self.txLog.closed:
+            self.txLog.close()
+        if self.rxLog and not self.rxLog.closed:
+            self.rxLog.close()
+
+
+class WinmailslotNb(object):
+    '''
+    Class to manage non-blocking reads and writes from a
+    Windows Mailslot
+
+    Opens a non-blocking mailslot
+    Use instance method to close socket
+
+    Needs Windows Python Extensions
+    '''
+
+    def __init__(self, ha=None, bufsize=1024, path='', log=False):
+        '''
+        Init method for instance
+
+        bufsize = default mailslot buffer size
+        path = path to directory where logfiles go.  Must end in /.
+        ha = basename for mailslot path. 
+        '''
+        self.ha = ha
+        self.bs = bufsize
+        self.ms = None   # Mailslot needs to be opened
+
+        self.path = path
+        self.txLog = None     # Transmit log
+        self.rxLog = None     # receive log
+        self.log = log
+
+    def open(self):
+        '''
+        Opens mailslot in nonblocking mode
+        '''
+        try:
+            self.ms = win32file.CreateMailslot(self.ha, 0, 0, None)
+            # ha = path to mailslot
+            # 0 = MaxMessageSize, 0 for unlimited
+            # 0 = ReadTimeout, 0 to not block
+            # None = SecurityAttributes, none for nothing special
+        except win32file.error as ex:
+            console.terse('mailslot.error = {0}'.format(ex))
+            return False
+
+        if self.log:
+            if not self.openLogs():
+                return False
+
+        return True
+
+    def reopen(self):
+        '''
+        Clear the ms and reopen
+        '''
+        self.close()
+        return self.open()
+
+    def close(self):
+        '''
+        Close the mailslot
+        '''
+        if self.ms:
+            win32file.CloseHandle(self.ms)
+            self.ms = None
+
+        self.closeLogs()
+
+    def receive(self):
+        '''
+        Perform a non-blocking read on the mailslot
+
+        Returns tuple of form (data, sa)
+        if no data, returns ('', None)
+          but always returns a tuple with 2 elements
+
+        '''
+        try:
+            data = win32file.ReadFile(self.ms, self.bs)
+
+            # Mailslots don't send their source address
+            # We can pick this up in a higher level of the stack if we
+            # need
+            sa = None
+
+            message = "Server at {0} received {1}\n".format(
+                self.ha, data)
+
+            console.profuse(message)
+
+            if self.log and self.rxLog:
+                self.rxLog.write("%s\n%s\n" % (sa, repr(data)))
+
+            return (data, sa)
+
+        except win32file.error:
+            return ('', None)
+
+    def send(self, data, destmailslot):
+        '''
+        Perform a non-blocking write on the mailslot
+        data is string in python2 and bytes in python3
+        da is destination mailslot path
+        '''
+
+        try:
+            f = win32file.CreateFile(destmailslot,
+                                     win32file.GENERIC_WRITE,
+                                     win32file.FILE_SHARE_READ,
+                                     None, win32file.OPEN_EXISTING, 0, None)
+        except win32file.error as ex:
+            emsg = 'mailslot.error = {0}: opening mailslot from {1} to {2}\n'.format(
+                ex, self.ha, destmailslot)
+            console.terse(emsg)
+            result = 0
+            raise
+
+        try:
+            datatuple = (self.ha, data)
+            packed = msgpack.packb(datatuple)
+            result = win32file.WriteFile(f, packed)
+            console.profuse("Server at {0} sent {1} bytes\n".format(self.ha,
+                                                                    result))
+        except win32file.error as ex:
+            emsg = 'mailslot.error = {0}: sending from {1} to {2}\n'.format(ex, self.ha, destmailslot)
+            console.terse(emsg)
+            result = 0
+            raise
+
+        finally:
+            win32file.CloseHandle(f)
+
+        if self.log and self.txLog:
+            self.txLog.write("%s %s bytes\n%s\n" %
+                             (str(destmailslot), str(result), repr(data)))
 
         return result
 
