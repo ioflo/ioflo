@@ -48,16 +48,16 @@ def TestSocketUdpNB():
         serverA.close()
         serverB.close()
 
-def TestSocketUxdNB():
-    """Class SocketUxdNb self test """
+def TestSocketLocalNB():
+    """Class SocketLocalNb self test """
     console.reinit(verbosity=console.Wordage.verbose)
     try:
-        print("Testing SocketUxdNb")
-        serverA = aiding.SocketUxdNb(ha = '/tmp/local/uxdA', umask=0x077)
+        print("Testing SocketLocalNb")
+        serverA = aiding.SocketLocalNb(ha = '/tmp/local/uxdA', umask=0o077)
         serverA.reopen()
-        serverB = aiding.SocketUxdNb(ha = '/tmp/local/uxdB', umask=0x077)
+        serverB = aiding.SocketLocalNb(ha = '/tmp/local/uxdB', umask=0o077)
         serverB.reopen()
-        serverC = aiding.SocketUxdNb(ha = '/tmp/local/uxdC', umask=0x077)
+        serverC = aiding.SocketLocalNb(ha = '/tmp/local/uxdC', umask=0o077)
         serverC.reopen()
 
         serverA.send("A sends to B",serverB.ha)
@@ -124,4 +124,4 @@ def Test():
 
 if __name__ == "__main__":
     #Test()
-    TestSocketUxdNB()
+    TestSocketLocalNB()
