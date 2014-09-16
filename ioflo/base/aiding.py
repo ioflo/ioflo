@@ -27,6 +27,7 @@ import math
 import types
 import socket
 import os
+import sys
 import errno
 import time
 import struct
@@ -38,6 +39,11 @@ try:
     import simplejson as json
 except ImportError:
     import json
+
+try:
+    import win32file
+except ImportError:
+    pass
 
 # Import ioflo libs
 from .globaling import *
@@ -496,6 +502,7 @@ class ConsoleNB(object):
         """
         return(os.write(self.fd, data))
 
+
 class SocketUdpNb(object):
     """Class to manage non blocking reads and writes from UDP socket.
 
@@ -624,7 +631,9 @@ class SocketUdpNb(object):
 
             return (data,sa)
         except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+            # EAGAIN -> Resource temporarily unavailable on os x
+            # EWOULDBLOCK -> Nothing to read on Windows
+            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
@@ -654,26 +663,19 @@ class SocketUdpNb(object):
 
         return result
 
+
 class SocketUxdNb(object):
-    """Class to manage non blocking reads and writes from UXD (unix domain) socket.
-
-       Opens non blocking socket
-       Use instance method close to close socket
-
-       Needs socket module
-    """
-
+    '''
+    Creates a local abstracted socket that will be a non-blocking Unix domain
+    socket
+    '''
     def __init__(self, ha=None, bufsize = 1024, path = '', log = False, umask=None):
         """Initialization method for instance.
 
-           ha = host address duple (host, port)
-           host = '' equivalant to any interface on host
-           port = socket port
+           ha = host address (path to socket)
            bs = buffer size
         """
-        self.ha = ha # uxd host address string name
         self.bs = bufsize
-        self.ss = None #server's socket needs to be opened
 
         self.path = path #path to directory where log files go must end in /
         self.txLog = None #transmit log
@@ -681,43 +683,22 @@ class SocketUxdNb(object):
         self.log = log
         self.umask = umask
 
-    def openLogs(self, path = ''):
-        """Open log files
+        self.ss = None  # server's uxd socket needs to be opened
 
-        """
-        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
-        try:
-            self.txLog = open(name, 'w+')
-        except IOError:
-            self.txLog = None
-            self.log = False
-            return False
-        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
-        try:
-            self.rxLog = open(name, 'w+')
-        except IOError:
-            self.rxLog = None
-            self.log = False
-            return False
+        self.ha = ha # uxd fs path name
 
-        return True
-
-    def closeLogs(self):
-        """Close log files
-
-        """
-        if self.txLog and not self.txLog.closed:
-            self.txLog.close()
-        if self.rxLog and not self.rxLog.closed:
-            self.rxLog.close()
 
     def open(self):
-        """Opens socket in non blocking mode.
+        '''
+        opens socket/mailslot in non-blocking mode
+        '''
 
-           if socket not closed properly, binding socket gets error
-              socket.error: (48, 'Address already in use')
-        """
+        # make sure the server socket or the mailslot vars are empty
+        self.ss = None
+        self.ms = None
+
+        # if socket not closed properly, binding socket gets error
+        # socket.error: (48, 'Address already in use')
         #create socket ss = server socket
         self.ss = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 
@@ -758,6 +739,7 @@ class SocketUxdNb(object):
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
 
+
         if self.log:
             if not self.openLogs():
                 return False
@@ -765,52 +747,67 @@ class SocketUxdNb(object):
         return True
 
     def reopen(self):
-        """     """
+        '''
+        Close and reopen the socket/mailslot
+        '''
         self.close()
         return self.open()
 
     def close(self):
-        """Closes  socket.
-
-        """
+        '''
+        Close the socket/mailslot
+        '''
         if self.ss:
-            self.ss.close() #close socket
+            self.ss.close()   # Close socket
             self.ss = None
 
-        try:
-            os.unlink(self.ha)
-        except OSError:
-            if os.path.exists(self.ha):
-                raise
+            try:
+                os.unlink(self.ha)
+            except OSError:
+                if os.path.exists(self.ha):
+                    raise
 
-        self.closeLogs()
+        if self.ms:
+            try:
+                win32file.CloseHandle(self.ms)
+            except win32file.error:
+                # Just in case Windows decides to throw an error
+                # if the handle is already gone for some reason
+                pass
+            self.ms = None
 
     def receive(self):
-        """Perform non blocking read on  socket.
+        '''
+        Perform a non-blocking read on the socket
 
-           returns tuple of form (data, sa)
-           if no data then returns ('',None)
-           but always returns a tuple with two elements
-        """
-        try:
-            #sa = source address tuple (sourcehost, sourceport)
-            data, sa = self.ss.recvfrom(self.bs)
+        Returns tuple of form (data, sa)
+        if no data, returns ('', None)
+          but always returns a tuple with 2 elements
 
-            message = "Server at {0} received {1} from {2}\n".format(
-                str(self.ha),data, str(sa))
-            console.profuse(message)
+        '''
 
-            if self.log and self.rxLog:
-                self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
+        if self.ss:    # This is a UXD socket
+            try:
+                #sa = source address tuple (sourcehost, sourceport)
+                data, sa = self.ss.recvfrom(self.bs)
 
-            return (data,sa)
-        except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
-                return ('',None) #receive has nothing empty string for data
-            else:
-                emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
-                console.terse(emsg)
-                raise #re raise exception ex1
+                message = "Server at {0} received {1} from {2}\n".format(
+                    str(self.ha),data, str(sa))
+                console.profuse(message)
+
+                if self.log and self.rxLog:
+                    self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
+
+                return (data,sa)
+            except socket.error as ex: # 2.6 socket.error is subclass of IOError
+                # EAGAIN -> Resource temporarily unavailable on os x
+                # EWOULDBLOCK -> Nothing to read on Windows
+                if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
+                    return ('',None) #receive has nothing empty string for data
+                else:
+                    emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
+                    console.terse(emsg)
+                    raise #re raise exception ex1
 
     def send(self, data, da):
         """Perform non blocking send on  socket.
@@ -819,13 +816,14 @@ class SocketUxdNb(object):
            da is destination address tuple (destHost, destPort)
 
         """
-        try:
-            result = self.ss.sendto(data, da) #result is number of bytes sent
-        except socket.error as ex:
-            emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
-            console.terse(emsg)
-            result = 0
-            raise
+        if self.ss:
+            try:
+                result = self.ss.sendto(data, da) #result is number of bytes sent
+            except socket.error as ex:
+                emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
+                console.terse(emsg)
+                result = 0
+                raise
 
         console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
 
@@ -834,6 +832,203 @@ class SocketUxdNb(object):
                              (str(da), str(result), repr(data)))
 
         return result
+
+    def openLogs(self, path = ''):
+        """Open log files
+
+        """
+        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
+        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.txLog = open(name, 'w+')
+        except IOError:
+            self.txLog = None
+            self.log = False
+            return False
+        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.rxLog = open(name, 'w+')
+        except IOError:
+            self.rxLog = None
+            self.log = False
+            return False
+
+        return True
+
+    def closeLogs(self):
+        """Close log files
+
+        """
+        if self.txLog and not self.txLog.closed:
+            self.txLog.close()
+        if self.rxLog and not self.rxLog.closed:
+            self.rxLog.close()
+
+
+class WinmailslotNb(object):
+    '''
+    Class to manage non-blocking reads and writes from a
+    Windows Mailslot
+
+    Opens a non-blocking mailslot
+    Use instance method to close socket
+
+    Needs Windows Python Extensions
+    '''
+
+    def __init__(self, ha=None, bufsize=1024, path='', log=False):
+        '''
+        Init method for instance
+
+        bufsize = default mailslot buffer size
+        path = path to directory where logfiles go.  Must end in /.
+        ha = basename for mailslot path. 
+        '''
+        self.ha = ha
+        self.bs = bufsize
+        self.ms = None   # Mailslot needs to be opened
+
+        self.path = path
+        self.txLog = None     # Transmit log
+        self.rxLog = None     # receive log
+        self.log = log
+
+    def open(self):
+        '''
+        Opens mailslot in nonblocking mode
+        '''
+        try:
+            self.ms = win32file.CreateMailslot(self.ha, 0, 0, None)
+            # ha = path to mailslot
+            # 0 = MaxMessageSize, 0 for unlimited
+            # 0 = ReadTimeout, 0 to not block
+            # None = SecurityAttributes, none for nothing special
+        except win32file.error as ex:
+            console.terse('mailslot.error = {0}'.format(ex))
+            return False
+
+        if self.log:
+            if not self.openLogs():
+                return False
+
+        return True
+
+    def reopen(self):
+        '''
+        Clear the ms and reopen
+        '''
+        self.close()
+        return self.open()
+
+    def close(self):
+        '''
+        Close the mailslot
+        '''
+        if self.ms:
+            win32file.CloseHandle(self.ms)
+            self.ms = None
+
+        self.closeLogs()
+
+    def receive(self):
+        '''
+        Perform a non-blocking read on the mailslot
+
+        Returns tuple of form (data, sa)
+        if no data, returns ('', None)
+          but always returns a tuple with 2 elements
+
+        '''
+        try:
+            data = win32file.ReadFile(self.ms, self.bs)
+            # ReadFile returns a tuple (error, content)
+            # Mailslots don't send their source address
+            # We can pick this up in a higher level of the stack if we
+            # need
+            sa = None
+
+            message = "Server at {0} received {1}\n".format(
+                self.ha, data)
+
+            console.profuse(message)
+
+            if self.log and self.rxLog:
+                self.rxLog.write("%s\n%s\n" % (sa, repr(data)))
+
+            return (data[1], sa)
+
+        except win32file.error:
+            return ('', None)
+
+    def send(self, data, destmailslot):
+        '''
+        Perform a non-blocking write on the mailslot
+        data is string in python2 and bytes in python3
+        da is destination mailslot path
+        '''
+
+        try:
+            f = win32file.CreateFile(destmailslot,
+                                     win32file.GENERIC_WRITE,
+                                     win32file.FILE_SHARE_READ,
+                                     None, win32file.OPEN_EXISTING, 0, None)
+        except win32file.error as ex:
+            emsg = 'mailslot.error = {0}: opening mailslot from {1} to {2}\n'.format(
+                ex, self.ha, destmailslot)
+            console.terse(emsg)
+            result = 0
+            raise
+
+        try:
+            result = win32file.WriteFile(f, data)
+            console.profuse("Server at {0} sent {1} bytes\n".format(self.ha,
+                                                                    result))
+        except win32file.error as ex:
+            emsg = 'mailslot.error = {0}: sending from {1} to {2}\n'.format(ex, self.ha, destmailslot)
+            console.terse(emsg)
+            result = 0
+            raise
+
+        finally:
+            win32file.CloseHandle(f)
+
+        if self.log and self.txLog:
+            self.txLog.write("%s %s bytes\n%s\n" %
+                             (str(destmailslot), str(result), repr(data)))
+
+        return result
+
+    def openLogs(self, path = ''):
+        """Open log files
+
+        """
+        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
+        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.txLog = open(name, 'w+')
+        except IOError:
+            self.txLog = None
+            self.log = False
+            return False
+        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.rxLog = open(name, 'w+')
+        except IOError:
+            self.rxLog = None
+            self.log = False
+            return False
+
+        return True
+
+    def closeLogs(self):
+        """Close log files
+
+        """
+        if self.txLog and not self.txLog.closed:
+            self.txLog.close()
+        if self.rxLog and not self.rxLog.closed:
+            self.rxLog.close()
+
 
 #Utility Functions
 
