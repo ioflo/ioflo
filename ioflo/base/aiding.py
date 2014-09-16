@@ -1159,7 +1159,7 @@ from abc import ABCMeta,  abstractmethod
 class NonStringIterable:
     """ Check for iterable that is not a string
         Works in python 2.6 to 3.x with isinstance(x, NonStringIterable)
-
+        Latest python3 strings now have __iter__ methods so not valid in python3
     """
     #__metaclass__ = ABCMeta
 
