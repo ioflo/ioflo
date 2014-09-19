@@ -27,17 +27,24 @@ import math
 import types
 import socket
 import os
+import sys
 import errno
 import time
 import struct
 import re
 import string
+import msgpack
 from collections import deque
 
 try:
     import simplejson as json
 except ImportError:
     import json
+
+try:
+    import win32file
+except ImportError:
+    pass
 
 # Import ioflo libs
 from .globaling import *
@@ -624,7 +631,9 @@ class SocketUdpNb(object):
 
             return (data,sa)
         except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+            # EAGAIN -> Resource temporarily unavailable on os x
+            # EWOULDBLOCK -> Nothing to read on Windows
+            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
@@ -834,6 +843,175 @@ class SocketUxdNb(object):
                              (str(da), str(result), repr(data)))
 
         return result
+
+class WinmailslotNb(object):
+    '''
+    Class to manage non-blocking reads and writes from a
+    Windows Mailslot
+
+    Opens a non-blocking mailslot
+    Use instance method to close socket
+
+    Needs Windows Python Extensions
+    '''
+
+    def __init__(self, ha=None, bufsize=1024, path='', log=False):
+        '''
+        Init method for instance
+
+        bufsize = default mailslot buffer size
+        path = path to directory where logfiles go.  Must end in /.
+        ha = basename for mailslot path. 
+        '''
+        self.ha = ha
+        self.bs = bufsize
+        self.ms = None   # Mailslot needs to be opened
+
+        self.path = path
+        self.txLog = None     # Transmit log
+        self.rxLog = None     # receive log
+        self.log = log
+
+    def open(self):
+        '''
+        Opens mailslot in nonblocking mode
+        '''
+        try:
+            self.ms = win32file.CreateMailslot(self.ha, 0, 0, None)
+            # ha = path to mailslot
+            # 0 = MaxMessageSize, 0 for unlimited
+            # 0 = ReadTimeout, 0 to not block
+            # None = SecurityAttributes, none for nothing special
+        except win32file.error as ex:
+            console.terse('mailslot.error = {0}'.format(ex))
+            return False
+
+        if self.log:
+            if not self.openLogs():
+                return False
+
+        return True
+
+    def reopen(self):
+        '''
+        Clear the ms and reopen
+        '''
+        self.close()
+        return self.open()
+
+    def close(self):
+        '''
+        Close the mailslot
+        '''
+        if self.ms:
+            win32file.CloseHandle(self.ms)
+            self.ms = None
+
+        self.closeLogs()
+
+    def receive(self):
+        '''
+        Perform a non-blocking read on the mailslot
+
+        Returns tuple of form (data, sa)
+        if no data, returns ('', None)
+          but always returns a tuple with 2 elements
+
+        Note win32file.ReadFile returns a tuple: (errcode, data)
+
+        '''
+        try:
+            data = win32file.ReadFile(self.ms, self.bs)
+
+            # Mailslots don't send their source address
+            # We can pick this up in a higher level of the stack if we
+            # need
+            sa = None
+
+            message = "Server at {0} received {1}\n".format(
+                self.ha, data[1])
+
+            console.profuse(message)
+
+            if self.log and self.rxLog:
+                self.rxLog.write("%s\n%s\n" % (sa, repr(data[1])))
+
+            return (data[1], sa)
+
+        except win32file.error:
+            return ('', None)
+
+    def send(self, data, destmailslot):
+        '''
+        Perform a non-blocking write on the mailslot
+        data is string in python2 and bytes in python3
+        da is destination mailslot path
+        '''
+
+        try:
+            f = win32file.CreateFile(destmailslot,
+                                     win32file.GENERIC_WRITE | win32file.GENERIC_READ,
+                                     win32file.FILE_SHARE_READ,
+                                     None, win32file.OPEN_ALWAYS, 0, None)
+        except win32file.error as ex:
+            emsg = 'mailslot.error = {0}: opening mailslot from {1} to {2}\n'.format(
+                ex, self.ha, destmailslot)
+            console.terse(emsg)
+            result = 0
+            raise
+
+        try:
+            result = win32file.WriteFile(f, data)
+            console.profuse("Server at {0} sent {1} bytes\n".format(self.ha,
+                                                                    result))
+        except win32file.error as ex:
+            emsg = 'mailslot.error = {0}: sending from {1} to {2}\n'.format(ex, self.ha, destmailslot)
+            console.terse(emsg)
+            result = 0
+            raise
+
+        finally:
+            win32file.CloseHandle(f)
+
+        if self.log and self.txLog:
+            self.txLog.write("%s %s bytes\n%s\n" %
+                             (str(destmailslot), str(result), repr(data)))
+
+        # WriteFile returns a tuple, we only care about the number of bytes
+        return result[1]
+
+    def openLogs(self, path = ''):
+        """Open log files
+
+        """
+        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
+        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.txLog = open(name, 'w+')
+        except IOError:
+            self.txLog = None
+            self.log = False
+            return False
+        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.rxLog = open(name, 'w+')
+        except IOError:
+            self.rxLog = None
+            self.log = False
+            return False
+
+        return True
+
+    def closeLogs(self):
+        """Close log files
+
+        """
+        if self.txLog and not self.txLog.closed:
+            self.txLog.close()
+        if self.rxLog and not self.rxLog.closed:
+            self.rxLog.close()
+
+
 
 #Utility Functions
 
