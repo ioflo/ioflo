@@ -33,7 +33,6 @@ import time
 import struct
 import re
 import string
-import msgpack
 from collections import deque
 
 try:
