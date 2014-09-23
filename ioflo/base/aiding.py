@@ -630,8 +630,7 @@ class SocketUdpNb(object):
 
             return (data,sa)
         except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            # EAGAIN -> Resource temporarily unavailable on os x
-            # EWOULDBLOCK -> Nothing to read on Windows
+            # Some OSes define errno differently so check for both
             if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
                 return ('',None) #receive has nothing empty string for data
             else:
@@ -843,8 +842,8 @@ class SocketUxdNb(object):
 
         return result
 
-class WinmailslotNb(object):
-    '''
+class WinMailslotNb(object):
+    """
     Class to manage non-blocking reads and writes from a
     Windows Mailslot
 
@@ -852,16 +851,16 @@ class WinmailslotNb(object):
     Use instance method to close socket
 
     Needs Windows Python Extensions
-    '''
+    """
 
     def __init__(self, ha=None, bufsize=1024, path='', log=False):
-        '''
+        """
         Init method for instance
 
         bufsize = default mailslot buffer size
         path = path to directory where logfiles go.  Must end in /.
-        ha = basename for mailslot path. 
-        '''
+        ha = basename for mailslot path.
+        """
         self.ha = ha
         self.bs = bufsize
         self.ms = None   # Mailslot needs to be opened
@@ -872,9 +871,9 @@ class WinmailslotNb(object):
         self.log = log
 
     def open(self):
-        '''
+        """
         Opens mailslot in nonblocking mode
-        '''
+        """
         try:
             self.ms = win32file.CreateMailslot(self.ha, 0, 0, None)
             # ha = path to mailslot
@@ -892,9 +891,9 @@ class WinmailslotNb(object):
         return True
 
     def reopen(self):
-        '''
+        """
         Clear the ms and reopen
-        '''
+        """
         self.close()
         return self.open()
 
@@ -909,7 +908,7 @@ class WinmailslotNb(object):
         self.closeLogs()
 
     def receive(self):
-        '''
+        """
         Perform a non-blocking read on the mailslot
 
         Returns tuple of form (data, sa)
@@ -918,7 +917,7 @@ class WinmailslotNb(object):
 
         Note win32file.ReadFile returns a tuple: (errcode, data)
 
-        '''
+        """
         try:
             data = win32file.ReadFile(self.ms, self.bs)
 
@@ -941,11 +940,11 @@ class WinmailslotNb(object):
             return ('', None)
 
     def send(self, data, destmailslot):
-        '''
+        """
         Perform a non-blocking write on the mailslot
         data is string in python2 and bytes in python3
         da is destination mailslot path
-        '''
+        """
 
         try:
             f = win32file.CreateFile(destmailslot,
