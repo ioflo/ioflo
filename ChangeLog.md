@@ -3,6 +3,18 @@ CHANGE LOG
 -------------------
 
 ---------
+20140923
+---------
+
+v0.9.40
+
+Added WinMailslotNb  Class for non blocking comms on windows to replace SocketUxdNb
+
+Added better support for Python3
+
+
+
+---------
 20140724
 ---------
 
