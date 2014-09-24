@@ -22,7 +22,7 @@ from . import acting
 from .consoling import getConsole
 console = getConsole()
 
-from .aiding import NonStringIterable, just, nameToPath
+from .aiding import nonStringIterable, just, nameToPath
 
 def deedify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
             parametric=None):

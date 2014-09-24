@@ -114,6 +114,27 @@ def TestBlend0(u = .25, s = .75, steps = 10):
         b = Blend0(d,u,s)
         print(d, b)
 
+def TestNonStringIterableSequence(w=dict(a=1, b=2, c=3), x='abc',  y=b'abc', z=[1, 2, 3]):
+    """
+    """
+    result = isinstance(w, aiding.NonStringIterable)
+    print("{0} is NonStringIterable = {1}".format(repr(w), result))
+    result = isinstance(x, aiding.NonStringIterable)
+    print("{0} is NonStringIterable = {1}".format(repr(x), result))
+    result = isinstance(y, aiding.NonStringIterable)
+    print("{0} is NonStringIterable = {1}".format(repr(y), result))
+    result = isinstance(z, aiding.NonStringIterable)
+    print("{0} is NonStringIterable = {1}".format(repr(z), result))
+    print()
+    result = isinstance(w, aiding.NonStringSequence)
+    print("{0} is NonStringSequence = {1}".format(repr(w), result))
+    result = isinstance(x, aiding.NonStringSequence)
+    print("{0} is NonStringSequence = {1}".format(repr(x), result))
+    result = isinstance(y, aiding.NonStringSequence)
+    print("{0} is NonStringSequence = {1}".format(repr(y), result))
+    result = isinstance(z, aiding.NonStringSequence)
+    print("{0} is NonStringSequence = {1}".format(repr(z), result))
+
 def Test():
     """Module self test
 
@@ -124,4 +145,5 @@ def Test():
 
 if __name__ == "__main__":
     #Test()
-    TestSocketUxdNB()
+    #TestSocketUxdNB()
+    TestNonStringIterableSequence()

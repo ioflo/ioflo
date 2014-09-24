@@ -14,7 +14,7 @@ from .globaling import *
 from .odicting import odict
 
 from . import aiding
-from .aiding import NonStringIterable, nameToPath
+from .aiding import nonStringIterable, nameToPath
 from . import excepting
 from . import registering
 from . import storing
@@ -380,7 +380,7 @@ class Actor(object): # old registering.StoriedRegistry
                         if not ival: #empty mapping
                             ival = odict(value=copy.copy(ival)) #make copy so each instance unique
                         # otherwise don't change since ival is non-empty mapping
-                    elif isinstance(ival, NonStringIterable): # not mapping and NonStringIterable
+                    elif nonStringIterable(ival): # not mapping and nonStringIterable
                         ival = odict(value=copy.copy(ival))
                     else:
                         ival = odict(value=ival)

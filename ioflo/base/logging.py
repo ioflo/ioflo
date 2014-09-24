@@ -23,7 +23,6 @@ from collections import deque, MutableSequence, MutableMapping
 
 from .globaling import *
 from .odicting import odict
-from .aiding import u
 
 from . import excepting
 from . import registering
@@ -369,23 +368,23 @@ class Log(registering.StoriedRegistry):
 
         #build header
         cf = io.StringIO()
-        cf.write(u(self.kind))
+        cf.write(ns2u(self.kind))
         cf.write(u'\t')
-        cf.write(u(LogRuleNames[self.rule]))
+        cf.write(ns2u(LogRuleNames[self.rule]))
         cf.write(u'\t')
-        cf.write(u(self.fileName))
+        cf.write(ns2u(self.fileName))
         cf.write(u'\n')
         cf.write(u'_time')
         for tag, loggee in self.loggees.items():
             if len(loggee) > 1:
                 for field in loggee:
                     cf.write(u'\t')
-                    cf.write(u(tag))
+                    cf.write(ns2u(tag))
                     cf.write(u'.')
-                    cf.write(u(field))
+                    cf.write(ns2u(field))
             else:
                 cf.write(u'\t')
-                cf.write(u(tag))
+                cf.write(ns2u(tag))
 
         cf.write(u'\n')
         self.header = cf.getvalue()
@@ -433,7 +432,7 @@ class Log(registering.StoriedRegistry):
             text = self.formats['_time'] % self.stamp
         except TypeError:
             text = '%s' % self.stamp
-        cf.write(u(text))
+        cf.write(ns2u(text))
 
         for tag, loggee in self.loggees.items():
             if loggee: #len non zero
@@ -442,7 +441,7 @@ class Log(registering.StoriedRegistry):
                         text = self.formats[tag][field] % value
                     except TypeError:
                         text = '%s' % value
-                    cf.write(u(text))
+                    cf.write(ns2u(text))
 
             else: #no items so just write tab
                 cf.write(u'\t')

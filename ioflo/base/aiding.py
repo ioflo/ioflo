@@ -6,23 +6,6 @@
 from __future__ import division
 
 import sys
-if sys.version > '3':
-    xrange = range
-
-if sys.version < '3':
-    def b(x):
-        return x
-
-    def u(x):
-        return unicode(x)
-else:
-    def b(x):
-        return x.encode('ISO-8859-1')
-
-    def u(x):
-        return x
-
-
 import math
 import types
 import socket
@@ -33,7 +16,8 @@ import time
 import struct
 import re
 import string
-from collections import deque
+from collections import deque, Iterable, Sequence
+from abc import ABCMeta
 
 try:
     import simplejson as json
@@ -51,8 +35,6 @@ from .odicting import odict
 
 from .consoling import getConsole
 console = getConsole()
-
-
 
 def metaclassify(metaclass):
     """
@@ -89,6 +71,54 @@ def metaclassify(metaclass):
         return metaclass(cls.__name__, cls.__bases__, originals)
     return wrapper
 
+@metaclassify(ABCMeta)
+class NonStringIterable:
+    """ Allows isinstance check for iterable that is not a string
+    """
+    #__metaclass__ = ABCMeta
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is NonStringIterable:
+            if (not issubclass(C, basestring) and issubclass(C, Iterable)):
+                return True
+        return NotImplemented
+
+@metaclassify(ABCMeta)
+class NonStringSequence:
+    """ Allows isinstance check for sequence that is not a string
+    """
+    #__metaclass__ = ABCMeta
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is NonStringSequence:
+            if (not issubclass(C, basestring) and issubclass(C, Sequence)):
+                return True
+        return NotImplemented
+
+def nonStringIterable(obj):
+    """
+    Returns True if obj is non-string iterable, False otherwise
+
+    Future proof way that is compatible with both Python3 and Python2 to check
+    for non string iterables.
+    Assumes in Python3 that, basestring = (str, bytes)
+
+    Faster way that is less future proof
+    return (hasattr(x, '__iter__') and not isinstance(x, basestring))
+    """
+    return (not isinstance(obj, basestring) and isinstance(obj, Iterable))
+
+def nonStringSequence(obj):
+    """
+    Returns True if obj is non-string sequence, False otherwise
+
+    Future proof way that is compatible with both Python3 and Python2 to check
+    for non string sequences.
+    Assumes in Python3 that, basestring = (str, bytes)
+    """
+    return (not isinstance(obj, basestring) and isinstance(obj, Sequence) )
 
 class Fifo(deque):  #new-style class to add put get methods
     """ Extends deque to support more convenient FIFO queue access
@@ -1134,27 +1164,6 @@ def Just(n, seq):
         yield next(it, None)
 
 just = Just #alias
-
-from abc import ABCMeta,  abstractmethod
-@metaclassify(ABCMeta)
-class NonStringIterable:
-    """ Check for iterable that is not a string
-        Works in python 2.6 to 3.x with isinstance(x, NonStringIterable)
-        Latest python3 strings now have __iter__ methods so not valid in python3
-    """
-    #__metaclass__ = ABCMeta
-
-    @abstractmethod
-    def __iter__(self):
-        while False:
-            yield None
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is NonStringIterable:
-            if any("__iter__" in B.__dict__ for B in C.__mro__):
-                return True
-        return NotImplemented
 
 # Faster to use precompiled versions in globaling
 def IsPath(s):
@@ -2291,4 +2300,3 @@ def LoadJson(filename = ""):
         return it
 
 loadJson = LoadJson
-
