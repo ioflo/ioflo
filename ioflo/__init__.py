@@ -1,15 +1,13 @@
 """ ioflo package
 
 """
-#print("\nPackage at {0}".format( __path__[0]))
-
 from __future__ import division
 
 import importlib
 
-__version__ = "0.9.40"
+__version__ = "1.0.0"
 __author__ = "Samuel M. Smith"
-__license__ =  "MIT"
+__license__ =  "Apache 2.0"
 
 
 __all__ = ['base', 'trim']
