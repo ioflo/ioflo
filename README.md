@@ -190,7 +190,7 @@ http://ioflo.com/documentation/architecture-overview/
 http://ioflo.com/documentation/user-guide/
 
 #### License
-MIT
+APACHE 2.0
 
 #### Supported Python Versions
 Python 2.6
