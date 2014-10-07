@@ -5,7 +5,7 @@ from __future__ import division
 
 import importlib
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "Samuel M. Smith"
 __license__ =  "Apache 2.0"
 
