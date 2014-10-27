@@ -4,7 +4,7 @@
 import argparse
 import os
 
-from .. import __version__
+from ..__metadata__ import __version__
 from ..base import skedding, consoling
 
 

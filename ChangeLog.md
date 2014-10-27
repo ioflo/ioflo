@@ -2,6 +2,15 @@
 CHANGE LOG
 -------------------
 ---------
+20141027
+---------
+
+Changed how version author metadata is handled to fix import problem with
+Python 2.6
+
+
+
+---------
 20141002
 ---------
 

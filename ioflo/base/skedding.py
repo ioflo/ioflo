@@ -25,7 +25,7 @@ from . import storing
 from . import tasking
 from . import building
 
-from .. import __version__
+from ..__metadata__ import __version__
 
 from .consoling import getConsole
 console = getConsole()
