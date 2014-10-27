@@ -15,3 +15,5 @@ __all__ = ['base', 'trim']
 for m in __all__:
     importlib.import_module(".{0}".format(m), package='ioflo')
 
+from ioflo.__metadata__ import *
+
