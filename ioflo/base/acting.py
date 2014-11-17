@@ -225,7 +225,7 @@ def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=Non
     return implicit
 
 @aiding.metaclassify(registering.RegisterType) # python2or3 compatible
-class Actor(object): # old registering.StoriedRegistry
+class Actor(object):
     """ Actor Base Class
         Has Actor specific Registry of classes
     """
