@@ -1,6 +1,12 @@
 ------------------
 CHANGE LOG
 -------------------
+
+
+
+
+Replaced Restarter Actor with SideAct restart
+
 ---------
 20141027
 ---------

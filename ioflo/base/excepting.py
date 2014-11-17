@@ -77,7 +77,7 @@ class ResolveError(Exception):
     def __init__(self, message = None, name = None, value = None):
         self.message = message #description of error
         self.name = name #link name or description
-        self.value = value #component action, framer, frame etc
+        self.value = value  # actor, framer, frame etc
 
         self.args = (message, name, value)
 

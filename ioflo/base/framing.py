@@ -896,31 +896,23 @@ class Frame(registering.StoriedRegistry):
         #or at least check for duplicates and flag error
 
     def resolveAuxLinks(self):
-        """ Resolve aux links """
+        """ Resolve aux links
+
+            aux.main for each aux is not assigned here but is assigned when
+            frame.enter before aux.enterAll() so can reuse aux in other frames.
+        """
         for i, aux in enumerate(self.auxes):
-            if not isinstance(aux, Framer): # link is name not object
-                if aux not in Framer.Names:
-                    raise excepting.ResolveError("ResolveError: Bad aux(s) link name", self.name, aux)
-                aux = Framer.Names[aux] #replace link name with link
-                if not isinstance(aux, Framer): #maker sure framer not just tasker since tasker framer share registry
-                    raise excepting.ResolveError("ResolveError: Bad aux(s) name, tasker not framer", self.name, aux.name)
-                self.auxes[i] = aux #replace link name with link
-
-            if aux.schedule != AUX:
-                raise excepting.ResolveError("ResolveError: Scheduling context not aux", aux.name, aux.schedule)
-
-            #aux.main  is set upon frame.enter before aux.enterAll() so can reuse aux in other frames
+            self.auxes[i] = aux = resolveFramer(aux,
+                                                who=self.name,
+                                                desc='aux',
+                                                contexts=[AUX])
 
     def resolveFramerLink(self):
         """Resolve framer link """
         if self.framer:
-            if not isinstance(self.framer, Framer):
-                if self.framer not in Framer.Names:
-                    raise excepting.ResolveError("ResolveError: Bad framer link name", self.name, self.framer)
-                framer = Framer.Names[self.framer] #replace link name with link
-                if not isinstance(framer, Framer):  #maker sure framer not tasker since tasker framer share registry
-                    raise excepting.ResolveError("ResolveError: Bad framer name, tasker not framer", self.name, framer.name)
-                self.framer = framer #replace link name with link
+            self.framer = framer = resolveFramer(self.framer,
+                                                who=self.name,
+                                                desc='framer',)
 
     def resolve(self):
         """Resolve links where links are instance name strings assigned during building
@@ -1253,30 +1245,50 @@ class Frame(registering.StoriedRegistry):
 
 
 #utility functions
-def resolveFramer(framer, who=''):
+def resolveFramer(framer, who='', desc='framer', contexts=None):
     """ Returns resolved framer instance from framer
         framer may be name of framer or instance
-        who is optinal name of object owning the link such as framer or frame
+        who is optional name of object owning the link
+        such as framer or frame or actor
+        desc is string description of framer link such as 'aux' or 'framer'
+        contexts is list of allowed schedule contexts, None or empty means any
         Framer.Names registry must be setup
     """
     if not isinstance(framer, Framer): # not instance so name
         if framer not in Framer.Names:
-            raise excepting.ResolveError("ResolveError: Bad framer link name", framer, who)
+            raise excepting.ResolveError("ResolveError: Bad {0} link name".format(desc),
+                                         framer,
+                                         who)
         framer = Framer.Names[framer]
+        #maker sure framer not just tasker since tasker framer share registry
+        if not isinstance(framer, Framer):
+            raise excepting.ResolveError("ResolveError: Bad {0} link name, tasker"
+                                         " not framer".format(desc),
+                                         self.name,
+                                         aux.name)
+        if contexts and framer.schedule not in contexts:
+            raise excepting.ResolveError("ResolveError: Bad {0} link not scheduled"
+                                         " as one of {1}".format(desc, contexts),
+                                         framer,
+                                         who)
+        console.terse("    Resolved {0} as {1} in {2}".format(desc, framer.name, who))
+
 
     return framer
 
 ResolveFramer = resolveFramer
 
-def resolveFrame(frame, who=''):
+def resolveFrame(frame, who='', desc='act'):
     """ Returns resolved frame instance from frame
-            frame may be name of frame or instance
+        frame may be name of frame or instance
 
-            Frame.Names registry must be setup
-        """
+        Frame.Names registry must be setup
+    """
     if not isinstance(frame, Frame): # not instance so name
         if frame not in Frame.Names:
-            raise excepting.ResolveError("ResolveError: Bad frame link name", frame, who)
+            raise excepting.ResolveError("ResolveError: Bad {0} frame link name".format(desc),
+                                         frame,
+                                         who)
         frame = Frame.Names[frame] #replace frame name with frame
 
     return frame

@@ -53,7 +53,7 @@ class Act(object):
         self.act = act
         self.actor = actor #callable instance performs action
         self.registrar = registrar or Actor
-        self.parms = parms if parms is not None else {} # parms must always be not None
+        self.parms = parms if parms is not None else odict() # parms must always be not None
         self.inits = inits if inits else None # store None if empty dict
         self.ioinits = ioinits if ioinits else None # store None if empty dict
 
@@ -73,7 +73,7 @@ class Act(object):
         if self.act: # this is sub act of another act self.act so get super act context
             self.frame = self.act.frame
             self.context = self.act.context
-        self.frame = framing.resolveFrame(self.frame, who=self)
+        self.frame = framing.resolveFrame(self.frame, who=self, desc='act')
 
         if not isinstance(self.actor, Actor): # Need to resolve .actor
             actor, inits, ioinits, parms = self.registrar.__fetch__(self.actor)
@@ -653,11 +653,9 @@ class Transiter(Interrupter):
 
         parms = super(Transiter, self).resolve( **kwa)
 
-        if not isinstance(near, framing.Frame):
-            if near not in framing.Frame.Names:
-                raise excepting.ResolveError("ResolveError: Bad near link",
-                                            human, near)
-            parms['near'] = near = framing.Frame.Names[near] #replace name with valid link
+        parms['near'] = near = framing.resolveFrame(near,
+                                                    who=self.name,
+                                                    desc='near in {0}'.format(human))
 
         if not isinstance(far, framing.Frame):
             if far == 'next':
@@ -800,28 +798,20 @@ class Suspender(Interrupter):
         """Resolve any links aux and in associated parms for actors"""
         parms = super(Suspender, self).resolve( **kwa)
 
-        if not isinstance(main, framing.Frame):
-            if main not in framing.Frame.Names:
-                raise excepting.ResolveError("ResolveError: Bad main link", human, main)
-            parms['main'] = main = framing.Frame.Names[main] #replace name with valid link
+        parms['main'] = main = framing.resolveFrame(main,
+                                                    who=main,
+                                                    desc='main in {0}'.format(human))
 
-        if not isinstance(aux, framing.Framer):
-            if aux not in framing.Framer.Names:
-                raise excepting.ResolveError("ResolveError: Bad aux link",
-                                                main.name + " " + human, aux)
-
-            parms['aux'] = aux = framing.Framer.Names[aux] #replace name with valid link
-            console.terse("    Resolved aux as {0} in {1}".format(aux.name, main.name))
-
-        if aux.schedule != AUX:
-            raise excepting.ResolveError("ResolveError: Bad aux link not scheduled as AUX",
-                                         main.name + " " + human, aux)
+        parms['aux'] = aux = framing.resolveFramer(aux,
+                                                   who=main.name,
+                                                   desc='aux in {0}'.format(human),
+                                                   contexts=[AUX])
 
         for act in needs:
             act.act = self.act
             act.resolve()
 
-        deActParms = dict(aux=aux)
+        deActParms = odict(aux=aux)
         deAct = SideAct( actor=self,
                         parms=deActParms,
                         action='deactivize')
