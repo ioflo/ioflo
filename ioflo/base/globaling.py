@@ -52,6 +52,11 @@ TWOPI = 2.0 * math.pi # two times pi
 DEGTORAD = math.pi / 180.0 # r = DEGTORAD * d
 RADTODEG = 180.0 / math.pi # d = RADTODEG * r
 
+
+#FlowScript build reporting indentations
+INDENT_ADD = '      '
+INDENT_CREATE = '     '
+
 #Task generator control values
 STOP = 0
 START = 1

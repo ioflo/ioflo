@@ -218,7 +218,9 @@ class Store(registering.Registry):
         node[tail] = share
         share.changeStore(self)
 
-        console.profuse("     Added share {0} to store {1}\n".format(share.name, self.name))
+        console.profuse("{0}Added share {1} to store {2}\n".format(INDENT_ADD,
+                                                                   share.name,
+                                                                   self.name))
 
         return share
 
@@ -243,7 +245,9 @@ class Store(registering.Registry):
             if isinstance(node, Share):
                 raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
 
-        console.profuse("     Added node {0} to {1}\n".format(name, self.name))
+        console.profuse("{0}Added node {1} to {2}\n".format(INDENT_ADD,
+                                                            name,
+                                                            self.name))
 
         return node
 

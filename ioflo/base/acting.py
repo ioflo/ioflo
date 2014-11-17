@@ -53,7 +53,7 @@ class Act(object):
         self.act = act
         self.actor = actor #callable instance performs action
         self.registrar = registrar or Actor
-        self.parms = parms if parms else None # parms must always be not None
+        self.parms = parms if parms is not None else {} # parms must always be not None
         self.inits = inits if inits else None # store None if empty dict
         self.ioinits = ioinits if ioinits else None # store None if empty dict
 
@@ -826,7 +826,8 @@ class Suspender(Interrupter):
                         parms=deActParms,
                         action='deactivize')
         self.act.frame.addExact(deAct)
-        console.profuse("     Added Exact {0} with {1}\n".format(deAct.actor, deAct.parms))
+        console.profuse("{0}Added exact {1} SideAct for {2} with {3} in {4}\n".format(
+                INDENT_ADD, 'deactivize', self.name, deAct.parms, self.act.frame.name))
         deAct.resolve()
 
         return parms
@@ -866,30 +867,6 @@ class Suspender(Interrupter):
                 parms['aux'] = clones[aux][1].name # change to clone name
 
         return parms
-
-
-class Restarter(Actor):
-    """ Restarter is a special actor that acts on other act's actor
-        In the Restarter's action method,
-            if the act.actor passed in as a parameter has a restart attribute
-                 it calls the act.actor.restart() method
-
-        Doesn't need to resolve its action method's 'act' parm because the act has
-        own entry in Frame it will get resolved normally
-
-        Restarter act is created in .resolve of Deed's that need restarting.
-    """
-    def action(self, act, **kw):
-        """ Action called by Actor
-        """
-        console.profuse("{0} restart {1}\n".format(self.name, act.actor.name))
-
-        if hasattr(act.actor, 'restart'):
-            return act.actor.restart()
-
-    def expose(self):
-        """   """
-        console.terse("Restarter {0}\n".format(self.name))
 
 class Printer(Actor):
     """Printor Actor Patron Registry Class

@@ -156,15 +156,13 @@ class DeedLapse(Deed):
         print("Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse))
 
     def resolve(self, **kwa):
-        """ Create enact with RestarterActor to restart this Actor """
+        """ Create enact with restart SideAct to restart this Actor """
         parms = super(DeedLapse, self).resolve( **kwa)
 
-        kind = 'Restarter'
-        restartAct = acting.Act( actor=kind,
-                                 registrar=acting.Actor,
-                                 parms=odict(act=self.act),
-                                 inits=odict(name=kind), )
-
+        restartActParms = {}
+        restartAct = acting.SideAct(   actor=self,
+                                parms=restartActParms,
+                                action='restart')
         # need to insert restartAct before self.act so restartAct runs first
         found = False
         for i, enact in enumerate(self.act.frame.enacts):
@@ -175,9 +173,7 @@ class DeedLapse(Deed):
         if not found:
             self.act.frame.addEnact(restartAct)
 
+        console.profuse("{0}Added enact {1} SideAct for {2} with {3} in {4}\n".format(
+                INDENT_ADD, 'restart', self.name, restartAct.parms, self.act.frame.name))
         restartAct.resolve()
-
-        console.profuse("     Added {0} {1} for {2} in {3}\n".format(
-            'enact', kind, self.name, self.act.frame.name ))
-
         return parms
