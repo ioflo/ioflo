@@ -415,7 +415,7 @@ class Actor(object):
             at resolve time.
 
             It allows for substitution into ipath of
-            frame, framer, main frame, or main framer relative names.
+            frame, framer, actor, main frame, or main framer relative names.
             So that lexically relative pathnames can
             be dynamically resolved in support of framer cloning.
             It assumes that any implied variants have been reconciled.
@@ -427,10 +427,13 @@ class Actor(object):
                 fully reconciled and no contextual substitutions are to be applied.
 
                 Otherwise make subsitutions in pathname strings that begin
-                with 'framer.' and have the special framer and/or frame names
-                of 'me' or 'main'.
+                with 'framer.'
+                Substitute for special path part 'framer' with names of 'me' or 'main'
+                Substitute for special path part 'frame' with names  of 'me' or 'main'
+                Substitute for special path part 'actor' with name of 'me'
 
-                'me' indicates substitute the current framer or frame name respectively.
+                'me' indicates substitute the current framer, frame, or actor name
+                respectively.
 
                 'main' indicates substitute the current frame's main framer or main frame
                 name respectively.
@@ -577,9 +580,11 @@ class Interrupter(Actor):
        This class must be subclassed. This is a convenience so can either use
          isinstance to test
 
-       Specifically and Interrupter's action() method returns truthy when its action
-       will interrupt the normal frame processing examples are
-       Transitors which interrupt by changing to a new frame
+       Specifically an Interrupter's action() method returns truthy when its action
+       interrupts the normal frame processing.
+
+       Examples are:
+       Transiters which interrupt by changing to a new frame
        Suspenders which interrupt when the conditional aux condition is true and
           further processing of the frame and sub frames is stopped
 
