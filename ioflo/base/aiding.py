@@ -665,7 +665,7 @@ class SocketUdpNb(object):
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
-                console.terse(emsg)
+                console.profuse(emsg)
                 raise #re raise exception ex1
 
     def send(self, data, da):
@@ -679,7 +679,7 @@ class SocketUdpNb(object):
             result = self.ss.sendto(data, da) #result is number of bytes sent
         except socket.error as ex:
             emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
-            console.terse(emsg)
+            console.profuse(emsg)
             result = 0
             raise
 
@@ -846,7 +846,7 @@ class SocketUxdNb(object):
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
-                console.terse(emsg)
+                console.profuse(emsg)
                 raise #re raise exception ex1
 
     def send(self, data, da):
@@ -860,7 +860,7 @@ class SocketUxdNb(object):
             result = self.ss.sendto(data, da) #result is number of bytes sent
         except socket.error as ex:
             emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
-            console.terse(emsg)
+            console.profuse(emsg)
             result = 0
             raise
 
