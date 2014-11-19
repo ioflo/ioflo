@@ -352,7 +352,8 @@ class Actor(object):
             raise ValueError("Nonstring inode arg '{0}'".format(inode))
 
         if not inode:
-            inode = aiding.nameToPath(self.name)
+            #inode = aiding.nameToPath(self.name)
+            inode = "framer.me.frame.me.actor.me."
 
         if not inode.endswith('.'):
             inode = "{0}.".format(inode)
@@ -496,13 +497,13 @@ class Actor(object):
                                     if not self.name:
                                         raise excepting.ResolveError("ResolveError: Missing name"
                                             " context to resolve relative pathname.", ipath, self)
-                                    parts[5:6] = nameToPath(self.name).rstrip('.').split('.')
+                                    parts[5:6] = nameToPath(self.name).lstrip('.').rstrip('.').split('.')
                         elif parts[2] == 'actor':
                             if parts[3] == 'me': # slice insert multiple parts
                                 if not self.name:
                                     raise excepting.ResolveError("ResolveError: Missing name"
                                         " context to resolve relative pathname.", ipath, self)
-                                parts[3:4] = nameToPath(self.name).rstrip('.').split('.')
+                                parts[3:4] = nameToPath(self.name).lstrip('.').rstrip('.').split('.')
 
                 ipath = '.'.join(parts)
 

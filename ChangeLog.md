@@ -2,8 +2,11 @@
 CHANGE LOG
 -------------------
 
+Refactor and clean up code
 
+Raises error if duplicate unders
 
+Refactor so resolving Framer and Frame links uses utility function to be more DRY
 
 Replaced Restarter Actor with SideAct restart
 
