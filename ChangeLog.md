@@ -4,7 +4,11 @@ CHANGE LOG
 
 Refactor and clean up code
 
+Change default inode path in resolvePath to "framer.me.frame.me.actor.me"
+
 Raises error if duplicate unders
+
+Refactor so resolving Tasker links uses utility function more DRY
 
 Refactor so resolving Framer and Frame links uses utility function to be more DRY
 

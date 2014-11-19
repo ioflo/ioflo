@@ -1236,8 +1236,8 @@ def resolveFramer(framer, who='', desc='framer', contexts=None):
         who is optional name of object owning the link
         such as framer or frame or actor
         desc is string description of framer link such as 'aux' or 'framer'
-        contexts is list of allowed schedule contexts, None or empty means any
-        Framer.Names registry must be setup
+        contexts is list of allowed schedule contexts, None or empty means any.
+        Framer.Names registry must already be setup
     """
     if not isinstance(framer, Framer): # not instance so name
         if framer not in Framer.Names:
@@ -1257,8 +1257,6 @@ def resolveFramer(framer, who='', desc='framer', contexts=None):
                                          framer,
                                          who)
         console.terse("    Resolved {0} as {1} in {2}".format(desc, framer.name, who))
-
-
     return framer
 
 ResolveFramer = resolveFramer

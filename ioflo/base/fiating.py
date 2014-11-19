@@ -37,15 +37,10 @@ class Fiat(acting.Actor):
         """
         parms = super(Fiat, self).resolve( **kwa)
 
-        if not isinstance(tasker, tasking.Tasker): #name
-            if tasker not in tasking.Tasker.Names:
-                raise excepting.ResolveError("ResolveError: Bad fiat tasker link name", tasker, '')
-            parms['tasker'] = tasker = tasking.Tasker.Names[tasker] #replace name with valid link
-
-        if tasker.schedule != SLAVE : # only allowed on slave taskers
-            msg = "ResolveError: Bad tell tasker, not slave"
-            raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
-
+        parms['tasker'] = tasker = tasking.resolveTasker(tasker,
+                                                 who=self.name,
+                                                 desc='fiat tasker',
+                                                 contexts=[SLAVE])
         return parms
 
     def cloneParms(self, parms, clones, **kw):

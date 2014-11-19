@@ -86,17 +86,10 @@ class NeedDone(Need):
            resolved link is passed back to container act to update in act's parms
         """
         parms = super(NeedDone, self).resolve( **kwa)
-
-        if not isinstance(tasker, tasking.Tasker): # name of tasker so resolve
-            if tasker not in tasking.Tasker.Names:
-                raise excepting.ResolveError("ResolveError: Bad need done aux link", tasker, self.name)
-            tasker = tasking.Tasker.Names[tasker] #replace tasker name with tasker
-
-        #if not tasker.schedule in [AUX, SLAVE]:
-            #raise excepting.ResolveError("ResolveError: Bad need done tasker not auxiliary or slave", tasker, self.name)
-
-        parms['tasker'] = tasker #replace name with valid link
-
+        parms['tasker'] = tasker = tasking.resolveTasker(tasker,
+                                                         who=self.name,
+                                                         desc='need done tasker',
+                                                         contexts=[])
         return parms #return items are updated in original act parms
 
     def cloneParms(self, parms, clones, **kw):
@@ -145,14 +138,10 @@ class NeedStatus(Need):
            resolved link is passed back to container act to update in act's parms
         """
         parms = super(NeedStatus, self).resolve( **kwa)
-
-        if not isinstance(tasker, tasking.Tasker): #so name of tasker
-            if tasker not in tasking.Tasker.Names:
-                raise excepting.ResolveError("ResolveError: Bad need done tasker link", tasker, self.name)
-            tasker = tasking.Tasker.Names[tasker] #replace tasker name with tasker
-
-        parms['tasker'] = tasker #replace name with valid link
-
+        parms['tasker'] = tasker = tasking.resolveTasker(tasker,
+                                                         who=self.name,
+                                                         desc='need status tasker',
+                                                         contexts=[])
         return parms #return items are updated in original act parms
 
     def cloneParms(self, parms, clones, **kw):
@@ -217,7 +206,6 @@ class NeedDirect(Need):
                 tolerance
 
         """
-
         result = self.Check(state[stateField], comparison, goal, tolerance)
         console.profuse("Need Direct, if {0}[{1}] {2} {3} +- {4}: = {5}\n".format(
             state.name, stateField, comparison, goal, tolerance, result))
