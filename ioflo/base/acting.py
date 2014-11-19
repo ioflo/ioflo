@@ -82,7 +82,7 @@ class Act(object):
                 inits['name'] = self.actor
             inits['store'] = self.frame.store
             inits['act'] = self
-            self.actor = actor = actor(**inits)
+            self.actor = actor = actor(**inits) # instantiate and convert
 
             parms.update(self.parms or odict())
             ioinits.update(self.ioinits or odict())
