@@ -21,34 +21,32 @@ class RegisterType(type):
         super(RegisterType, cls).__init__(name, bases, attrs)
         if not hasattr(cls, 'Registry'):
             cls.Registry = odict()
-        #rname = reverseCamel(name)
-        rname = name
-        cls.__register__(   rname,
+        cls.__register__(   name,
                             inits=getattr(cls, 'Inits', None),
                             ioinits=getattr(cls, 'Ioinits', None),
                             parms=getattr(cls, 'Parms', None))
 
-    def __register__(cls, rname, inits=None,  ioinits=None, parms=None):
-        """ Register cls under rname with ioinits and inits
+    def __register__(cls, name, inits=None,  ioinits=None, parms=None):
+        """ Register class cls under name with ioinits and inits
 
-            Usage:  A.__register__(rname, ioinits, inits, parms)
+            Usage:  A.__register__(name, ioinits, inits, parms)
         """
-        if rname in cls.Registry:
-            msg = "Entry '{0}' already exists in registry of {1}".format(rname, cls)
+        if name in cls.Registry:
+            msg = "Entry '{0}' already exists in registry of {1}".format(name, cls)
             raise excepting.RegisterError(msg)
-        cls.Registry[rname] = (cls, inits, ioinits, parms)
-        console.profuse("Registered: '{0}'\n".format(rname))
+        cls.Registry[name] = (cls, inits, ioinits, parms)
+        console.profuse("Registered: '{0}'\n".format(name))
         return cls
 
-    def __fetch__(cls, rname):
+    def __fetch__(cls, name):
         """ Return tuple derived from .Registry entry at rname if present
             Otherwise raise exception
             Makes copies of inits and ioinits so safe for downstream use
         """
-        if rname not in cls.Registry:
-            msg = "Entry '{0}' not found in Registry of '{1}'".format(rname, cls.__name__)
+        if name not in cls.Registry:
+            msg = "Entry '{0}' not found in Registry of '{1}'".format(name, cls.__name__)
             raise excepting.RegisterError(msg)
-        actor, inits, ioinits, parms = cls.Registry[rname]
+        actor, inits, ioinits, parms = cls.Registry[name] # actor is the registered class
         return (actor,
                 odict(inits or odict()),
                 odict(ioinits or odict()),
