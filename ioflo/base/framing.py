@@ -208,11 +208,7 @@ class Framer(tasking.Tasker):
 
         #Resolve first frame link
         if self.first:
-            if not isinstance(self.first, Frame):
-                if self.first not in Frame.Names:
-                    raise excepting.ResolveError("Bad first frame link", self.name, self.first)
-
-                self.first = Frame.Names[self.first] #replace link name with link
+            self.first = resolveFrame(self.first, who=self.name, desc='first')
         else:
             raise excepting.ResolveError("No first frame link", self.name, self.first)
 
@@ -838,13 +834,7 @@ class Frame(registering.StoriedRegistry):
 
         """
         if self.next:
-            if not isinstance(self.next, Frame): #over is name not ref so resolve
-                try:
-                    next = Frame.Names[self.next] #get reference from Frame name registry
-                except KeyError:
-                    raise excepting.ResolveError("Bad next link in outline", self.name, self.next)
-
-                self.next = next
+            self.next = resolveFrame(self.next, who=self.name, desc='next')
 
     def resolveOverLinks(self):
         """Starting with self.over climb over links resolving the links as needed along the way
@@ -885,15 +875,10 @@ class Frame(registering.StoriedRegistry):
     def resolveUnderLinks(self):
         """ Resolve under links """
         for i, under in enumerate(self.unders):
-            if not isinstance(under, Frame):
-                try:
-                    self.unders[i] = Frame.Names[under] #replace link name with link
-                except KeyError:
-                    raise excepting.ResolveError("Bad link in unders", self.name, under)
+            self.unders[i] = resolveFrame(under, who=self.name, desc='under')
 
-        #maybe should as precaution check for and remove duplicate unders
-        #with right most removed
-        #or at least check for duplicates and flag error
+        if len(set(self.unders)) != len(self.unders): # duplicates
+            raise excepting.ResolveError("Duplicate under", name=self.name, value=self.unders)
 
     def resolveAuxLinks(self):
         """ Resolve aux links

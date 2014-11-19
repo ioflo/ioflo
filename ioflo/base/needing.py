@@ -267,11 +267,7 @@ class NeedMarker(Need):
         """
         parms = super(NeedMarker, self).resolve( **kwa)
 
-        if not isinstance(frame, framing.Frame): # must be pathname
-            if frame not in framing.Frame.Names:
-                msg = "ResolveError: Bad need update frame link"
-                raise excepting.ResolveError(msg, frame, self.name)
-            parms['frame'] = frame = framing.Frame.Names[frame] #replace frame name with frame
+        parms['frame'] = frame = framing.resolveFrame(frame, who=self.name, desc='need marker')
 
         if not share.marks.get(frame.name):
             share.marks[frame.name] = storing.Mark()
