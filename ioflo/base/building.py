@@ -1294,11 +1294,11 @@ class Builder(object):
               aux framername
 
            Cloned Auxiliary:
-              aux [clone name parts] as auxname
+              aux framername as cloneauxname
 
            Conditional Auxiliary:
-              aux framername if [not] need
-              aux framername if [not] need [and [not] need ...]
+              aux framername [as cloneauxname] if [not] need
+              aux framername [as cloneauxname] if [not] need [and [not] need ...]
 
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
@@ -1759,11 +1759,12 @@ class Builder(object):
 
             elif connective in ['by', 'from']:
                 srcFields, index = self.parseFields(tokens, index)
-                srcPath, index = self.parsePath(tokens, index)
+                #srcPath, index = self.parsePath(tokens, index)
+                srcPath, index = self.parseIndirect(tokens, index, variant = '')
                 if self.currentStore.fetchShare(srcPath) is None:
-                     msg = ("     Warning: Inc from non-existent share {0}"
+                    msg = ("     Warning: Inc from non-existent share {0}"
                             " ... creating anyway\n".format(srcPath))
-                     console.terse(msg)
+                    console.terse(msg)
 
                 src = self.currentStore.create(srcPath)
 
