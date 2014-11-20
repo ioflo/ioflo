@@ -89,7 +89,9 @@ class NeedDone(Need):
         parms['tasker'] = tasker = tasking.resolveTasker(tasker,
                                                          who=self.name,
                                                          desc='need done tasker',
-                                                         contexts=[])
+                                                         contexts=[],
+                                                         human=self.act.human,
+                                                         count=self.act.count)
         return parms #return items are updated in original act parms
 
     def cloneParms(self, parms, clones, **kw):
@@ -141,7 +143,9 @@ class NeedStatus(Need):
         parms['tasker'] = tasker = tasking.resolveTasker(tasker,
                                                          who=self.name,
                                                          desc='need status tasker',
-                                                         contexts=[])
+                                                         contexts=[],
+                                                         human=self.act.human,
+                                                         count=self.act.count)
         return parms #return items are updated in original act parms
 
     def cloneParms(self, parms, clones, **kw):
@@ -272,7 +276,8 @@ class NeedMarker(Need):
         if not found:
             if marker not in acting.Actor.Registry:
                 msg = "ResolveError: Bad need marker link"
-                raise excepting.ResolveError(msg, marker, self.name)
+                raise excepting.ResolveError(msg, marker, self.name,
+                                self.act.human, self.act.count)
 
             markerParms = dict(share=share, frame=frame.name)
             parms['marker'] = marker = acting.Act(  actor=marker,

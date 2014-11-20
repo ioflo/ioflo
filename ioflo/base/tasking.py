@@ -203,7 +203,7 @@ class Tasker(registering.StoriedRegistry):
             self.status = ABORTED
 
 
-def resolveTasker(tasker, who='', desc='tasker', contexts=None):
+def resolveTasker(tasker, who='', desc='tasker', contexts=None, human='', count=None):
     """ Returns resolved tasker instance from tasker
         tasker may be name of tasker or instance
         who is optional name of object owning the link
@@ -216,13 +216,17 @@ def resolveTasker(tasker, who='', desc='tasker', contexts=None):
         if tasker not in Tasker.Names:
             raise excepting.ResolveError("ResolveError: Bad {0} link name".format(desc),
                                          tasker,
-                                         who)
+                                         who,
+                                         human,
+                                         count)
         tasker = Tasker.Names[tasker]
         if contexts and tasker.schedule not in contexts:
             raise excepting.ResolveError("ResolveError: Bad {0} link not scheduled"
                                          " as one of {1}".format(desc, contexts),
                                          tasker,
-                                         who)
+                                         who,
+                                         human,
+                                         count)
         console.terse("    Resolved {0} as {1} in {2}".format(desc, tasker.name, who))
     return tasker
 

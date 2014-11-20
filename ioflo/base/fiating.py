@@ -40,7 +40,9 @@ class Fiat(acting.Actor):
         parms['tasker'] = tasker = tasking.resolveTasker(tasker,
                                                  who=self.name,
                                                  desc='fiat tasker',
-                                                 contexts=[SLAVE])
+                                                 contexts=[SLAVE],
+                                                 human=self.act.human,
+                                                 count=self.act.count)
         return parms
 
     def cloneParms(self, parms, clones, **kw):

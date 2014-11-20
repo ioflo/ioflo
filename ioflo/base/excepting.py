@@ -74,17 +74,19 @@ class ResolveError(Exception):
        msg = "ResolveError: Bad frame link '%s' for action '%s'" % (link, action.name)
        raise excepting.ResolveError(msg, link, action)
     """
-    def __init__(self, message = None, name = None, value = None):
+    def __init__(self, message=None, name=None, value=None, human='', count=None):
         self.message = message #description of error
         self.name = name #link name or description
         self.value = value  # actor, framer, frame etc
+        self.human = human  # human readable Floscript declaration
+        self.count = count  # count of line for Floscript declaration
 
-        self.args = (message, name, value)
+        self.args = (message, name, value, human, count)
 
 
     def __str__(self):
-        return ("%s. Name = %s, Value = %s.\n" %\
-                (self.message, self.name, repr(self.value)) )
+        return ("%s. Name = %s, Value = %s. at line %s\n    %s\n" %\
+                (self.message, self.name, repr(self.value), self.count, self.human, ) )
 
 class CloneError(Exception):
     """Used to indicate cloning error

@@ -1230,7 +1230,8 @@ class Frame(registering.StoriedRegistry):
 
 
 #utility functions
-def resolveFramer(framer, who='', desc='framer', contexts=None):
+def resolveFramer(framer, who='', desc='framer', contexts=None,
+                  human='', count=None):
     """ Returns resolved framer instance from framer
         framer may be name of framer or instance
         who is optional name of object owning the link
@@ -1243,25 +1244,31 @@ def resolveFramer(framer, who='', desc='framer', contexts=None):
         if framer not in Framer.Names:
             raise excepting.ResolveError("ResolveError: Bad {0} link name".format(desc),
                                          framer,
-                                         who)
+                                         who,
+                                         human,
+                                         count)
         framer = Framer.Names[framer]
         #maker sure framer not just tasker since tasker framer share registry
         if not isinstance(framer, Framer):
             raise excepting.ResolveError("ResolveError: Bad {0} link name, tasker"
                                          " not framer".format(desc),
                                          self.name,
-                                         aux.name)
+                                         aux.name,
+                                         human,
+                                         count)
         if contexts and framer.schedule not in contexts:
             raise excepting.ResolveError("ResolveError: Bad {0} link not scheduled"
                                          " as one of {1}".format(desc, contexts),
                                          framer,
-                                         who)
+                                         who,
+                                         human,
+                                         count)
         console.terse("    Resolved {0} as {1} in {2}".format(desc, framer.name, who))
     return framer
 
 ResolveFramer = resolveFramer
 
-def resolveFrame(frame, who='', desc='act'):
+def resolveFrame(frame, who='', desc='act', human='', count=None):
     """ Returns resolved frame instance from frame
         frame may be name of frame or instance
 
@@ -1271,7 +1278,9 @@ def resolveFrame(frame, who='', desc='act'):
         if frame not in Frame.Names:
             raise excepting.ResolveError("ResolveError: Bad {0} frame link name".format(desc),
                                          frame,
-                                         who)
+                                         who,
+                                         human,
+                                         count)
         frame = Frame.Names[frame] #replace frame name with frame
 
     return frame

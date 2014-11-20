@@ -76,7 +76,11 @@ class Act(object):
         if self.act: # this is sub act of another act self.act so get super act context
             self.frame = self.act.frame
             self.context = self.act.context
-        self.frame = framing.resolveFrame(self.frame, who=self, desc='act')
+        self.frame = framing.resolveFrame(self.frame,
+                                          who=self,
+                                          desc='act',
+                                          human=self.human,
+                                          count=self.count)
 
         if not isinstance(self.actor, Actor): # Need to resolve .actor
             actor, inits, ioinits, parms = self.registrar.__fetch__(self.actor)
@@ -99,12 +103,20 @@ class Act(object):
                         if actor._Parametric:
                             if key in parms:
                                 msg = "ResolveError: Parm and Ioi with same name"
-                                raise excepting.ResolveError(msg, key, self)
+                                raise excepting.ResolveError(msg,
+                                                             key,
+                                                             self,
+                                                             self.human,
+                                                             self.count)
                             parms[key] = share
                         else:
                             if hasattr(actor, key):
                                 msg = "ResolveError: Attribute and Ioi with same name"
-                                raise excepting.ResolveError(msg, key, self)
+                                raise excepting.ResolveError(msg,
+                                                             key,
+                                                             self,
+                                                             self.human,
+                                                             self.count)
                             setattr(actor, key, share)
             self.parms = parms
             self.parms.update(self.actor.resolve(**self.parms))
@@ -182,11 +194,19 @@ class SideAct(Act):
 
         if not self.action : # Woops
             msg = "ResolveError: Empty action"
-            raise excepting.ResolveError(msg, self.action, self)
+            raise excepting.ResolveError(msg,
+                                         self.action,
+                                         self,
+                                         self.human,
+                                         self.count)
 
         if not getattr(self.actor, self.action, None):
             msg = "ResolveError: Missing action in actor"
-            raise excepting.ResolveError(msg, self.action, self)
+            raise excepting.ResolveError(msg,
+                                         self.action,
+                                         self,
+                                         self.human,
+                                         self.count)
 
 def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
              parametric=None):
@@ -467,13 +487,16 @@ class Actor(object):
                 if parts[0] == 'framer':  #  relative addressing
                     if not self.act:
                         raise excepting.ResolveError("ResolveError: Missing act context"
-                                " to resolve relative pathname.", ipath, self)
+                                " to resolve relative pathname.", ipath, self,
+                                self.act.human, self.act.count)
                     if not self.act.frame:
                         raise excepting.ResolveError("ResolveError: Missing frame context"
-                            " to resolve relative pathname.", ipath, self.act)
+                            " to resolve relative pathname.", ipath, self.act,
+                                self.act.human, self.act.count)
                     if not self.act.frame.framer:
                         raise excepting.ResolveError("ResolveError: Missing framer context"
-                            " to resolve relative pathname.", ipath, self.act.frame)
+                            " to resolve relative pathname.", ipath, self.act.frame,
+                                self.act.human, self.act.count)
 
                     if parts[1] == 'me': # current framer
                         parts[1] = self.act.frame.framer.name
@@ -481,7 +504,8 @@ class Actor(object):
                         if not self.act.frame.framer.main:
                             raise excepting.ResolveError("ResolveError: Missing main frame"
                                 " context to resolve relative pathname.", ipath,
-                                self.act.frame.framer)
+                                self.act.frame.framer,
+                                self.act.human, self.act.count)
                         parts[1] = self.act.frame.framer.main.framer.name
 
                     if (len(parts) >= 3):
@@ -493,26 +517,30 @@ class Actor(object):
                                     raise excepting.ResolveError("ResolveError: "
                                         "Missing main frame context to resolve "
                                         "relative pathname.", ipath,
-                                        self.act.frame.framer)
+                                        self.act.frame.framer,
+                                        self.act.human, self.act.count)
                                 parts[3] = self.act.frame.framer.main.name
                             if (len(parts) >= 5 ) and parts[4] == 'actor':
                                 if parts[5] == 'me': # slice insert multiple parts
                                     if not self.name:
                                         raise excepting.ResolveError("ResolveError: Missing name"
-                                            " context to resolve relative pathname.", ipath, self)
+                                            " context to resolve relative pathname.", ipath, self,
+                                                        self.act.human, self.act.count)
                                     parts[5:6] = nameToPath(self.name).lstrip('.').rstrip('.').split('.')
                         elif parts[2] == 'actor':
                             if parts[3] == 'me': # slice insert multiple parts
                                 if not self.name:
                                     raise excepting.ResolveError("ResolveError: Missing name"
-                                        " context to resolve relative pathname.", ipath, self)
+                                        " context to resolve relative pathname.", ipath, self,
+                                               self.act.human, self.act.count)
                                 parts[3:4] = nameToPath(self.name).lstrip('.').rstrip('.').split('.')
 
                 ipath = '.'.join(parts)
 
             if not self.store:
                 raise excepting.ResolveError("ResolveError: Missing store context"
-                                " to resolve relative pathname.", ipath, self)
+                                " to resolve relative pathname.", ipath, self,
+                                self.act.human, self.act.count)
             if ipath.endswith('.'): # Node not Share
                 ipath = self.store.createNode(ipath.rstrip('.'))
             else: # Share
@@ -659,13 +687,16 @@ class Transiter(Interrupter):
 
         parms['near'] = near = framing.resolveFrame(near,
                                                     who=self.name,
-                                                    desc='near in {0}'.format(human))
+                                                    desc='near',
+                                                    human=self.act.human,
+                                                    count=self.act.count)
 
         if not isinstance(far, framing.Frame):
             if far == 'next':
                 if not isinstance(near.next_, framing.Frame):
                     raise excepting.ResolveError("ResolveError: Bad next frame",
-                                                 near.name, near.next_)
+                                                 near.name, near.next_,
+                                                 self.act.human, self.act.count)
                 far = near.next_
 
             elif far == 'me':
@@ -676,7 +707,8 @@ class Transiter(Interrupter):
 
             else:
                 raise excepting.ResolveError("ResolveError: Bad far link",
-                                             near.name + " " + human, far)
+                                             near.name, far,
+                                             self.act.human, self.act.count)
 
             parms['far'] = far #replace name with valid link
 
@@ -804,12 +836,16 @@ class Suspender(Interrupter):
 
         parms['main'] = main = framing.resolveFrame(main,
                                                     who=main,
-                                                    desc='main in {0}'.format(human))
+                                                    desc='main',
+                                                    human=self.act.human,
+                                                    count=self.act.count)
 
         parms['aux'] = aux = framing.resolveFramer(aux,
                                                    who=main.name,
-                                                   desc='aux in {0}'.format(human),
-                                                   contexts=[AUX])
+                                                   desc='aux',
+                                                   contexts=[AUX],
+                                                   human=self.act.human,
+                                                   count=self.act.count)
 
         for act in needs:
             act.act = self.act
