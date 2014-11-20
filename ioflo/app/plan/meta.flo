@@ -75,7 +75,3 @@ server two  to /var/tmp/log/ioflo/ \
    rx :55552 \
    for value in .meta.name # trailing comment
 server server to /var/tmp/log/ioflo/ # trailing comment
-
-#tasker tasker one as tasker per stuff 5
-#tasker tasker two as tasker for value in .meta.name
-#tasker tasker

@@ -144,7 +144,8 @@ def Convert2StrBoolCoordNum(text):
     return None
 
 CommandList = ['load', 'house', 'init',
-               'tasker', 'server', 'logger', 'log', 'loggee',
+               'server',
+               'logger', 'log', 'loggee',
                'framer', 'first',
                'frame', 'over', 'under', 'next', 'done', 'timeout', 'repeat',
                'native', 'benter', 'enter', 'recur', 'exit', 'precur', 'renter', 'rexit',
@@ -547,180 +548,6 @@ class Builder(object):
         if index != len(tokens):
             msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
-
-        return True
-
-    def buildTasker(self, command, tokens, index):
-        """create tasker in current house
-           tasker has to have name so can  ask stop
-
-           tasker name [part ...] [as kind [part ...]][at period] [be scheduled]
-              [in order][per [field] value] [for field [field ...] in share]
-
-           scheduled: (active, inactive, slave)
-
-           order:
-              (front, mid, back)
-
-           data:
-              direct
-
-           source:
-              [(value, fields) in] indirect
-        """
-        if not self.currentHouse:
-            msg = "ParseError: Building verb '%s'. No current house" % (command)
-            raise excepting.ParseError(msg, tokens, index)
-
-        if not self.currentStore:
-            msg = "ParseError: Building verb '%s'. No current store" % (command)
-            raise excepting.ParseError(msg, tokens, index)
-
-        try:
-            parms = {}
-            init = {}
-            parts = []
-            name = ''
-            kind = None
-            connective = None
-            period = 0.0
-            prefix = './'
-            schedule = ACTIVE #globaling.py
-            order = MID #globaling.py
-
-            name = tokens[index]
-            index +=1
-
-            while index < len(tokens): # name parts end when connective
-                if tokens[index] in ['as', 'at', 'be', 'in', 'per', 'for']: # end of parts
-                    break
-                parts.append(tokens[index])
-                index += 1 #eat token
-
-            name += "".join(part.capitalize() for part in parts)
-
-            while index < len(tokens): #options
-                connective = tokens[index]
-                index += 1
-
-                if connective == 'as':
-                    parts = []
-                    while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'at', 'be', 'in', 'per', 'for']: # end of parts
-                            break
-                        parts.append(tokens[index])
-                        index += 1 #eat token
-
-                    kind = "".join(part.capitalize() for part in parts) #camel case
-                    #kind =  "".join(parts[0:1] + [part.capitalize() for part in parts[1:]]) #camel case lower first
-                    if not kind:
-                        msg = "ParseError: Building verb '%s'. Missing kind for connective 'as'" % (command)
-                        raise excepting.ParseError(msg, tokens, index)
-
-                elif connective == 'at':
-                    period = abs(Convert2Num(tokens[index]))
-                    index +=1
-
-                elif connective == 'be':
-                    option = tokens[index]
-                    index +=1
-
-                    if option not in ['active', 'inactive', 'slave']:
-                        msg = "ParseError: Building verb '%s'. Bad server scheduled option got %s" % \
-                            (command, option)
-                        raise excepting.ParseError(msg, tokens, index)
-
-                    schedule = ScheduleValues[option] #replace text with value
-
-                elif connective == 'in':
-                    order = tokens[index]
-                    index +=1
-                    if order not in OrderValues:
-                        msg = "ParseError: Building verb '%s'. Bad order option got %s" % \
-                            (command, order)
-                        raise excepting.ParseError(msg, tokens, index)
-
-                    order = OrderValues[order] #convert to order value
-
-                elif connective == 'per':
-                    data, index = self.parseDirect(tokens, index)
-                    init.update(data)
-
-                elif connective == 'for':
-                    srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parsePath(tokens, index)
-                    if self.currentStore.fetchShare(srcPath) is None:
-                        console.terse("     Warning: Do 'for' non-existent share {0} ..."
-                                      " creating anyway".format(srcPath))
-                    src = self.currentStore.create(srcPath)
-                    #assumes src share inited before this line parsed
-                    for field in srcFields:
-                        init[field] = src[field]
-
-                else:
-                    msg = "ParseError: Building verb '%s'. Bad connective got %s" % \
-                        (command, connective)
-                    raise excepting.ParseError(msg, tokens, index)
-
-        except IndexError:
-            msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
-            raise excepting.ParseError(msg, tokens, index)
-
-        if index != len(tokens):
-            msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
-            raise excepting.ParseError(msg, tokens, index)
-
-        if kind: # Create new instance from kind class with name
-            if name in tasking.Tasker.Names:
-                msg = "ParseError: Building verb '%s'. Task named %s of kind %s already exists" % \
-                    (command, name, kind)
-                raise excepting.ParseError(msg, tokens, index)
-
-            if kind not in tasking.Tasker.Names: # expect instance of same name as kind
-                msg = "ParseError: Building verb '%s'. No tasker kind of %s" %\
-                    (command, kind)
-                raise excepting.ParseError(msg, tokens, index)
-
-            kinder = tasking.Tasker.Names[kind]
-            #create new instance as the same type as kinder
-            tasker = type(kinder)(name=name, store=self.currentStore, period=period,
-                                  schedule=schedule)
-            kw = dict()
-            kw.update(init)
-            tasker.reinit(**kw)
-
-        else: # Use an existing instance
-            if name not in tasking.Tasker.Names: #instance not exist
-                msg = "ParseError: Building verb '%s'. No tasker named %s" %\
-                    (command, name)
-                raise excepting.ParseError(msg, tokens, index)
-
-            tasker = tasking.Tasker.Names[name] #fetch existing instance
-            kind = tasker.__class__.__name__
-
-            if tasker in self.currentHouse.taskers: #tasker already used somewhere else
-                msg = "ParseError: Building verb '%s'. Task named %s of kind %s already scheduled" %\
-                    (command, name, kind)
-                raise excepting.ParseError(msg, tokens, index)
-
-            kw = dict(period=period, schedule=schedule)
-            kw.update(init)
-            tasker.reinit(**kw)
-
-        self.currentHouse.taskers.append(tasker)
-        if schedule == SLAVE:
-            self.currentHouse.slaves.append(tasker)
-        else: #taskable active or inactive
-            if order == FRONT:
-                self.currentHouse.fronts.append(tasker)
-            elif order == BACK:
-                self.currentHouse.backs.append(tasker)
-            else:
-                self.currentHouse.mids.append(tasker)
-
-        msg = "     Created tasker named {0} of kind {1} at period {2:0.4f} be {3}\n".format(
-            tasker.name, kind, tasker.period,  ScheduleNames[tasker.schedule])
-        console.profuse(msg)
 
         return True
 
@@ -1461,10 +1288,13 @@ class Builder(object):
 
 
     def buildAux(self, command, tokens, index):
-        """Parse 'aux' command  for simple or conditional aux of forms
+        """Parse 'aux' command  for simple, cloned, or conditional aux of forms
 
            Simple Auxiliary:
               aux framername
+
+           Cloned Auxiliary:
+              aux [clone name parts] as auxname
 
            Conditional Auxiliary:
               aux framername if [not] need
@@ -1770,7 +1600,7 @@ class Builder(object):
     #Frame Action specific builders
 
     def buildPrint(self, command, tokens, index):
-        """prints a string consiting of space separated tokens
+        """prints a string consisting of space separated tokens
            print message
 
            print hello world
@@ -2226,7 +2056,7 @@ class Builder(object):
     def buildLet(self, command, tokens, index):
         """Parse 'let' command  benter action  with entry conditions of forms
 
-           Befor Enter:
+           Before Enter:
               let [me] if [not] need
               let [me] if [not] need [and [not] need ...]
 

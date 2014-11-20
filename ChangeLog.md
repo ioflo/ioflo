@@ -1,6 +1,9 @@
 ------------------
 CHANGE LOG
 -------------------
+Deprecated current server command as will be changing syntax significantly
+
+Got rid of tasker command as only use subclasses Framer, Logger, Server
 
 Refactor and clean up code
 
