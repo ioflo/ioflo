@@ -1759,7 +1759,6 @@ class Builder(object):
 
             elif connective in ['by', 'from']:
                 srcFields, index = self.parseFields(tokens, index)
-                #srcPath, index = self.parsePath(tokens, index)
                 srcPath, index = self.parseIndirect(tokens, index, variant = '')
                 if self.currentStore.fetchShare(srcPath) is None:
                     msg = ("     Warning: Inc from non-existent share {0}"
@@ -2126,7 +2125,7 @@ class Builder(object):
 
     def buildDo(self, command, tokens, index):
         """ do kind [part ...] [as name [part ...]] [at context] [to data]
-                   [by source] [per data] [for source] [per data] [for source]
+                   [by source] [per data] [for source] [with data] [from source]
 
             deed:
                 name [part ...]
@@ -2206,7 +2205,7 @@ class Builder(object):
 
                 elif connective in ['by']:
                     srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parsePath(tokens, index)
+                    srcPath, index = self.parseIndirect(tokens, index, variant = '')
                     if self.currentStore.fetchShare(srcPath) is None:
                         console.profuse("     Warning: Do 'by' non-existent "
                                         "share %s ... creating anyway".format(srcPath))
@@ -2215,28 +2214,13 @@ class Builder(object):
                     for field in srcFields:
                         parms[field] = src[field]
 
-                elif connective in ['with']:
-                    data, index = self.parseDirect(tokens, index)
-                    inits.update(data)
-
-                elif connective in ['from']:
-                    srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parsePath(tokens, index)
-                    if self.currentStore.fetchShare(srcPath) is None:
-                        console.profuse("     Warning: Do 'from' non-existent"
-                                        " share '{0}' ... creating anyway".format(srcPath))
-                    src = self.currentStore.create(srcPath)
-                    # assumes that src share was inited earlier in parsing so has fields
-                    for field in srcFields:
-                        inits[field] = src[field]
-
                 elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
                     ioinits.update(data)
 
                 elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parsePath(tokens, index)
+                    srcPath, index = self.parseIndirect(tokens, index, variant = '')
                     if self.currentStore.fetchShare(srcPath) is None:
                         console.profuse("     Warning: Do 'for' non-existent "
                                         "share '{0}' ... creating anyway".format(srcPath))
@@ -2244,6 +2228,21 @@ class Builder(object):
                     # assumes that src share was inited earlier in parsing so has fields
                     for field in srcFields:
                         ioinits[field] = src[field]
+
+                elif connective in ['with']:
+                    data, index = self.parseDirect(tokens, index)
+                    inits.update(data)
+
+                elif connective in ['from']:
+                    srcFields, index = self.parseFields(tokens, index)
+                    srcPath, index = self.parseIndirect(tokens, index, variant = '')
+                    if self.currentStore.fetchShare(srcPath) is None:
+                        console.profuse("     Warning: Do 'from' non-existent"
+                                        " share '{0}' ... creating anyway".format(srcPath))
+                    src = self.currentStore.create(srcPath)
+                    # assumes that src share was inited earlier in parsing so has fields
+                    for field in srcFields:
+                        inits[field] = src[field]
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
