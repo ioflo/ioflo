@@ -143,7 +143,8 @@ class Nact(Act):
     """ Negating Act used for actor needs to give Not Need
     """
     __slots__ = ('frame', 'context', 'act',
-                 'actor', 'registrar', 'parms', 'inits', 'ioinits')
+                 'actor', 'registrar', 'parms', 'inits', 'ioinits',
+                 'human', 'count')
 
     def __init__(self, **kwa ):
         """ Initialization method for instance. """
@@ -167,7 +168,7 @@ class SideAct(Act):
         of the Main act.actor in support of combined activity such as restarting
         an action.
 
-        SideActa are created in the .resolve method of an Actor and assume that
+        SideActs are created in the .resolve method of an Actor and assume that
         all attributes and parms have already been resolved.
 
         Unique Attributes:
@@ -854,7 +855,9 @@ class Suspender(Interrupter):
         deActParms = odict(aux=aux)
         deAct = SideAct( actor=self,
                         parms=deActParms,
-                        action='deactivize')
+                        action='deactivize',
+                        human=self.act.human,
+                        count=self.act.count)
         self.act.frame.addExact(deAct)
         console.profuse("{0}Added exact {1} SideAct for {2} with {3} in {4}\n".format(
                 INDENT_ADD, 'deactivize', self.name, deAct.parms, self.act.frame.name))

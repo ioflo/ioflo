@@ -1350,7 +1350,9 @@ class Builder(object):
             parms = dict(needs = needs, main = self.currentFrame, aux = aux, human = human)
             act = acting.Act(   actor='Suspender',
                                 registrar=acting.Actor,
-                                parms=parms, )
+                                parms=parms,
+                                human=self.currentHuman,
+                                count=self.currentCount)
 
             self.currentFrame.addPreact(act)
 
@@ -1395,7 +1397,9 @@ class Builder(object):
             parms['framer'] = framer #resolve later if needed
             act = acting.Act(    actor=actorName,
                                  registrar=completing.Complete,
-                                 parms=parms,)
+                                 parms=parms,
+                                 human=self.currentHuman,
+                                 count=self.currentCount)
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
@@ -1456,7 +1460,9 @@ class Builder(object):
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
         act = acting.Act(   actor='Transiter',
                             registrar=acting.Actor,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
         self.currentFrame.addPreact(act) #add transact as preact
 
         console.profuse("     Added timeout transition preact,  '{0}', with far {1} needs:\n".format(
@@ -1507,7 +1513,9 @@ class Builder(object):
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
         act = acting.Act(    actor='Transiter',
                              registrar=acting.Actor,
-                             parms=parms,)
+                             parms=parms,
+                             human=self.currentHuman,
+                             count=self.currentCount)
 
         self.currentFrame.addPreact(act) #add transact as preact
 
@@ -1618,7 +1626,9 @@ class Builder(object):
         parms = dict(message = message)
         act = acting.Act(    actor='Printer',
                              registrar=acting.Actor,
-                             parms=parms,)
+                             parms=parms,
+                             human=self.currentHuman,
+                             count=self.currentCount)
 
         context = self.currentContext
         if context == NATIVE:
@@ -1691,7 +1701,9 @@ class Builder(object):
         parms['destination'] = dst #this is a share
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         msg = "     Created Actor {0} parms: data = {1}  destination = {2} ".format(
             actorName, data, dst.name)
@@ -1860,7 +1872,9 @@ class Builder(object):
         parms['destinationFields'] = dstFields #this is a list
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -2044,7 +2058,9 @@ class Builder(object):
         parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
         act = acting.Act(   actor='Transiter',
                             registrar=acting.Actor,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         self.currentFrame.addPreact(act)
 
@@ -2270,7 +2286,9 @@ class Builder(object):
                             registrar=deeding.Deed,
                             parms=parms,
                             inits=inits,
-                            ioinits=ioinits)
+                            ioinits=ioinits,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         #context = self.currentContext
         if context == NATIVE:
@@ -2331,7 +2349,9 @@ class Builder(object):
             parms['taskers'] = taskers #resolve later
             act = acting.Act(   actor=actorName,
                                 registrar=wanting.Want,
-                                parms=parms, )
+                                parms=parms,
+                                human=self.currentHuman,
+                                count=self.currentCount)
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
@@ -2538,7 +2558,9 @@ class Builder(object):
 
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
 
         msg = "     Created Actor {0} parms: ".format(actorName)
@@ -2568,7 +2590,9 @@ class Builder(object):
         parms['sourceFields'] = sourceFields #this is a list
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
 
         msg = "     Created Actor {0} parms: ".format(actorName)
@@ -2661,7 +2685,9 @@ class Builder(object):
 
         act = acting.Act(   actor=actorName,
                             registrar=goaling.Goal,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -2689,7 +2715,9 @@ class Builder(object):
 
         act = acting.Act(   actor=actorName,
                             registrar=goaling.Goal,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
 
         msg = "     Created Actor {0} parms: ".format(actorName)
@@ -2786,7 +2814,10 @@ class Builder(object):
                     act = self.makeIndirectNeed(state, stateField, comparison, goal, goalField, tolerance)
 
         if Negate:
-            act = acting.Nact(actor = act.actor, parms = act.parms)
+            act = acting.Nact(actor=act.actor,
+                              parms=act.parms,
+                              human=self.currentHuman,
+                              count=self.currentCount)
 
         return (act, index)
 
@@ -2807,7 +2838,9 @@ class Builder(object):
         parms = {}
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         return (act, index)
 
@@ -2829,7 +2862,9 @@ class Builder(object):
         parms['tasker'] = tasker
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         return (act, index)
 
@@ -2870,7 +2905,9 @@ class Builder(object):
         parms['status'] = status
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
         return (act, index)
 
     def makeUpdateNeed(self, kind, tokens, index):
@@ -2930,7 +2967,9 @@ class Builder(object):
         parms['marker'] = marker # marker kind resolved in resolvelinks
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
         return (act, index)
 
     def makeImplicitDirectFramerNeed(self, name, comparison, goal, tolerance):
@@ -3031,7 +3070,9 @@ class Builder(object):
         parms['stateField'] = stateField #this is string
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
@@ -3059,7 +3100,9 @@ class Builder(object):
         parms['tolerance'] = tolerance #this is a number
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
         msg = "     Created Actor {0} parms: ".format(actorName)
         for key, value in parms.items():
             msg += " {0} = {1}".format(key, value)
@@ -3093,7 +3136,9 @@ class Builder(object):
 
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         return act
 
@@ -3113,7 +3158,9 @@ class Builder(object):
         parms['tasker'] = name #resolve later
         act = acting.Act(   actor=actorName,
                             registrar=fiating.Fiat,
-                            parms=parms, )
+                            parms=parms,
+                            human=self.currentHuman,
+                            count=self.currentCount)
 
         context = self.currentContext
         if context == NATIVE:

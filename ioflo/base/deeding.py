@@ -161,7 +161,9 @@ class DeedLapse(Deed):
         restartActParms = {}
         restartAct = acting.SideAct(   actor=self,
                                 parms=restartActParms,
-                                action='restart')
+                                action='restart',
+                                human=self.act.human,
+                                count=self.act.count)
         # need to insert restartAct before self.act so restartAct runs first
         found = False
         for i, enact in enumerate(self.act.frame.enacts):

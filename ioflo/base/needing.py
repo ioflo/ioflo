@@ -282,7 +282,9 @@ class NeedMarker(Need):
             markerParms = dict(share=share, frame=frame.name)
             parms['marker'] = marker = acting.Act(  actor=marker,
                                                     registrar=acting.Actor,
-                                                    parms=markerParms)
+                                                    parms=markerParms,
+                                                    human=self.act.human,
+                                                    count=self.act.count)
 
             frame.insertEnact(marker)
             console.profuse("     Added {0} {1} with {2} in {3}\n".format(
