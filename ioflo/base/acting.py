@@ -660,10 +660,10 @@ class Transiter(Interrupter):
 
         if not isinstance(far, framing.Frame):
             if far == 'next':
-                if not isinstance(near.next, framing.Frame):
+                if not isinstance(near.next_, framing.Frame):
                     raise excepting.ResolveError("ResolveError: Bad next frame",
-                                                 near.name, near.next)
-                far = near.next
+                                                 near.name, near.next_)
+                far = near.next_
 
             elif far == 'me':
                 far = near

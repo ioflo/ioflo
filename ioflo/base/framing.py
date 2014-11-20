@@ -684,7 +684,7 @@ class Frame(registering.StoriedRegistry):
         self.head = [] #list of frames from top down to self
         self.human = '' #string of names of frames in outline '>' separated
         self.headHuman = '' #string of names of frames in head '>' separated
-        self.next = None #next frame used by builder for transitions to next
+        self.next_ = None #next frame used by builder for transitions to next
 
         self.beacts = [] #list of enter need acts callables that return True or False
         self.preacts = [] #list of pre-recurring acts  callables upon pre recurrence
@@ -717,11 +717,11 @@ class Frame(registering.StoriedRegistry):
                 clone.over = self.over.name
             else:
                 clone.over = self.over
-        if self.next:
-            if isinstance(self.next, Frame):
-                clone.next = self.next.name
+        if self.next_:
+            if isinstance(self.next_, Frame):
+                clone.next_ = self.next_.name
             else:
-                clone.next = self.next
+                clone.next_ = self.next_
 
         for under in self.unders:
             if isinstance(under, Frame):
@@ -833,8 +833,8 @@ class Frame(registering.StoriedRegistry):
         """Resolve next link
 
         """
-        if self.next:
-            self.next = resolveFrame(self.next, who=self.name, desc='next')
+        if self.next_:
+            self.next_ = resolveFrame(self.next_, who=self.name, desc='next')
 
     def resolveOverLinks(self):
         """Starting with self.over climb over links resolving the links as needed along the way

@@ -184,13 +184,13 @@ class Builder(object):
 
         self.currentFile = None
         self.currentCount = 0
-        self.currentMode = None #None is any
+        self.currentMode = None  # None is any
         self.currentHouse = None
         self.currentStore = None
         self.currentLogger = None
         self.currentLog = None
         self.currentFramer = None
-        self.currentFrame = None #current frame
+        self.currentFrame = None  # current frame
         self.currentContext = NATIVE
 
     def build(self, fileName='', mode=None, metas=None, preloads=None, behaviors=None):
@@ -1335,8 +1335,8 @@ class Builder(object):
 
             #if previous frame did not have explicit next frame then use this new frame
             # ad next lexically
-            if self.currentFrame and not self.currentFrame.next:
-                self.currentFrame.next = frame.name
+            if self.currentFrame and not self.currentFrame.next_:
+                self.currentFrame.next_ = frame.name
 
                 #default first frame is first lexical frame if not assigned otherwise
                 #so if startFrame is none then we must be first lexical frame
@@ -1436,13 +1436,13 @@ class Builder(object):
 
         try:
             if index < len(tokens): #next frame optional
-                next = tokens[index]
+                next_ = tokens[index]
                 index += 1
 
-                self.verifyName(next, command, tokens, index)
+                self.verifyName(next_, command, tokens, index)
 
             else:
-                next = None
+                next_ = None
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
@@ -1452,10 +1452,10 @@ class Builder(object):
             msg = "Error building %s. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
-        self.currentFrame.next = next
+        self.currentFrame.next_ = next_
 
         console.profuse("     Assigned next frame {0} for frame {1}\n".format(
-            next, self.currentFrame.name))
+            next_, self.currentFrame.name))
 
         return True
 
