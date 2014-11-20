@@ -27,9 +27,8 @@ from .aiding import nonStringIterable, just, nameToPath
 def deedify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
             parametric=None):
     """ Parametrized decorator function that converts the decorated function
-        into an Actor sub class with .action method and with class name that
-        is the reverse camel case of name and registers the
-        new subclass in the registry under name.
+        into an Actor sub class with .action method and with class name name
+        and registers the new subclass in the registry under name.
         If base is not provided then use Deed
 
         The parameters  registry, parametric, inits, ioinits, and parms if provided,

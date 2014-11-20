@@ -185,6 +185,7 @@ class Builder(object):
 
         self.currentFile = None
         self.currentCount = 0
+        self.currentHuman = ''  # human friendly version of current line
         self.currentMode = None  # None is any
         self.currentHouse = None
         self.currentStore = None
@@ -268,6 +269,7 @@ class Builder(object):
                             continue
                         #above guarantees at least 1 token
 
+                        self.currentHuman =  ' '.join(tokens)
                         try: #ParseError ParseWarning
                             if not self.dispatch(tokens):
                                 console.terse("Script Parsing stopped at line {0} in file {1}\n".format(

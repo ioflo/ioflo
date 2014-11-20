@@ -29,10 +29,11 @@ console = getConsole()
 class Act(object):
     """ Container class for actor resolve time initialization and runtime operation """
     __slots__ = ('frame', 'context', 'act',
-                 'actor', 'registrar', 'parms', 'inits', 'ioinits')
+                 'actor', 'registrar', 'parms', 'inits', 'ioinits',
+                 'human', 'count')
 
     def __init__(self, frame=None, context=None, act=None, actor=None, registrar=None,
-                 parms=None, inits=None, ioinits=None, action='', **kwa ):
+                 parms=None, inits=None, ioinits=None, human='', count=0, **kwa ):
         """ Initialization method for instance.
 
             Attributes:
@@ -56,6 +57,8 @@ class Act(object):
         self.parms = parms if parms is not None else odict() # parms must always be not None
         self.inits = inits if inits else None # store None if empty dict
         self.ioinits = ioinits if ioinits else None # store None if empty dict
+        self.human = human  # human readable version of FloScript declaration
+        self.count = count  # line number or count of FloScript declaration
 
     def __call__(self): #make Act instance callable as function
         """ Define act as callable object """

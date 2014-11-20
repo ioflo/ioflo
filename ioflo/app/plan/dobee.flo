@@ -1,0 +1,39 @@
+# dobee.flo
+
+
+house test
+
+init meta.test to value "test"
+init meta.spot to when "now" where "here"
+init meta.stuff to value "test2"
+init .trial to depth 5 height 10 width 15
+init .init.test to trial ".trial"
+
+framer testdobe be active first test
+
+  frame test
+    print "Hello World"
+    do deed at enter to stuff 5
+    do deed at enter by depth in .trial
+    do deed at enter per trial ".trial"
+    do deed at enter for trial in .init.test
+    do deed at enter with stuff 7
+    do deed at enter from width in .trial
+
+    do deed param at enter to stuff 5
+    do deed param at enter by depth in .trial
+    do deed param at enter per trial ".trial"
+    do deed param at enter for trial in .init.test
+    do deed param at enter with stuff 7
+    do deed param at enter from width in .trial
+
+    set elapsed to 1.0
+    go next if elapsed >= goal
+
+  frame done
+    print "Success"
+    bid stop all
+
+  frame abort
+    print "Failure"
+    bid stop all
