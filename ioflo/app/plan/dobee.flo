@@ -57,6 +57,15 @@ framer testdobe be active first test0
       set dims from height width in .trial
       go next if height in .trial == height in dims and width in .trial == width in dims
 
+    frame test7 in timeout
+       put 6 into .marked.changed
+       go next if change .marked.changed
+
+    frame test8 in timeout
+       put true into .marked.updated
+       go next if update .marked.updated
+
+
   frame done
     print "Success"
     bid stop all

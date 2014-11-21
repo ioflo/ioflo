@@ -2868,7 +2868,7 @@ class Builder(object):
             frame = self.currentFrame.name
 
         sharePath, index = self.parseIndirect(tokens, index, variant = '')
-        share = self.currentStore.create(sharePath)
+        #share = self.currentStore.create(sharePath)
         #if not share.marks.get(name):
             #share.marks[name] = storing.Mark()
 
@@ -2882,7 +2882,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
-        parms['share'] = share
+        parms['share'] = sharePath
         parms['frame'] = frame  # marked frame name resolved in resolvelinks
         parms['marker'] = marker # marker kind resolved in resolvelinks
         act = acting.Act(   actor=actorName,
