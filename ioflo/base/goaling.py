@@ -114,19 +114,19 @@ class GoalIndirect(Goal):
         parms['sourceFields'] = sourceFields
         return parms
 
-    def action(self, goal, goalFields, source, sourceFields, **kw):
+    def action(self, destination, destinationFields, source, sourceFields, **kw):
         """
-        Set goalFields in goal from sourceFields in source
+        Set destinationFields in destination goal from sourceFields in source
 
         parameters:
-              goal = share of goal
+              destination = share of goal
               source = share of source to get data from
               fields = fields to use to update goal
         """
         console.profuse("Set {0} in {1} from {2} in {3}\n".format(
-                goal.name, goalFields, source.name, sourceFields))
+                destination.name, destinationFields, source.name, sourceFields))
         data = odict()
-        for gf, sf in izip(goalFields, sourceFields):
+        for gf, sf in izip(destinationFields, sourceFields):
             data[gf] = source[sf]
-        goal.update(data)
+        destination.update(data)
         return None

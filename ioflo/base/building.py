@@ -1897,14 +1897,7 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
 
-                    if self.currentStore.fetchShare(srcPath) is None:
-                        console.profuse("     Warning: Copy from non-existent share %s "
-                                        "... creating anyway".format(srcPath))
-                    src = self.currentStore.create(srcPath)
-
-                    srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
-
-                    act = self.makeGoalIndirect(dst, dstFields, src, srcFields)
+                    act = self.makeGoalIndirect(dstPath, dstFields, srcPath, srcFields)
 
                 else:
                     msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
@@ -2581,30 +2574,15 @@ class Builder(object):
         connective = tokens[index]
         index += 1
 
-        if connective == 'to': #data direct
+        if connective in ['to', 'with']: #data direct
             srcData, index = self.parseDirect(tokens, index)
-            #dataFields = srcData.keys()
-
-            #dataFields, dstFields = self.prepareDataDstFields(srcData, dataFields, dst, dstFields, tokens, index)
-
-            #dstData = odict()
-            #for dstField, dataField in izip(dstFields, dataFields):
-                #dstData[dstField] = srcData[dataField]
-
             act = self.makeGoalDirect(dstPath, dstFields, srcData )
 
-        elif connective == 'from': #source indirect
+        elif connective in ['by', 'from']: #source indirect
             srcFields, index = self.parseFields(tokens, index)
             srcPath, index = self.parseIndirect(tokens, index, variant = '')
 
-            if self.currentStore.fetchShare(srcPath) is None:
-                console.profuse("     Warning: Copy from non-existent"
-                                " share %s ... creating anyway".format(srcPath))
-            src = self.currentStore.create(srcPath)
-
-            srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
-
-            act = self.makeGoalIndirect(dst, dstFields, src, srcFields)
+            act = self.makeGoalIndirect(dstPath, dstFields, srcPath, srcFields)
 
         else:
             msg = "ParseError:  Unexpected connective '%s'" %\
@@ -2642,7 +2620,7 @@ class Builder(object):
 
         return act
 
-    def makeGoalIndirect(self, goal, goalFields, source, sourceFields):
+    def makeGoalIndirect(self, dstPath, dstFields, srcPath, srcFields):
         """Make GoalIndirect act
 
            method must be wrapped in appropriate try excepts
@@ -2654,10 +2632,10 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
-        parms['goal'] = goal #this is share
-        parms['goalFields'] = goalFields #this is a list
-        parms['source'] = source #this is a share
-        parms['sourceFields'] = sourceFields #this is a list
+        parms['destination'] = dstPath #this is string
+        parms['destinationFields'] = dstFields #this is a list
+        parms['source'] = srcPath #this is a string
+        parms['sourceFields'] = srcFields #this is a list
 
         act = acting.Act(   actor=actorName,
                             registrar=goaling.Goal,
