@@ -2868,9 +2868,6 @@ class Builder(object):
             frame = self.currentFrame.name
 
         sharePath, index = self.parseIndirect(tokens, index, variant = '')
-        #share = self.currentStore.create(sharePath)
-        #if not share.marks.get(name):
-            #share.marks[name] = storing.Mark()
 
         # assign marker type actual marker Act created in need's resolve
         marker = 'Marker' + kind.capitalize()
