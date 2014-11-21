@@ -159,7 +159,7 @@ class IncDirect(Poke):
             console.terse("Error in Inc: {0}\n".format(ex))
         else:
             console.profuse("Inc {0} in {1} by {2} to {3}\n".format(
-                sourceData.keys(), destination.name, sourceData.values(), dstData.values()))
+                data.keys(), destination.name, data.values(), dstData.values()))
 
 
 class IncIndirect(Poke):

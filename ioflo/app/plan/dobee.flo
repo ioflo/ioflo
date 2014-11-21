@@ -49,6 +49,10 @@ framer testdobe be active first test0
       inc height width in .sink from height width in .tank
       go next if height in .sink == 10 and width in .sink == 15
 
+    frame test5 in timeout
+      set dims to height 5 width 10
+      go next if height in .trial >= height in dims and width in .trial >= width in dims
+
   frame done
     print "Success"
     bid stop all

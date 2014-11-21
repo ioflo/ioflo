@@ -73,7 +73,7 @@ class GoalDirect(Goal):
         for dstField, srcField in izip(destinationFields, sourceFields):
             dstData[dstField] = sourceData[srcField]
 
-        parms['destination'] = goal
+        parms['destination'] = destination
         parms['data'] = dstData
         return parms
 

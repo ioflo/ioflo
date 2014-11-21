@@ -2582,16 +2582,16 @@ class Builder(object):
         index += 1
 
         if connective == 'to': #data direct
-            data, index = self.parseDirect(tokens, index)
-            dataFields = data.keys()
+            srcData, index = self.parseDirect(tokens, index)
+            #dataFields = srcData.keys()
 
-            dataFields, dstFields = self.prepareDataDstFields(data, dataFields, dst, dstFields, tokens, index)
+            #dataFields, dstFields = self.prepareDataDstFields(srcData, dataFields, dst, dstFields, tokens, index)
 
-            dstData = odict()
-            for dstField, dataField in izip(dstFields, dataFields):
-                dstData[dstField] = data[dataField]
+            #dstData = odict()
+            #for dstField, dataField in izip(dstFields, dataFields):
+                #dstData[dstField] = srcData[dataField]
 
-            act = self.makeGoalDirect(dst, dstData)
+            act = self.makeGoalDirect(dstPath, dstFields, srcData )
 
         elif connective == 'from': #source indirect
             srcFields, index = self.parseFields(tokens, index)
