@@ -571,7 +571,7 @@ class Actor(object):
 
         return ipath
 
-    def prepareFields(self, srcFields, dst, dstFields):
+    def prepareDstFields(self, srcFields, dst, dstFields):
         """
         Prepares  for a transfer of data
         from srcFields to dstFields in dst
@@ -615,6 +615,68 @@ class Actor(object):
                 dst[field] = 0 #create
 
         return dstFields
+
+    def prepareSrcDstFields(self, src, srcFields, dst, dstFields):
+        """
+        Prepares and verifys a transfer of data
+           from srcFields in src
+           to dstFields in dst
+           handles default conditions when fields are empty
+
+           src and dst are shares
+           srcFields and dstFields are lists
+
+        """
+        if not srcFields: # empty source fields so assign defaults
+            if src:
+                if 'value' in src:
+                    srcFields = ['value'] #use value field
+                elif dstFields: #use destination fields for source fields
+                    srcFields = dstFields
+                else: #use pre-existing source fields
+                    srcFields = src.keys()
+            else: # empty src
+                srcFields = ['value'] #use value field
+
+        self.verifyShareFields(src, srcFields)
+
+        if not dstFields: #no destination fields so assign defaults
+            if 'value' in dst:
+                dstFields = ['value'] #use value field
+            else: #use source fields for destination fields
+                dstFields = srcFields
+
+        self.verifyShareFields(dst, dstFields)
+
+        if len(srcFields) != len(dstFields):
+            msg = ("ResolveError: Unequal number of fields, source = {0} and"
+                  " destination={1)".format(srcFields, dstFields))
+            raise excepting.ResolveError(msg,
+                                         self.name,
+                                         '',
+                                         self.act.human,
+                                         self.act.count)
+
+        for dstField, srcField in izip(dstFields, srcFields):
+            if (dstField != srcField) and (srcField != 'value'):
+                console.profuse("     Warning: Field names mismatch. '{0}' in {1} "
+                                "from '{2}' in {3}  ... creating anyway".format(
+                                    dstField, dst.name, srcField, src.name))
+
+        #create any non existent source or destination fields
+        for field in srcFields: #use source fields for source data
+            if field not in src:
+                console.profuse("     Warning: Transfer from non-existent field '{0}' "
+                        "in share {1} ... creating anyway".format(field, src.name))
+                src[field] = 0.0 #create
+
+        for field in dstFields: #use destination fields for destination data
+            if field not in dst:
+                console.profuse("     Warning: Transfer into non-existent field '{0}' "
+                        "in share {1} ... creating anyway".format(field, dst.name))
+                dst[field] = 0.0 #create
+
+        return (srcFields, dstFields)
 
     def verifyShareFields(self, share, fields):
         """Verify that updating fields in share won't violate the

@@ -1835,18 +1835,6 @@ class Builder(object):
             msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
-        if self.currentStore.fetchShare(srcPath) is None:
-            console.profuse("     Warning: Copy from non-existent share %s "
-                            "... creating anyway".format(srcPath))
-        src = self.currentStore.create(srcPath)
-
-        if self.currentStore.fetchShare(dstPath) is None:
-            console.profuse("     Warning: Copy into non-existent share '{0}'"
-                                " ... creating anyway".format(dstPath))
-        dst = self.currentStore.create(dstPath)
-
-        srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
-
         actorName = 'Poke' + 'Indirect' #capitalize second word
 
         if actorName not in poking.Poke.Registry:
@@ -1854,9 +1842,9 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
-        parms['source'] = src #this is share
+        parms['source'] = srcPath #this is string
         parms['sourceFields'] = srcFields #this is a list
-        parms['destination'] = dst #this is a share
+        parms['destination'] = dstPath #this is a string
         parms['destinationFields'] = dstFields #this is a list
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,

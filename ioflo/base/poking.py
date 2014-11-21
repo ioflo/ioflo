@@ -47,7 +47,7 @@ class PokeDirect(Poke):
 
         srcFields = data.keys()
         destination = self.resolvePath(ipath=destination,  warn=True) # now a share
-        dstFields = self.prepareFields(srcFields, destination, fields)
+        dstFields = self.prepareDstFields(srcFields, destination, fields)
 
         dstData = odict()
         for dstField, srcField in izip(dstFields, srcFields):
@@ -67,13 +67,30 @@ class PokeDirect(Poke):
 
         destination.update(data)
 
-
 class PokeIndirect(Poke):
     """
     Class to copy values from one share to another
        based on source and destination field lists
 
     """
+    def resolve(self, source, sourceFields, destination, destinationFields, **kwa):
+        parms = super(PokeIndirect, self).resolve( **kwa)
+
+        source = self.resolvePath(ipath=source,  warn=True) # now a share
+        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+
+        sourceFields, destinationFields = self.prepareSrcDstFields(source,
+                                                        sourceFields,
+                                                        destination,
+                                                        destinationFields)
+
+        parms['source'] = source
+        parms['sourceFields'] = sourceFields
+        parms['destination'] = destination
+        parms['destinationFields'] = destinationFields
+        return parms
+
+
     def action(self, source, sourceFields, destination, destinationFields, **kwa):
         """ Copy sourceFields in source to destinationFields in destination
 
