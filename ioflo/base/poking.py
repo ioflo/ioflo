@@ -47,7 +47,7 @@ class PokeDirect(Poke):
 
         srcFields = data.keys()
         destination = self.resolvePath(ipath=destination,  warn=True) # now a share
-        srcFields, dstFields = self.prepareFields(srcFields, destination, fields)
+        dstFields = self.prepareFields(srcFields, destination, fields)
 
         dstData = odict()
         for dstField, srcField in izip(dstFields, srcFields):

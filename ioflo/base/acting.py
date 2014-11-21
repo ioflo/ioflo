@@ -614,7 +614,7 @@ class Actor(object):
                        "share {1} ... creating anyway".format(field, dst.name))
                 dst[field] = 0 #create
 
-        return (srcFields, dstFields)
+        return dstFields
 
     def verifyShareFields(self, share, fields):
         """Verify that updating fields in share won't violate the
