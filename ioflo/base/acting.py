@@ -9,6 +9,10 @@ from collections import deque, Mapping
 from functools import wraps
 import inspect
 import copy
+try:
+    from itertools import izip
+except ImportError: #python 3 zip is same as izip
+    izip = zip
 
 from .globaling import *
 from .odicting import odict
@@ -431,13 +435,19 @@ class Actor(object):
         """
         pass
 
-    def resolvePath(self, ipath, ival=None, iown=None):
+    def resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
             ipath may be path name of share or node
             or reference to Share or Node instance
 
             This method resolves pathname strings into share and node references
             at resolve time.
+
+            ival is optional value for share
+            iown is optional ownership if True then overwrite if exists
+                   otherwise do not overwrite
+
+            if warn then will complain if the share is created.
 
             It allows for substitution into ipath of
             frame, framer, actor, main frame, or main framer relative names.
@@ -461,7 +471,7 @@ class Actor(object):
                 respectively.
 
                 'main' indicates substitute the current frame's main framer or main frame
-                name respectively.
+                name respectively obtained from
 
             When  ipath is a pathname string that resolves to a Share and ival is not None
             Then ival is used to initialize the share values.
@@ -542,8 +552,12 @@ class Actor(object):
                 raise excepting.ResolveError("ResolveError: Missing store context"
                                 " to resolve relative pathname.", ipath, self,
                                 self.act.human, self.act.count)
+
             if ipath.endswith('.'): # Node not Share
                 ipath = self.store.createNode(ipath.rstrip('.'))
+                if warn:
+                    console.profuse( "     Warning: Non-existent node '{0}' "
+                                        "... creating anyway\n".format(ipath))
             else: # Share
                 ipath = self.store.create(ipath)
                 if ival is not None:
@@ -551,8 +565,87 @@ class Actor(object):
                         ipath.update(ival)
                     else:
                         ipath.create(ival)
+                if warn:
+                    console.profuse( "     Warning: Non-existent node '{0}' "
+                                     "... creating anyway\n".format(ipath))
 
         return ipath
+
+    def prepareFields(self, srcFields, dst, dstFields):
+        """
+        Prepares  for a transfer of data
+        from srcFields to dstFields in dst
+           handles default conditions when fields are empty
+
+        srcFields is list of field names
+        dst is share
+        dstFields is list of field names
+
+        """
+
+        if not dstFields: #no destinationField so use default rules
+            if 'value' in dst:
+                dstFields = ['value'] #use value field
+
+            else: #use srcFields
+                dstFields = srcFields
+
+        self.verifyShareFields(dst, dstFields)
+
+        if len(srcFields) != len(dstFields):
+            msg = ("ResolveError: Unequal number of source = {0} and "
+                   "destination = {2} fields".format(srcFields, dstFields))
+            raise excepting.ResolveError(msg,
+                                         self.name,
+                                         '',
+                                         self.act.human,
+                                         self.act.count)
+
+        for dstField, srcField in izip(dstFields, srcFields):
+            if (dstField != srcField) and (srcField != 'value'):
+                console.profuse("     Warning: Field names mismatch. '{0}' in {1} "
+                                "from '{2}' ... creating anyway".format(
+                                  dstField, dst.name, srcField))
+
+        #create any non existent destination fields
+        for field in dstFields: #use destination fields for destination data
+            if field not in dst:
+                console.profuse("     Warning: Transfer into non-existent field '{0}' in "
+                       "share {1} ... creating anyway".format(field, dst.name))
+                dst[field] = 0 #create
+
+        return (srcFields, dstFields)
+
+    def verifyShareFields(self, share, fields):
+        """Verify that updating fields in share won't violate the
+           condition that when a share has field == 'value'
+           it will be the only field
+
+           fields is list of field names
+           share is  share
+
+           raises exception if condition would be violated
+        """
+        if (len(fields) > 1) and ('value' in fields):
+            msg = "ResolveError: Field = 'value' within fields = '{0}'".format(fields)
+            raise excepting.ResolveError(msg,
+                                         self.name,
+                                         '',
+                                         self.act.human,
+                                         self.act.count)
+
+        if share: #does share have fields already
+            for field in fields:
+                if field not in share: #so this field could be added to share
+                    if ('value' in share) or (field == 'value'):
+                        msg = ("ResolveError: Candidate field '{0}' when "
+                               "fields = '{1}' exist".format(field, share.keys()))
+                        raise excepting.ResolveError(msg,
+                                                     self.name,
+                                                     '',
+                                                     self.act.human,
+                                                     self.act.count)
+
 
     def clone(self):
         """ Clone self in support of framer cloning.

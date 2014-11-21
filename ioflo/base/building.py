@@ -1659,8 +1659,6 @@ class Builder(object):
 
         try:
             data, index = self.parseDirect(tokens, index)
-            dataFields = data.keys()
-
             connective = tokens[index]
             index += 1
             if connective != 'into':
@@ -1679,17 +1677,6 @@ class Builder(object):
             msg = "ParseError: Building verb '%s'. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
-        if self.currentStore.fetchShare(dstPath) is None:
-            console.profuse( "     Warning: Put into non-existent share '{0}' "
-                             "... creating anyway\n".format(dstPath))
-        dst = self.currentStore.create(dstPath)
-
-        dataFields, dstFields = self.prepareDataDstFields(data, dataFields, dst, dstFields, tokens, index)
-
-        dstData = odict()
-        for dstField, dataField in izip(dstFields, dataFields):
-            dstData[dstField] = data[dataField]
-
         actorName = 'Poke' + 'Direct' #capitalize second word
 
         if actorName not in poking.Poke.Registry:
@@ -1697,16 +1684,17 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
-        parms['data'] = dstData #this is dict
-        parms['destination'] = dst #this is a share
+        parms['data'] = data  # this is dict
+        parms['destination'] = dstPath # this is a share path
+        parms['fields'] = dstFields  # this is a list
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,
                             parms=parms,
                             human=self.currentHuman,
                             count=self.currentCount)
 
-        msg = "     Created Actor {0} parms: data = {1}  destination = {2} ".format(
-            actorName, data, dst.name)
+        msg = "     Created Actor {0} parms: data = {1}  destination = {2} fields = {3} ".format(
+            actorName, data, dstPath, dstFields)
         console.profuse(msg)
 
         context = self.currentContext

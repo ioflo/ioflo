@@ -33,7 +33,7 @@ class Poke(acting.Actor):
     """Poke Class to put values into explicit shares"""
     Registry = odict()
 
-    def action(self, share, data, **kw):
+    def action(self, share, data, **kwa):
         """Put data into share """
         console.profuse("Put {0} into {1}\n".format( data, share.name))
 
@@ -41,7 +41,23 @@ class Poke(acting.Actor):
 
 class PokeDirect(Poke):
     """Class to put direct data values into destination share"""
-    def action(self, data, destination, **kw):
+
+    def resolve(self, data, destination, fields, **kwa):
+        parms = super(PokeDirect, self).resolve( **kwa)
+
+        srcFields = data.keys()
+        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        srcFields, dstFields = self.prepareFields(srcFields, destination, fields)
+
+        dstData = odict()
+        for dstField, srcField in izip(dstFields, srcFields):
+            dstData[dstField] = data[srcField]
+
+        parms['data'] = dstData
+        parms['destination'] = destination
+        return parms
+
+    def action(self, data, destination, **kwa):
         """ Put data into share
             parameters:
               data = data to copy from
@@ -58,7 +74,7 @@ class PokeIndirect(Poke):
        based on source and destination field lists
 
     """
-    def action(self, source, sourceFields, destination, destinationFields, **kw):
+    def action(self, source, sourceFields, destination, destinationFields, **kwa):
         """ Copy sourceFields in source to destinationFields in destination
 
             copy fields in order according to field lists
@@ -90,7 +106,7 @@ class PokeIndirect(Poke):
 
 class IncDirect(Poke):
     """Class to incremate destination share by direct data values"""
-    def action(self, destination, data, **kw):
+    def action(self, destination, data, **kwa):
         """ Increment destinationFields in destination by values in data
 
             if only one field then single increment
@@ -117,7 +133,7 @@ class IncIndirect(Poke):
        based on source and destination field lists
 
     """
-    def action(self, destination, destinationFields, source, sourceFields, **kw):
+    def action(self, destination, destinationFields, source, sourceFields, **kwa):
         """ Increment destinationFields in destination by sourceFields in source
             parameters:
                 destination = share to increment
