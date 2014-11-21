@@ -1884,26 +1884,14 @@ class Builder(object):
                 dstFields, index = self.parseFields(tokens, index)
                 dstPath, index = self.parseIndirect(tokens, index, variant = 'goal')
 
-                if self.currentStore.fetchShare(dstPath) is None:
-                    console.profuse("     Warning: Set non-existent goal share '{0}'"
-                                " ... creating anyway".format(dstPath))
-                dst = self.currentStore.create(dstPath)
-
                 #required connective
                 connective = tokens[index]
                 index += 1
 
                 if connective in ['to', 'with']: #data direct
-                    data, index = self.parseDirect(tokens, index)
-                    dataFields = data.keys()
+                    srcData, index = self.parseDirect(tokens, index)
 
-                    dataFields, dstFields = self.prepareDataDstFields(data, dataFields, dst, dstFields, tokens, index)
-
-                    dstData = odict()
-                    for dstField, dataField in izip(dstFields, dataFields):
-                        dstData[dstField] = data[dataField]
-
-                    act = self.makeDirectGoal(dst, dstData)
+                    act = self.makeGoalDirect(dstPath, dstFields, srcData)
 
                 elif connective in ['by', 'from']: #source indirect
                     srcFields, index = self.parseFields(tokens, index)
@@ -1916,7 +1904,7 @@ class Builder(object):
 
                     srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
 
-                    act = self.makeIndirectGoal(dst, dstFields, src, srcFields)
+                    act = self.makeGoalIndirect(dst, dstFields, src, srcFields)
 
                 else:
                     msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
@@ -2603,7 +2591,7 @@ class Builder(object):
             for dstField, dataField in izip(dstFields, dataFields):
                 dstData[dstField] = data[dataField]
 
-            act = self.makeDirectGoal(dst, dstData)
+            act = self.makeGoalDirect(dst, dstData)
 
         elif connective == 'from': #source indirect
             srcFields, index = self.parseFields(tokens, index)
@@ -2616,7 +2604,7 @@ class Builder(object):
 
             srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
 
-            act = self.makeIndirectGoal(dst, dstFields, src, srcFields)
+            act = self.makeGoalIndirect(dst, dstFields, src, srcFields)
 
         else:
             msg = "ParseError:  Unexpected connective '%s'" %\
@@ -2625,8 +2613,8 @@ class Builder(object):
 
         return act, index
 
-    def makeDirectGoal(self, goal, data):
-        """Make directGoal act
+    def makeGoalDirect(self, dstPath, dstFields, srcData):
+        """Make GoalDirect act
 
            method must be wrapped in appropriate try excepts
         """
@@ -2637,8 +2625,9 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
-        parms['goal'] = goal #this is a share
-        parms['data'] = data #this is a dictionary
+        parms['destination'] = dstPath #this is string
+        parms['destinationFields'] = dstFields #this is list
+        parms['sourceData'] = srcData #this is a dictionary
 
         act = acting.Act(   actor=actorName,
                             registrar=goaling.Goal,
@@ -2653,8 +2642,8 @@ class Builder(object):
 
         return act
 
-    def makeIndirectGoal(self, goal, goalFields, source, sourceFields):
-        """Make indirectGoal act
+    def makeGoalIndirect(self, goal, goalFields, source, sourceFields):
+        """Make GoalIndirect act
 
            method must be wrapped in appropriate try excepts
         """

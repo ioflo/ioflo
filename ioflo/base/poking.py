@@ -132,11 +132,15 @@ class IncDirect(Poke):
                                           destination,
                                           destinationFields)
 
+        dstData = odict()
+        for dstField, srcField in izip(destinationFields, sourceFields):
+            dstData[dstField] = sourceData[srcField]
+
         parms['destination'] = destination
-        parms['data'] = sourceData
+        parms['data'] = dstData
         return parms
 
-    def action(self, destination, sourceData, **kwa):
+    def action(self, destination, data, **kwa):
         """ Increment corresponding items in destination by items in data
 
             if only one field then single increment
@@ -148,8 +152,8 @@ class IncDirect(Poke):
         """
         try:
             dstData = odict()
-            for field in sourceData:
-                dstData[field] = destination[field] + sourceData[field]
+            for field in data:
+                dstData[field] = destination[field] + data[field]
             destination.update(dstData) #update so time stamp updated, use dict
         except TypeError as ex: #in case value is not a number
             console.terse("Error in Inc: {0}\n".format(ex))

@@ -60,15 +60,33 @@ class GoalDirect(Goal):
         super(GoalDirect, self).__init__(**kw)  #.goal inited here
 
 
-    def action(self, goal, data, **kw):
+    def resolve(self, destination, destinationFields, sourceData, **kwa):
+        parms = super(GoalDirect, self).resolve( **kwa)
+
+        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        sourceFields = sourceData.keys()
+        destinationFields = self.prepareDstFields(sourceFields,
+                                          destination,
+                                          destinationFields)
+
+        dstData = odict()
+        for dstField, srcField in izip(destinationFields, sourceFields):
+            dstData[dstField] = sourceData[srcField]
+
+        parms['destination'] = goal
+        parms['data'] = dstData
+        return parms
+
+
+    def action(self, destination, data, **kw):
         """
-        Set goal to data dictionary
+        Set destination goal to data dictionary
         parameters:
-              goal = share of goal
+              destination = share of goal
               data = dict of data fields to assign to goal share
         """
-        console.profuse("Set {0} to {1}\n".format(goal.name, data))
-        goal.update(data)
+        console.profuse("Set {0} to {1}\n".format(destination.name, data))
+        destination.update(data)
         return None
 
 class GoalIndirect(Goal):
@@ -78,6 +96,23 @@ class GoalIndirect(Goal):
         """Initialization method for instance."""
 
         super(GoalIndirect, self).__init__(**kw)  #.goal inited here
+
+    def resolve(self, destination, destinationFields, source, sourceFields, **kwa):
+        parms = super(GoalIndirect, self).resolve( **kwa)
+
+        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        source = self.resolvePath(ipath=source,  warn=True) # now a share
+
+        sourceFields, destinationFields = self.prepareSrcDstFields(source,
+                                                        sourceFields,
+                                                        destination,
+                                                        destinationFields)
+
+        parms['destination'] = destination
+        parms['destinationFields'] = destinationFields
+        parms['source'] = source
+        parms['sourceFields'] = sourceFields
+        return parms
 
     def action(self, goal, goalFields, source, sourceFields, **kw):
         """
