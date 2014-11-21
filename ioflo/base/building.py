@@ -1658,7 +1658,7 @@ class Builder(object):
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
         try:
-            data, index = self.parseDirect(tokens, index)
+            srcData, index = self.parseDirect(tokens, index)
             connective = tokens[index]
             index += 1
             if connective != 'into':
@@ -1684,9 +1684,9 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
-        parms['data'] = data  # this is dict
+        parms['sourceData'] = srcData  # this is dict
         parms['destination'] = dstPath # this is a share path
-        parms['fields'] = dstFields  # this is a list
+        parms['destinationFields'] = dstFields  # this is a list
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,
                             parms=parms,
@@ -1694,7 +1694,7 @@ class Builder(object):
                             count=self.currentCount)
 
         msg = "     Created Actor {0} parms: data = {1}  destination = {2} fields = {3} ".format(
-            actorName, data, dstPath, dstFields)
+            actorName, srcData, dstPath, dstFields)
         console.profuse(msg)
 
         context = self.currentContext
@@ -1732,32 +1732,21 @@ class Builder(object):
         try:
             dstFields, index = self.parseFields(tokens, index)
             dstPath, index = self.parseIndirect(tokens, index, variant = '')
-            if self.currentStore.fetchShare(dstPath) is None:
-                console.profuse("     Warning: Inc of non-existent share '{0}'"
-                                " ... creating anyway".format(dstPath))
-            dst = self.currentStore.create(dstPath)
 
             connective = tokens[index]
             index += 1
 
             if connective in ['to', 'with']:
-                data, index = self.parseDirect(tokens, index)
-                dataFields = data.keys()
+                srcData, index = self.parseDirect(tokens, index)
 
-                for field, value in data.items():
+                for field, value in srcData.items():
                     if isinstance(value, str):
                         msg = "ParseError: Building verb '%s'. " % (command)
                         msg += "Data value = '%s' in field '%s' not a number" %\
                             (value, field)
                         raise excepting.ParseError(msg, tokens, index)
 
-                dataFields, dstFields = self.prepareDataDstFields(data, dataFields, dst, dstFields, tokens, index)
-
-                dstData = odict()
-                for dstField, dataField in izip(dstFields, dataFields):
-                    dstData[dstField] = data[dataField]
-
-                act = self.makeDirectInc(dst, dstData)
+                act = self.makeIncDirect(dstPath, dstFields, srcData)
 
             elif connective in ['by', 'from']:
                 srcFields, index = self.parseFields(tokens, index)
@@ -2515,7 +2504,7 @@ class Builder(object):
 
 
 #------------------
-    def makeDirectInc(self, destination, data):
+    def makeIncDirect(self, dstPath, dstFields, srcData):
         """Make IncDirect act
 
            method must be wrapped in appropriate try excepts
@@ -2526,11 +2515,11 @@ class Builder(object):
             msg = "ParseError: Can't find actor named '%s'" % (actorName)
             raise excepting.ParseError(msg, tokens, index)
 
-        #actor = poking.Poke.Names[actorName]
-
         parms = {}
-        parms['destination'] = destination #this is a share
-        parms['data'] = data #this is an ordered dictionary
+
+        parms['destination'] = dstPath #this is string
+        parms['destinationFields'] = dstFields # this is a list
+        parms['sourceData'] = srcData #this is an ordered dictionary
 
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,

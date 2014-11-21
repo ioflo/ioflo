@@ -42,16 +42,16 @@ class Poke(acting.Actor):
 class PokeDirect(Poke):
     """Class to put direct data values into destination share"""
 
-    def resolve(self, data, destination, fields, **kwa):
+    def resolve(self, sourceData, destination, destinationFields, **kwa):
         parms = super(PokeDirect, self).resolve( **kwa)
 
-        srcFields = data.keys()
         destination = self.resolvePath(ipath=destination,  warn=True) # now a share
-        dstFields = self.prepareDstFields(srcFields, destination, fields)
+        srcFields = sourceData.keys()
+        dstFields = self.prepareDstFields(srcFields, destination, destinationFields)
 
         dstData = odict()
         for dstField, srcField in izip(dstFields, srcFields):
-            dstData[dstField] = data[srcField]
+            dstData[dstField] = sourceData[srcField]
 
         parms['data'] = dstData
         parms['destination'] = destination
@@ -123,26 +123,41 @@ class PokeIndirect(Poke):
 
 class IncDirect(Poke):
     """Class to incremate destination share by direct data values"""
-    def action(self, destination, data, **kwa):
-        """ Increment destinationFields in destination by values in data
+
+    def resolve(self, destination, destinationFields, sourceData, **kwa):
+        parms = super(IncDirect, self).resolve( **kwa)
+
+        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        sourceFields = sourceData.keys()
+        destinationFields = self.prepareDstFields(sourceFields,
+                                          destination,
+                                          destinationFields)
+
+        parms['destination'] = destination
+        parms['data'] = sourceData
+        return parms
+
+    def action(self, destination, sourceData, **kwa):
+        """ Increment corresponding items in destination by items in data
 
             if only one field then single increment
             if multiple fields then vector increment
 
             parameters:
                 destination = share to increment
-                data = dict of field values to increment by
+                sourceData = dict of field values to increment by
         """
         try:
             dstData = odict()
-            for field in data:
-                dstData[field] = destination[field] + data[field]
+            for field in sourceData:
+                dstData[field] = destination[field] + sourceData[field]
             destination.update(dstData) #update so time stamp updated, use dict
         except TypeError as ex: #in case value is not a number
             console.terse("Error in Inc: {0}\n".format(ex))
         else:
             console.profuse("Inc {0} in {1} by {2} to {3}\n".format(
-                data.keys(), destination.name, data.values(), dstData.values()))
+                sourceData.keys(), destination.name, sourceData.values(), dstData.values()))
+
 
 class IncIndirect(Poke):
     """
