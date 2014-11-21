@@ -2566,10 +2566,6 @@ class Builder(object):
         dstPath = 'framer.' + self.currentFramer.name + '.goal.' + name
         dstField = 'value'
         dstFields = [dstField]
-        #Create share as needed and create field as needed with default value
-        #list of duples needed to initialize and dereference field
-        dst = self.currentStore.create(dstPath).create([(dstField, 0)])
-
         #required connective
         connective = tokens[index]
         index += 1
