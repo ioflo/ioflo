@@ -1751,16 +1751,8 @@ class Builder(object):
             elif connective in ['by', 'from']:
                 srcFields, index = self.parseFields(tokens, index)
                 srcPath, index = self.parseIndirect(tokens, index, variant = '')
-                if self.currentStore.fetchShare(srcPath) is None:
-                    msg = ("     Warning: Inc from non-existent share {0}"
-                            " ... creating anyway\n".format(srcPath))
-                    console.terse(msg)
 
-                src = self.currentStore.create(srcPath)
-
-                srcFields, dstFields = self.prepareSrcDstFields(src, srcFields, dst, dstFields, tokens, index)
-
-                act = self.makeIndirectInc(dst, dstFields, src, srcFields)
+                act = self.makeIncIndirect(dstPath, dstFields, srcPath, srcFields)
 
             else:
                 msg = "ParseError: Building verb '%s'. Unexpected connective '%s'" %\
@@ -2535,7 +2527,7 @@ class Builder(object):
 
         return act
 
-    def makeIndirectInc(self, destination, destinationFields, source, sourceFields):
+    def makeIncIndirect(self, dstPath, dstFields, srcPath, srcFields):
         """Make IncIndirect act
 
            method must be wrapped in appropriate try excepts
@@ -2549,10 +2541,10 @@ class Builder(object):
         #actor = poking.Poke.Names[actorName]
 
         parms = {}
-        parms['destination'] = destination #this is a share
-        parms['destinationFields'] = destinationFields #this is a list
-        parms['source'] = source #this is a share
-        parms['sourceFields'] = sourceFields #this is a list
+        parms['destination'] = dstPath #this is a share
+        parms['destinationFields'] = dstFields #this is a list
+        parms['source'] = srcPath #this is a share
+        parms['sourceFields'] = srcFields #this is a list
         act = acting.Act(   actor=actorName,
                             registrar=poking.Poke,
                             parms=parms,

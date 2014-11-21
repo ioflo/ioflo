@@ -90,7 +90,6 @@ class PokeIndirect(Poke):
         parms['destinationFields'] = destinationFields
         return parms
 
-
     def action(self, source, sourceFields, destination, destinationFields, **kwa):
         """ Copy sourceFields in source to destinationFields in destination
 
@@ -165,6 +164,23 @@ class IncIndirect(Poke):
        based on source and destination field lists
 
     """
+    def resolve(self, destination, destinationFields, source, sourceFields, **kwa):
+        parms = super(IncIndirect, self).resolve( **kwa)
+
+        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        source = self.resolvePath(ipath=source,  warn=True) # now a share
+
+        sourceFields, destinationFields = self.prepareSrcDstFields(source,
+                                                        sourceFields,
+                                                        destination,
+                                                        destinationFields)
+
+        parms['destination'] = destination
+        parms['destinationFields'] = destinationFields
+        parms['source'] = source
+        parms['sourceFields'] = sourceFields
+        return parms
+
     def action(self, destination, destinationFields, source, sourceFields, **kwa):
         """ Increment destinationFields in destination by sourceFields in source
             parameters:
