@@ -260,8 +260,7 @@ class NeedMarker(Need):
         parms = super(NeedMarker, self).resolve( **kwa)
 
         parms['frame'] = frame = framing.resolveFrame(frame, who=self.name, desc='need marker')
-        parms['share'] = share = self.store.create(share)
-
+        parms['share'] = share = self.resolvePath(ipath=share,  warn=True) # now a share
 
         if not share.marks.get(frame.name):
             share.marks[frame.name] = storing.Mark()
