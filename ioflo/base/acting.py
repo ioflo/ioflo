@@ -32,12 +32,13 @@ console = getConsole()
 
 class Act(object):
     """ Container class for actor resolve time initialization and runtime operation """
-    __slots__ = ('frame', 'context', 'act',
-                 'actor', 'registrar', 'parms', 'inits', 'ioinits',
-                 'human', 'count')
+    __slots__ = ('frame', 'context', 'act', 'actor',
+                 'registrar', 'inits', 'ioinits', 'parms',
+                 'prerefs', 'human', 'count')
 
-    def __init__(self, frame=None, context=None, act=None, actor=None, registrar=None,
-                 parms=None, inits=None, ioinits=None, human='', count=0, **kwa ):
+    def __init__(self, frame=None, context=None, act=None, actor=None,
+                 registrar=None, inits=None, ioinits=None, parms=None,
+                 prerefs=None, human='', count=0, **kwa ):
         """ Initialization method for instance.
 
             Attributes:
@@ -50,6 +51,9 @@ class Act(object):
             .parms = dictionary of keyword arguments for Actor instance call
             .inits = dictionary of arguments to Actor.__init__()
             .ioinits = dictionary of arguments to Actor.initio()
+            .prerefs = dictionary of init, ioinit, and parm refs to resolve
+            .human = human friendly version of action declaration
+            .count = line count in floscript of action declaration
         """
         super(Act,self).__init__()
 
@@ -61,6 +65,7 @@ class Act(object):
         self.parms = parms if parms is not None else odict() # parms must always be not None
         self.inits = inits if inits else None # store None if empty dict
         self.ioinits = ioinits if ioinits else None # store None if empty dict
+        self.prerefs = prerefs if prerefs else None # store None if empty dict
         self.human = human  # human readable version of FloScript declaration
         self.count = count  # line number or count of FloScript declaration
 
@@ -87,10 +92,20 @@ class Act(object):
                                           count=self.count)
 
         if not isinstance(self.actor, Actor): # Need to resolve .actor
+            # .actor is currently unresolved name string for actor
             actor, inits, ioinits, parms = self.registrar.__fetch__(self.actor)
             inits.update(self.inits or odict())
+            if self.prerefs:
+                preinits = self.prerefs.get('inits', {})
+                # preinits dict items
+                # each key is share src path, value is list of src fields
+                for src, fields in preinits.items():
+                    src = self.resolvePath(ipath=src, warn=True) # now a share
+                    for field in fields:  # requires src pre inited
+                        if field in src:  # only init if src has field
+                            inits[field] = src[field]
             if 'name' not in inits:
-                inits['name'] = self.actor
+                inits['name'] = self.actor  # as yet unresolved name string
             inits['store'] = self.frame.store
             inits['act'] = self
             self.actor = actor = actor(**inits) # instantiate and convert
@@ -125,6 +140,147 @@ class Act(object):
             self.parms = parms
             self.parms.update(self.actor.resolve(**self.parms))
             self.actor.postinitio(**self.parms)
+
+    def resolvePath(self, ipath, ival=None, iown=None, warn=False):
+        """ Returns resolved Share or Node instance from ipath
+            ipath may be path name of share or node
+            or reference to Share or Node instance
+
+            This method resolves pathname strings into share and node references
+            at resolve time.
+
+            ival is optional value for share
+            iown is optional ownership if True then overwrite if exists
+                   otherwise do not overwrite
+
+            if warn then will complain if the share is created.
+
+            It allows for substitution into ipath of
+            frame, framer, actor, main frame, or main framer relative names.
+            So that lexically relative pathnames can
+            be dynamically resolved in support of framer cloning.
+            It assumes that any implied variants have been reconciled.
+            If .actor is not yet instantiated then raises exception if ipath
+               uses actor relative addressing. This may occur for init prerefs.
+
+            When ipath is a string:  (not a Node or Share reference)
+                the following syntax is used:
+
+                If the path name starts with a leading '.' dot then path name is
+                fully reconciled and no contextual substitutions are to be applied.
+
+                Otherwise make subsitutions in pathname strings that begin
+                with 'framer.'
+                Substitute for special path part 'framer' with names of 'me' or 'main'
+                Substitute for special path part 'frame' with names  of 'me' or 'main'
+                Substitute for special path part 'actor' with name of 'me'
+
+                'me' indicates substitute the current framer, frame, or actor name
+                respectively.
+
+                'main' indicates substitute the current frame's main framer or main frame
+                name respectively obtained from
+
+            When  ipath is a pathname string that resolves to a Share and ival is not None
+            Then ival is used to initialize the share values.
+                ival should be a share initializer:
+                   valid initializers are:
+                       a dict of fields and values
+                       a list of duples, each a (key, value) item
+
+                If own is True then .update(ival) is used
+                Otherwise .create(ival) is used
+
+            Requires that:
+               self.store exist
+
+               The following have already been resolved:
+                   self.frame
+                   self.frame.framer
+                   self.frame.framer.main
+                   self.frame.framer.main.framer
+
+               If actor relative addressing is used then:
+                  self.actor is resolved
+                  self.actor.name is not empty
+
+        """
+        if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
+            if not ipath.startswith('.'): # not reconciled so do relative substitutions
+                parts = ipath.split('.')
+                if parts[0] == 'framer':  #  relative addressing
+                    if not self.frame:
+                        raise excepting.ResolveError("ResolveError: Missing frame context"
+                            " to resolve relative pathname.", ipath, self,
+                                self.human, self.count)
+                    if not self.frame.framer:
+                        raise excepting.ResolveError("ResolveError: Missing framer context"
+                            " to resolve relative pathname.", ipath, self.frame,
+                                self.human, self.count)
+
+                    if parts[1] == 'me': # current framer
+                        parts[1] = self.frame.framer.name
+                    elif parts[1] == 'main': # current main framer
+                        if not self.frame.framer.main:
+                            raise excepting.ResolveError("ResolveError: Missing main frame"
+                                " context to resolve relative pathname.", ipath,
+                                self.frame.framer,
+                                self.human, self.count)
+                        parts[1] = self.frame.framer.main.framer.name
+
+                    if (len(parts) >= 3):
+                        if parts[2] == 'frame':
+                            if parts[3] == 'me':
+                                parts[3] = self.frame.name
+                            elif parts[3] == 'main':
+                                if not self.frame.framer.main:
+                                    raise excepting.ResolveError("ResolveError: "
+                                        "Missing main frame context to resolve "
+                                        "relative pathname.", ipath,
+                                        self.frame.framer,
+                                        self.human, self.count)
+                                parts[3] = self.frame.framer.main.name
+                            if (len(parts) >= 5 ) and parts[4] == 'actor':
+                                if parts[5] == 'me': # slice insert multiple parts
+                                    if (not isinstance(self.actor, Actor)
+                                            or not self.actor.name): # unresolved actor
+                                        raise excepting.ResolveError("ResolveError: Unresolved actor"
+                                            " context to resolve relative pathname.", ipath, self,
+                                                        self.human, self.count)
+                                    parts[5:6] = nameToPath(self.actor.name).lstrip('.').rstrip('.').split('.')
+                        elif parts[2] == 'actor':
+                            if parts[3] == 'me': # slice insert multiple parts
+                                if (not isinstance(self.actor, Actor)
+                                        or not self.actor.name):
+                                    raise excepting.ResolveError("ResolveError: Unresolved actor"
+                                        " context to resolve relative pathname.", ipath, self,
+                                               self.human, self.count)
+                                parts[3:4] = nameToPath(self.actor.name).lstrip('.').rstrip('.').split('.')
+
+                ipath = '.'.join(parts)
+
+            if not self.frame.store:
+                raise excepting.ResolveError("ResolveError: Missing store context"
+                                " to resolve relative pathname.", ipath, self,
+                                self.human, self.count)
+
+            if ipath.endswith('.'): # Node not Share
+                ipath = self.frame.store.createNode(ipath.rstrip('.'))
+                if warn:
+                    console.profuse( "     Warning: Non-existent node '{0}' "
+                                        "... creating anyway\n".format(ipath))
+            else: # Share
+                ipath = self.frame.store.create(ipath)
+                if ival is not None:
+                    if iown:
+                        ipath.update(ival)
+                    else:
+                        ipath.create(ival)
+                if warn:
+                    console.profuse( "     Warning: Non-existent node '{0}' "
+                                     "... creating anyway\n".format(ipath))
+
+        return ipath
 
     def clone(self, clones):
         """ Return clone of self in support of framer cloning

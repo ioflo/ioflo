@@ -2117,6 +2117,9 @@ class Builder(object):
             parms = odict()
             inits = odict()
             ioinits = odict()
+            prerefs = odict([('inits', odict()),
+                             ('ioinits', odict()),
+                             ('parms', odict()) ])
             connective = None
             context = self.currentContext
 
@@ -2192,13 +2195,15 @@ class Builder(object):
                 elif connective in ['from']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
-                    if self.currentStore.fetchShare(srcPath) is None:
-                        console.profuse("     Warning: Do 'from' non-existent"
-                                        " share '{0}' ... creating anyway".format(srcPath))
-                    src = self.currentStore.create(srcPath)
-                    # assumes that src share was inited earlier in parsing so has fields
-                    for field in srcFields:
-                        inits[field] = src[field]
+                    prerefs['inits'][srcPath] = srcFields
+
+                    #if self.currentStore.fetchShare(srcPath) is None:
+                        #console.profuse("     Warning: Do 'from' non-existent"
+                                        #" share '{0}' ... creating anyway".format(srcPath))
+                    #src = self.currentStore.create(srcPath)
+                    ## assumes that src share was inited earlier in parsing so has fields
+                    #for field in srcFields:
+                        #inits[field] = src[field]
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
@@ -2222,9 +2227,10 @@ class Builder(object):
             inits['name'] = name
         act = acting.Act(   actor=kind,
                             registrar=deeding.Deed,
-                            parms=parms,
                             inits=inits,
                             ioinits=ioinits,
+                            parms=parms,
+                            prerefs=prerefs,
                             human=self.currentHuman,
                             count=self.currentCount)
 
