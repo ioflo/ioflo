@@ -2165,13 +2165,14 @@ class Builder(object):
                 elif connective in ['by']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
-                    if self.currentStore.fetchShare(srcPath) is None:
-                        console.profuse("     Warning: Do 'by' non-existent "
-                                        "share %s ... creating anyway".format(srcPath))
-                    src = self.currentStore.create(srcPath)
-                    # assumes that src share was inited earlier in parsing so has fields
-                    for field in srcFields:
-                        parms[field] = src[field]
+                    prerefs['parms'][srcPath] = srcFields
+                    #if self.currentStore.fetchShare(srcPath) is None:
+                        #console.profuse("     Warning: Do 'by' non-existent "
+                                        #"share %s ... creating anyway".format(srcPath))
+                    #src = self.currentStore.create(srcPath)
+                    ## assumes that src share was inited earlier in parsing so has fields
+                    #for field in srcFields:
+                        #parms[field] = src[field]
 
                 elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
@@ -2180,13 +2181,14 @@ class Builder(object):
                 elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
-                    if self.currentStore.fetchShare(srcPath) is None:
-                        console.profuse("     Warning: Do 'for' non-existent "
-                                        "share '{0}' ... creating anyway".format(srcPath))
-                    src = self.currentStore.create(srcPath)
-                    # assumes that src share was inited earlier in parsing so has fields
-                    for field in srcFields:
-                        ioinits[field] = src[field]
+                    prerefs['ioinits'][srcPath] = srcFields
+                    #if self.currentStore.fetchShare(srcPath) is None:
+                        #console.profuse("     Warning: Do 'for' non-existent "
+                                        #"share '{0}' ... creating anyway".format(srcPath))
+                    #src = self.currentStore.create(srcPath)
+                    ## assumes that src share was inited earlier in parsing so has fields
+                    #for field in srcFields:
+                        #ioinits[field] = src[field]
 
                 elif connective in ['with']:
                     data, index = self.parseDirect(tokens, index)

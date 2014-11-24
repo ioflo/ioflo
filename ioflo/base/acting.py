@@ -95,14 +95,12 @@ class Act(object):
             # .actor is currently unresolved name string for actor
             actor, inits, ioinits, parms = self.registrar.__fetch__(self.actor)
             inits.update(self.inits or odict())
-            if self.prerefs:
-                preinits = self.prerefs.get('inits', {})
-                # preinits dict items
-                # each key is share src path, value is list of src fields
-                for src, fields in preinits.items():
+            if self.prerefs: # preinits inits dict items
+                # each key is share src path, and value is list of src fields
+                for src, fields in self.prerefs.get('inits', {}).items():
                     src = self.resolvePath(ipath=src, warn=True) # now a share
                     for field in fields:  # requires src pre inited
-                        if field in src:  # only init if src has field
+                        if field in src:  # only update if src has field
                             inits[field] = src[field]
             if 'name' not in inits:
                 inits['name'] = self.actor  # as yet unresolved name string
@@ -111,7 +109,22 @@ class Act(object):
             self.actor = actor = actor(**inits) # instantiate and convert
 
             parms.update(self.parms or odict())
+            if self.prerefs: # preinits parms dict items
+                # each key is share src path, and value is list of src fields
+                for src, fields in self.prerefs.get('parms', {}).items():
+                    src = self.resolvePath(ipath=src, warn=True) # now a share
+                    for field in fields:  # requires src pre inited
+                        if field in src:  # only update if src has field
+                            parms[field] = src[field]
+
             ioinits.update(self.ioinits or odict())
+            if self.prerefs: # preinits ioinits dict items
+                # each key is share src path, and value is list of src fields
+                for src, fields in self.prerefs.get('ioinits', {}).items():
+                    src = self.resolvePath(ipath=src, warn=True) # now a share
+                    for field in fields:  # requires src pre inited
+                        if field in src:  # only update if src has field
+                            ioinits[field] = src[field]
             if ioinits:
                 iois = actor.initio(**ioinits)
                 if iois:
