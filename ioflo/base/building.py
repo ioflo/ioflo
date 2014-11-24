@@ -3169,50 +3169,6 @@ class Builder(object):
 
         return (data, index)
 
-    def parseDirectOne(self, tokens, index):
-        """Parse DirectOne
-           returns ordered dictionary of one field  and its value
-           if no field provided then uses default field = 'value'
-
-           parms:
-              tokens = list of tokens for command
-              index = current index into tokens
-
-           returns:
-              data ordered dict
-              index
-
-           method must be wrapped in appropriate try excepts
-
-           Syntax:
-
-           data:
-              [value] value
-
-        """
-        if index == (len(tokens) - 1): #only one more token so it must be value
-            value = tokens[index]
-            index +=1 #eat token
-            field = 'value' #default field
-
-        else: #more than one so first may be field and second token may be value
-            field = tokens[index]
-            index += 1
-            value = tokens[index]
-            if value in Reserved: #second reserved token so first token was value
-                value = field
-                field = 'value' #default field
-            else: #first token was field and second value
-                index += 1 #eat token
-
-        value = Convert2StrBoolCoordNum(value) #convert to boolnumstr
-
-        #prevent using incorrect format for fields
-        if not REO_IdentPub.match(field): #invalid format
-            msg = "ParseError: Invalid field  = '%s'" % (field)
-            raise excepting.ParseError(msg, tokens, index)
-
-        return (field, value, index)
 
     def parseFields(self, tokens, index):
         """Parse optional field list for Indirect address
@@ -3605,8 +3561,8 @@ class Builder(object):
                         chunks[0] = 'goal'
 
                     elif ((chunks[0] == 'framer') or (chunks[0] == 'frame')) and \
-                         (chunks[2] == 'state'): #framer or frame relative .frame.name.state
-                        chunks[2] = 'goal' #becomes .frame.name.goal
+                         (chunks[2] == 'state'): #framer or frame relative .frame.me.state
+                        chunks[2] = 'goal' #becomes .frame.me.goal
 
                     else:
                         msg = "ParseError: Goal = 'goal' without state variant path '%s'" %\
