@@ -178,6 +178,42 @@ class NeedBoolean(Need):
 
        if state
     """
+    def resolve(self, state, stateField, **kwa):
+        """
+        Resolves state share
+
+        parms:
+            state       share path of state
+            stateField  state share field name
+        """
+        parms = super(NeedBoolean, self).resolve( **kwa)
+
+        #convert state path to share and create field if necessary
+        parms['state'] = state = self.resolvePath(ipath=state,
+                                                  warn=True) # now a share
+
+        if not stateField: #default rules for field
+            if state: #state has fields
+                if 'value' in state:
+                    stateField = 'value'
+
+                else: #ambiguous
+                    msg = ("ResolveError: Can't determine field for state"
+                          " '{0}'".format(state.name))
+                    raise excepting.ResolveError(msg, 'state', self.name,
+                                            self.act.human, self.act.count)
+            else:
+                stateField = 'value'
+
+        if stateField not in state:
+            console.profuse("     Warning: Non-existent field '{0}' in state {1}"
+                            " ... creating anyway".format(stateField, state.name))
+            state[stateField] = 0.0 #create
+
+        parms['stateField'] = stateField
+
+        return parms #return items are updated in original act parms
+
     def action(self, state, stateField, **kw):
         """ Check if state[stateField] evaluates to True
             parameters:
@@ -199,6 +235,45 @@ class NeedDirect(Need):
 
        if state comparison goal [+- tolerance]
     """
+    def resolve(self, state, stateField, comparison, goal, tolerance, **kwa):
+        """
+        Resolves state share
+
+        parms:
+            state       share path of state
+            stateField  state share field name
+            comparison  comparison operator string
+            goal        goal value
+            tolerance   tolerance value
+
+        """
+        parms = super(NeedDirect, self).resolve( **kwa)
+
+        #convert state path to share and create field if necessary
+        parms['state'] = state = self.resolvePath(ipath=state,
+                                                  warn=True) # now a share
+
+        if not stateField: #default rules for field
+            if state: #state has fields
+                if 'value' in state:
+                    stateField = 'value'
+
+                else: #ambiguous
+                    msg = ("ResolveError: Can't determine field for state"
+                          " '{0}'".format(state.name))
+                    raise excepting.ResolveError(msg, 'state', self.name,
+                                                self.act.human, self.act.count)
+            else:
+                stateField = 'value'
+
+        if stateField not in state:
+            console.profuse("     Warning: Non-existent field '{0}' in state {1}"
+                            " ... creating anyway".format(stateField, state.name))
+            state[stateField] = 0.0 #create
+
+        parms['stateField'] = stateField
+
+        return parms #return items are updated in original act parms
 
     def action(self, state, stateField, comparison, goal, tolerance, **kw):
         """ Check if state[field] comparison to goal +- tolerance is True
@@ -221,7 +296,69 @@ class NeedIndirect(Need):
 
        if state comparison goal [+- tolerance]
     """
-    def action(self, state, stateField, comparison, goal, goalField, tolerance, **kw):
+    def resolve(self, state, stateField, comparison, goal, goalField, tolerance, **kwa):
+        """
+        Resolves state share
+
+        parms:
+            state       share path of state
+            stateField  state share field name
+            comparison  comparison operator string
+            goal        share path of goal
+            goalField   goal share field name
+            tolerance   tolerance value
+
+        """
+        parms = super(NeedIndirect, self).resolve( **kwa)
+
+        #convert state path to share and create field if necessary
+        parms['state'] = state = self.resolvePath(ipath=state,
+                                                  warn=True) # now a share
+
+        if not stateField: #default rules for field
+            if state: #state has fields
+                if 'value' in state:
+                    stateField = 'value'
+
+                else: #ambiguous
+                    msg = ("ResolveError: Can't determine field for state"
+                          " '{0}'".format(state.name))
+                    raise excepting.ResolveError(msg, 'state', self.name,
+                                                self.act.human, self.act.count)
+            else:
+                stateField = 'value'
+
+        if stateField not in state:
+            console.profuse("     Warning: Non-existent field '{0}' in state {1}"
+                            " ... creating anyway".format(stateField, state.name))
+            state[stateField] = 0.0 #create
+
+        parms['stateField'] = stateField
+
+        #convert goal path to share and create field if necessary
+        parms['goal'] = goal = self.resolvePath(ipath=goal,
+                                                warn=True) # now a share
+
+        if not goalField: #default rules for field
+            if goal: #goal has fields
+                if 'value' in goal:
+                    goalField = 'value'
+
+                else: #use stateField
+                    goalField = stateField
+            else:
+                goalField = 'value'
+
+        if goalField not in goal:
+            console.profuse("     Warning: Non-existent field '{0}' in goal"
+                    " {1} ... creating anyway".format(goalField, goal.name))
+            goal[goalField] = 0.0 #create
+
+        parms['goalField'] = goalField
+
+        return parms #return items are updated in original act parms
+
+    def action(self, state, stateField, comparison, goal, goalField, tolerance, **kwa):
         """ Check if state[field] comparison to goal[goalField] +- tolerance is True
                        parameters:
               state = share of state

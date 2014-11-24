@@ -475,7 +475,10 @@ class Actor(object):
 
             When  ipath is a pathname string that resolves to a Share and ival is not None
             Then ival is used to initialize the share values.
-                ival should be a dict of fields and values
+                ival should be a share initializer:
+                   valid initializers are:
+                       a dict of fields and values
+                       a list of duples, each a (key, value) item
 
                 If own is True then .update(ival) is used
                 Otherwise .create(ival) is used
