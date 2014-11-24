@@ -2166,13 +2166,6 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
                     prerefs['parms'][srcPath] = srcFields
-                    #if self.currentStore.fetchShare(srcPath) is None:
-                        #console.profuse("     Warning: Do 'by' non-existent "
-                                        #"share %s ... creating anyway".format(srcPath))
-                    #src = self.currentStore.create(srcPath)
-                    ## assumes that src share was inited earlier in parsing so has fields
-                    #for field in srcFields:
-                        #parms[field] = src[field]
 
                 elif connective == 'per':
                     data, index = self.parseDirect(tokens, index)
@@ -2182,13 +2175,6 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
                     prerefs['ioinits'][srcPath] = srcFields
-                    #if self.currentStore.fetchShare(srcPath) is None:
-                        #console.profuse("     Warning: Do 'for' non-existent "
-                                        #"share '{0}' ... creating anyway".format(srcPath))
-                    #src = self.currentStore.create(srcPath)
-                    ## assumes that src share was inited earlier in parsing so has fields
-                    #for field in srcFields:
-                        #ioinits[field] = src[field]
 
                 elif connective in ['with']:
                     data, index = self.parseDirect(tokens, index)
@@ -2198,14 +2184,6 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index, variant = '')
                     prerefs['inits'][srcPath] = srcFields
-
-                    #if self.currentStore.fetchShare(srcPath) is None:
-                        #console.profuse("     Warning: Do 'from' non-existent"
-                                        #" share '{0}' ... creating anyway".format(srcPath))
-                    #src = self.currentStore.create(srcPath)
-                    ## assumes that src share was inited earlier in parsing so has fields
-                    #for field in srcFields:
-                        #inits[field] = src[field]
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
