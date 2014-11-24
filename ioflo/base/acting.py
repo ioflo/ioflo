@@ -593,140 +593,19 @@ class Actor(object):
 
     def resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
-            ipath may be path name of share or node
-            or reference to Share or Node instance
-
-            This method resolves pathname strings into share and node references
-            at resolve time.
-
-            ival is optional value for share
-            iown is optional ownership if True then overwrite if exists
-                   otherwise do not overwrite
-
-            if warn then will complain if the share is created.
-
-            It allows for substitution into ipath of
-            frame, framer, actor, main frame, or main framer relative names.
-            So that lexically relative pathnames can
-            be dynamically resolved in support of framer cloning.
-            It assumes that any implied variants have been reconciled.
-
-            When ipath is a string:  (not a Node or Share reference)
-                the following syntax is used:
-
-                If the path name starts with a leading '.' dot then path name is
-                fully reconciled and no contextual substitutions are to be applied.
-
-                Otherwise make subsitutions in pathname strings that begin
-                with 'framer.'
-                Substitute for special path part 'framer' with names of 'me' or 'main'
-                Substitute for special path part 'frame' with names  of 'me' or 'main'
-                Substitute for special path part 'actor' with name of 'me'
-
-                'me' indicates substitute the current framer, frame, or actor name
-                respectively.
-
-                'main' indicates substitute the current frame's main framer or main frame
-                name respectively obtained from
-
-            When  ipath is a pathname string that resolves to a Share and ival is not None
-            Then ival is used to initialize the share values.
-                ival should be a share initializer:
-                   valid initializers are:
-                       a dict of fields and values
-                       a list of duples, each a (key, value) item
-
-                If own is True then .update(ival) is used
-                Otherwise .create(ival) is used
+            Calls self.act.resolvePath()
+            See doc string from Act.resolvePath for detailed description of
+            functionality
 
             Requires that
-               self.name is not empty
-               self.store exist
                self.act exist
-
-               The following have already been resolved:
-               self.act.frame
-               self.act.frame.framer
-               self.act.frame.framer.main
-               self.act.frame.framer.main.framer
-
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
-            if not ipath.startswith('.'): # not reconciled so do relative substitutions
-                parts = ipath.split('.')
-                if parts[0] == 'framer':  #  relative addressing
-                    if not self.act:
-                        raise excepting.ResolveError("ResolveError: Missing act context"
-                                " to resolve relative pathname.", ipath, self,
-                                self.act.human, self.act.count)
-                    if not self.act.frame:
-                        raise excepting.ResolveError("ResolveError: Missing frame context"
-                            " to resolve relative pathname.", ipath, self.act,
-                                self.act.human, self.act.count)
-                    if not self.act.frame.framer:
-                        raise excepting.ResolveError("ResolveError: Missing framer context"
-                            " to resolve relative pathname.", ipath, self.act.frame,
-                                self.act.human, self.act.count)
-
-                    if parts[1] == 'me': # current framer
-                        parts[1] = self.act.frame.framer.name
-                    elif parts[1] == 'main': # current main framer
-                        if not self.act.frame.framer.main:
-                            raise excepting.ResolveError("ResolveError: Missing main frame"
-                                " context to resolve relative pathname.", ipath,
-                                self.act.frame.framer,
-                                self.act.human, self.act.count)
-                        parts[1] = self.act.frame.framer.main.framer.name
-
-                    if (len(parts) >= 3):
-                        if parts[2] == 'frame':
-                            if parts[3] == 'me':
-                                parts[3] = self.act.frame.name
-                            elif parts[3] == 'main':
-                                if not self.act.frame.framer.main:
-                                    raise excepting.ResolveError("ResolveError: "
-                                        "Missing main frame context to resolve "
-                                        "relative pathname.", ipath,
-                                        self.act.frame.framer,
-                                        self.act.human, self.act.count)
-                                parts[3] = self.act.frame.framer.main.name
-                            if (len(parts) >= 5 ) and parts[4] == 'actor':
-                                if parts[5] == 'me': # slice insert multiple parts
-                                    if not self.name:
-                                        raise excepting.ResolveError("ResolveError: Missing name"
-                                            " context to resolve relative pathname.", ipath, self,
-                                                        self.act.human, self.act.count)
-                                    parts[5:6] = nameToPath(self.name).lstrip('.').rstrip('.').split('.')
-                        elif parts[2] == 'actor':
-                            if parts[3] == 'me': # slice insert multiple parts
-                                if not self.name:
-                                    raise excepting.ResolveError("ResolveError: Missing name"
-                                        " context to resolve relative pathname.", ipath, self,
-                                               self.act.human, self.act.count)
-                                parts[3:4] = nameToPath(self.name).lstrip('.').rstrip('.').split('.')
-
-                ipath = '.'.join(parts)
-
-            if not self.store:
-                raise excepting.ResolveError("ResolveError: Missing store context"
-                                " to resolve relative pathname.", ipath, self,
-                                self.act.human, self.act.count)
-
-            if ipath.endswith('.'): # Node not Share
-                ipath = self.store.createNode(ipath.rstrip('.'))
-                if warn:
-                    console.profuse( "     Warning: Non-existent node '{0}' "
-                                        "... creating anyway\n".format(ipath))
-            else: # Share
-                ipath = self.store.create(ipath)
-                if ival is not None:
-                    if iown:
-                        ipath.update(ival)
-                    else:
-                        ipath.create(ival)
-                if warn:
-                    console.profuse( "     Warning: Non-existent node '{0}' "
-                                     "... creating anyway\n".format(ipath))
+            if not self.act:
+                raise excepting.ResolveError("ResolveError: Missing act context"
+                        " to resolve relative pathname.", ipath, self,
+                        self.act.human, self.act.count)
+            ipath = self.act.resolvePath(ipath, ival, iown, warn)
 
         return ipath
 
