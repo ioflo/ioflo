@@ -2918,14 +2918,8 @@ class Builder(object):
         #name is used as name of state relative to current framer
         # and if implicit goal the name of goal relative to current framer
         #create state relative to framer
-        #statePath = 'framer.' + self.currentFramer.name + '.state.' + name
         statePath = 'framer.' + 'me' + '.state.' + name
         stateField = 'value'
-
-        #convert state path to share and create field if necessary
-        #pass in list of duple to dereference field to its string
-        #state = self.currentStore.create(statePath).create([(stateField, 0.0)])
-
         act = self.makeDirectNeed(statePath, stateField, comparison, goal, tolerance)
 
         return act
@@ -2957,13 +2951,8 @@ class Builder(object):
         #name is used as name of state relative to current framer
         # and if implicit goal the name of goal relative to current framer
         #create state relative to framer
-        #statePath = 'framer.' + self.currentFramer.name + '.state.' + name
         statePath = 'framer.' + 'me' + '.state.' + name
         stateField = 'value'
-
-        #convert state path to share and create field if necessary
-        #pass in list of duple to dereference field to its string
-        #state = self.currentStore.create(statePath).create([(stateField, 0.0)])
 
         #parse required comparison
         comparison, index = self.parseComparisonReq(tokens,index)
@@ -3600,27 +3589,6 @@ class Builder(object):
         """
         stateField, index = self.parseField(tokens, index)
         statePath, index = self.parseIndirect(tokens, index, variant = 'state')
-        #if self.currentStore.fetchShare(statePath) is None:
-            #console.profuse("     Warning: State '{0}' non-existent "
-                            #"... creating anyway".format(statePath))
-        #state = self.currentStore.create(statePath)
-
-        #if not stateField: #default rules for field
-            #if state: #state has fields
-                #if 'value' in state:
-                    #stateField = 'value'
-
-                #else: #ambiguous
-                    #msg = "ParseError: Can't determine field for state '%s'" % (state.name)
-                    #raise excepting.ParseError(msg, tokens, index)
-            #else:
-                #stateField = 'value'
-
-        #if stateField not in state:
-            #console.profuse("     Warning: Non-existent field '{0}' in state {1}"
-                            #" ... creating anyway".format(stateField, state.name))
-            #state[stateField] = 0.0 #create
-
         return (statePath, stateField, index)
 
     def parseNeedGoal(self, statePath, stateField, tokens, index):
@@ -3667,40 +3635,10 @@ class Builder(object):
                 goalPath = ".".join(chunks)
                 goalField = stateField #goal field is the same as the given state field
 
-                #if self.currentStore.fetchShare(goalPath) is None:
-                    #console.profuse("     Warning: Goal '{0}' non-existent "
-                                    #"... creating anyway".format(goalPath))
-                #goal = self.currentStore.create(goalPath)
-
-                #if goalField not in goal:
-                    #console.profuse("     Warning: Non-existent field '{0}' in goal"
-                            #" {1} ... creating anyway".format(goalField, goal.name))
-                    #goal[goalField] = 0.0 #create
-
             else: #not 'goal' so parse as indirect
                 #is 'field in' clause present
                 goalField, index = self.parseField(tokens, index)
                 goalPath, index =  self.parseIndirect(tokens, index, variant = 'goal')
-                #if self.currentStore.fetchShare(goalPath) is None:
-                    #console.profuse("     Warning: Goal '%s' non-existent ... "
-                                    #"creating anyway".format(goalPath))
-                #goal = self.currentStore.create(goalPath)
-
-                #if not goalField: #default rules for field
-                    #if goal: #goal has fields
-                        #if 'value' in goal:
-                            #goalField = 'value'
-
-                        #else: #use stateField
-                            #goalField = stateField
-                    #else:
-                        #goalField = 'value'
-
-                #if goalField not in goal:
-                    #console.profuse("     Warning: Non-existent field '{0}' in goal"
-                            #" {1} ... creating anyway".format(goalField, goal.name))
-                    #goal[goalField] = 0.0 #create
-
 
         return (direct, goal, goalPath, goalField, index)
 
