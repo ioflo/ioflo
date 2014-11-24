@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Runs alls the example FloScripts
+Runs all the example FloScripts
 
 
 """
