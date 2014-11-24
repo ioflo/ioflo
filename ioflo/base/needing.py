@@ -70,17 +70,6 @@ class NeedAlways(Need):
 
 class NeedDone(Need):
     """NeedDone Need Special Need"""
-    def action(self, tasker, **kw):
-        """
-        Check if  tasker done
-        parameters:
-            tasker
-        """
-        result = tasker.done
-        console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result))
-
-        return result
-
     def resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as tasker parm
            resolved link is passed back to container act to update in act's parms
@@ -93,6 +82,18 @@ class NeedDone(Need):
                                                          human=self.act.human,
                                                          count=self.act.count)
         return parms #return items are updated in original act parms
+
+    def action(self, tasker, **kw):
+        """
+        Check if  tasker done
+        parameters:
+            tasker
+        """
+        result = tasker.done
+        console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result))
+
+        return result
+
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -121,19 +122,6 @@ class NeedDone(Need):
 
 class NeedStatus(Need):
     """NeedStatus Need Special Need """
-    def action(self, tasker, status, **kw):
-        """
-        Check if  tasker done
-        parameters:
-          tasker
-          status
-        """
-
-        result = (tasker.status == status)
-        console.profuse("Need Tasker {0} status is {1} = {2}\n".format(
-            tasker.name, StatusNames[status], result))
-
-        return result
 
     def resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as parm
@@ -147,6 +135,20 @@ class NeedStatus(Need):
                                                          human=self.act.human,
                                                          count=self.act.count)
         return parms #return items are updated in original act parms
+
+    def action(self, tasker, status, **kw):
+        """
+        Check if  tasker done
+        parameters:
+          tasker
+          status
+        """
+
+        result = (tasker.status == status)
+        console.profuse("Need Tasker {0} status is {1} = {2}\n".format(
+            tasker.name, StatusNames[status], result))
+
+        return result
 
     def cloneParms(self, parms, clones, **kw):
         """ Returns parms fixed up for framing cloning. This includes:
@@ -173,10 +175,9 @@ class NeedStatus(Need):
 
         return parms
 
-class NeedBoolean(Need):
-    """NeedBoolean Need Special Need
-
-       if state
+class NeedState(Need):
+    """
+    NeedState is a base class for Needs that must resolve a state share ref
     """
     def resolve(self, state, stateField, **kwa):
         """
@@ -186,7 +187,7 @@ class NeedBoolean(Need):
             state       share path of state
             stateField  state share field name
         """
-        parms = super(NeedBoolean, self).resolve( **kwa)
+        parms = super(NeedState, self).resolve( **kwa)
 
         #convert state path to share and create field if necessary
         parms['state'] = state = self.resolvePath(ipath=state,
@@ -214,6 +215,12 @@ class NeedBoolean(Need):
 
         return parms #return items are updated in original act parms
 
+class NeedBoolean(NeedState):
+    """NeedBoolean Need Special Need
+
+       if state
+    """
+
     def action(self, state, stateField, **kw):
         """ Check if state[stateField] evaluates to True
             parameters:
@@ -230,50 +237,11 @@ class NeedBoolean(Need):
 
         return result
 
-class NeedDirect(Need):
+class NeedDirect(NeedState):
     """NeedDirect Need
 
        if state comparison goal [+- tolerance]
     """
-    def resolve(self, state, stateField, comparison, goal, tolerance, **kwa):
-        """
-        Resolves state share
-
-        parms:
-            state       share path of state
-            stateField  state share field name
-            comparison  comparison operator string
-            goal        goal value
-            tolerance   tolerance value
-
-        """
-        parms = super(NeedDirect, self).resolve( **kwa)
-
-        #convert state path to share and create field if necessary
-        parms['state'] = state = self.resolvePath(ipath=state,
-                                                  warn=True) # now a share
-
-        if not stateField: #default rules for field
-            if state: #state has fields
-                if 'value' in state:
-                    stateField = 'value'
-
-                else: #ambiguous
-                    msg = ("ResolveError: Can't determine field for state"
-                          " '{0}'".format(state.name))
-                    raise excepting.ResolveError(msg, 'state', self.name,
-                                                self.act.human, self.act.count)
-            else:
-                stateField = 'value'
-
-        if stateField not in state:
-            console.profuse("     Warning: Non-existent field '{0}' in state {1}"
-                            " ... creating anyway".format(stateField, state.name))
-            state[stateField] = 0.0 #create
-
-        parms['stateField'] = stateField
-
-        return parms #return items are updated in original act parms
 
     def action(self, state, stateField, comparison, goal, tolerance, **kw):
         """ Check if state[field] comparison to goal +- tolerance is True
@@ -291,18 +259,16 @@ class NeedDirect(Need):
 
         return result
 
-class NeedIndirect(Need):
+class NeedIndirect(NeedState):
     """NeedIndirect Need
 
        if state comparison goal [+- tolerance]
     """
-    def resolve(self, state, stateField, comparison, goal, goalField, tolerance, **kwa):
+    def resolve(self, goal, goalField, **kwa):
         """
         Resolves state share
 
         parms:
-            state       share path of state
-            stateField  state share field name
             comparison  comparison operator string
             goal        share path of goal
             goalField   goal share field name
@@ -310,30 +276,6 @@ class NeedIndirect(Need):
 
         """
         parms = super(NeedIndirect, self).resolve( **kwa)
-
-        #convert state path to share and create field if necessary
-        parms['state'] = state = self.resolvePath(ipath=state,
-                                                  warn=True) # now a share
-
-        if not stateField: #default rules for field
-            if state: #state has fields
-                if 'value' in state:
-                    stateField = 'value'
-
-                else: #ambiguous
-                    msg = ("ResolveError: Can't determine field for state"
-                          " '{0}'".format(state.name))
-                    raise excepting.ResolveError(msg, 'state', self.name,
-                                                self.act.human, self.act.count)
-            else:
-                stateField = 'value'
-
-        if stateField not in state:
-            console.profuse("     Warning: Non-existent field '{0}' in state {1}"
-                            " ... creating anyway".format(stateField, state.name))
-            state[stateField] = 0.0 #create
-
-        parms['stateField'] = stateField
 
         #convert goal path to share and create field if necessary
         parms['goal'] = goal = self.resolvePath(ipath=goal,
@@ -396,8 +338,11 @@ class NeedMarker(Need):
         """
         parms = super(NeedMarker, self).resolve( **kwa)
 
-        parms['frame'] = frame = framing.resolveFrame(frame, who=self.name, desc='need marker')
-        parms['share'] = share = self.resolvePath(ipath=share,  warn=True) # now a share
+        parms['frame'] = frame = framing.resolveFrame(frame,
+                                                      who=self.name,
+                                                      desc='need marker')
+        parms['share'] = share = self.resolvePath(ipath=share,
+                                                  warn=True) # now a share
 
         if not share.marks.get(frame.name):
             share.marks[frame.name] = storing.Mark()
