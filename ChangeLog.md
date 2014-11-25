@@ -1,20 +1,22 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+201411XX
+---------
+v1.1
+
+Added actor relative addressing
+Refactored so all share resolution happens at resolve time not parse time
+Refactored sl all frame and framer resolution happens at resolve time not parse time
 Deprecated current server command as will be changing syntax significantly
-
 Got rid of tasker command as only use subclasses Framer, Logger, Server
-
 Refactor and clean up code
-
 Change default inode path in resolvePath to "framer.me.frame.me.actor.me"
-
 Raises error if duplicate unders
-
 Refactor so resolving Tasker links uses utility function more DRY
-
 Refactor so resolving Framer and Frame links uses utility function to be more DRY
-
 Replaced Restarter Actor with SideAct restart
 
 ---------
@@ -29,6 +31,7 @@ Python 2.6
 ---------
 20141002
 ---------
+v1.0.0
 
 Changed license to Apache 2.0
 1.0 release
