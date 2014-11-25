@@ -162,7 +162,7 @@ Comparisons = ['==', '<', '<=', '>=', '>', '!=']
 Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'as', 'at', 'in', 'of', 'on',
                'if', 'be', 'into', 'and', 'not', '+-', ]
 Reserved = Connectives + Comparisons #concatenate to get reserved words
-ReservedFrameNames = ['next',  'prev'] #these frame names have special meaning as goto target
+ReservedFrameNames = ['next', 'prev'] #these frame names have special meaning as goto target
 
 
 class Builder(object):
@@ -3305,7 +3305,7 @@ class Builder(object):
 
     def parsePath(self, tokens, index):
         """Parse required (path or dotpath) path
-
+           No relative path processing.
            method must be wrapped in appropriate try excepts
         """
         path = tokens[index]
@@ -3374,7 +3374,7 @@ class Builder(object):
 
             path = relation + path #absolute path starts with '.'
 
-        elif REO_RelPath.match(path): #valid relative path
+        elif REO_RelPath.match(path): #valid relative path not start with '.'
             #get optional relation clause, default is root
             relation, index = self.parseRelation(tokens, index)
 
@@ -3389,8 +3389,6 @@ class Builder(object):
         else: #invalid path format
             msg = "ParseError: Invalid path '%s'" % (path)
             raise excepting.ParseError(msg, tokens, index)
-
-        #path = path.lstrip('.') #remove leading dot if any, all done
 
         return (path, index)
 
@@ -3418,10 +3416,13 @@ class Builder(object):
               path [of root]
 
            framer:
-              path of framer [name]
+              path of framer [(me, main, name)]
 
            frame:
-              path of frame [name]
+              path of frame [(me, main, name)]
+
+           actor:
+              path of actor [(me, name)]
 
 
         """
@@ -3433,7 +3434,7 @@ class Builder(object):
                 relation = tokens[index]
                 index +=1
 
-                if relation not in ['root', 'framer', 'frame']:
+                if relation not in ['root', 'framer', 'frame', 'actor']:
                     msg = "ParseError: Invalid relation '%s'" % (relation)
                     raise excepting.ParseError(msg, tokens, index)
 
@@ -3455,7 +3456,7 @@ class Builder(object):
                         name = ''
 
                 if not name: #no name given so substitute default
-                    name = self.currentFramer.name
+                    name = 'me'  # self.currentFramer.name
 
                 relation += '.' + name  #append name
 
@@ -3474,14 +3475,17 @@ class Builder(object):
                         name = ''
 
                 if not name: #no name given so substitute default
-                    name = self.currentFrame.name
+                    name = 'me'  # self.currentFrame.name
 
                 relation += '.' + name  #append name
 
                 # parse optional of framer relation
                 framerRelation, index = self.parseRelation(tokens, index)
 
-                if framerRelation and '.frame.' in framerRelation: # another of frame
+                # check if spurious, of frame or, of actor
+                if (framerRelation and
+                        ('.frame.' in framerRelation or
+                         '.actor.' in framerRelation )):
                     msg = "ParseError: Invalid relation '%s' following frame relation" %\
                                                     (framerRelation)
                     raise excepting.ParseError(msg, tokens, index)
@@ -3490,7 +3494,60 @@ class Builder(object):
                     relation = framerRelation + '.' + relation
 
                 else: #use default framer
-                    relation = ('framer.' + self.currentFramer.name + '.' + relation)
+                    relation = ('framer.' + 'me' + '.' + relation)
+
+            if relation in ['actor']: #may be optional name of actor
+                name = '' #default name is empty
+                if index < len(tokens): #more tokens to check for optional name
+                    name = tokens[index]
+                    if name not in Reserved: #name given
+                        index += 1 #eat token
+
+                        if not REO_IdentPub.match(name): #check if valid name
+                            msg = "ParseError: Invalid relation %s name '%s'" %\
+                                (relation, name)
+                            raise excepting.ParseError(msg, tokens, index)
+                    else:
+                        name = ''
+
+                if not name: #no name given so substitute default
+                    name = 'me'  # self.currentFrame.name
+
+                relation += '.' + name  #append name
+
+                # parse optional of frame relation
+                frameRelation, index = self.parseRelation(tokens, index)
+
+                # check if spurious, of framer or, of actor
+                if (frameRelation and
+                        ('.framer.' in frameRelation or
+                         '.actor.' in frameRelation )):
+                    msg = "ParseError: Invalid relation '%s' following actor relation" %\
+                                                    (frameRelation)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if frameRelation:
+                    relation = frameRelation + '.' + relation
+
+                else: #use default frame
+                    relation = ('frame.' + 'me' + '.' + relation)
+
+                # parse optional of framer relation
+                framerRelation, index = self.parseRelation(tokens, index)
+
+                # check if spurious, of frame or, of actor
+                if (framerRelation and
+                        ('.frame.' in framerRelation or
+                         '.actor.' in framerRelation )):
+                    msg = "ParseError: Invalid relation '%s' following frame relation" %\
+                                                    (framerRelation)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if framerRelation:
+                    relation = framerRelation + '.' + relation
+
+                else: #use default framer
+                    relation = ('framer.' + 'me' + '.' + relation)
 
         return (relation, index)
 

@@ -65,6 +65,11 @@ framer testdobe be active first test0
        put true into .marked.updated
        go next if update .marked.updated
 
+    frame test9 in timeout
+      put "who am I" into value in .test of actor
+      go next if value in .test of actor == "who am I"
+
+
 
   frame done
     print "Success"
