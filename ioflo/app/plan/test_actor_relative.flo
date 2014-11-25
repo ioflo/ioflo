@@ -1,0 +1,42 @@
+# dobee.flo
+
+
+house test
+
+init .box to depth 5 height 10 width 15
+
+framer test be active first start
+  frame start
+    go abort if elapsed >= 3.0
+
+    frame test0 in start
+      print "Test 0"
+      #framer.test.frame.test0.actor.poke.direct.test
+      put "who am I" into value in .test of actor
+      go next if value in .framer.test.frame.test0.actor.poke.direct.test  == "who am I"
+
+    frame test1 in start
+      print "Test 1"
+      put "who am I" into value in .framer.test.frame.test1.actor.need.direct.test
+      # framer.test.frame.test1.actor.need.direct.test
+      go next if value in .test of actor == "who am I"
+
+    frame test2 in start
+      print "Test 2"
+      put "who am I" into framer.me.frame.me.actor.need.direct.test
+      # framer.test.frame.test1.actor.need.direct.test
+      go next if value in .test of actor == "who am I"
+
+    frame test3 in start
+      print "Test 3"
+      #framer.test.frame.test3.actor.poke.direct.test
+      put "who am I" into value in .test of actor
+      go next if value in .frame.me.actor.poke.direct.test of framer me  == "who am I"
+
+  frame done
+    print "Success"
+    bid stop all
+
+  frame abort
+    print "Failure"
+    bid stop all

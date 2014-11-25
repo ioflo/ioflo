@@ -33,11 +33,6 @@ class Poke(acting.Actor):
     """Poke Class to put values into explicit shares"""
     Registry = odict()
 
-    def action(self, share, data, **kwa):
-        """Put data into share """
-        console.profuse("Put {0} into {1}\n".format( data, share.name))
-
-        share.update(data)
 
 class PokeDirect(Poke):
     """Class to put direct data values into destination share"""

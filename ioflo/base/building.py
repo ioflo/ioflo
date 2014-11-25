@@ -3365,23 +3365,23 @@ class Builder(object):
             msg = "ParseError: Invalid path '%s' using reserved" % (path)
             raise excepting.ParseError(msg, tokens, index)
 
-        if REO_DotPath.match(path): #valid absolute path
+        if REO_DotPath.match(path): #valid absolute path segment
             #check for optional relation clause
-            #if 'of relation' clause then allows override of relative  variant
+            #if 'of relation' clause then allows override of relative variant
             #but still relative but using dotpath instead of path
             #so overrides any implied variants
             relation, index = self.parseRelation(tokens, index)
 
-            path = relation + path #absolute path starts with '.'
+            path = relation + path  # dotpath starts with '.' no need to add
 
-        elif REO_RelPath.match(path): #valid relative path not start with '.'
+        elif REO_RelPath.match(path): #valid relative path segment
             #get optional relation clause, default is root
             relation, index = self.parseRelation(tokens, index)
 
-            if relation:
+            if relation:  # add dot since not dotpath
                 relation += '.'
 
-            if variant:
+            if variant: # add dot since not dotpath
                 variant += '.'
 
             path = relation + variant + path

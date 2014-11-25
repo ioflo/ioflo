@@ -1,6 +1,3 @@
-# dobee.flo
-
-
 house test
 
 init meta.test to value "test"
@@ -9,7 +6,7 @@ init meta.stuff to value "test2"
 init .trial to depth 5 height 10 width 15
 init .init.test to trial ".trial"
 
-framer testdobe be active first test0
+framer test be active first test0
   frame timeout
     go abort if elapsed >= 3.0
 
@@ -64,12 +61,6 @@ framer testdobe be active first test0
     frame test8 in timeout
        put true into .marked.updated
        go next if update .marked.updated
-
-    frame test9 in timeout
-      put "who am I" into value in .test of actor
-      go next if value in .test of actor == "who am I"
-
-
 
   frame done
     print "Success"

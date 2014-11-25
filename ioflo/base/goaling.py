@@ -33,24 +33,6 @@ class Goal(acting.Actor):
     """Goal Class for setting configuration or command value in data share """
     Registry = odict()
 
-    def __init__(self,  **kw):
-        """
-        Initialization method for instance.
-        inherited attributes:
-           .name = unique name for action instance
-           .store = shared data store
-
-        parameters:
-           goal = share of goal
-        """
-        if 'preface' not in kw:
-            kw['preface'] = 'Goal'
-
-        super(Goal,self).__init__(**kw)
-
-    def expose(self):
-        """ """
-        print("Goal %s" % (self.name))
 
 class GoalDirect(Goal):
     """GoalDirect Goal """
