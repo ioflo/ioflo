@@ -1043,6 +1043,8 @@ class Builder(object):
                     self.currentHouse.slaves.append(framer)
                 elif schedule == AUX:
                     self.currentHouse.auxes.append(framer)
+                elif schedule == MOOT:
+                    self.currentHouse.moots.append(framer)
                 else: #taskable active or inactive
                     if order == FRONT:
                         self.currentHouse.fronts.append(framer)

@@ -92,8 +92,17 @@ INACTIVE = 0
 ACTIVE = 1
 AUX = 2
 SLAVE = 3
-ScheduleNames = { INACTIVE : 'inactive', ACTIVE : 'active', AUX : 'aux', SLAVE : 'slave'}
-ScheduleValues = { 'inactive': INACTIVE , 'active':  ACTIVE, 'aux': AUX, 'slave': SLAVE}
+MOOT = 4
+ScheduleNames = { INACTIVE : 'inactive',
+                  ACTIVE : 'active',
+                  AUX : 'aux',
+                  SLAVE : 'slave',
+                  MOOT : 'moot'}
+ScheduleValues = { 'inactive': INACTIVE ,
+                   'active':  ACTIVE,
+                   'aux': AUX,
+                   'slave': SLAVE,
+                   'moot': MOOT}
 
 #Task ordering
 MID = 0

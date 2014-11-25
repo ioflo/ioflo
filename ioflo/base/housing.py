@@ -66,8 +66,9 @@ class House(registering.StoriedRegistry):
           .backs = list of taskables to go in back of taskables
 
           .taskables = list of active/inactive taskers (fronts + mids + backs)
-          .auxes = list of aux  taskers in house subset of .taskers
-          .slaves = list of slave frameworks in house subset of .taskers
+          .auxes = list of aux  framers in house subset of .taskers
+          .slaves = list of slave taskers in house subset of .taskers
+          .moots = list of moot framers in house subset of .taskers
 
           .names = dictonary of names from each name registry
           .counters = dictionary of counters from each name registry
@@ -92,6 +93,7 @@ class House(registering.StoriedRegistry):
         self.taskables = [] #list taskable (active inactive) taskers (fronts + mids + backs)
         self.auxes = [] #list of aux framers in house
         self.slaves = [] #list of slave taskers in house
+        self.moots = [] #list of moot framers in house
 
         self.names = odict() #houses dict of registry Names
         self.counters = odict() #houses dict of registry Name Counters
@@ -129,7 +131,7 @@ class House(registering.StoriedRegistry):
         console.terse("   Resolving House '{0}' ...\n".format(self.name))
         self.assignRegistries()
 
-        for tasker in self.taskers:
+        for tasker in [tasker for tasker in self.taskers if tasker not in self.moots]:
             tasker.resolve()
 
     def traceOutlines(self):
@@ -142,7 +144,7 @@ class House(registering.StoriedRegistry):
             framer.traceOutlines()
 
     def showAllTaskers(self):
-        """Show all Taskers and Slaves and Auxes and Framers."""
+        """Show all Taskers and Slaves and Auxes and Moots and Framers."""
 
         console.terse("Taskables in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.taskables])))
@@ -152,6 +154,9 @@ class House(registering.StoriedRegistry):
 
         console.terse("Auxes in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.auxes])))
+
+        console.terse("Moots in House '{0}':\n     {1}\n".format(
+                    self.name, ' '.join([tasker.name for tasker in self.moots])))
 
         console.terse("Framers in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.framers])))
