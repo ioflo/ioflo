@@ -45,6 +45,8 @@ def main():
                 failed = True
                 print("**** Failed in House = {0}. "
                       "Failure = {1}.\n".format(house.name, failure))
+            else:
+                print("**** Succeeded in House = {0}.\n".format(house.name))
         if failed:
             failedCount += 1
 

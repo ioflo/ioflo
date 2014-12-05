@@ -9,27 +9,37 @@ frame vehicle_run
 
 framer mission be active first mission_start
 
-frame mission_start
-   set elapsed to 20.0
-   set heading to 0.0
-   set depth to 5.0
-   set speed to 2.5
-   
-   put true into stuff of framer
-   put true into stuff of frame
-   set test of framer to true
-   set test of frame to true
-   put true into junk of frame of root
-   put true into junk of frame autopilot_run of framer autopilot
-   
-   
-   go next if test of framer and test of frame
-   go next if elapsed >= goal
+frame timeout
+   go abort if elapsed > 30
 
-frame mission_stop  
+   frame mission_start in timeout
+      set elapsed to 20.0
+      set heading to 0.0
+      set depth to 5.0
+      set speed to 2.5
+
+      put true into stuff of framer
+      put true into stuff of frame
+      set test of framer to true
+      set test of frame to true
+      put true into junk of frame of root
+      put true into junk of frame autopilot_run of framer autopilot
+
+
+      go next if test of framer and test of frame
+      go next if elapsed >= goal
+
+frame mission_stop
+   print "Success"
    bid stop vehiclesim
    bid stop autopilot
    bid stop me
+
+frame abort
+   print "Failure"
+   put "Address" into meta.failure
+   bid stop all
+
 
 framer autopilot be active first autopilot_run
 
@@ -38,4 +48,3 @@ frame autopilot_run
    do controller pid heading
    do controller pid depth
    do controller pid pitch
-   
