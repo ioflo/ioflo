@@ -7,6 +7,7 @@ CHANGE LOG
 ---------
 v1.1
 
+Support for ioflo has test run using reporting via house metas
 Added framer schedule type of moot, when moot, house builder does not call
    resolveLinks on the framer. When moot the framer
    is meant to be cloned. ResolveLinks will be called on the clones
