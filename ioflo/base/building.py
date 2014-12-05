@@ -1669,7 +1669,7 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)
 
             dstFields, index = self.parseFields(tokens, index)
-            dstPath, index = self.parseIndirect(tokens, index, variant = '')
+            dstPath, index = self.parseIndirect(tokens, index)
 
         except IndexError:
             msg = "ParseError: Building verb '%s'. Not enough tokens." % (command, )
@@ -1733,7 +1733,7 @@ class Builder(object):
 
         try:
             dstFields, index = self.parseFields(tokens, index)
-            dstPath, index = self.parseIndirect(tokens, index, variant = '')
+            dstPath, index = self.parseIndirect(tokens, index)
 
             connective = tokens[index]
             index += 1
@@ -1752,7 +1752,7 @@ class Builder(object):
 
             elif connective in ['by', 'from']:
                 srcFields, index = self.parseFields(tokens, index)
-                srcPath, index = self.parseIndirect(tokens, index, variant = '')
+                srcPath, index = self.parseIndirect(tokens, index)
 
                 act = self.makeIncIndirect(dstPath, dstFields, srcPath, srcFields)
 
@@ -1798,7 +1798,7 @@ class Builder(object):
 
         try:
             srcFields, index = self.parseFields(tokens, index)
-            srcPath, index = self.parseIndirect(tokens, index, variant = '')
+            srcPath, index = self.parseIndirect(tokens, index)
 
             connective = tokens[index]
             index += 1
@@ -1808,7 +1808,7 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)
 
             dstFields, index = self.parseFields(tokens, index)
-            dstPath, index = self.parseIndirect(tokens, index, variant = '')
+            dstPath, index = self.parseIndirect(tokens, index)
 
         except IndexError:
             msg = "ParseError: Building verb '%s'. Not enough tokens." % (command,)
@@ -1884,7 +1884,6 @@ class Builder(object):
             else: #basic goals
                 #goal is destination dst
                 dstFields, index = self.parseFields(tokens, index)
-                #dstPath, index = self.parseIndirect(tokens, index, variant = 'goal')
                 dstPath, index = self.parseIndirect(tokens, index)
 
                 #required connective
@@ -1898,7 +1897,7 @@ class Builder(object):
 
                 elif connective in ['by', 'from']: #source indirect
                     srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parseIndirect(tokens, index, variant = '')
+                    srcPath, index = self.parseIndirect(tokens, index)
 
                     act = self.makeGoalIndirect(dstPath, dstFields, srcPath, srcFields)
 
@@ -2167,7 +2166,7 @@ class Builder(object):
 
                 elif connective in ['by']:
                     srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parseIndirect(tokens, index, variant = '')
+                    srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['parms'][srcPath] = srcFields
 
                 elif connective == 'per':
@@ -2176,7 +2175,7 @@ class Builder(object):
 
                 elif connective == 'for':
                     srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parseIndirect(tokens, index, variant = '')
+                    srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['ioinits'][srcPath] = srcFields
 
                 elif connective in ['with']:
@@ -2185,7 +2184,7 @@ class Builder(object):
 
                 elif connective in ['from']:
                     srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parseIndirect(tokens, index, variant = '')
+                    srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['inits'][srcPath] = srcFields
 
         except IndexError:
@@ -2565,7 +2564,7 @@ class Builder(object):
 
         elif connective in ['by', 'from']: #source indirect
             srcFields, index = self.parseFields(tokens, index)
-            srcPath, index = self.parseIndirect(tokens, index, variant = '')
+            srcPath, index = self.parseIndirect(tokens, index)
 
             act = self.makeGoalIndirect(dstPath, dstFields, srcPath, srcFields)
 
@@ -2865,7 +2864,7 @@ class Builder(object):
         if not frame: #default to current frame
             frame = self.currentFrame.name
 
-        sharePath, index = self.parseIndirect(tokens, index, variant = '')
+        sharePath, index = self.parseIndirect(tokens, index)
 
         # assign marker type actual marker Act created in need's resolve
         marker = 'Marker' + kind.capitalize()
@@ -3323,13 +3322,12 @@ class Builder(object):
         return (path, index)
 
 
-    def parseIndirect(self, tokens, index, variant = ''):
+    def parseIndirect(self, tokens, index):
         """Parse Indirect data address
 
            parms:
               tokens = list of tokens for command
               index = current index into tokens
-              variant = '' or if variant applies = 'goal' or 'state'
 
            returns:
               path
@@ -3350,6 +3348,7 @@ class Builder(object):
               root
               framer
               frame
+              actor
 
            root:
               path [of root]
@@ -3359,6 +3358,9 @@ class Builder(object):
 
            frame:
               path of frame [name]
+
+           actor:
+              path of actor [name]
 
         """
         path = tokens[index]
@@ -3370,9 +3372,8 @@ class Builder(object):
 
         if REO_DotPath.match(path): #valid absolute path segment
             #check for optional relation clause
-            #if 'of relation' clause then allows override of relative variant
-            #but still relative but using dotpath instead of path
-            #so overrides any implied variants
+            #if 'of relation' clause then allows relative but no
+            #implied relation clauses
             relation, index = self.parseRelation(tokens, index)
 
             path = relation + path  # dotpath starts with '.' no need to add
@@ -3381,16 +3382,28 @@ class Builder(object):
             #get optional relation clause, default is root
             relation, index = self.parseRelation(tokens, index)
 
-            if relation:  # add dot since not dotpath
-                relation += '.'
+            chunks = path.split('.')
+            if relation:  # check for relation conflict
+                if chunks[0] in ['framer', 'frame', 'actor']:
+                    if (chunks[0] == 'framer' or
+                            (chunks[0] == 'frame' and  '.frame.' in relation) or
+                            (chunks[0] == 'actor' and  '.actor.' in  relation)):
+                        msg = ("ParseError: Relation conflict in path '{0}'"
+                               " with relation '{1}'".format(path, relations))
+                        raise excepting.ParseError(msg, tokens, index)
 
-            if variant: # add dot since not dotpath
-                variant += '.'
+                relation += '.' # add dot since not dotpath
 
-            path = relation + variant + path
+            else: # prepend missing relations if partial relation
+                if chunks[0] == 'actor':
+                    relation = 'framer.me.frame.me.'
+                elif chunks[0] == 'frame':
+                    relation = 'framer.me.'
+
+            path = relation + path
 
         else: #invalid path format
-            msg = "ParseError: Invalid path '%s'" % (path)
+            msg = "ParseError: Invalid path '{0}'".format(path)
             raise excepting.ParseError(msg, tokens, index)
 
         return (path, index)
@@ -3590,7 +3603,6 @@ class Builder(object):
            method must be wrapped in appropriate try excepts
         """
         stateField, index = self.parseField(tokens, index)
-        #statePath, index = self.parseIndirect(tokens, index, variant = 'state')
         statePath, index = self.parseIndirect(tokens, index)
         return (statePath, stateField, index)
 
@@ -3612,7 +3624,6 @@ class Builder(object):
 
         except ValueError: #means text is not (quoted string, bool, or number) so indirect
             goalField, index = self.parseField(tokens, index)
-            #goalPath, index =  self.parseIndirect(tokens, index, variant = 'goal')
             goalPath, index =  self.parseIndirect(tokens, index)
 
         return (direct, goal, goalPath, goalField, index)
@@ -3648,12 +3659,12 @@ class Builder(object):
                         chunks[2] = 'goal' # .framer.me.state becomes .framer.me.goal
 
                     else:
-                        msg = "ParseError: Goal = 'goal' without framer state variant path '%s'" %\
+                        msg = "ParseError: Goal = 'goal' without framer state path '%s'" %\
                             (statePath)
                         raise excepting.ParseError(msg, tokens, index)
 
                 except IndexError:
-                    msg = "ParseError: Goal = 'goal' without framer state variant path '%s'" %\
+                    msg = "ParseError: Goal = 'goal' without framer state path '%s'" %\
                         (statePath)
                     raise excepting.ParseError(msg, tokens, index)
 
@@ -3663,7 +3674,6 @@ class Builder(object):
             else: #not 'goal' so parse as indirect
                 #is 'field in' clause present
                 goalField, index = self.parseField(tokens, index)
-                #goalPath, index =  self.parseIndirect(tokens, index, variant = 'goal')
                 goalPath, index =  self.parseIndirect(tokens, index)
 
         return (direct, goal, goalPath, goalField, index)
