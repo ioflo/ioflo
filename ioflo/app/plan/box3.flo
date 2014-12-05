@@ -13,13 +13,13 @@ frame vehicle_run
 framer mission be active first northleg
 
 frame depthmax
-   go abort if depth >= .max.depth
+   go abort if state.depth >= .max.depth
 
 frame northleg in depthmax
    set elapsed to 20.0
-   set heading to 0.0
-   set depth to 5.0
-   set speed to 2.5
+   set goal.heading to 0.0
+   set goal.depth to 5.0
+   set goal.speed to 2.5
    go next if elapsed >= goal
 
 frame gpsfixnorth
@@ -28,9 +28,9 @@ frame gpsfixnorth
 
 frame eastleg in depthmax
    set elapsed to 20.0
-   set heading to 90.0
-   set depth to 5.0
-   set speed to 2.5
+   set goal.heading to 90.0
+   set goal.depth to 5.0
+   set goal.speed to 2.5
    go next if elapsed >= goal
 
 frame gpxfixeast
@@ -39,9 +39,9 @@ frame gpxfixeast
 
 frame southleg in depthmax
    set elapsed to 20.0
-   set heading to 180.0
-   set depth to 5.0
-   set speed to 2.5
+   set goal.heading to 180.0
+   set goal.depth to 5.0
+   set goal.speed to 2.5
    go next if elapsed >= goal
 
 frame gpxfixsouth
@@ -50,25 +50,25 @@ frame gpxfixsouth
 
 frame westleg in depthmax
    set elapsed to 20.0
-   set heading to 270.0
-   set depth to 5.0
-   set speed to 2.5
+   set goal.heading to 270.0
+   set goal.depth to 5.0
+   set goal.speed to 2.5
    go next if elapsed >= goal
 
 frame gpxfixwest
    aux gps
    go next if done gps
 
-frame mission_stop  
+frame mission_stop
    bid stop vehiclesim
    bid stop autopilot
    bid stop logger
    bid stop me
 
 frame abort
-   set depth to 0.0
-   set speed to 2.5
-   go mission_stop if depth == 0.0 +- 0.25
+   set goal.depth to 0.0
+   set goal.speed to 2.5
+   go mission_stop if state.depth == 0.0 +- 0.25
 
 framer autopilot be active first autopilot_run
 
@@ -77,7 +77,7 @@ frame autopilot_run
    do controller pid heading
    do controller pid depth
    do controller pid pitch
-   
+
 logger logger to /var/tmp/log/ioflo/
 log state on update
 loggee position state.position heading state.heading depth state.depth speed state.speed
@@ -88,14 +88,14 @@ loggee heading goal.heading depth goal.depth speed goal.speed
 framer gps be aux first gps1
 
    frame gps1
-      set depth to 0.0
-      go next if depth == 0.0 +- 0.25
-      
+      set goal.depth to 0.0
+      go next if state.depth == 0.0 +- 0.25
+
    frame gps2
-      set speed to 0.0
+      set goal.speed to 0.0
       go next if elapsed >= 10.0
-   
+
    frame gps3
       done
-      
+
 

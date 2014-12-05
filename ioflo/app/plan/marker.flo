@@ -12,9 +12,9 @@ framer mission be active first change1
 
 frame start
     set elapsed to 2.0
-    set heading to 0.0
-    set depth to 5.0
-    set speed to 2.5
+    set goal.heading to 0.0
+    set goal.depth to 5.0
+    set goal.speed to 2.5
 
     go abort if elapsed >= goal
 

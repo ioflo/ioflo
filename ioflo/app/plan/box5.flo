@@ -19,15 +19,15 @@ frame vehicle_run
 framer mission be active first leg
 
 frame depthmax
-   go abort if depth >= .max.depth 
+   go abort if state.depth >= .max.depth
 
 frame leg in depthmax
    set elapsed to 20.0
-   set heading from boxer.heading
-   set depth to 5.0
-   set speed to 2.5
-   go gpsfix if elapsed >= goal 
-   go mission_stop if .boxer.leg >= .boxer.nlegs 
+   set goal.heading from boxer.heading
+   set goal.depth to 5.0
+   set goal.speed to 2.5
+   go gpsfix if elapsed >= goal
+   go mission_stop if .boxer.leg >= .boxer.nlegs
 
 frame gpsfix
    aux gps
@@ -37,11 +37,11 @@ frame gpsfix
       inc boxer.leg with 1.0
 
 frame abort
-   set depth to 0.0
-   set speed to 2.5
-   go mission_stop if depth == 0.0 +- 0.25 
+   set goal.depth to 0.0
+   set goal.speed to 2.5
+   go mission_stop if state.depth == 0.0 +- 0.25
 
-frame mission_stop  
+frame mission_stop
    bid stop all
 
 framer autopilot be active first autopilot_run
@@ -51,7 +51,7 @@ frame autopilot_run
    do controller pid heading
    do controller pid depth
    do controller pid pitch
-   
+
 logger logger to /var/tmp/log/ioflo/
 log state   on update
 loggee position state.position heading state.heading depth state.depth speed state.speed

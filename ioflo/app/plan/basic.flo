@@ -6,8 +6,8 @@ init .speed to 20
 framer test be active first start
 
    frame start
-      set depth to 5
-      set speed from .speed
+      set goal.depth to 5
+      set goal.speed from .speed
       put 30 into .heading
       put green 4 blue 30 into .color
       inc .heading to 5

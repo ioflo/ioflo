@@ -47,12 +47,14 @@ framer test be active first test0
       go next if height in .sink == 10 and width in .sink == 15
 
     frame test5 in timeout
-      set dims to height 5 width 10
-      go next if height in .trial >= height in dims and width in .trial >= width in dims
+      set goal.dims to height 5 width 10
+      go next if height in .trial >= height in goal.dims and \
+                 width in .trial >= width in goal.dims
 
     frame test6 in timeout
-      set dims from height width in .trial
-      go next if height in .trial == height in dims and width in .trial == width in dims
+      set goal.dims from height width in .trial
+      go next if height in .trial == height in goal.dims and \
+                 width in .trial == width in goal.dims
 
     frame test7 in timeout
        put 6 into .marked.changed

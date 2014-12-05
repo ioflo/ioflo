@@ -1884,7 +1884,8 @@ class Builder(object):
             else: #basic goals
                 #goal is destination dst
                 dstFields, index = self.parseFields(tokens, index)
-                dstPath, index = self.parseIndirect(tokens, index, variant = 'goal')
+                #dstPath, index = self.parseIndirect(tokens, index, variant = 'goal')
+                dstPath, index = self.parseIndirect(tokens, index)
 
                 #required connective
                 connective = tokens[index]
@@ -2947,7 +2948,7 @@ class Builder(object):
 
         #parse required goal
         direct, goal, goalPath, goalField, index = \
-                self.parseNeedGoal(statePath, stateField, tokens, index)
+                self.parseFramerNeedGoal(statePath, stateField, tokens, index)
 
         #parse optional tolerance
         tolerance, index = self.parseTolerance(tokens, index)
@@ -3589,13 +3590,39 @@ class Builder(object):
            method must be wrapped in appropriate try excepts
         """
         stateField, index = self.parseField(tokens, index)
-        statePath, index = self.parseIndirect(tokens, index, variant = 'state')
+        #statePath, index = self.parseIndirect(tokens, index, variant = 'state')
+        statePath, index = self.parseIndirect(tokens, index)
         return (statePath, stateField, index)
 
     def parseNeedGoal(self, statePath, stateField, tokens, index):
         """Parse required goal
 
            method must be wrapped in appropriate try excepts
+        """
+        goalPath = None #default
+        goalField = None #default
+        direct = False
+
+        goal = tokens[index]
+        #parse required goal
+        try:
+            goal = Convert2StrBoolCoordNum(tokens[index]) #goal is quoted string, boolean, or number
+            index += 1 #eat token
+            direct = True
+
+        except ValueError: #means text is not (quoted string, bool, or number) so indirect
+            goalField, index = self.parseField(tokens, index)
+            #goalPath, index =  self.parseIndirect(tokens, index, variant = 'goal')
+            goalPath, index =  self.parseIndirect(tokens, index)
+
+        return (direct, goal, goalPath, goalField, index)
+
+    def parseFramerNeedGoal(self, statePath, stateField, tokens, index):
+        """
+        Parse required goal for special framer need such as
+           elapsed or recurred
+
+        method must be wrapped in appropriate try excepts
         """
         goalPath = None #default
         goalField = None #default
@@ -3639,7 +3666,8 @@ class Builder(object):
             else: #not 'goal' so parse as indirect
                 #is 'field in' clause present
                 goalField, index = self.parseField(tokens, index)
-                goalPath, index =  self.parseIndirect(tokens, index, variant = 'goal')
+                #goalPath, index =  self.parseIndirect(tokens, index, variant = 'goal')
+                goalPath, index =  self.parseIndirect(tokens, index)
 
         return (direct, goal, goalPath, goalField, index)
 
