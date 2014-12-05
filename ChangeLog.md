@@ -7,7 +7,11 @@ CHANGE LOG
 ---------
 v1.1
 
-Added actor relative addressing
+Added framer schedule type of moot, when moot, house builder does not call
+   resolveLinks on the framer. When moot the framer
+   is meant to be cloned. ResolveLinks will be called on the clones
+
+Added actor, main, and me relative addressing with of
 Refactored so all share resolution happens at resolve time not parse time
 Refactored sl all frame and framer resolution happens at resolve time not parse time
 Deprecated current server command as will be changing syntax significantly

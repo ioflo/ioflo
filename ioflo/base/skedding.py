@@ -334,7 +334,6 @@ class Skedder(object):
                 house.store.expose(values=(console._verbosity >= console.Wordage.terse))
 
 
-
 def Test(real = False, verbose = False):
     """Module Common self test
 
