@@ -3640,23 +3640,20 @@ class Builder(object):
                 index += 1 #eat token
 
                 #now create goal path as inferred from state path
-                #check if statePath can be interpreted  as state relative
+                #check if statePath can be interpreted  as  framer state relative
                 chunks = statePath.strip('.').split('.')
                 try:
-                    if chunks[0] == 'state': #root relative
-                        chunks[0] = 'goal'
-
-                    elif ((chunks[0] == 'framer') or (chunks[0] == 'frame')) and \
-                         (chunks[2] == 'state'): #framer or frame relative .frame.me.state
-                        chunks[2] = 'goal' #becomes .frame.me.goal
+                    if ((chunks[0] == 'framer') and
+                         (chunks[2] == 'state')): #framer relative
+                        chunks[2] = 'goal' # .framer.me.state becomes .framer.me.goal
 
                     else:
-                        msg = "ParseError: Goal = 'goal' without state variant path '%s'" %\
+                        msg = "ParseError: Goal = 'goal' without framer state variant path '%s'" %\
                             (statePath)
                         raise excepting.ParseError(msg, tokens, index)
 
                 except IndexError:
-                    msg = "ParseError: Goal = 'goal' without state variant path '%s'" %\
+                    msg = "ParseError: Goal = 'goal' without framer state variant path '%s'" %\
                         (statePath)
                     raise excepting.ParseError(msg, tokens, index)
 
