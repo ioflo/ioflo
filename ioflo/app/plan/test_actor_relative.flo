@@ -39,4 +39,5 @@ framer test be active first start
 
   frame abort
     print "Failure"
+    put "Actor Relative" into meta.failure
     bid stop all

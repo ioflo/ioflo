@@ -68,4 +68,5 @@ framer test be active first test0
 
   frame abort
     print "Failure"
+    put "Resolve Do" into meta.failure
     bid stop all

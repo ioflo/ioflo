@@ -3,7 +3,7 @@
 # This is a test of the line continuation \
 # how does this work
 
-house meta
+house test_slave
 
 init meta.test to value "test"
 init meta.spot to when "now" where "here"

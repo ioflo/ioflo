@@ -27,14 +27,28 @@ def getPlanFiles(planDirPath=PLAN_DIR_PATH):
 
 def main():
     """ Run example scripts"""
+    failedCount = 0
     plans = getPlanFiles()
     for plan in plans:
         name, ext = os.path.splitext(os.path.basename(plan))
-        ioflo.app.run.run(  name=name,
+        skeddar = ioflo.app.run.run(  name=name,
                             filepath=plan,
                             period=0.0625,
                             verbose=1,
                             real=False,)
+
+        print("Plan {0}\n  Skeddar {1}\n".format(plan, skeddar.name))
+        failed = False
+        for house in skeddar.houses:
+            failure = house.metas['failure'].value
+            if failure:
+                failed = True
+                print("**** Failed in House = {0}. "
+                      "Failure = {1}.\n".format(house.name, failure))
+        if failed:
+            failedCount += 1
+
+    print("{0} failed out of {1}.\n".format(failedCount, len(plans)))
 
 if __name__ == '__main__':
     main()

@@ -147,6 +147,8 @@ class Skedder(object):
                 ("behaviors", "meta.behaviors", odict(value=self.behaviors)),
                 ("credentials", "meta.credentials",
                      odict([('username', self.username), ('password', self.password)])),
+                ("failure", "meta.failure", odict(value="")),
+                ("framers", "meta.framers", odict()),
             ]
         if metas:
             self.metas.extend(metas)
