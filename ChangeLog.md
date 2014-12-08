@@ -7,14 +7,18 @@ CHANGE LOG
 ---------
 v1.1
 
+
+Added support for inline relative addressing syntax and removed goal and state
+   varients of relative addressing as these are imcompatible
+   special cases of recurred and elapsed still supported
 Support for ioflo has test run using reporting via house metas
 Added framer schedule type of moot, when moot, house builder does not call
    resolveLinks on the framer. When moot the framer
    is meant to be cloned. ResolveLinks will be called on the clones
 
-Added actor, main, and me relative addressing with of
+Added actor, main, and me relative addressing in "of" clauses
 Refactored so all share resolution happens at resolve time not parse time
-Refactored sl all frame and framer resolution happens at resolve time not parse time
+Refactored so all frame and framer resolution happens at resolve time not parse time
 Deprecated current server command as will be changing syntax significantly
 Got rid of tasker command as only use subclasses Framer, Logger, Server
 Refactor and clean up code
