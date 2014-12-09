@@ -7,6 +7,11 @@ CHANGE LOG
 ---------
 v1.1
 
+Added support for cloning auxiliary framers. This is provided via the
+   aux framer as clonename
+form of the aux verb
+
+Only framers whose schedule kind is moot may be cloned.
 
 Added support for inline relative addressing syntax and removed goal and state
    varients of relative addressing as these are imcompatible

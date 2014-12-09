@@ -9,6 +9,7 @@ framer mission be active first clone1
       frame clone1 in start
          print clone1
          put 0 into counter of framer
+         put 1 into limit of frame
          aux orig1 as clone1
          go next if done clone1
 
@@ -33,13 +34,13 @@ framer orig1 be moot first cloneA
 
    frame cloneA
       print cloneA
-      put 0 into counter of framer
-      go next
+      put 2 into counter of framer
+      go next if counter of framer main == 0
 
    frame cloneB
       print cloneB
       inc counter of framer with 1
-      go next
+      go next if limit of frame main  == 1
 
    frame cloneC
       done

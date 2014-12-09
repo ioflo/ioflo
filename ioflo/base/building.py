@@ -3402,8 +3402,7 @@ class Builder(object):
             #if 'of relation' clause then allows relative but no
             #implied relation clauses
             relation, index = self.parseRelation(tokens, index)
-
-            path = relation + path  # dotpath starts with '.' no need to add
+            # dotpath starts with '.' no need to add
 
         elif REO_RelPath.match(path): #valid relative path segment
             #get optional relation clause, default is root
@@ -3419,28 +3418,43 @@ class Builder(object):
                                " with relation '{1}'".format(path, relations))
                         raise excepting.ParseError(msg, tokens, index)
 
-                relation += '.' # add dot since not dotpath
-
             else: # prepend missing relations if partial relation
                 if chunks[0] == 'actor':
-                    relation = 'framer.me.frame.me.'
+                    if len(chunks) < 3: # actor name or share name missing
+                        msg = ("ParseError: Incomplete path '{0}'. Actor name"
+                               " or Share name missing given inline actor "
+                               "relation".format(path))
+                        raise excepting.ParseError(msg, tokens, index)
+                    relation = 'framer.me.frame.me'
                 elif chunks[0] == 'frame':
-                    relation = 'framer.me.'
+                    if len(chunks) < 3: # frame name or share name missing
+                        msg = ("ParseError: Incomplete path '{0}'. Frame name"
+                               " or Share name missing given inline frame "
+                               "relation".format(path))
+                        raise excepting.ParseError(msg, tokens, index)
+                    framername = 'me'
+                    if chunks[1] == 'main':
+                        framername = 'main'
+                    relation = 'framer.' + framername
 
-            path = relation + path
+            if relation:
+                relation += '.' # add dot since not dotpath
 
         else: #invalid path format
             msg = "ParseError: Invalid path '{0}'".format(path)
             raise excepting.ParseError(msg, tokens, index)
 
+        path = relation + path
+
         return (path, index)
 
-    def parseRelation(self, tokens, index):
+    def parseRelation(self, tokens, index, framername=''):
         """Parse optional relation clause of relative data address
 
            parms:
               tokens = list of tokens for command
               index = current index into tokens
+              framername = default framer name if not provided such as 'main'
 
            returns:
               relation
@@ -3499,7 +3513,7 @@ class Builder(object):
                         name = ''
 
                 if not name: #no name given so substitute default
-                    name = 'me'
+                    name = framername or 'me'
 
                 relation += '.' + name  #append name
 
@@ -3518,12 +3532,18 @@ class Builder(object):
                         name = ''
 
                 if not name: #no name given so substitute default
-                    name = 'me'  # self.currentFrame.name
+                    name = 'me'
 
                 relation += '.' + name  #append name
 
                 # parse optional of framer relation
-                framerRelation, index = self.parseRelation(tokens, index)
+                framername = ''
+                if name == 'main': # default framer for frame main is framer main
+                    framername = 'main'
+
+                framerRelation, index = self.parseRelation(tokens,
+                                                           index,
+                                                           framername=framername)
 
                 # check if spurious, of frame or, of actor
                 if (framerRelation and
@@ -3537,7 +3557,8 @@ class Builder(object):
                     relation = framerRelation + '.' + relation
 
                 else: #use default framer
-                    relation = ('framer.' + 'me' + '.' + relation)
+                    framername = framername or 'me'
+                    relation = ('framer.' + framername + '.' + relation)
 
             if relation in ['actor']: #may be optional name of actor
                 name = '' #default name is empty
@@ -3558,13 +3579,12 @@ class Builder(object):
 
                 relation += '.' + name  #append name
 
-                # parse optional of frame relation
+                # parse optional of frame and hence framer relation
                 frameRelation, index = self.parseRelation(tokens, index)
 
                 # check if spurious, of framer or, of actor
                 if (frameRelation and
-                        ('.framer.' in frameRelation or
-                         '.actor.' in frameRelation )):
+                         '.actor.' in frameRelation ):
                     msg = "ParseError: Invalid relation '%s' following actor relation" %\
                                                     (frameRelation)
                     raise excepting.ParseError(msg, tokens, index)
@@ -3572,25 +3592,8 @@ class Builder(object):
                 if frameRelation:
                     relation = frameRelation + '.' + relation
 
-                else: #use default frame
-                    relation = ('frame.' + 'me' + '.' + relation)
-
-                # parse optional of framer relation
-                framerRelation, index = self.parseRelation(tokens, index)
-
-                # check if spurious, of frame or, of actor
-                if (framerRelation and
-                        ('.frame.' in framerRelation or
-                         '.actor.' in framerRelation )):
-                    msg = "ParseError: Invalid relation '%s' following frame relation" %\
-                                                    (framerRelation)
-                    raise excepting.ParseError(msg, tokens, index)
-
-                if framerRelation:
-                    relation = framerRelation + '.' + relation
-
-                else: #use default framer
-                    relation = ('framer.' + 'me' + '.' + relation)
+                else: #use default frame and framer
+                    relation = ('framer.' + 'me.' + 'frame.' + 'me' + '.' + relation)
 
         return (relation, index)
 
