@@ -820,26 +820,24 @@ class Transiter(Interrupter):
                                                     human=self.act.human,
                                                     count=self.act.count)
 
-        if not isinstance(far, framing.Frame):
-            if far == 'next':
-                if not isinstance(near.next_, framing.Frame):
-                    raise excepting.ResolveError("ResolveError: Bad next frame",
-                                                 near.name, near.next_,
-                                                 self.act.human, self.act.count)
-                far = near.next_
 
-            elif far == 'me':
-                far = near
-
-            elif far in framing.Frame.Names:
-                far = framing.Frame.Names[far]
-
-            else:
-                raise excepting.ResolveError("ResolveError: Bad far link",
-                                             near.name, far,
+        if far == 'next':
+            if not isinstance(near.next_, framing.Frame):
+                raise excepting.ResolveError("ResolveError: Bad next frame",
+                                             near.name, near.next_,
                                              self.act.human, self.act.count)
+            far = near.next_
 
-            parms['far'] = far
+        elif far == 'me':
+            far = near
+
+        far = framing.resolveFrame(far,
+                                   who=self.name,
+                                   desc='far',
+                                   human=self.act.human,
+                                   count=self.act.count)
+
+        parms['far'] = far
 
         for act in needs:
             act.act = self.act
