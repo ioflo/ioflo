@@ -1,16 +1,22 @@
 house cloner
 
-framer mission be active first clone
+framer mission be active first clone1
 
    frame start
       print start
       go abort if elapsed > 3
 
-      frame clone in start
-         print clone
+      frame clone1 in start
+         print clone1
          put 0 into counter of framer
-         aux original as clone
-         go next if done clone
+         aux orig1 as clone1
+         go next if done clone1
+
+      frame clone2 in start
+         print clone2
+         put 0 into counter of framer
+         aux orig2 as clone2
+         go next if done clone2
 
    frame done
        print "Success"
@@ -23,18 +29,48 @@ framer mission be active first clone
 
 
 
-framer original be moot first clone1
+framer orig1 be moot first cloneA
 
-   frame clone1
-      print clone1
+   frame cloneA
+      print cloneA
       put 0 into counter of framer
       go next
 
-   frame clone2
-      print clone2
+   frame cloneB
+      print cloneB
       inc counter of framer with 1
       go next
 
-   frame clone3
+   frame cloneC
       done
 
+
+framer orig2 be moot first cloneR
+
+   frame cloneR
+      print cloneR
+      aux orig3 as clone3
+      go next if done clone3
+
+   frame cloneS
+      print cloneS
+      inc counter of framer with 1
+      go next
+
+   frame cloneT
+      done
+
+framer orig3 be moot first cloneX
+
+   frame cloneX
+      print cloneX
+      put 0 into counter of framer
+      go next
+
+   frame cloneY
+      print cloneY
+      inc counter of framer with 1
+      go next
+
+   frame cloneZ
+      done
