@@ -98,12 +98,11 @@ class Framer(tasking.Tasker):
         self.frameNames = odict() #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
 
-    def clone(self, index, clones):
-        """ Return clone of self with name derived from index
-            Assumes that Framer Registry as been assigned to self.store.house
+    def clone(self, name, period=0.0, schedule=AUX):
+        """ Return clone of self named name
 
         """
-        name = "{0}_{1:d}".format(self.name, index)
+        self.store.assignRegistries() # ensure Framer.names is houses registry
 
         if name and not REO_IdentPub.match(name):
             msg = "CloneError: Invalid framer name '{0}'.".format(name)
@@ -113,26 +112,20 @@ class Framer(tasking.Tasker):
             msg = "CloneError: Framer '{0}' already exists.".format(name)
             raise excepting.CloneError(msg)
 
-        clone = Framer(name=name, store=self.store, period=0.0)
-        console.profuse("     Cloning framer {0} to {1}\n".format(self.name, clone.name))
-        clone.schedule = AUX
-        clone.first = self.first.name # resolve later
-        clones[self.name] = (self, clone)
+        clone = Framer(name=name,
+                       store=self.store,
+                       period=period,
+                       schedule=schedule)
+        console.profuse("     Cloning Framer original {0} to {1}\n"
+                        "".format(self.name, clone.name))
+        clone.schedule = schedule
+        clone.first = self.first # resolve later
 
+        clone.assignFrameRegistry() #Frame.names is cloned framer registry
         for frame in self.frameNames.values():
-            for aux in frame.auxes:
-                aux.clone(index, clones) # changes clones in place
+            frame.clone(framer=clone)
 
         return clone
-
-    def cloneFrames(self, clone, clones):
-        """ Return clone of self with name derived from index
-            Assumes that Framer Registry as been assigned to self.store.house
-
-        """
-        clone.assignFrameRegistry()
-        for frame in self.frameNames.values():
-            frame.clone(framer=clone, clones=clones) #creates cloned frames in cloned framer registry
 
     def assignFrameRegistry(self):
         """Point Frame class name registry dict and counter to .frameNames
@@ -696,62 +689,59 @@ class Frame(registering.StoriedRegistry):
 
         self.auxes = [] #list of auxilary framers for this frame
 
-    def clone(self, framer, clones):
+    def clone(self, framer):
         """ Return clone of self by creating new frame in framer and by
             frame links, acts, and auxes
-            clones is dict with items each key is name of orignal framer and value
-                 is duple of (original, clone) framer references
 
-            Assumes that the Frame Registry is pointing to framer which is a clone
-            of this Frame's Framer so all new Frames will be in the cloned registry.
+            Assumes that the Frame Registry is pointing to framer
+            which is a clone of this Frame's Framer
+            so all new Frames will be in the cloned registry.
 
         """
-        clone = Frame(  name=self.name,
-                        store=self.store,
-                        framer=framer)
+        clone = Frame(name=self.name,
+                      store=self.store,
+                      framer=framer)
         console.profuse("     Cloning frame {0} into framer {1}\n".format(
                                clone.name, framer.name))
 
+        for aux in self.auxes:
+            clone.addAux(aux)
+
         if self.over:
             if isinstance(self.over, Frame):
-                clone.over = self.over.name
-            else:
-                clone.over = self.over
+                msg = ("CloneError: Attempting to clone resolved over frame"
+                      "  '{0}'.".format(self.over.name))
+                raise excepting.CloneError(msg)
+            clone.over = self.over
+
         if self.next_:
             if isinstance(self.next_, Frame):
-                clone.next_ = self.next_.name
-            else:
-                clone.next_ = self.next_
+                msg = ("CloneError: Attempting to clone resolved next frame"
+                      "  '{0}'.".format(self.next_.name))
+                raise excepting.CloneError(msg)
+            clone.next_ = self.next_
 
         for under in self.unders:
             if isinstance(under, Frame):
-                clone.unders.append(under.name)
-            else:
-                clone.unders.append(under)
-
-        for i, aux in enumerate(self.auxes): #replace each aux with its clone name
-            if isinstance(aux, Framer):
-                if aux.name in clones:
-                    self.auxes[i] = clones[aux.name][1].name
-            else: # assume namestring
-                if aux in clones:
-                    self.auxes[i] = clones[aux][1].name
+                msg = ("CloneError: Attempting to clone resolved under frame"
+                      "  '{0}'.".format(under.name))
+                raise excepting.CloneError(msg)
+            clone.unders.append(under)
 
         for act in self.beacts:
-            clone.addBeact(act.clone(clones))
+            clone.addBeact(act.clone()) # sets context and frame name
         for act in self.preacts:
-            clone.addPreact(act.clone(clones))
+            clone.addPreact(act.clone())
         for act in self.enacts:
-            clone.addEnact(act.clone(clones))
+            clone.addEnact(act.clone())
         for act in self.renacts:
-            clone.addRenact(act.clone(clones))
+            clone.addRenact(act.clone())
         for act in self.reacts:
-            clone.addReact(act.clone(clones))
+            clone.addReact(act.clone())
         for act in self.exacts:
-            clone.addExact(act.clone(clones))
+            clone.addExact(act.clone())
         for act in self.rexacts:
-            clone.addRexact(act.clone(clones))
-
+            clone.addRexact(act.clone())
 
         return clone
 
@@ -1238,6 +1228,9 @@ def resolveFramer(framer, who='', desc='framer', contexts=None,
         such as framer or frame or actor
         desc is string description of framer link such as 'aux' or 'framer'
         contexts is list of allowed schedule contexts, None or empty means any.
+        human is human readable version of associated declaration
+        cout is line number of associated declaration
+
         Framer.Names registry must already be setup
     """
     if not isinstance(framer, Framer): # not instance so name
@@ -1258,8 +1251,10 @@ def resolveFramer(framer, who='', desc='framer', contexts=None,
                                          count)
         if contexts and framer.schedule not in contexts:
             raise excepting.ResolveError("ResolveError: Bad {0} link not scheduled"
-                                         " as one of {1}".format(desc, contexts),
-                                         framer,
+                                         " as one of {1}".format(desc,
+                                            [ScheduleNames.get(context, context)
+                                                 for context in contexts]),
+                                         framer.name,
                                          who,
                                          human,
                                          count)

@@ -48,9 +48,9 @@ frame mission_stop
 framer autopilot be active first autopilot_run
 
 frame autopilot_run
-   do controller pid speed with fake 1
+   do controller pid speed
    do controller pid heading
-   do controller pid depth from value in .max.depth
+   do controller pid depth
    do controller pid pitch
 
 logger logger to /var/tmp/log/ioflo/

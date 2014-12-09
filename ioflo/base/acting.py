@@ -55,11 +55,11 @@ class Act(object):
             .human = human friendly version of action declaration
             .count = line count in floscript of action declaration
         """
-        super(Act,self).__init__()
+        super(Act,self).__init__(**kwa) # in case of MRO
 
         self.frame = frame
         self.context = context
-        self.act = act
+        self.act = act # should normally not be set until resolve time
         self.actor = actor #callable instance performs action
         self.registrar = registrar or Actor
         self.parms = parms if parms is not None else odict() # parms must always be not None
@@ -68,6 +68,38 @@ class Act(object):
         self.prerefs = prerefs if prerefs else None # store None if empty dict
         self.human = human  # human readable version of FloScript declaration
         self.count = count  # line number or count of FloScript declaration
+
+    def clone(self):
+        """ Return clone of self in support of framer cloning
+            clones is dict whose items keys are original framer names
+            and values are duples of (original,clone) framer references
+        """
+        if isinstance(self.frame, Frame):
+            msg = ("CloneError: Attempting to clone resolved frame link"
+                "  '{0}'.".format(self.frame.name))
+            raise excepting.CloneError(msg)
+
+        if self.act:
+            msg = ("CloneError: Attempting to clone resolved act link"
+                   "  '{0}'.".format(self.act))
+            raise excepting.CloneError(msg)
+
+        if isinstance(self.actor, Actor):
+            msg = ("CloneError: Attempting to clone resolved actor"
+                "  '{0}'.".format(self.actor.name))
+            raise excepting.CloneError(msg)
+
+        clone = Act(act=self.act,
+                    actor=self.actor,
+                    registrar=self.registrar,
+                    parms=copy.copy(self.parms),
+                    inits=copy.copy(self.inits),
+                    ioinits=copy.copy(self.ioinits),
+                    prerefs=copy.copy(self.prerefs),
+                    human=self.human,
+                    count=self.count)
+        # frame and context for Act set when add Act to frame later
+        return clone
 
     def __call__(self): #make Act instance callable as function
         """ Define act as callable object """
@@ -295,23 +327,6 @@ class Act(object):
 
         return ipath
 
-    def clone(self, clones):
-        """ Return clone of self in support of framer cloning
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        clone = Act(actor=self.actor.clone(), parms=copy.copy(self.parms))
-        clone.cloneParms(clones)
-        return clone
-
-    def cloneParms(self, clones):
-        """ Fixup parms in actor for framer cloning.
-            clones is dict whose items keys are original framer names
-            and values are are duples of (original,clone) framer references
-        """
-        parms = self.actor.cloneParms(parms=self.parms, clones=clones)
-        self.parms.update(parms)
-
 class Nact(Act):
     """ Negating Act used for actor needs to give Not Need
     """
@@ -442,6 +457,8 @@ class Actor(object):
                 .store = reference to shared data Store
                 .act = reference to containing Act
         """
+        super(Actor,self).__init__(**kwa) # in case of MRO
+
         self.name = name
         if store is not None:
             if  not isinstance(store, storing.Store):
@@ -759,58 +776,6 @@ class Actor(object):
                                                      self.act.human,
                                                      self.act.count)
 
-
-    def clone(self):
-        """ Clone self in support of framer cloning.
-            Actors that are fully parametrized work as singletons so just return
-            self. Non fully parametrized actor classes need to override to make
-            copy of instance
-        """
-        return self
-
-    def cloneParms(self, parms, clones, **kwa):
-        """ Returns parms fixed up for framer cloning. This includes:
-            Reverting any Frame links to name strings,
-            Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from clones
-            Replacing any parms that are acts, in this case the needs with clones.
-
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        parms = self.rerefShares(parms, clones)
-        return parms
-
-    def rerefShares(self, parms, clones):
-        """ Returns parms fixed up for framer cloning.
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-
-            Generates oldPrefix and newPrefix from the original and new framer names
-            Replaces refs to shares whose path starts with oldPrefix
-                    with refs to new shares whose path starts with newPrefix.
-            The rest of the path stays the same.
-            Create new share if needed.
-            Deep copy the contents of the share.
-            This is to support framer cloning so typically the path prefixes
-            are framer relative paths.
-        """
-        for key, val in parms.items():
-            if isinstance(val, storing.Share):
-                for original, clone in clones.values():
-                    oldPrefix = "framer.{0}.".format(original.name)
-                    newPrefix = "framer.{0}.".format(clone.name)
-                    if val.name.startswith(oldPrefix):
-                        newPath = val.name.replace(oldPrefix, newPrefix, 1)
-                        newShare = self.store.create(newPath)
-                        stuff = {}
-                        for k, v in val.items():
-                            stuff[k] = copy.deepcopy(v)
-                        newShare.create(stuff)
-                        parms[key] = newShare
-
-        return parms
-
 class Interrupter(Actor):
     """Interrupter Actor Patron Registry Class
        Interrupter is a base clase for all actor classes that interrupt normal precur
@@ -925,35 +890,6 @@ class Transiter(Interrupter):
 
         return parms
 
-    def cloneParms(self, parms, clones, **kw):
-        """ Returns parms fixed up for framing cloning. This includes:
-            Reverting any Frame links to name strings,
-            Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from clones
-            Replacing any parms that are acts, in this case the needs with clones.
-
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        parms = super(Transiter,self).cloneParms(parms, clones, **kw)
-
-        needs = parms.get('needs')
-        near = parms.get('near')
-        far =  parms.get('far')
-
-        if needs:
-            needClones = []
-            for act in needs:
-                needClones.append(act.clone())
-            parms['needs'] = needClones
-
-        if isinstance(near, framing.Frame):
-            parms['near'] = near.name # revert to name
-
-        if isinstance(far, framing.Frame):
-            parms['far'] = far.name # revert to name
-
-        return parms
 
 class Suspender(Interrupter):
     """Suspender Interrupter Actor Patron Registry Class
@@ -1071,42 +1007,6 @@ class Suspender(Interrupter):
 
         return parms
 
-    def cloneParms(self, parms, clones, **kw):
-        """ Returns parms fixed up for framing cloning. This includes:
-            Reverting any Frame links to name strings,
-            Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from clones
-            Replacing any parms that are acts, in this case the needs with clones.
-
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        parms = super(Suspender,self).cloneParms(parms, clones, **kw)
-
-        needs = parms.get('needs')
-        main = parms.get('main')
-        aux = parms.get('aux')
-
-        if needs:
-            needClones = []
-            for act in needs:
-                needClones.append(act.clone())
-            parms['needs'] = needClones
-
-        if isinstance(main, framing.Frame):
-            parms['main'] = main.name # revert to name
-
-        if isinstance(aux, framing.Framer):
-            if aux.name in clones:
-                parms['aux'] = clones[aux.name][1].name #change to clone name
-            else:
-                parms['aux'] = aux.name # revert to name
-        elif aux: # assume namestring
-            if aux in clones:
-                parms['aux'] = clones[aux][1].name # change to clone name
-
-        return parms
-
 class Printer(Actor):
     """Printor Actor Patron Registry Class
 
@@ -1125,25 +1025,7 @@ class Printer(Actor):
 
 class Marker(Actor):
     """ Base class that sets up mark in provided share reference"""
-
-    def cloneParms(self, parms, clones, **kw):
-        """ Returns parms fixed up for framing cloning. This includes:
-            Reverting any Frame links to name strings,
-            Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from clones
-            Replacing any parms that are acts with clones.
-
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        parms = super(Marker,self).cloneParms(parms, clones, **kw)
-
-        share = parms.get('share')
-        name = parms.get('name')
-
-        #don't need to do anything yet since rerefShares will reref
-
-        return parms
+    pass
 
 class MarkerUpdate(Marker):
     """ MarkerUpdate Class

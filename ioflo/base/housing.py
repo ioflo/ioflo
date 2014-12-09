@@ -70,6 +70,8 @@ class House(registering.StoriedRegistry):
           .slaves = list of slave taskers in house subset of .taskers
           .moots = list of moot framers in house subset of .taskers
 
+          .dyads = list of tuples for cloning (original, clone, human, count)
+
           .names = dictonary of names from each name registry
           .counters = dictionary of counters from each name registry
 
@@ -95,6 +97,8 @@ class House(registering.StoriedRegistry):
         self.slaves = [] #list of slave taskers in house
         self.moots = [] #list of moot framers in house
 
+        self.dyads = [] # list of tuples of clone pair names (original, clone, human, count)
+
         self.names = odict() #houses dict of registry Names
         self.counters = odict() #houses dict of registry Name Counters
 
@@ -118,6 +122,7 @@ class House(registering.StoriedRegistry):
     def assignRegistries(self):
         """Point class Names registries dicts and counters to local version in house
            Subsequent creation of instances will then be registered locally
+           Idempotent operation
         """
         for key, value in Registries.items():
             value.Names = self.names[key]
@@ -130,14 +135,40 @@ class House(registering.StoriedRegistry):
         """
         console.terse("   Resolving House '{0}' ...\n".format(self.name))
         self.assignRegistries()
-
+        self.resolveDyads()
         for tasker in [tasker for tasker in self.taskers if tasker not in self.moots]:
             tasker.resolve()
+
+    def resolveDyads(self):
+        """ resolves clone dyad  tuples of form (original, clone, human, count)
+            creates clone and adds to taskables
+            resolution looks up name string in appropriate registry and replaces
+            name string with link to object
+        """
+        console.terse("     Resolving dyads for House '{0}' ...\n".format(self.name))
+
+        for original, clone, human, count in self.dyads:
+            console.concise("       Cloning original '{0}' as '{1}'\n"
+                            "".format(original, clone))
+            original = framing.resolveFramer(original,
+                                             who=self.name,
+                                             desc='original',
+                                             contexts=[MOOT],
+                                             human=human,
+                                             count=count)
+            clone = original.clone(name=clone, schedule=AUX)
+            self.taskers.append(clone)
+            self.framers.append(clone)
+            self.auxes.append(clone)
+
+            console.profuse("     Cloned original '{0}' as '{1}'\n".format(
+                   original.name, clone.name))
+
 
     def traceOutlines(self):
         """ trace and assign outlines for each frame
         """
-        console.terse("   Tracing outlines for house {0}\n".format(self.name))
+        console.terse("   Tracing outlines for House {0}\n".format(self.name))
         self.assignRegistries()
 
         for framer in self.framers:
@@ -161,7 +192,25 @@ class House(registering.StoriedRegistry):
         console.terse("Framers in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.framers])))
 
-    def cloneFramer(self, framer, index):
+    def cloneFramer(self, original, name):
+        """
+        Create a clone named name of Framer original and return
+        """
+        self.assignRegistries()
+
+        clone.resolveLinks() # resolve links in clone
+        clone.traceOutlines()  # traceoutlines in clone
+        self.taskers.append(clone)
+        self.framers.append(clone)
+        self.auxes.append(clone)
+
+        console.profuse("     Cloned framer '{0}' as '{1}' in House "
+                "'{2}'\n".format(framer.name, clone.name, self.name))
+
+        return clonee # return primary clone of framer
+
+
+    def cloneFramerOld(self, framer, index):
         """ Create a clone of framer framer with name generated from index
                 as aux framer and return
         """

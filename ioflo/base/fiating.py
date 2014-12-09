@@ -45,31 +45,6 @@ class Fiat(acting.Actor):
                                                  count=self.act.count)
         return parms
 
-    def cloneParms(self, parms, clones, **kw):
-        """ Returns parms fixed up for framing cloning. This includes:
-            Reverting any Frame links to name strings,
-            Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from clones
-            Replacing any parms that are acts with clones.
-
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        parms = super(Fiat,self).cloneParms(parms, clones, **kw)
-
-        tasker = parms.get('tasker')
-
-        if isinstance(tasker, tasking.Tasker):
-            if tasker.name in clones:
-                parms['tasker'] = clones[tasker.name][1].name
-            else:
-                parms['tasker'] = tasker.name # revert to name
-        elif tasker: # assume namestring
-            if tasker in clones:
-                parms['tasker'] = clones[tasker][1].name
-
-        return parms
-
 class FiatReady(Fiat):
     """FiatReady Fiat
 

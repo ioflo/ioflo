@@ -223,7 +223,7 @@ def resolveTasker(tasker, who='', desc='tasker', contexts=None, human='', count=
         if contexts and tasker.schedule not in contexts:
             raise excepting.ResolveError("ResolveError: Bad {0} link not scheduled"
                                          " as one of {1}".format(desc, contexts),
-                                         tasker,
+                                         tasker.name,
                                          who,
                                          human,
                                          count)

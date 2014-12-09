@@ -64,34 +64,6 @@ class Want(acting.Actor):
 
         return parms
 
-    def cloneParms(self, parms, clones, **kw):
-        """ Returns parms fixed up for framing cloning. This includes:
-            Reverting any Frame links to name strings,
-            Reverting non cloned Framer links into name strings
-            Replacing any cloned framer links with the cloned name strings from clones
-            Replacing any parms that are acts with clones.
-
-            clones is dict whose items keys are original framer names
-            and values are duples of (original,clone) framer references
-        """
-        parms = super(Want, self).cloneParms(parms, clones, **kw)
-        taskers = parms.get('taskers')
-        links = []
-        for tasker in taskers:
-            if isinstance(tasker, tasking.Tasker):
-                if tasker.name in clones: # replace name with clone.name
-                    links.append(clones[tasker.name][1].name)
-                else:
-                    links.append(tasker.name) # revert to name
-            elif tasker in clones: # replace name with clone.name
-                links.append(clones[tasker][1].name)
-            else:
-                links.append(tasker)
-
-        parms['taskers'] = links
-
-        return parms
-
 class WantStart(Want):
     """WantStart Want
        bid start tasker [taskers ...]

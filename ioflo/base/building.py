@@ -1298,45 +1298,52 @@ class Builder(object):
               aux framername
 
            Cloned Auxiliary:
-              aux framername as cloneauxname
+              aux framername as clonedauxname
 
            Conditional Auxiliary:
-              aux framername [as cloneauxname] if [not] need
-              aux framername [as cloneauxname] if [not] need [and [not] need ...]
+              aux framername [as clonedauxname] if [not] need
+              aux framername [as clonedauxname] if [not] need [and [not] need ...]
 
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
         try:
             needs = []
-            aux = None
+            aux = None #original
             connective = None
+            clone = None
 
             aux = tokens[index]
             index +=1 #eat token
 
             self.verifyName(aux, command, tokens, index)
 
-            if index < len(tokens): #check for optional if connective
+            while index < len(tokens): #options
                 connective = tokens[index]
-                if connective not in ['if']: #invalid connective
-                    msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
-                        (command, connective)
-                    raise excepting.ParseError(msg, tokens, index)
-                index += 1 #otherwise eat token
+                index += 1
 
-                while (index < len(tokens)):
-                    act, index = self.makeNeed(tokens, index)
-                    if not act:
-                        return False # something wrong do not know what
-                    needs.append(act)
-                    if index < len(tokens):
-                        connective = tokens[index]
-                        if connective not in ['and']:
-                            msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
-                                                    (command, connective)
-                            raise excepting.ParseError(msg, tokens, index)
-                        index += 1 #otherwise eat token
+                if connective == 'as':
+                    clone = tokens[index]
+                    index += 1
+
+                elif connective == 'if':
+                    while (index < len(tokens)):
+                        act, index = self.makeNeed(tokens, index)
+                        if not act:
+                            return False # something wrong do not know what
+                        needs.append(act)
+                        if index < len(tokens):
+                            connective = tokens[index]
+                            if connective not in ['and']:
+                                msg = "ParseError: Building verb '%s'. Bad connective '%s'" % \
+                                                        (command, connective)
+                                raise excepting.ParseError(msg, tokens, index)
+                            index += 1 #otherwise eat token
+
+                else:
+                    msg = ("Error building {0}. Invalid connective"
+                          " '{1}'.".format(command, connective))
+                    raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
@@ -1346,7 +1353,15 @@ class Builder(object):
             msg = "Error building %s. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
-        if connective: #conditional auxiliary suspender preact
+        if clone: # add dyad (orignal, clone, human, count) to be resolved
+            self.currentHouse.dyads.append((aux,
+                                            clone,
+                                            self.currentHuman,
+                                            self.currentCount))
+            #aux = clone # assign aux to clone as original aux is to be cloned
+            pass
+
+        if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later
             parms = dict(needs = needs, main = self.currentFrame, aux = aux, human = human)
@@ -1380,9 +1395,12 @@ class Builder(object):
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
-        if not self.currentFramer.schedule in [AUX,  SLAVE]:
-            msg = "Error building %s. Framer is '%s' not auxiliary or slave." %\
-                    (command, self.currentFramer.schedule)
+        if not self.currentFramer.schedule in [AUX, SLAVE, MOOT]:
+            msg = ("Error building {0}. Framer schedule is '{1}' not one of"
+                   " '{2}'.".format(command,
+                                   ScheduleNames.get(self.currentFramer.schedule,
+                                                     self.currentFramer.schedule),
+                                   ScheduleValues.keys()))
             raise excepting.ParseError(msg, tokens, index)
 
 
@@ -2186,6 +2204,11 @@ class Builder(object):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['inits'][srcPath] = srcFields
+
+                else:
+                    msg = ("Error building {0}. Invalid connective"
+                          " '{1}'.".format(command, connective))
+                    raise excepting.ParseError(msg, tokens, index)
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
