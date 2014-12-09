@@ -10,7 +10,7 @@ framer mission be active first clone
          print clone
          put 0 into counter of framer
          aux original as clone
-         go next
+         go next if done clone
 
    frame done
        print "Success"

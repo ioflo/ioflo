@@ -1406,20 +1406,11 @@ class Builder(object):
 
         try:
             kind = 'Done'
-            framer = self.currentFramer
-            actorName = 'Complete' + kind.capitalize()
-            if actorName not in completing.Complete.Registry:
-                msg = "Error building complete %s. No actor named %s." %\
-                        (kind, actorName)
-                raise excepting.ParseError(msg, tokens, index)
-
-            parms = {}
-            parms['framer'] = framer #resolve later if needed
-            act = acting.Act(    actor=actorName,
-                                 registrar=completing.Complete,
-                                 parms=parms,
-                                 human=self.currentHuman,
-                                 count=self.currentCount)
+            framer = 'me'
+            if index < len(tokens): # tasker optional
+                framer = tokens[index]
+                index += 1
+                self.verifyName(framer, command, tokens, index)
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
@@ -1428,6 +1419,20 @@ class Builder(object):
         if index != len(tokens):
             msg = "Error building %s. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
+
+        actorName = 'Complete' + kind.capitalize()
+        if actorName not in completing.Complete.Registry:
+            msg = "Error building complete %s. No actor named %s." %\
+                    (kind, actorName)
+            raise excepting.ParseError(msg, tokens, index)
+
+        parms = {}
+        parms['framer'] = framer #resolve later
+        act = acting.Act(actor=actorName,
+                         registrar=completing.Complete,
+                         parms=parms,
+                         human=self.currentHuman,
+                         count=self.currentCount)
 
         context = self.currentContext
         if context == NATIVE:
@@ -1478,11 +1483,11 @@ class Builder(object):
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later
         parms = dict(needs = needs, near = self.currentFrame.name, far = far, human = human)
-        act = acting.Act(   actor='Transiter',
-                            registrar=acting.Actor,
-                            parms=parms,
-                            human=self.currentHuman,
-                            count=self.currentCount)
+        act = acting.Act(actor='Transiter',
+                         registrar=acting.Actor,
+                         parms=parms,
+                         human=self.currentHuman,
+                         count=self.currentCount)
         self.currentFrame.addPreact(act) #add transact as preact
 
         console.profuse("     Added timeout transition preact,  '{0}', with far {1} needs:\n".format(
@@ -3897,7 +3902,7 @@ class Builder(object):
 
     def verifyName(self, name, command, tokens, index):
         """Verify that name is a valid public identifyer
-           Used for Task, Framer, and Frame names
+           Used for Tasker, Framer, and Frame names
         """
         if not REO_IdentPub.match(name): #bad name
             msg = "ParseError: Building verb '%s'. Invalid entity name '%s'" %\

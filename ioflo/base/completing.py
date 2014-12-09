@@ -32,15 +32,17 @@ class Complete(acting.Actor):
     def resolve(self, framer, **kwa):
         """Resolves value (framer) link that is passed in as parm
            resolved link is passed back to act to store in parms
-           since framer may not be current framer at build time
+           since tasker may not be current tasker at build time
         """
         parms = super(Complete, self).resolve( **kwa)
-        parms['framer'] = framer = framing.resolveFramer(framer, who=self.name)
-
-        #if not framer.schedule in [AUX, SLAVE]: #maker sure framer is auxliary or slave
-            #raise excepting.ResolveError("ResolveError: Bad done framer, framer not auxiliary or slave", framer, '')
-
-        parms['framer'] = framer #replace name with valid link
+        if framer == 'me':
+            framer = self.act.frame.framer.name
+        parms['framer'] = framer = framing.resolveFramer(framer,
+                                                         who=self.name,
+                                                         desc='framer',
+                                                         contexts=[AUX, SLAVE],
+                                                         human=self.act.human,
+                                                         count=self.act.count)
 
         return parms
 
