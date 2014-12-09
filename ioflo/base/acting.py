@@ -809,6 +809,45 @@ class Transiter(Interrupter):
             human = text version of transition
 
     """
+    def resolve(self, needs, near, far, human, **kwa):
+        """Resolve any links in far and in associated parms for actors"""
+
+        parms = super(Transiter, self).resolve( **kwa)
+
+        parms['near'] = near = framing.resolveFrame(near,
+                                                    who=self.name,
+                                                    desc='near',
+                                                    human=self.act.human,
+                                                    count=self.act.count)
+
+        if not isinstance(far, framing.Frame):
+            if far == 'next':
+                if not isinstance(near.next_, framing.Frame):
+                    raise excepting.ResolveError("ResolveError: Bad next frame",
+                                                 near.name, near.next_,
+                                                 self.act.human, self.act.count)
+                far = near.next_
+
+            elif far == 'me':
+                far = near
+
+            elif far in framing.Frame.Names:
+                far = framing.Frame.Names[far]
+
+            else:
+                raise excepting.ResolveError("ResolveError: Bad far link",
+                                             near.name, far,
+                                             self.act.human, self.act.count)
+
+            parms['far'] = far
+
+        for act in needs:
+            act.act = self.act
+            act.resolve()
+
+        return parms
+
+
     def action(self, needs, near, far, human, **kw):
         """Action called by Actor  """
 
@@ -852,44 +891,6 @@ class Transiter(Interrupter):
         """      """
         console.terse("Transiter {0}\n".format(self.name))
 
-    def resolve(self, needs, near, far, human, **kwa):
-        """Resolve any links in far and in associated parms for actors"""
-
-        parms = super(Transiter, self).resolve( **kwa)
-
-        parms['near'] = near = framing.resolveFrame(near,
-                                                    who=self.name,
-                                                    desc='near',
-                                                    human=self.act.human,
-                                                    count=self.act.count)
-
-        if not isinstance(far, framing.Frame):
-            if far == 'next':
-                if not isinstance(near.next_, framing.Frame):
-                    raise excepting.ResolveError("ResolveError: Bad next frame",
-                                                 near.name, near.next_,
-                                                 self.act.human, self.act.count)
-                far = near.next_
-
-            elif far == 'me':
-                far = near
-
-            elif far in framing.Frame.Names:
-                far = framing.Frame.Names[far]
-
-            else:
-                raise excepting.ResolveError("ResolveError: Bad far link",
-                                             near.name, far,
-                                             self.act.human, self.act.count)
-
-            parms['far'] = far #replace name with valid link
-
-        for act in needs:
-            act.act = self.act
-            act.resolve()
-
-        return parms
-
 
 class Suspender(Interrupter):
     """Suspender Interrupter Actor Patron Registry Class
@@ -907,6 +908,40 @@ class Suspender(Interrupter):
     def __init__(self,**kw ):
         """Initialization method for instance. """
         super(Suspender,self).__init__(**kw)
+
+    def resolve(self, needs, main, aux, human, **kwa):
+        """Resolve any links aux and in associated parms for actors"""
+        parms = super(Suspender, self).resolve( **kwa)
+
+        parms['main'] = main = framing.resolveFrame(main,
+                                                    who=main,
+                                                    desc='main',
+                                                    human=self.act.human,
+                                                    count=self.act.count)
+
+        parms['aux'] = aux = framing.resolveFramer(aux,
+                                                   who=main.name,
+                                                   desc='aux',
+                                                   contexts=[AUX],
+                                                   human=self.act.human,
+                                                   count=self.act.count)
+
+        for act in needs:
+            act.act = self.act
+            act.resolve()
+
+        deActParms = odict(aux=aux)
+        deAct = SideAct( actor=self,
+                        parms=deActParms,
+                        action='deactivize',
+                        human=self.act.human,
+                        count=self.act.count)
+        self.act.frame.addExact(deAct)
+        console.profuse("{0}Added exact {1} SideAct for {2} with {3} in {4}\n".format(
+                INDENT_ADD, 'deactivize', self.name, deAct.parms, self.act.frame.name))
+        deAct.resolve()
+
+        return parms
 
     def action(self, needs, main, aux, human, **kw):
         """Action called by Actor  """
@@ -982,39 +1017,7 @@ class Suspender(Interrupter):
         if aux.original:
             aux.main = None
 
-    def resolve(self, needs, main, aux, human, **kwa):
-        """Resolve any links aux and in associated parms for actors"""
-        parms = super(Suspender, self).resolve( **kwa)
 
-        parms['main'] = main = framing.resolveFrame(main,
-                                                    who=main,
-                                                    desc='main',
-                                                    human=self.act.human,
-                                                    count=self.act.count)
-
-        parms['aux'] = aux = framing.resolveFramer(aux,
-                                                   who=main.name,
-                                                   desc='aux',
-                                                   contexts=[AUX],
-                                                   human=self.act.human,
-                                                   count=self.act.count)
-
-        for act in needs:
-            act.act = self.act
-            act.resolve()
-
-        deActParms = odict(aux=aux)
-        deAct = SideAct( actor=self,
-                        parms=deActParms,
-                        action='deactivize',
-                        human=self.act.human,
-                        count=self.act.count)
-        self.act.frame.addExact(deAct)
-        console.profuse("{0}Added exact {1} SideAct for {2} with {3} in {4}\n".format(
-                INDENT_ADD, 'deactivize', self.name, deAct.parms, self.act.frame.name))
-        deAct.resolve()
-
-        return parms
 
 class Printer(Actor):
     """Printor Actor Patron Registry Class

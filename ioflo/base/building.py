@@ -1364,7 +1364,7 @@ class Builder(object):
         if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later
-            parms = dict(needs = needs, main = self.currentFrame, aux = aux, human = human)
+            parms = dict(needs = needs, main = self.currentFrame.name, aux = aux, human = human)
             act = acting.Act(   actor='Suspender',
                                 registrar=acting.Actor,
                                 parms=parms,
