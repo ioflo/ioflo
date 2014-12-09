@@ -7,16 +7,19 @@ CHANGE LOG
 ---------
 v1.1
 
-Added support for cloning auxiliary framers. This is provided via the
-   aux framer as clonename
-form of the aux verb
+Fixed related bugs
 
-Only framers whose schedule kind is moot may be cloned.
+Added support for cloning auxiliary framers. This is provided via the
+      aux framer as clonename
+   form of the aux verb
+   Only framers whose schedule kind is moot may be cloned.
 
 Added support for inline relative addressing syntax and removed goal and state
    varients of relative addressing as these are imcompatible
    special cases of recurred and elapsed still supported
+
 Support for ioflo has test run using reporting via house metas
+
 Added framer schedule type of moot, when moot, house builder does not call
    resolveLinks on the framer. When moot the framer
    is meant to be cloned. ResolveLinks will be called on the clones
