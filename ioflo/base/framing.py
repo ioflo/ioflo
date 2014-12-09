@@ -37,6 +37,7 @@ class Framer(tasking.Tasker):
 
        instance attributes
             .main = main frame when this framer is an auxiliary
+            .original = clone state, False if clone True if not clone
             .done = auxiliary completion state True or False when an auxiliary
             .elapsed = elapsed time from outline change
             .elapsedShr = share where .elapsed is stored for logging and need checks
@@ -70,6 +71,7 @@ class Framer(tasking.Tasker):
         super(Framer,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
 
         self.main = None  #when aux framer, frame that is running this aux
+        self.original = True  # as in not a clone
         self.done = True #when aux or slave framer, completion state, set to False on enterAll
 
         self.stamp = 0.0 #beginning time to compute elapsed time since last outline change
@@ -102,7 +104,7 @@ class Framer(tasking.Tasker):
         """ Return clone of self named name
 
         """
-        self.store.assignRegistries() # ensure Framer.names is houses registry
+        self.store.house.assignRegistries() # ensure Framer.names is houses registry
 
         if name and not REO_IdentPub.match(name):
             msg = "CloneError: Invalid framer name '{0}'.".format(name)
@@ -116,7 +118,7 @@ class Framer(tasking.Tasker):
                        store=self.store,
                        period=period,
                        schedule=schedule)
-        console.profuse("     Cloning Framer original {0} to {1}\n"
+        console.profuse("     Cloning Framer original '{0}' to clone '{1}'\n"
                         "".format(self.name, clone.name))
         clone.schedule = schedule
         clone.first = self.first # resolve later
@@ -701,7 +703,7 @@ class Frame(registering.StoriedRegistry):
         clone = Frame(name=self.name,
                       store=self.store,
                       framer=framer)
-        console.profuse("     Cloning frame {0} into framer {1}\n".format(
+        console.profuse("       Cloning Frame '{0}' into Framer '{1}'\n".format(
                                clone.name, framer.name))
 
         for aux in self.auxes:
@@ -873,14 +875,19 @@ class Frame(registering.StoriedRegistry):
     def resolveAuxLinks(self):
         """ Resolve aux links
 
-            aux.main for each aux is not assigned here but is assigned when
-            frame.enter before aux.enterAll() so can reuse aux in other frames.
+            If aux.original
+               aux.main for each aux is not assigned here but is assigned when
+              frame.enter before aux.enterAll() so can reuse aux in other frames.
+            Otherwise
+               assign aux.main to self
         """
         for i, aux in enumerate(self.auxes):
             self.auxes[i] = aux = resolveFramer(aux,
                                                 who=self.name,
                                                 desc='aux',
                                                 contexts=[AUX])
+            if not aux.original: # clones get fixed main never released
+                aux.main = self
 
     def resolveFramerLink(self):
         """Resolve framer link """
@@ -903,6 +910,8 @@ class Frame(registering.StoriedRegistry):
         self.resolveOverLinks()
         self.resolveUnderLinks()
 
+        self.resolveAuxLinks()
+
         for act in self.beacts:
             act.resolve()
 
@@ -924,7 +933,7 @@ class Frame(registering.StoriedRegistry):
         for act in self.renacts:
             act.resolve()
 
-        self.resolveAuxLinks()
+
 
     def findBottom(self):
         """Finds the bottom most frame for outline that this frame lives in
@@ -1042,8 +1051,9 @@ class Frame(registering.StoriedRegistry):
         for aux in self.auxes:
             #if aux.main is not None then it has not been released and so
             #we can't enter unless its ourself for forced re-entry
-            if aux.main and (aux.main is not self): #see if aux still belongs to another frame
-                console.profuse("    False aux {0}.main in use".format(aux.name))
+            if aux.main and (aux.main is not self): # does aux belong to another frame
+                console.profuse("    False. Invalid aux {0} in use "
+                        "by another frame {1}".format(aux.name, aux.main.name))
                 return False
 
             if not aux.checkStart(): #performs entry checks beacts
@@ -1064,8 +1074,8 @@ class Frame(registering.StoriedRegistry):
         for aux in self.auxes:
             msg = "To: %s<%s at %s\n" % (aux.name, aux.first.human, aux.store.stamp)
             console.terse(msg)
-
-            aux.main = self  #assign aux's main to this frame
+            if aux.original:
+                aux.main = self  #assign aux's main to this frame
             aux.enterAll() #starts at aux.first frame
 
     def renter(self):
@@ -1129,7 +1139,8 @@ class Frame(registering.StoriedRegistry):
 
         for aux in self.auxes: #since auxes entered last must be exited first
             aux.exitAll()
-            aux.main = None #release aux to be used by another frame
+            if aux.original:
+                aux.main = None #release aux to be used by another frame
 
         for act in self.exacts:
             act() #call Exit Action

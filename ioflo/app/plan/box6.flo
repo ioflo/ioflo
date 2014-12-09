@@ -14,64 +14,64 @@ init boxer.nlegs to 4.0
 
 framer vehiclesim be active first vehicle_run
 
-frame vehicle_run
-   do simulator motion uuv
+  frame vehicle_run
+    do simulator motion uuv
 
 framer mission be active first leg
 
-frame depthmax
-   go abort if state.depth >= .limit.depth.max
+  frame depthmax
+    go abort if state.depth >= .limit.depth.max
 
-frame shallow in depthmax
-   aux shallow if state.depth >= .limit.depth.shallow # until aux done
+    frame shallow in depthmax
+      aux shallow if state.depth >= .limit.depth.shallow # until aux done
 
-frame leg in shallow
-   set elapsed to 60.0
-   set goal.heading by boxer.heading
-   set goal.depth to 15.0
-   set goal.speed to 2.5
-   go gpsfix if elapsed >= goal
-   go mission_stop if .boxer.leg >= .boxer.nlegs
+      frame leg in shallow
+        set elapsed to 60.0
+        set goal.heading by boxer.heading
+        set goal.depth to 15.0
+        set goal.speed to 2.5
+        go gpsfix if elapsed >= goal
+        go mission_stop if .boxer.leg >= .boxer.nlegs
 
-frame gpsfix
-   aux gps
-   go leg if done gps
-   exit
+  frame gpsfix
+    aux gps
+    go leg if done gps
+    exit
       inc boxer.heading by boxer.turn
       inc boxer.leg with 1.0
 
-frame abort
-   set goal.depth with 0.0
-   set goal.speed with 2.5
-   go mission_stop if depth == 0.0 +- 0.25
+  frame abort
+    set goal.depth with 0.0
+    set goal.speed with 2.5
+    go mission_stop if depth == 0.0 +- 0.25
 
-frame mission_stop
-   bid stop all
+  frame mission_stop
+    bid stop all
 
 framer autopilot be active first autopilot_run
 
-frame autopilot_run
-   do controller pid speed
-   do controller pid heading
-   do controller pid depth
-   do controller pid pitch
+  frame autopilot_run
+    do controller pid speed
+    do controller pid heading
+    do controller pid depth
+    do controller pid pitch
 
 framer shallow be aux first shallow1 # conditional auxiliary
 
-frame shallow1
-   set goal.depth to 0.0
-   set goal.speed to 2.5
-   go next if state.depth <= .limit.depth.cruise #repaired
+  frame shallow1
+    set goal.depth to 0.0
+    set goal.speed to 2.5
+    go next if state.depth <= .limit.depth.cruise #repaired
 
-frame shallow2 #so complete
-   let me if state.depth <= .limit.depth.cruise # dumb beact
-   done
+  frame shallow2 #so complete
+    let me if state.depth <= .limit.depth.cruise # dumb beact
+    done
 
 logger logger to /var/tmp/log/ioflo/
-log state   on update
-loggee position state.position heading state.heading depth state.depth speed state.speed
+  log state   on update
+  loggee position state.position heading state.heading depth state.depth speed state.speed
 
-log goal   on update
-loggee heading goal.heading depth goal.depth speed goal.speed duration goal.duration
+  log goal   on update
+  loggee heading goal.heading depth goal.depth speed goal.speed duration goal.duration
 
 load gps.flo

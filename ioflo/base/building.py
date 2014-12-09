@@ -1354,11 +1354,11 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         if clone: # add dyad (orignal, clone, human, count) to be resolved
-            self.currentHouse.dyads.append((aux,
+            self.currentHouse.clones.append((aux,
                                             clone,
                                             self.currentHuman,
                                             self.currentCount))
-            #aux = clone # assign aux to clone as original aux is to be cloned
+            aux = clone # assign aux to clone as original aux is to be cloned
             pass
 
         if needs: #conditional auxiliary suspender preact
@@ -1477,7 +1477,7 @@ class Builder(object):
         # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later
-        parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
+        parms = dict(needs = needs, near = self.currentFrame.name, far = far, human = human)
         act = acting.Act(   actor='Transiter',
                             registrar=acting.Actor,
                             parms=parms,
@@ -1530,7 +1530,7 @@ class Builder(object):
         # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later
-        parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
+        parms = dict(needs = needs, near = self.currentFrame.name, far = far, human = human)
         act = acting.Act(    actor='Transiter',
                              registrar=acting.Actor,
                              parms=parms,
@@ -2013,7 +2013,7 @@ class Builder(object):
         # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
         #resolve far link later
-        parms = dict(needs = needs, near = self.currentFrame, far = far, human = human)
+        parms = dict(needs = needs, near = self.currentFrame.name, far = far, human = human)
         act = acting.Act(   actor='Transiter',
                             registrar=acting.Actor,
                             parms=parms,
@@ -3782,7 +3782,7 @@ class Builder(object):
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' "
-                        "in share {1} ... creating anyway".format(field, dst.name))
+                        "in share {1} ... creating anyway\n".format(field, dst.name))
                 dst[field] = 0.0 #create
 
         return (srcFields, dstFields)
@@ -3822,7 +3822,7 @@ class Builder(object):
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' in "
-                       "share {1} ... creating anyway".format(field, dst.name))
+                       "share {1} ... creating anyway\n".format(field, dst.name))
                 dst[field] = 0 #create
 
         return (dataFields, dstFields)

@@ -74,7 +74,7 @@ class Act(object):
             clones is dict whose items keys are original framer names
             and values are duples of (original,clone) framer references
         """
-        if isinstance(self.frame, Frame):
+        if isinstance(self.frame, framing.Frame):
             msg = ("CloneError: Attempting to clone resolved frame link"
                 "  '{0}'.".format(self.frame.name))
             raise excepting.CloneError(msg)
@@ -679,7 +679,7 @@ class Actor(object):
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' in "
-                       "share {1} ... creating anyway".format(field, dst.name))
+                       "share {1} ... creating anyway\n".format(field, dst.name))
                 dst[field] = 0 #create
 
         return dstFields
@@ -741,7 +741,7 @@ class Actor(object):
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' "
-                        "in share {1} ... creating anyway".format(field, dst.name))
+                        "in share {1} ... creating anyway\n".format(field, dst.name))
                 dst[field] = 0.0 #create
 
         return (srcFields, dstFields)
@@ -921,7 +921,14 @@ class Suspender(Interrupter):
                 if not act(): #return None if not all true
                     return None
 
-            if aux.main: #see if aux still belongs to another frame
+            #if aux.main: #see if aux still belongs to another frame
+            #    return None
+
+            # if aux.main is not None then it has not been released and so
+            # we can't enter unless it is our act's frame
+            if aux.main and (aux.main is not self.act.frame):
+                console.profuse("    Invalid aux {0} in use "
+                        "by another frame {1}".format(aux.name, aux.main.name))
                 return None
 
             if not aux.checkStart(): #performs entry checks
@@ -932,7 +939,8 @@ class Suspender(Interrupter):
                 human, framer.human, framer.elapsed)
             console.terse(msg)
 
-            aux.main = main  #assign aux's main to this frame
+            if aux.original:
+                aux.main = main  #assign aux's main to this frame
             aux.enterAll() #starts at aux.first frame
             aux.recur()
 
@@ -971,7 +979,8 @@ class Suspender(Interrupter):
         console.profuse("Deactivating {0}\n".format(aux.name))
 
         aux.exitAll() # also sets .done = True
-        aux.main = None
+        if aux.original:
+            aux.main = None
 
     def resolve(self, needs, main, aux, human, **kwa):
         """Resolve any links aux and in associated parms for actors"""

@@ -35,7 +35,7 @@ class Tasker(registering.StoriedRegistry):
         """Initialize instance.
 
            iherited instance attributes
-           .name = unique name for machine
+           .name = unique name for tasker
            .store = data store
 
            instance attributes
@@ -64,12 +64,11 @@ class Tasker(registering.StoriedRegistry):
         self.desire = STOP #desired control next time Task is iterated
         self.done = True # tasker completion state reset on restart
         self.schedule = schedule #initial scheduling context vis a vis skedder
-
         self.runner = None #reference to runner generator
         self.remake() #make generator assign to .runner and advance to yield
 
-        self.source = None # future reference to share
-        self.sourceFields = None #future reference to share fields
+        #self.source = None # future reference to share
+        #self.sourceFields = None #future reference to share fields
 
     def reinit(self, period=None, schedule=None, **kw):
         if period is not None:

@@ -70,7 +70,7 @@ class House(registering.StoriedRegistry):
           .slaves = list of slave taskers in house subset of .taskers
           .moots = list of moot framers in house subset of .taskers
 
-          .dyads = list of tuples for cloning (original, clone, human, count)
+          .clones = list of tuples for cloning (original, clone, human, count)
 
           .names = dictonary of names from each name registry
           .counters = dictionary of counters from each name registry
@@ -97,7 +97,7 @@ class House(registering.StoriedRegistry):
         self.slaves = [] #list of slave taskers in house
         self.moots = [] #list of moot framers in house
 
-        self.dyads = [] # list of tuples of clone pair names (original, clone, human, count)
+        self.clones = [] # list of tuples of clone pair names (original, clone, human, count)
 
         self.names = odict() #houses dict of registry Names
         self.counters = odict() #houses dict of registry Name Counters
@@ -135,19 +135,19 @@ class House(registering.StoriedRegistry):
         """
         console.terse("   Resolving House '{0}' ...\n".format(self.name))
         self.assignRegistries()
-        self.resolveDyads()
+        self.resolveClones()
         for tasker in [tasker for tasker in self.taskers if tasker not in self.moots]:
             tasker.resolve()
 
-    def resolveDyads(self):
+    def resolveClones(self):
         """ resolves clone dyad  tuples of form (original, clone, human, count)
             creates clone and adds to taskables
             resolution looks up name string in appropriate registry and replaces
             name string with link to object
         """
-        console.terse("     Resolving dyads for House '{0}' ...\n".format(self.name))
+        console.terse("     Resolving clones for House '{0}' ...\n".format(self.name))
 
-        for original, clone, human, count in self.dyads:
+        for original, clone, human, count in self.clones:
             console.concise("       Cloning original '{0}' as '{1}'\n"
                             "".format(original, clone))
             original = framing.resolveFramer(original,
@@ -157,6 +157,7 @@ class House(registering.StoriedRegistry):
                                              human=human,
                                              count=count)
             clone = original.clone(name=clone, schedule=AUX)
+            clone.original = False  # main frame will be fixed
             self.taskers.append(clone)
             self.framers.append(clone)
             self.auxes.append(clone)
