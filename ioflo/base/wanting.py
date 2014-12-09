@@ -39,26 +39,23 @@ class Want(acting.Actor):
            since tasker may not be current framer at build time
         """
         parms = super(Want, self).resolve( **kwa)
-        links = []
+        links = set()
         for tasker in taskers:
-            if not isinstance(tasker, tasking.Tasker): # string name of tasker
-                if tasker == 'all':
-                    for tasker in self.store.house.taskables:
-                        if tasker not in links:
-                            links.append(tasker)
-                elif tasker in tasking.Tasker.Names:
-                    tasker = tasking.Tasker.Names[tasker]
-                    if tasker not in links:
-                        links.append(tasker)
-                else:
-                    raise excepting.ResolveError("ResolveError: Bad want tasker link name", tasker, '')
-            else:
-                links.append(tasker)
+            if tasker == 'all':
+                for tasker in self.store.house.taskables:
+                    links.add(tasker)
+            elif tasker == 'me':
+                tasker = self.act.frame.framer
+                links.add(tasker)
 
-        for tasker in links:
-            if tasker.schedule == AUX or tasker.schedule == SLAVE : #want forbidden on aux or slave
-                msg = "ResolveError: Bad want tasker, aux or slave forbidden"
-                raise excepting.ResolveError(msg, tasker.name, tasker.schedule)
+            else:
+                tasker = tasking.resolveTasker(tasker,
+                                               who=self.name,
+                                               desc='tasker',
+                                               contexts=[ACTIVE, INACTIVE],
+                                               human=self.act.human,
+                                               count=self.act.count)
+                links.add(tasker)
 
         parms['taskers'] = links #replace with valid list
 

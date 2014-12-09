@@ -29,32 +29,40 @@ class Complete(acting.Actor):
     """
     Registry = odict()
 
-    def resolve(self, framer, **kwa):
-        """Resolves value (framer) link that is passed in as parm
-           resolved link is passed back to act to store in parms
-           since tasker may not be current tasker at build time
+    def resolve(self, taskers, **kwa):
+        """Resolves value (taskers) list of link names that is passed in as parm
+           resolved links are passed back to act to store in parms
         """
         parms = super(Complete, self).resolve( **kwa)
-        if framer == 'me':
-            framer = self.act.frame.framer.name
-        parms['framer'] = framer = framing.resolveFramer(framer,
-                                                         who=self.name,
-                                                         desc='framer',
-                                                         contexts=[AUX, SLAVE],
-                                                         human=self.act.human,
-                                                         count=self.act.count)
 
+        links = set()
+        for tasker in taskers:
+            if tasker == 'me':
+                tasker = self.act.frame.framer
+                links.add(tasker)
+
+            else:
+                tasker = tasking.resolveTasker(tasker,
+                                               who=self.name,
+                                               desc='tasker',
+                                               contexts=[AUX, SLAVE],
+                                               human=self.act.human,
+                                               count=self.act.count)
+                links.add(tasker)
+
+        parms['taskers'] = links #replace with valid list
         return parms
 
 class CompleteDone(Complete):
     """CompleteDone Complete
 
     """
-    def action(self, framer = None, **kw):
+    def action(self, taskers, **kw):
         """set done state to True for aux or slave framer
 
         """
-        framer.done = True
-        console.profuse("    Done {0}\n".format(framer.name))
+        for tasker in taskers:
+            tasker.done = True
+            console.profuse("    Done {0}\n".format(tasker.name))
 
         return None

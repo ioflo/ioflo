@@ -1387,30 +1387,34 @@ class Builder(object):
         return True
 
     def buildDone(self, command, tokens, index):
-        """Creates complete action that indicates tasker completed by setting .done state to True
-           native context is enter
-           Only works in framer taskers
+        """
+        Creates complete action that indicates tasker(s) completed
+        by setting .done state to True
 
-           done
+           native context is enter
+
+           done tasker [tasker ...]
+           done [me]
+
+           tasker:
+              (taskername, me)
+
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
-        if not self.currentFramer.schedule in [AUX, SLAVE, MOOT]:
-            msg = ("Error building {0}. Framer schedule is '{1}' not one of"
-                   " '{2}'.".format(command,
-                                   ScheduleNames.get(self.currentFramer.schedule,
-                                                     self.currentFramer.schedule),
-                                   ScheduleValues.keys()))
-            raise excepting.ParseError(msg, tokens, index)
-
-
         try:
             kind = 'Done'
-            framer = 'me'
-            if index < len(tokens): # tasker optional
-                framer = tokens[index]
-                index += 1
-                self.verifyName(framer, command, tokens, index)
+            taskers = []
+
+            while index < len(tokens):
+                tasker = tokens[index]
+                index +=1
+
+                self.verifyName(tasker, command, tokens, index)
+                taskers.append(tasker) #resolve later
+
+            if not taskers:
+                taskers.append('me')
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)
@@ -1427,7 +1431,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         parms = {}
-        parms['framer'] = framer #resolve later
+        parms['taskers'] = taskers #resolve later
         act = acting.Act(actor=actorName,
                          registrar=completing.Complete,
                          parms=parms,
@@ -2260,7 +2264,7 @@ class Builder(object):
     def buildBid(self, command, tokens, index):
         """
            bid control tasker [tasker ...]
-           bid control me
+           bid control [me]
            bid control all
 
            control:
@@ -2284,15 +2288,10 @@ class Builder(object):
                 index +=1
 
                 self.verifyName(tasker, command, tokens, index)
-
-                if tasker == 'me':
-                    tasker = self.currentFramer
-
                 taskers.append(tasker) #resolve later
 
             if not taskers:
-                msg = "Error building %s %s. No taskers." % (command, control)
-                raise excepting.ParseError(msg, tokens, index)
+                taskers.append('me')
 
             actorName = 'Want' + control.capitalize()
             if actorName not in wanting.Want.Registry:
@@ -3500,7 +3499,7 @@ class Builder(object):
                         name = ''
 
                 if not name: #no name given so substitute default
-                    name = 'me'  # self.currentFramer.name
+                    name = 'me'
 
                 relation += '.' + name  #append name
 
