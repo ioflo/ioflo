@@ -214,14 +214,14 @@ class Skedder(object):
 
         return True
 
-    def run(self, renewable=False):
+    def run(self, growable=False):
         """runs all generator taskers in running list by calling next() method.
 
            Keyboard interrupt (cntl-c) to end forever loop
            Since finally clause closes taskers they must be restarted before
            run can be executed again
 
-           if renewable is True then allow adding new taskers at runtime
+           if growable is True then allow adding new taskers at runtime
               via  house metas['taskables']
 
         """
@@ -282,7 +282,7 @@ class Skedder(object):
                         if status == RUNNING or status == STARTED:
                             more = True
 
-                    if renewable:
+                    if growable:
                         # todo from each house.metas fetch new taskables
                         # add to ready
                         pass

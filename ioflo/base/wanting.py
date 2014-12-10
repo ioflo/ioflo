@@ -61,25 +61,11 @@ class Want(acting.Actor):
 
         return parms
 
-class WantStart(Want):
-    """WantStart Want
-       bid start tasker [taskers ...]
-       bid start all
-       bid stort me #won't do anything
-    """
-    def action(self, taskers, **kw):
-        """start taskers  """
-        for tasker in taskers:
-            tasker.desire = START
-            console.profuse( "Bid start {0}\n".format(tasker.name))
-
-        return None
-
 class WantStop(Want):
     """WantStop Want
        bid stop tasker [tasker ...]
        bid stop all
-       bid stop me
+       bid stop [me]
     """
     def action(self, taskers, **kw):
         """stop taskers """
@@ -90,16 +76,58 @@ class WantStop(Want):
 
         return None
 
+class WantStart(Want):
+    """WantStart Want
+       bid start tasker [taskers ...]
+       bid start all
+       bid start [me] #won't cahnge anything since must be already started
+    """
+    def action(self, taskers, **kw):
+        """start taskers  """
+        for tasker in taskers:
+            tasker.desire = START
+            console.profuse( "Bid start {0}\n".format(tasker.name))
+
+        return None
+
 class WantRun(Want):
     """WantRun Want
        bid run tasker [taskers ...]
        bid run all
-       bid run me #won't do anything
+       bid run [me] #won't cahnge anything since must be already running
     """
     def action(self, taskers, **kw):
         """run taskers """
         for tasker in taskers:
             tasker.desire = RUN
             console.profuse( "Bid run {0}\n".format(tasker.name))
+
+        return None
+
+class WantAbort(Want):
+    """WantAbort Want
+       bid abort tasker [taskers ...]
+       bid abort all
+       bid abort [me]
+    """
+    def action(self, taskers, **kw):
+        """abort taskers """
+        for tasker in taskers:
+            tasker.desire = ABORT
+            console.profuse( "Bid abort {0}\n".format(tasker.name))
+
+        return None
+
+class WantReady(Want):
+    """WantReady Want
+       bid ready tasker [taskers ...]
+       bid ready all
+       bid ready [me]  # won't change anything since must be already ready
+    """
+    def action(self, taskers, **kw):
+        """readt taskers """
+        for tasker in taskers:
+            tasker.desire = READY
+            console.profuse( "Bid ready {0}\n".format(tasker.name))
 
         return None

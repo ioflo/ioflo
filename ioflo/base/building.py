@@ -2270,7 +2270,7 @@ class Builder(object):
            bid control all
 
            control:
-              (start, run, stop)
+              (stop, start, run, abort, ready)
 
            tasker:
               (tasker, me, all)
@@ -2280,7 +2280,7 @@ class Builder(object):
         try:
             control = tokens[index]
             index +=1
-            if control not in ['start', 'run', 'stop']:
+            if control not in ['start', 'run', 'stop', 'abort', 'ready']:
                 msg = "Error building {0}. Bad control = {1}.".format(command, control)
                 raise excepting.ParseError(msg, tokens, index)
 

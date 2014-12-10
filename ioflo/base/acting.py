@@ -1106,6 +1106,7 @@ class Cloner(Actor):
             original = moot framer to be cloned
             name = name of clone
             prefix = name prefix
+            schedule = schedule kind of clone
 
     """
     def resolve(self, original, name, prefix, schedule, **kwa):
