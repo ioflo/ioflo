@@ -3,9 +3,19 @@ CHANGE LOG
 -------------------
 
 ---------
-201411XX
+201412XX
+---------
+v1.1.1
+
+Added new clone verb
+
+
+---------
+20141209
 ---------
 v1.1
+
+Added improvements to done verb and bid verb
 
 Fixed related bugs
 
