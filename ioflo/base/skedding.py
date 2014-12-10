@@ -147,8 +147,9 @@ class Skedder(object):
                 ("behaviors", "meta.behaviors", odict(value=self.behaviors)),
                 ("credentials", "meta.credentials",
                      odict([('username', self.username), ('password', self.password)])),
-                ("failure", "meta.failure", odict(value="")),
-                ("framers", "meta.framers", odict()),
+                ("failure", "meta.failure", odict(value="")), # for failure reporting
+                ("framers", "meta.framers", odict()), # for failure reporting
+                ("taskables", "meta.taskables", odict(value=set())), # to add taskables at runtime
             ]
         if metas:
             self.metas.extend(metas)
@@ -163,21 +164,21 @@ class Skedder(object):
         if preloads:
             self.preloads.extend(preloads)
 
-        self.ready = deque() #deque of taskers in run order
-        self.aborted = deque() #deque of aborted taskers
+        self.ready = deque() # deque of taskers in run order
+        self.aborted = deque() # deque of aborted taskers
 
-
-    def addReadyTask(self,tasker):
-        """Prepare tasker to be started"""
+    def addReadyTask(self, tasker):
+        """
+        Prepare tasker to be started and add to ready list
+        """
         if tasker.schedule == ACTIVE:
             tasker.desire = START
         else:
             tasker.desire = STOP
-
         tasker.status = STOPPED
         retime = tasker.store.stamp
         period = tasker.period
-        trp = (tasker, retime, period) #make tuple
+        trp = (tasker, retime, period)
         self.ready.append(trp)
         console.profuse("     Add ready: {0} retime: {1} period: {2} desire {3}\n".format(
             tasker.name, retime, period, ControlNames[tasker.desire]))
@@ -213,12 +214,16 @@ class Skedder(object):
 
         return True
 
-    def run(self):
+    def run(self, renewable=False):
         """runs all generator taskers in running list by calling next() method.
 
            Keyboard interrupt (cntl-c) to end forever loop
            Since finally clause closes taskers they must be restarted before
            run can be executed again
+
+           if renewable is True then allow adding new taskers at runtime
+              via  house metas['taskables']
+
         """
 
         console.terse("Starting Skedder '{0}' ...\n".format(self.name))
@@ -255,20 +260,20 @@ class Skedder(object):
                     more = False #are any taskers RUNNING or STARTED
 
                     for i in xrange(len(ready)): #attempt to run each ready tasker
-                        tasker,retime,period = ready.popleft() #pop it off
+                        tasker, retime, period = ready.popleft() #pop it off
 
                         if retime > stamp: #not time yet
-                            ready.append((tasker,retime,period)) #reappend it
+                            ready.append((tasker, retime, period)) #reappend it
                             status = tasker.status
 
                         else: #run it
                             try:
                                 status = tasker.runner.send(tasker.desire)
                                 if status == ABORTED: #aborted so abort tasker
-                                    aborted.append((tasker,stamp,period))
+                                    aborted.append((tasker, stamp, period))
                                     console.profuse("     Tasker Self Aborted: {0}\n".format(tasker.name))
                                 else:
-                                    ready.append((tasker,retime + period, period)) #append
+                                    ready.append((tasker, retime + period, period)) #append
 
                             except StopIteration: #generator returned instead of yielded
                                 aborted.append((tasker,stamp,period))
@@ -276,6 +281,11 @@ class Skedder(object):
 
                         if status == RUNNING or status == STARTED:
                             more = True
+
+                    if renewable:
+                        # todo from each house.metas fetch new taskables
+                        # add to ready
+                        pass
 
                     if not ready: #no pending taskers so done
                         console.terse("No ready taskers. Shutting down skedder ...\n")

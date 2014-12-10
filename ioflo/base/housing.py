@@ -161,10 +161,7 @@ class House(registering.StoriedRegistry):
             self.taskers.append(clone)
             self.framers.append(clone)
             self.auxes.append(clone)
-
-            console.profuse("     Cloned original '{0}' as '{1}'\n".format(
-                   original.name, clone.name))
-
+        self.clones = [] # release clone list
 
     def traceOutlines(self):
         """ trace and assign outlines for each frame
@@ -193,41 +190,31 @@ class House(registering.StoriedRegistry):
         console.terse("Framers in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.framers])))
 
-    def cloneFramer(self, original, name):
+    def cloneFramer(self, original, name, schedule):
         """
         Create a clone named name of Framer original and return
+        Assumes name is already valid and unique framer name
         """
         self.assignRegistries()
+        console.concise("       Cloning original '{0}' as '{1}' be '{2}'\n"
+                                    "".format(original, clone, ))
 
-        clone.resolveLinks() # resolve links in clone
-        clone.traceOutlines()  # traceoutlines in clone
+        clone = original.clone(name=name, schedule=schedule)
+        clone.original = False  # main frame will be fixed
         self.taskers.append(clone)
         self.framers.append(clone)
-        self.auxes.append(clone)
 
-        console.profuse("     Cloned framer '{0}' as '{1}' in House "
-                "'{2}'\n".format(framer.name, clone.name, self.name))
-
-        return clonee # return primary clone of framer
-
-
-    def cloneFramerOld(self, framer, index):
-        """ Create a clone of framer framer with name generated from index
-                as aux framer and return
-        """
-        self.assignRegistries()
-        clones = odict() # key original.name : (original, clone)
-        clonee = framer.clone(index=index, clones=clones) #changes clones in place
-
-        for original, clone in clones.values(): #values are tuples
-            original.cloneFrames(clone, clones)
-            clone.resolveLinks() # resolve links in clone
-            clone.traceOutlines()  # traceoutlines in clone
-            self.taskers.append(clone)
-            self.framers.append(clone)
+        if schedule == AUX:
             self.auxes.append(clone)
+        elif schedule == SLAVE:
+            self.slaves.append(clone)
+        elif schedule in [ACTIVE, INACTIVE]:
+            self.metas['taskables'].add(clone)
 
-            console.profuse("     Cloned framer {0} to House '{1}'\n".format(
-                clone.name, self.name))
+        clone.resolve() # resolve links in clone
+        clone.traceOutlines()  # traceoutlines in clone
 
-        return clonee # return primary clone of framer
+        console.concise("       Cloned '{0}' as '{1}' be '{2}'\n".format(
+                original.name, name, ScheduleNames.get(schedule, schedule)))
+
+        return clone

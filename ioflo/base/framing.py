@@ -129,6 +129,36 @@ class Framer(tasking.Tasker):
 
         return clone
 
+    def resolve(self):
+        """Convert all the name strings for links to references to instance
+           by that name
+        """
+        console.terse("     Resolving framer {0}\n".format(self.name))
+
+        self.assignFrameRegistry() #needed by act links below
+
+        for frame in Frame.Names.values(): #all frames in this framer's name space
+            frame.resolve()
+
+        #Resolve first frame link
+        if self.first:
+            self.first = resolveFrame(self.first, who=self.name, desc='first')
+        else:
+            raise excepting.ResolveError("No first frame link", self.name, self.first)
+
+    def traceOutlines(self):
+        """Trace and assign outlines for each frame in framer
+        """
+        console.terse("     Tracing outlines for framer {0}\n".format(self.name))
+
+        self.assignFrameRegistry()
+
+        for frame in Frame.Names.values(): #all frames in this framer's name space
+            frame.traceOutline()
+            frame.traceHead()
+            frame.traceHuman()
+            frame.traceHeadHuman()
+
     def assignFrameRegistry(self):
         """Point Frame class name registry dict and counter to .frameNames
            and .frameCounter.
@@ -189,36 +219,6 @@ class Framer(tasking.Tasker):
         console.profuse("     Updating {0} from {1:d} to {2:d}\n".format(
             self.recurredShr.name, self.recurredShr.value, self.recurred))
         self.recurredShr.update(value = self.recurred)
-
-    def resolve(self):
-        """Convert all the name strings for links to references to instance
-           by that name
-        """
-        console.terse("     Resolving framer {0}\n".format(self.name))
-
-        self.assignFrameRegistry() #needed by act links below
-
-        for frame in Frame.Names.values(): #all frames in this framer's name space
-            frame.resolve()
-
-        #Resolve first frame link
-        if self.first:
-            self.first = resolveFrame(self.first, who=self.name, desc='first')
-        else:
-            raise excepting.ResolveError("No first frame link", self.name, self.first)
-
-    def traceOutlines(self):
-        """Trace and assign outlines for each frame in framer
-        """
-        console.terse("     Tracing outlines for framer {0}\n".format(self.name))
-
-        self.assignFrameRegistry()
-
-        for frame in Frame.Names.values(): #all frames in this framer's name space
-            frame.traceOutline()
-            frame.traceHead()
-            frame.traceHuman()
-            frame.traceHeadHuman()
 
     def change(self, actives, human = ''):
         """set .actives and .human to new outline actives

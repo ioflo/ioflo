@@ -1326,6 +1326,8 @@ class Builder(object):
                     clone = tokens[index]
                     index += 1
 
+                    self.verifyName(clone, command, tokens, index)
+
                 elif connective == 'if':
                     while (index < len(tokens)):
                         act, index = self.makeNeed(tokens, index)

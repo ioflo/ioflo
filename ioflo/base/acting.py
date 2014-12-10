@@ -1097,3 +1097,56 @@ class MarkerChange(Marker):
         """   """
         console.terse("MarkerChange {0}\n".format(self.name))
 
+class Cloner(Actor):
+    """
+    Cloner Actor Class
+    Cloner is a special actor that clones a moot framer at runtime
+
+       Parameters
+            original = moot framer to be cloned
+            name = name of clone
+            prefix = name prefix
+
+    """
+    def resolve(self, original, name, prefix, schedule, **kwa):
+        """
+        Resolve any links
+        """
+        parms = super(Cloner, self).resolve( **kwa)
+
+        parms['original'] = original = framing.resolveFramer(original,
+                                                    who=self.name,
+                                                    desc='original',
+                                                    contexts=[MOOT],
+                                                    human=self.act.human,
+                                                    count=self.act.count)
+
+        if schedule not in [ACTIVE, INACTIVE, SLAVE, AUX]:
+            msg = ("ResolveError: Invalid schedule '{0}' for clone"
+                  "of '{1}'".format(ScheduleNames.get(schedule, schedule),
+                                  original.name))
+            raise excepting.ResolveError(msg=msg,
+                                         name=self.name,
+                                         value=schedule,
+                                         human=self.act.human,
+                                         count=self.act.count)
+
+        return parms
+
+    def action(self, original, name, prefix, schedule, **kw):
+        """Action called by Actor  """
+        if not name:
+            index = 1
+            name = "{0}{1}".format(prefix, index)
+            while name in self.act.frame.framer.Names:
+                index += 1
+                name = "{0}{1}".format(prefix, index)
+
+        console.profuse("       Cloning '{0}' as '{1}' be '{2}'\n".format(
+                original.name, name, ScheduleNames.get(schedule, schedule)))
+
+
+
+    def expose(self):
+        """      """
+        console.terse("Cloner {0}\n".format(self.name))
