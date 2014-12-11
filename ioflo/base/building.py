@@ -1159,7 +1159,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
         else:
             frame = framing.Frame(name = name, store = self.currentStore,
-                                  framer = self.currentFramer)
+                                  framer = self.currentFramer.name)
 
             if over:
                 frame.over = over #need to resolve later
@@ -1171,8 +1171,8 @@ class Builder(object):
 
                 #default first frame is first lexical frame if not assigned otherwise
                 #so if startFrame is none then we must be first lexical frame
-            if not frame.framer.first:
-                frame.framer.first = frame
+            if not self.currentFramer.first: #frame.framer.first:
+                self.currentFramer.first = frame.name #frame.framer.first = frame
 
             self.currentFrame = frame
             self.currentContext = NATIVE

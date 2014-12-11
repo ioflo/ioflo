@@ -118,7 +118,7 @@ class Framer(tasking.Tasker):
                        store=self.store,
                        period=period,
                        schedule=schedule)
-        console.profuse("     Cloning Framer original '{0}' to clone '{1}'\n"
+        console.terse("         Cloning contents of Framer original '{0}' to clone '{1}'\n"
                         "".format(self.name, clone.name))
         clone.schedule = schedule
         clone.first = self.first # resolve later
@@ -133,7 +133,7 @@ class Framer(tasking.Tasker):
         """Convert all the name strings for links to references to instance
            by that name
         """
-        console.terse("     Resolving framer {0}\n".format(self.name))
+        console.terse("     Resolving Framer {0}\n".format(self.name))
 
         self.assignFrameRegistry() #needed by act links below
 
@@ -702,8 +702,8 @@ class Frame(registering.StoriedRegistry):
         """
         clone = Frame(name=self.name,
                       store=self.store,
-                      framer=framer)
-        console.profuse("       Cloning Frame '{0}' into Framer '{1}'\n".format(
+                      framer=framer.name) # only name so resolve framer later
+        console.terse("           Cloning Frame '{0}' into Framer '{1}'\n".format(
                                clone.name, framer.name))
 
         for aux in self.auxes:
@@ -746,6 +746,122 @@ class Frame(registering.StoriedRegistry):
             clone.addRexact(act.clone())
 
         return clone
+
+    def resolve(self):
+        """Resolve links where links are instance name strings assigned during building
+           need to be converted to object references using instance name registry
+
+        """
+        console.concise("       Resolving Frame {0}\n".format(self.name))
+
+        self.resolveFramerLink()
+
+        self.resolveNextLink()
+        self.resolveOverLinks()
+        self.resolveUnderLinks()
+
+        self.resolveAuxLinks()
+
+        for act in self.beacts:
+            act.resolve()
+
+        for act in self.enacts:
+            act.resolve()
+
+        for act in self.reacts:
+            act.resolve()
+
+        for act in self.preacts:
+            act.resolve()
+
+        for act in self.exacts:
+            act.resolve()
+
+        for act in self.rexacts:
+            act.resolve()
+
+        for act in self.renacts:
+            act.resolve()
+
+    def resolveFramerLink(self):
+        """Resolve framer link """
+        if self.framer:
+            self.framer = framer = resolveFramer(self.framer,
+                                                who=self.name,
+                                                desc="frame's",)
+
+    def resolveNextLink(self):
+        """Resolve next link
+
+        """
+        if self.next_:
+            self.next_ = resolveFrame(self.next_, who=self.name, desc='next')
+
+    def resolveOverLinks(self):
+        """Starting with self.over climb over links resolving the links as needed along the way
+
+        """
+        over = self.over
+        under = self
+
+        while over: #not beyond top
+            if not isinstance(over, Frame): #over is name of frame not ref so resolve
+                name = over #make copy for later
+                try:
+                    over = Frame.Names[name] #get reference from Frame name registry
+                except KeyError:
+                    raise excepting.ResolveError("Bad over link in outline", self.name, name)
+
+                if over == self: #check for loop
+                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
+
+                #attach under to over
+                if under.name in over.unders: #under name in unders as a result of script under cmd
+                    index = over.unders.index(under.name) #index = position in list
+                    over.unders[index] = under #replace under at position index
+                else: #otherwise append
+                    over.unders.append(under) #add to unders
+
+                #maybe should error check for duplicates in unders here
+
+                under.over = over #assign valid over ref
+
+            else: #over is valid frame reference so don't need to resolve
+                if over == self: #check for loop
+                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
+
+            under = over
+            over = over.over #rise one level
+
+    def resolveUnderLinks(self):
+        """ Resolve under links """
+        for i, under in enumerate(self.unders):
+            self.unders[i] = resolveFrame(under, who=self.name, desc='under')
+
+        if len(set(self.unders)) != len(self.unders): # duplicates
+            raise excepting.ResolveError("Duplicate under", name=self.name, value=self.unders)
+
+    def resolveAuxLinks(self):
+        """ Resolve aux links
+
+            If aux.original
+               aux.main for each aux is not assigned here but is assigned when
+              frame.enter before aux.enterAll() so can reuse aux in other frames.
+            Otherwise
+               assign aux.main to self
+        """
+        for i, aux in enumerate(self.auxes):
+            self.auxes[i] = aux = resolveFramer(aux,
+                                                who=self.name,
+                                                desc='aux',
+                                                contexts=[AUX])
+            if not aux.original: # clones get fixed main never released
+                if aux.main: # raise exception if aux.main is not None
+                    msg = "Aux already assigned to main '{0}'".format(aux.main.name)
+                    raise excepting.ResolveError(msg,
+                                                 name=aux.name,
+                                                 value=self.name)
+                aux.main = self
 
     def expose(self):
         """Prints out instance variables.
@@ -820,120 +936,6 @@ class Frame(registering.StoriedRegistry):
             else:
                 frame = frame.over #keep going up outline
         return False #no loop
-
-    def resolveNextLink(self):
-        """Resolve next link
-
-        """
-        if self.next_:
-            self.next_ = resolveFrame(self.next_, who=self.name, desc='next')
-
-    def resolveOverLinks(self):
-        """Starting with self.over climb over links resolving the links as needed along the way
-
-        """
-        over = self.over
-        under = self
-
-        while over: #not beyond top
-            if not isinstance(over, Frame): #over is name of frame not ref so resolve
-                name = over #make copy for later
-                try:
-                    over = Frame.Names[name] #get reference from Frame name registry
-                except KeyError:
-                    raise excepting.ResolveError("Bad over link in outline", self.name, name)
-
-                if over == self: #check for loop
-                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
-
-                #attach under to over
-                if under.name in over.unders: #under name in unders as a result of script under cmd
-                    index = over.unders.index(under.name) #index = position in list
-                    over.unders[index] = under #replace under at position index
-                else: #otherwise append
-                    over.unders.append(under) #add to unders
-
-                #maybe should error check for duplicates in unders here
-
-                under.over = over #assign valid over ref
-
-            else: #over is valid frame reference so don't need to resolve
-                if over == self: #check for loop
-                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
-
-            under = over
-            over = over.over #rise one level
-
-    def resolveUnderLinks(self):
-        """ Resolve under links """
-        for i, under in enumerate(self.unders):
-            self.unders[i] = resolveFrame(under, who=self.name, desc='under')
-
-        if len(set(self.unders)) != len(self.unders): # duplicates
-            raise excepting.ResolveError("Duplicate under", name=self.name, value=self.unders)
-
-    def resolveAuxLinks(self):
-        """ Resolve aux links
-
-            If aux.original
-               aux.main for each aux is not assigned here but is assigned when
-              frame.enter before aux.enterAll() so can reuse aux in other frames.
-            Otherwise
-               assign aux.main to self
-        """
-        for i, aux in enumerate(self.auxes):
-            self.auxes[i] = aux = resolveFramer(aux,
-                                                who=self.name,
-                                                desc='aux',
-                                                contexts=[AUX])
-            if not aux.original: # clones get fixed main never released
-                aux.main = self
-
-    def resolveFramerLink(self):
-        """Resolve framer link """
-        if self.framer:
-            self.framer = framer = resolveFramer(self.framer,
-                                                who=self.name,
-                                                desc='framer',)
-
-    def resolve(self):
-        """Resolve links where links are instance name strings assigned during building
-           need to be converted to object references using instance name registry
-
-        """
-        console.profuse("Resolving frame {0} in framer {1}\n".format(
-            self.name, self.framer.name))
-
-        self.resolveFramerLink()
-
-        self.resolveNextLink()
-        self.resolveOverLinks()
-        self.resolveUnderLinks()
-
-        self.resolveAuxLinks()
-
-        for act in self.beacts:
-            act.resolve()
-
-        for act in self.enacts:
-            act.resolve()
-
-        for act in self.reacts:
-            act.resolve()
-
-        for act in self.preacts:
-            act.resolve()
-
-        for act in self.exacts:
-            act.resolve()
-
-        for act in self.rexacts:
-            act.resolve()
-
-        for act in self.renacts:
-            act.resolve()
-
-
 
     def findBottom(self):
         """Finds the bottom most frame for outline that this frame lives in
@@ -1052,8 +1054,8 @@ class Frame(registering.StoriedRegistry):
             #if aux.main is not None then it has not been released and so
             #we can't enter unless its ourself for forced re-entry
             if aux.main and (aux.main is not self): # does aux belong to another frame
-                console.profuse("    False. Invalid aux {0} in use "
-                        "by another frame {1}".format(aux.name, aux.main.name))
+                console.concise("    False. Invalid aux '{0}' in use "
+                        "by another frame '{1}'\n".format(aux.name, aux.main.name))
                 return False
 
             if not aux.checkStart(): #performs entry checks beacts
@@ -1269,7 +1271,8 @@ def resolveFramer(framer, who='', desc='framer', contexts=None,
                                          who,
                                          human,
                                          count)
-        console.terse("    Resolved {0} as {1} in {2}".format(desc, framer.name, who))
+        console.concise("         Resolved {0} Framer '{1}' in {2}\n"
+                      "".format(desc, framer.name, who))
     return framer
 
 ResolveFramer = resolveFramer
@@ -1288,6 +1291,8 @@ def resolveFrame(frame, who='', desc='act', human='', count=None):
                                          human,
                                          count)
         frame = Frame.Names[frame] #replace frame name with frame
+        console.concise("         Resolved {0} Frame '{1}' in {2}\n"
+                              "".format(desc, frame.name, who))
 
     return frame
 

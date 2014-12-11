@@ -89,16 +89,17 @@ class Act(object):
                 "  '{0}'.".format(self.actor.name))
             raise excepting.CloneError(msg)
 
-        clone = Act(act=self.act,
-                    actor=self.actor,
-                    registrar=self.registrar,
-                    parms=copy.copy(self.parms),
-                    inits=copy.copy(self.inits),
-                    ioinits=copy.copy(self.ioinits),
-                    prerefs=copy.copy(self.prerefs),
-                    human=self.human,
-                    count=self.count)
+        #clone = Act(act=self.act,
+                    #actor=self.actor,
+                    #registrar=self.registrar,
+                    #parms=copy.deepcopy(self.parms),
+                    #inits=copy.deepcopy(self.inits),
+                    #ioinits=copy.deepcopy(self.ioinits),
+                    #prerefs=copy.deepcopy(self.prerefs),
+                    #human=self.human,
+                    #count=self.count)
         # frame and context for Act set when add Act to frame later
+        clone = copy.deepcopy(self)
         return clone
 
     def __call__(self): #make Act instance callable as function
@@ -118,8 +119,8 @@ class Act(object):
             self.frame = self.act.frame
             self.context = self.act.context
         self.frame = framing.resolveFrame(self.frame,
-                                          who=self,
-                                          desc='act',
+                                          who="Act for {0}".format(self.actor),
+                                          desc="act's",
                                           human=self.human,
                                           count=self.count)
 
@@ -183,7 +184,7 @@ class Act(object):
                                                              self.count)
                             setattr(actor, key, share)
             self.parms = parms
-            self.parms.update(self.actor.resolve(**self.parms))
+            self.parms.update(self.actor.resolve(**self.parms)) # resolve sub acts
             self.actor.postinitio(**self.parms)
 
     def resolvePath(self, ipath, ival=None, iown=None, warn=False):
@@ -777,7 +778,7 @@ class Actor(object):
                                                      self.act.count)
 
 class Interrupter(Actor):
-    """Interrupter Actor Patron Registry Class
+    """Interrupter Actor Class
        Interrupter is a base clase for all actor classes that interrupt normal precur
        processing and result in a change in the frame or the frame processing.
 
@@ -799,7 +800,7 @@ class Interrupter(Actor):
         super(Interrupter,self).__init__(**kw)
 
 class Transiter(Interrupter):
-    """Transiter Interrupter Actor Patron Registry Class
+    """Transiter Interrupter Class
        Transiter  is a special actor that performs transitions between frames
 
        Parameters
@@ -891,7 +892,7 @@ class Transiter(Interrupter):
 
 
 class Suspender(Interrupter):
-    """Suspender Interrupter Actor Patron Registry Class
+    """Suspender Interrupter Class
        Suspender  is a special actor that performs a conditional auxiliary
           which truncates the active outline effectively suspended the truncated
           frames
@@ -960,8 +961,8 @@ class Suspender(Interrupter):
             # if aux.main is not None then it has not been released and so
             # we can't enter unless it is our act's frame
             if aux.main and (aux.main is not self.act.frame):
-                console.profuse("    Invalid aux {0} in use "
-                        "by another frame {1}".format(aux.name, aux.main.name))
+                console.concise("    Invalid aux '{0}' in use "
+                        "by another frame '{1}'\n".format(aux.name, aux.main.name))
                 return None
 
             if not aux.checkStart(): #performs entry checks
@@ -1018,7 +1019,7 @@ class Suspender(Interrupter):
 
 
 class Printer(Actor):
-    """Printor Actor Patron Registry Class
+    """Printor Actor Class
 
        Printer is a special actor that just prints to console its message
 

@@ -226,7 +226,8 @@ def resolveTasker(tasker, who='', desc='tasker', contexts=None, human='', count=
                                          who,
                                          human,
                                          count)
-        console.terse("    Resolved {0} as {1} in {2}".format(desc, tasker.name, who))
+        console.concise("         Resolved {0} Tasker '{1}' in '{2}'\n"
+                      "".format(desc, tasker.name, who))
     return tasker
 
 ResolveTasker = resolveTasker

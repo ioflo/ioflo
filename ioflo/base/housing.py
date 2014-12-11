@@ -148,7 +148,7 @@ class House(registering.StoriedRegistry):
         console.terse("     Resolving clones for House '{0}' ...\n".format(self.name))
 
         for original, clone, human, count in self.clones:
-            console.concise("       Cloning original '{0}' as '{1}'\n"
+            console.terse("       Cloning original '{0}' as clone '{1}'\n"
                             "".format(original, clone))
             original = framing.resolveFramer(original,
                                              who=self.name,
@@ -196,7 +196,7 @@ class House(registering.StoriedRegistry):
         Assumes name is already valid and unique framer name
         """
         self.assignRegistries()
-        console.concise("       Cloning original '{0}' as '{1}' be '{2}'\n"
+        console.concise("       Cloning original '{0}' as clone '{1}' be '{2}'\n"
                                     "".format(original, clone, ))
 
         clone = original.clone(name=name, schedule=schedule)

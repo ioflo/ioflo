@@ -76,8 +76,8 @@ class NeedDone(Need):
         """
         parms = super(NeedDone, self).resolve( **kwa)
         parms['tasker'] = tasker = tasking.resolveTasker(tasker,
-                                                         who=self.name,
-                                                         desc='need done tasker',
+                                                         who=self.act.frame.name,
+                                                         desc='need done',
                                                          contexts=[],
                                                          human=self.act.human,
                                                          count=self.act.count)
