@@ -38,6 +38,8 @@ class Framer(tasking.Tasker):
        instance attributes
             .main = main frame when this framer is an auxiliary
             .original = clone state, False if clone True if not clone
+            .insular = clone that is visible only to main framer
+            .cloneCounter = count of times this framer has been cloned
             .done = auxiliary completion state True or False when an auxiliary
             .elapsed = elapsed time from outline change
             .elapsedShr = share where .elapsed is stored for logging and need checks
@@ -76,6 +78,7 @@ class Framer(tasking.Tasker):
         self.main = None  #when aux framer, frame that is running this aux
         self.original = True  # as in not a clone
         self.insular = False  # as in a clone that is visible only to the main framer
+        self.cloneCounter = 0  # count of how many times this framer has been cloned
         self.done = True #when aux or slave framer, completion state, set to False on enterAll
 
         self.stamp = 0.0 #beginning time to compute elapsed time since last outline change
@@ -112,6 +115,8 @@ class Framer(tasking.Tasker):
 
         """
         self.store.house.assignRegistries() # ensure Framer.names is houses registry
+
+        self.cloneCounter += 1
 
         if name and not REO_IdentPub.match(name):
             msg = "CloneError: Invalid framer name '{0}'.".format(name)
@@ -202,7 +207,36 @@ class Framer(tasking.Tasker):
 
         insulars = [data for data in self.moots if data['clone'] == 'moot']
         for data in insulars:  # only visible to this Framer
-            pass
+            original = data['original']
+            schedule = data['schedule']
+            human = data['human']
+            count = data['count']
+            if schedule != AUX:
+                msg = ("CloneError: Invalid insular clone schedule '{0}' "
+                       "for {1}.".format(shedule, original))
+                raise excepting.CloneError(msg)
+
+            clone = "{0}{1}".format(original, self.cloneCounter)
+            self.cloneCounter += 1
+            while (clone in self.auxes):
+                clone = "{0}{1}".format(original, self.cloneCounter)
+                self.cloneCounter += 1
+            console.terse("       Cloning original '{0}' as insular clone '{1}'\n"
+                                        "".format(original, clone))
+            original = resolveFramer(original,
+                                     who=self.name,
+                                     desc='original',
+                                     contexts=[MOOT],
+                                     human=human,
+                                     count=count)
+            clone = original.clone(name=clone, schedule=schedule)
+            clone.original = False  # main frame will be fixed
+            clone.insular =  True
+            #self.store.house.taskers.append(clone)
+            #self.store.house.framers.append(clone)
+            #if schedule == AUX:
+                #self.store.house.auxes.append(clone)
+            self.store.house.resolvables.append(clone)
 
         self.moots = insulars  # these can be recloned since new name
 
