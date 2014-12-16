@@ -59,6 +59,9 @@ class Framer(tasking.Tasker):
 
             .frameNames = frame name registry , name space of frame names
             .frameCounter = frame name registry counter
+
+            .moots = list of moot framers to be cloned
+            .auxes = dict of insular aux framer clones keyed by aux framer.name
     """
     #Counter = 0
     #Names = {}
@@ -72,6 +75,7 @@ class Framer(tasking.Tasker):
 
         self.main = None  #when aux framer, frame that is running this aux
         self.original = True  # as in not a clone
+        self.insular = False  # as in a clone that is visible only to the main framer
         self.done = True #when aux or slave framer, completion state, set to False on enterAll
 
         self.stamp = 0.0 #beginning time to compute elapsed time since last outline change
@@ -100,6 +104,9 @@ class Framer(tasking.Tasker):
         self.frameNames = odict() #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
 
+        self.moots = []  # moot framers to be cloned
+        self.auxes =  odict()  # insular aux framer clones keyed by name
+
     def clone(self, name, period=0.0, schedule=AUX):
         """ Return clone of self named name
 
@@ -122,6 +129,7 @@ class Framer(tasking.Tasker):
                         "".format(self.name, clone.name))
         clone.schedule = schedule
         clone.first = self.first # resolve later
+        clone.moots = copy.deepcopy(self.moots)
 
         clone.assignFrameRegistry() #Frame.names is cloned framer registry
         for frame in self.frameNames.values():
@@ -134,6 +142,7 @@ class Framer(tasking.Tasker):
            by that name
         """
         console.terse("     Resolving Framer {0}\n".format(self.name))
+        self.resolveMoots()
 
         self.assignFrameRegistry() #needed by act links below
 
@@ -145,6 +154,57 @@ class Framer(tasking.Tasker):
             self.first = resolveFrame(self.first, who=self.name, desc='first')
         else:
             raise excepting.ResolveError("No first frame link", self.name, self.first)
+
+        self.resolved = True
+
+    def resolveMoots(self):
+        """
+        Resolves .moots by cloning as appropriate.
+        .moots is list of dicts of form
+        {
+            original: framername,
+            clone: string,
+            schedule: constant,
+            human: string,
+            count: number
+        }
+
+        creates clone and adds to taskables if named clone
+        resolution looks up name string in appropriate registry and replaces
+        name string with link to object
+
+        Assumes Framer.names is .house's registry
+        """
+        #self.store.house.assignRegistries() # ensure Framer.names is houses registry
+        console.terse("       Resolving moots ...\n")
+        nameds = [data for data in self.moots if data['clone'] != 'moot']
+        for data in nameds:
+            original = data['original']
+            clone = data['clone']
+            schedule = data['schedule']
+            human = data['human']
+            count = data['count']
+            console.terse("       Cloning original '{0}' as named clone '{1}'\n"
+                            "".format(original, clone))
+            original = resolveFramer(original,
+                                     who=self.name,
+                                     desc='original',
+                                     contexts=[MOOT],
+                                     human=human,
+                                     count=count)
+            clone = original.clone(name=clone, schedule=schedule)
+            clone.original = False  # main frame will be fixed
+            self.store.house.taskers.append(clone)
+            self.store.house.framers.append(clone)
+            if schedule == AUX:
+                self.store.house.auxes.append(clone)
+            self.store.house.resolvables.append(clone)
+
+        insulars = [data for data in self.moots if data['clone'] == 'moot']
+        for data in insulars:  # only visible to this Framer
+            pass
+
+        self.moots = insulars  # these can be recloned since new name
 
     def traceOutlines(self):
         """Trace and assign outlines for each frame in framer

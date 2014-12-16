@@ -12,12 +12,12 @@ frame setup
    set .nlegs to 3
    go abort if elapsed >= 3
 
-frame leg in setup
-   aux myaux
-   go me if done myaux  #forced exit entry
-   go finish if .leg >= .nlegs
-   exit
-      inc .leg with 1
+   frame leg in setup
+      aux myaux
+      go me if done myaux  #forced exit entry
+      go finish if .leg >= .nlegs
+      exit
+         inc .leg with 1
 
 frame finish
    print "Success"

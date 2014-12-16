@@ -1356,12 +1356,13 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         if clone: # add dyad (orignal, clone, human, count) to be resolved
-            self.currentHouse.clones.append((aux,
-                                            clone,
-                                            self.currentHuman,
-                                            self.currentCount))
+            data = odict(original=aux,
+                         clone=clone,
+                         schedule=AUX,
+                         human=self.currentHuman,
+                         count=self.currentCount)
+            self.currentFramer.moots.append(data)
             aux = clone # assign aux to clone as original aux is to be cloned
-            pass
 
         if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging

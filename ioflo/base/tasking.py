@@ -60,6 +60,7 @@ class Tasker(registering.StoriedRegistry):
 
         self.period = float(abs(period)) #desired time between runs, 0.0 means asap
         self.stamp = 0.0 #time last run
+        self.resolved = False  # tasker has been resolved
         self.status = STOPPED #operational status of tasker
         self.desire = STOP #desired control next time Task is iterated
         self.done = True # tasker completion state reset on restart
@@ -67,8 +68,6 @@ class Tasker(registering.StoriedRegistry):
         self.runner = None #reference to runner generator
         self.remake() #make generator assign to .runner and advance to yield
 
-        #self.source = None # future reference to share
-        #self.sourceFields = None #future reference to share fields
 
     def reinit(self, period=None, schedule=None, **kw):
         if period is not None:
@@ -97,8 +96,7 @@ class Tasker(registering.StoriedRegistry):
 
     def resolve(self, **kwa):
         """Resolves any by name links to other objects   """
-        parms = odict()
-        return parms
+        self.resolved = True
 
     def start(self):
         """ready runner

@@ -7,6 +7,8 @@
 import pdb
 import copy
 
+from collections import deque
+
 from .globaling import *
 from .odicting import odict
 
@@ -99,6 +101,8 @@ class House(registering.StoriedRegistry):
 
         self.clones = [] # list of tuples of clone pair names (original, clone, human, count)
 
+        self.resolvables = deque()  # deque of framers to be resolved
+
         self.names = odict() #houses dict of registry Names
         self.counters = odict() #houses dict of registry Name Counters
 
@@ -135,33 +139,14 @@ class House(registering.StoriedRegistry):
         """
         console.terse("   Resolving House '{0}' ...\n".format(self.name))
         self.assignRegistries()
-        self.resolveClones()
-        for tasker in [tasker for tasker in self.taskers if tasker not in self.moots]:
+
+        for tasker in self.taskers:
+            if not tasker.resolved and tasker not in self.moots:
+                self.resolvables.append(tasker)
+
+        while self.resolvables:
+            tasker = self.resolvables.popleft()
             tasker.resolve()
-
-    def resolveClones(self):
-        """ resolves clone dyad  tuples of form (original, clone, human, count)
-            creates clone and adds to taskables
-            resolution looks up name string in appropriate registry and replaces
-            name string with link to object
-        """
-        console.terse("     Resolving clones for House '{0}' ...\n".format(self.name))
-
-        for original, clone, human, count in self.clones:
-            console.terse("       Cloning original '{0}' as clone '{1}'\n"
-                            "".format(original, clone))
-            original = framing.resolveFramer(original,
-                                             who=self.name,
-                                             desc='original',
-                                             contexts=[MOOT],
-                                             human=human,
-                                             count=count)
-            clone = original.clone(name=clone, schedule=AUX)
-            clone.original = False  # main frame will be fixed
-            self.taskers.append(clone)
-            self.framers.append(clone)
-            self.auxes.append(clone)
-        self.clones = [] # release clone list
 
     def traceOutlines(self):
         """ trace and assign outlines for each frame
