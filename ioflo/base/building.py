@@ -1298,11 +1298,12 @@ class Builder(object):
               aux framername
 
            Cloned Auxiliary:
-              aux framername as clonedauxname
+              aux framername as (moot, clonedauxname)
+
 
            Conditional Auxiliary:
-              aux framername [as clonedauxname] if [not] need
-              aux framername [as clonedauxname] if [not] need [and [not] need ...]
+              aux framername [as (moot, clonedauxname)] if [not] need
+              aux framername [as (moot, clonedauxname)] if [not] need [and [not] need ...]
 
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
@@ -1355,16 +1356,20 @@ class Builder(object):
             msg = "Error building %s. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
-        if clone: # add dyad (orignal, clone, human, count) to be resolved
-            data = odict(original=aux,
-                         clone=clone,
-                         schedule=AUX,
-                         human=self.currentHuman,
-                         count=self.currentCount)
-            self.currentFramer.moots.append(data)
-            aux = clone # assign aux to clone as original aux is to be cloned
-
         if needs: #conditional auxiliary suspender preact
+            if clone: # to moots to be resolved
+                if clone == 'moot':
+                    msg = "Error building {0}. Insular clone 'moot, not"
+                    " allowd with conditional aux.".format (command,)
+                    raise excepting.ParseError(msg, tokens, index)
+                data = odict(original=aux,
+                             clone=clone,
+                             schedule=AUX,
+                             human=self.currentHuman,
+                             count=self.currentCount)
+                self.currentFramer.moots.append(data)
+                aux = clone # assign aux to clone as original aux is to be cloned
+
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later
             parms = dict(needs = needs, main = self.currentFrame.name, aux = aux, human = human)
@@ -1376,14 +1381,21 @@ class Builder(object):
 
             self.currentFrame.addPreact(act)
 
-            console.profuse("     Added suspender preact,  '{0}', with aux {1} needs:\n".format(
-                command, aux))
+            console.profuse("     Added suspender preact,  '{0}', with aux"
+                            " {1} needs:\n".format(command, aux))
             for need in needs:
                 console.profuse("       {0} with parms = {1}\n".format(need.actor, need.parms))
 
-            # deactivate added in suspender.resolve
-
         else: # Simple auxiliary
+            if clone: # to moots to be resolved
+                data = odict(original=aux,
+                             clone=clone,
+                             schedule=AUX,
+                             human=self.currentHuman,
+                             count=self.currentCount)
+                if clone != 'moot':
+                    self.currentFramer.moots.append(data)
+                    aux = clone # assign aux to clone as original aux is to be cloned
             self.currentFrame.addAux(aux) #need to resolve later
             console.profuse("     Added aux framer {0}\n".format(aux))
 
@@ -2679,7 +2691,8 @@ class Builder(object):
 
            need:
               always
-              done tasker
+              done taskername
+              done (any, all) [in frame [framename] [of framer [framername]]]
               status tasker is (readied, started, running, stopped, aborted)
               update [in frame] share
               change [in frame] share
@@ -2797,8 +2810,63 @@ class Builder(object):
 
            done tasker
         """
+        frame = "" # name of frame where aux resides
+        framer = "" # name of framer where aux resides
+
         tasker = tokens[index]
         index += 1
+
+        if index < len(tokens): #options
+            connective = tokens[index]
+
+            if connective == 'in': #optional in frame or in framer clause
+                index += 1 #eat token only otherwise save for next need
+                place = tokens[index] #need to resolve
+                index += 1 #eat token
+
+                if place != 'frame':
+                    msg = ("ParseError: Building verb '{0}'. Invalid "
+                        " '{1}' clause. Expected 'frame' got "
+                        "'{2}'".format(command, connective, place))
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if index < len(tokens):
+                    frame = tokens[index]
+                    index += 1
+
+                    if index < len(tokens): #options
+                        connective = tokens[index]
+
+                        if connective == 'of':
+                            index += 1 #eat token
+                            place = tokens[index] #need to resolve
+                            index += 1 #eat token
+
+                            if place != 'framer':
+                                msg = ("ParseError: Building verb '{0}'. Invalid "
+                                       " '{1}' clause. Expected 'framer' got "
+                                       "'{2}'".format(command, connective, place))
+                                raise excepting.ParseError(msg, tokens, index)
+
+                            if index < len(tokens):
+                                framer = tokens[index]
+                                index += 1
+                            else:
+                                framer = self.currentFramer.name
+
+                else:
+                    frame = self.currentFrame.name
+                    framer = self.currentFramer.name
+
+        if frame and tasker not in ['any', 'all']:
+            msg = ("ParseError: Building verb '{0}'. Named tasker '{1}'  not "
+                "allowed with 'in frame' clause.".format(command, tasker))
+            raise excepting.ParseError(msg, tokens, index)
+
+        if not frame and tasker in ['any', 'all']:
+            frame = self.currentFrame.name
+            framer = self.currentFramer.name
+
         actorName = 'Need' + kind.capitalize()
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
@@ -2807,11 +2875,13 @@ class Builder(object):
 
         parms = {}
         parms['tasker'] = tasker
-        act = acting.Act(   actor=actorName,
-                            registrar=needing.Need,
-                            parms=parms,
-                            human=self.currentHuman,
-                            count=self.currentCount)
+        parms['framer'] = framer
+        parms['frame'] = frame
+        act = acting.Act(actor=actorName,
+                         registrar=needing.Need,
+                         parms=parms,
+                         human=self.currentHuman,
+                         count=self.currentCount)
 
         return (act, index)
 

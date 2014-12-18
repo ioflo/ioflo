@@ -7,6 +7,7 @@ if sys.version > '3':
     xrange = range
 import copy
 from collections import deque
+import uuid
 
 from .odicting import odict
 from .globaling import *
@@ -39,7 +40,6 @@ class Framer(tasking.Tasker):
             .main = main frame when this framer is an auxiliary
             .original = clone state, False if clone True if not clone
             .insular = clone that is visible only to main framer
-            .cloneCounter = count of times this framer has been cloned
             .done = auxiliary completion state True or False when an auxiliary
             .elapsed = elapsed time from outline change
             .elapsedShr = share where .elapsed is stored for logging and need checks
@@ -78,7 +78,6 @@ class Framer(tasking.Tasker):
         self.main = None  #when aux framer, frame that is running this aux
         self.original = True  # as in not a clone
         self.insular = False  # as in a clone that is visible only to the main framer
-        self.cloneCounter = 0  # count of how many times this framer has been cloned
         self.done = True #when aux or slave framer, completion state, set to False on enterAll
 
         self.stamp = 0.0 #beginning time to compute elapsed time since last outline change
@@ -115,8 +114,6 @@ class Framer(tasking.Tasker):
 
         """
         self.store.house.assignRegistries() # ensure Framer.names is houses registry
-
-        self.cloneCounter += 1
 
         if name and not REO_IdentPub.match(name):
             msg = "CloneError: Invalid framer name '{0}'.".format(name)
@@ -199,11 +196,13 @@ class Framer(tasking.Tasker):
                                      count=count)
             clone = original.clone(name=clone, schedule=schedule)
             clone.original = False  # main frame will be fixed
+            self.auxes[clone.name] = clone # clones tied to this framer
+            self.store.house.resolvables.append(clone)
             self.store.house.taskers.append(clone)
             self.store.house.framers.append(clone)
             if schedule == AUX:
                 self.store.house.auxes.append(clone)
-            self.store.house.resolvables.append(clone)
+
 
         insulars = [data for data in self.moots if data['clone'] == 'moot']
         for data in insulars:  # only visible to this Framer
@@ -216,11 +215,10 @@ class Framer(tasking.Tasker):
                        "for {1}.".format(shedule, original))
                 raise excepting.CloneError(msg)
 
-            clone = "{0}{1}".format(original, self.cloneCounter)
-            self.cloneCounter += 1
-            while (clone in self.auxes):
-                clone = "{0}{1}".format(original, self.cloneCounter)
-                self.cloneCounter += 1
+            clone = self.nameUid(prefix=original)
+            while (clone in Framer.Names): # ensure unique
+                clone = self.nameUid(prefix=original)
+
             console.terse("       Cloning original '{0}' as insular clone '{1}'\n"
                                         "".format(original, clone))
             original = resolveFramer(original,
@@ -231,14 +229,23 @@ class Framer(tasking.Tasker):
                                      count=count)
             clone = original.clone(name=clone, schedule=schedule)
             clone.original = False  # main frame will be fixed
-            clone.insular =  True
-            #self.store.house.taskers.append(clone)
-            #self.store.house.framers.append(clone)
-            #if schedule == AUX:
-                #self.store.house.auxes.append(clone)
+            clone.insular =  True #  local to this framer
+            self.auxes[clone.name] = clone # clones tied to this framer
             self.store.house.resolvables.append(clone)
 
         self.moots = insulars  # these can be recloned since new name
+
+    @staticmethod
+    def nameUid(prefix='clone', size=8):
+        '''
+        Returns unique name for Framer composed of prefix and random bytes
+        prefix is prefix to name
+        size is number of random bytes
+
+        Uses uuid.uuid4
+        '''
+        size = int(max(size, 1))
+        return ("{0}_{1}".format(prefix, uuid.uuid4().hex[:size]))
 
     def traceOutlines(self):
         """Trace and assign outlines for each frame in framer
@@ -1392,3 +1399,23 @@ def resolveFrame(frame, who='', desc='act', human='', count=None):
 
 ResolveFrame = resolveFrame
 
+def resolveFrameOfFramer(frame, framer, who='', desc='act', human='', count=None):
+    """ Returns resolved frame instance from frame
+        frame may be name of frame or instance
+
+        Resolves relative to the framer's .frameNames registry
+    """
+    if not isinstance(frame, Frame): # not instance so name
+        if frame not in framer.frameNames:
+            raise excepting.ResolveError("ResolveError: Bad {0} frame link name".format(desc),
+                                         frame,
+                                         who,
+                                         human,
+                                         count)
+        frame = framer.frameNames[frame] #replace frame name with frame
+        console.concise("         Resolved {0} Frame '{1}' in {2}\n"
+                              "".format(desc, frame.name, who))
+
+    return frame
+
+ResolveFrameOfFramer = resolveFrameOfFramer

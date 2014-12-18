@@ -70,27 +70,56 @@ class NeedAlways(Need):
 
 class NeedDone(Need):
     """NeedDone Need Special Need"""
-    def resolve(self, tasker, **kwa):
+    def resolve(self, tasker, framer, frame, **kwa):
         """Resolves value (tasker) link that is passed in as tasker parm
            resolved link is passed back to container act to update in act's parms
         """
         parms = super(NeedDone, self).resolve( **kwa)
-        parms['tasker'] = tasker = tasking.resolveTasker(tasker,
-                                                         who=self.act.frame.name,
-                                                         desc='need done',
-                                                         contexts=[],
-                                                         human=self.act.human,
-                                                         count=self.act.count)
+        if framer:
+            parms['framer'] = framer = framing.resolveFramer(framer,
+                                                            who=self.act.frame.name,
+                                                            desc='need done',
+                                                            contexts=[],
+                                                            human=self.act.human,
+                                                            count=self.act.count)
+
+        if frame: # framer required
+            parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
+                                                                  framer,
+                                                                  who=self.act.frame.name,
+                                                                  desc='need done',
+                                                                  human=self.act.human,
+                                                                  count=self.act.count)
+
+
+        if tasker not in ['any', 'all']:
+            parms['tasker'] = tasker = tasking.resolveTasker(tasker,
+                                                             who=self.act.frame.name,
+                                                             desc='need done',
+                                                             contexts=[],
+                                                             human=self.act.human,
+                                                             count=self.act.count)
+
+
         return parms #return items are updated in original act parms
 
-    def action(self, tasker, **kw):
+    def action(self, tasker, framer, frame, **kw):
         """
         Check if  tasker done
         parameters:
             tasker
         """
-        result = tasker.done
-        console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result))
+        if frame:
+            if tasker == 'any':
+                result = any([aux.done for aux in frame.auxes ])
+            elif tasker == 'all':
+                result = frame.auxes and all([aux.done for aux in frame.auxes])
+            else:
+                result = False
+
+        else:
+            result = tasker.done
+            console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result))
 
         return result
 

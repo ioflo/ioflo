@@ -19,6 +19,13 @@ framer mission be active first cloner1
          aux orig2 as clone2
          go next if done clone2
 
+      frame cloner4 in start
+         print cloner4
+         put 0 into counter of framer
+         put 1 into limit of frame
+         aux orig1 as clone4
+         go next if done all
+
    frame done
        print "Success"
        bid stop all
