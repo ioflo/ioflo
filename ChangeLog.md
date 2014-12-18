@@ -7,7 +7,8 @@ CHANGE LOG
 ---------
 v1.1.1
 
-Added new clone verb
+Added preliminary support for insular clones
+Added if done (any, all) [in frame [framename] [of framer [framername]]]
 
 
 ---------
