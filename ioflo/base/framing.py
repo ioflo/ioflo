@@ -6,7 +6,7 @@ import sys
 if sys.version > '3':
     xrange = range
 import copy
-from collections import deque
+from collections import deque, Mapping
 import uuid
 
 from .odicting import odict
@@ -178,7 +178,7 @@ class Framer(tasking.Tasker):
         Assumes Framer.names is .house's registry
         """
         #self.store.house.assignRegistries() # ensure Framer.names is houses registry
-        console.terse("       Resolving moots ...\n")
+        console.terse("       Resolving moots for named clones ...\n")
         nameds = [data for data in self.moots if data['clone'] != 'moot']
         for data in nameds:
             original = data['original']
@@ -203,37 +203,7 @@ class Framer(tasking.Tasker):
             if schedule == AUX:
                 self.store.house.auxes.append(clone)
 
-
-        insulars = [data for data in self.moots if data['clone'] == 'moot']
-        for data in insulars:  # only visible to this Framer
-            original = data['original']
-            schedule = data['schedule']
-            human = data['human']
-            count = data['count']
-            if schedule != AUX:
-                msg = ("CloneError: Invalid insular clone schedule '{0}' "
-                       "for {1}.".format(shedule, original))
-                raise excepting.CloneError(msg)
-
-            clone = self.nameUid(prefix=original)
-            while (clone in Framer.Names): # ensure unique
-                clone = self.nameUid(prefix=original)
-
-            console.terse("       Cloning original '{0}' as insular clone '{1}'\n"
-                                        "".format(original, clone))
-            original = resolveFramer(original,
-                                     who=self.name,
-                                     desc='original',
-                                     contexts=[MOOT],
-                                     human=human,
-                                     count=count)
-            clone = original.clone(name=clone, schedule=schedule)
-            clone.original = False  # main frame will be fixed
-            clone.insular =  True #  local to this framer
-            self.auxes[clone.name] = clone # clones tied to this framer
-            self.store.house.resolvables.append(clone)
-
-        self.moots = insulars  # these can be recloned since new name
+        self.moots = []
 
     @staticmethod
     def nameUid(prefix='clone', size=8):
@@ -952,10 +922,52 @@ class Frame(registering.StoriedRegistry):
                assign aux.main to self
         """
         for i, aux in enumerate(self.auxes):
-            self.auxes[i] = aux = resolveFramer(aux,
+            if isinstance(aux, Mapping):
+                clone = aux['clone']
+                original = aux['original']
+                schedule = aux['schedule']
+                human = aux['human']
+                count = aux['count']
+                if schedule != AUX:
+                    msg = ("ResolveError: Invalid insular clone schedule '{0}' "
+                           "for {1}.".format(schedule, original))
+                    raise excepting.ResolveError(msg,
+                                                 name=clone,
+                                                 value=self.name,
+                                                 human=human,
+                                                 count=count)
+                if clone != 'moot':
+                    msg = "Aux clone must be 'moot' not '{0}'".format(clone)
+                    raise excepting.ResolveError(msg,
+                                                 name=clone,
+                                                 value=self.name,
+                                                 human=human,
+                                                 count=count)
+
+                clone = self.nameUid(prefix=original)
+                while (clone in Framer.Names): # ensure unique
+                    clone = Framer.nameUid(prefix=original)
+
+                console.terse("       Cloning original '{0}' as insular clone '{1}'\n"
+                                            "".format(original, clone))
+                original = resolveFramer(original,
+                                         who=self.name,
+                                         desc='original',
+                                         contexts=[MOOT],
+                                         human=human,
+                                         count=count)
+                clone = original.clone(name=clone, schedule=schedule)
+                clone.original = False  # main frame will be fixed
+                clone.insular =  True #  local to this framer
+                self.auxes[i] = aux = clone
+                self.framer.auxes[clone.name] = clone # clones tied to frames framer
+                self.store.house.resolvables.append(clone)
+            else:
+                self.auxes[i] = aux = resolveFramer(aux,
                                                 who=self.name,
                                                 desc='aux',
                                                 contexts=[AUX])
+
             if not aux.original: # clones get fixed main never released
                 if aux.main: # raise exception if aux.main is not None
                     msg = "Aux already assigned to main '{0}'".format(aux.main.name)

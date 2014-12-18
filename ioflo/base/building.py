@@ -1356,20 +1356,19 @@ class Builder(object):
             msg = "Error building %s. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
-        if needs: #conditional auxiliary suspender preact
-            if clone: # to moots to be resolved
-                if clone == 'moot':
-                    msg = "Error building {0}. Insular clone 'moot, not"
-                    " allowd with conditional aux.".format (command,)
-                    raise excepting.ParseError(msg, tokens, index)
-                data = odict(original=aux,
-                             clone=clone,
-                             schedule=AUX,
-                             human=self.currentHuman,
-                             count=self.currentCount)
+        if clone:
+            data = odict(original=aux,
+                         clone=clone,
+                         schedule=AUX,
+                         human=self.currentHuman,
+                         count=self.currentCount)
+            if clone == 'moot':  # insular clone
+                aux = data # create clone when resolve aux
+            else:  # named clone create clone when resolve framer.moots
                 self.currentFramer.moots.append(data)
                 aux = clone # assign aux to clone as original aux is to be cloned
 
+        if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later
             parms = dict(needs = needs, main = self.currentFrame.name, aux = aux, human = human)
@@ -1387,15 +1386,6 @@ class Builder(object):
                 console.profuse("       {0} with parms = {1}\n".format(need.actor, need.parms))
 
         else: # Simple auxiliary
-            if clone: # to moots to be resolved
-                data = odict(original=aux,
-                             clone=clone,
-                             schedule=AUX,
-                             human=self.currentHuman,
-                             count=self.currentCount)
-                if clone != 'moot':
-                    self.currentFramer.moots.append(data)
-                    aux = clone # assign aux to clone as original aux is to be cloned
             self.currentFrame.addAux(aux) #need to resolve later
             console.profuse("     Added aux framer {0}\n".format(aux))
 
