@@ -63,7 +63,6 @@ class Framer(tasking.Tasker):
             .frameCounter = frame name registry counter
 
             .moots = list of moot framers to be cloned
-            .auxes = dict of insular aux framer clones keyed by aux framer.name
     """
     #Counter = 0
     #Names = {}
@@ -107,7 +106,6 @@ class Framer(tasking.Tasker):
         self.frameCounter = 0 #frame name registry counter for framer
 
         self.moots = []  # moot framers to be cloned
-        self.auxes =  odict()  # insular aux framer clones keyed by name
 
     def clone(self, name, period=0.0, schedule=AUX):
         """ Return clone of self named name
@@ -148,14 +146,16 @@ class Framer(tasking.Tasker):
 
         self.assignFrameRegistry() #needed by act links below
 
-        for frame in Frame.Names.values(): #all frames in this framer's name space
-            frame.resolve()
-
         #Resolve first frame link
         if self.first:
             self.first = resolveFrame(self.first, who=self.name, desc='first')
         else:
             raise excepting.ResolveError("No first frame link", self.name, self.first)
+
+        for frame in Frame.Names.values(): #all frames in this framer's name space
+            frame.resolve()
+
+        self.traceOutlines()
 
         self.resolved = True
 
@@ -196,7 +196,6 @@ class Framer(tasking.Tasker):
                                      count=count)
             clone = original.clone(name=clone, schedule=schedule)
             clone.original = False  # main frame will be fixed
-            self.auxes[clone.name] = clone # clones tied to this framer
             self.store.house.resolvables.append(clone)
             self.store.house.taskers.append(clone)
             self.store.house.framers.append(clone)
@@ -246,7 +245,6 @@ class Framer(tasking.Tasker):
         self.stamp = self.store.stamp
         self.elapsed = 0.0
         self.updateElapsed()
-
 
     def updateTimer(self):
         """update the elapsed time of framer in  current outline
@@ -944,7 +942,7 @@ class Frame(registering.StoriedRegistry):
                                                  human=human,
                                                  count=count)
 
-                clone = self.nameUid(prefix=original)
+                clone = Framer.nameUid(prefix=original)
                 while (clone in Framer.Names): # ensure unique
                     clone = Framer.nameUid(prefix=original)
 
@@ -960,8 +958,8 @@ class Frame(registering.StoriedRegistry):
                 clone.original = False  # main frame will be fixed
                 clone.insular =  True #  local to this framer
                 self.auxes[i] = aux = clone
-                self.framer.auxes[clone.name] = clone # clones tied to frames framer
                 self.store.house.resolvables.append(clone)
+                self.framer.assignFrameRegistry()  # restore
             else:
                 self.auxes[i] = aux = resolveFramer(aux,
                                                 who=self.name,
@@ -1398,7 +1396,7 @@ def resolveFrame(frame, who='', desc='act', human='', count=None):
     """
     if not isinstance(frame, Frame): # not instance so name
         if frame not in Frame.Names:
-            raise excepting.ResolveError("ResolveError: Bad {0} frame link name".format(desc),
+            raise excepting.ResolveError("ResolveError: Bad {0} Frame link name".format(desc),
                                          frame,
                                          who,
                                          human,
@@ -1419,7 +1417,8 @@ def resolveFrameOfFramer(frame, framer, who='', desc='act', human='', count=None
     """
     if not isinstance(frame, Frame): # not instance so name
         if frame not in framer.frameNames:
-            raise excepting.ResolveError("ResolveError: Bad {0} frame link name".format(desc),
+            raise excepting.ResolveError("ResolveError: Bad {0} Frame link"
+                        " name in Framer '{1}'".format(desc, framer.name),
                                          frame,
                                          who,
                                          human,

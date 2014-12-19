@@ -300,7 +300,7 @@ class Builder(object):
                 for house in self.houses:
                     house.orderTaskables()
                     house.resolve()
-                    house.traceOutlines() #traces the outlines in each frame
+                    #house.traceOutlines() #traces the outlines in each frame
 
                     if console._verbosity >= console.Wordage.concise:
                         house.showAllTaskers()
