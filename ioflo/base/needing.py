@@ -76,6 +76,8 @@ class NeedDone(Need):
         """
         parms = super(NeedDone, self).resolve( **kwa)
         if framer:
+            if framer == 'me':
+                framer = self.act.frame.framer
             parms['framer'] = framer = framing.resolveFramer(framer,
                                                             who=self.act.frame.name,
                                                             desc='need done',
@@ -84,6 +86,8 @@ class NeedDone(Need):
                                                             count=self.act.count)
 
         if frame: # framer required
+            if frame == 'me':
+                frame = self.act.frame
             parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
                                                                   framer,
                                                                   who=self.act.frame.name,
@@ -131,6 +135,9 @@ class NeedStatus(Need):
            resolved link is passed back to container act to update in act's parms
         """
         parms = super(NeedStatus, self).resolve( **kwa)
+        if tasker == 'me':
+            tasker = self.act.frame.framer
+
         parms['tasker'] = tasker = tasking.resolveTasker(tasker,
                                                          who=self.name,
                                                          desc='need status tasker',
@@ -316,6 +323,9 @@ class NeedMarker(Need):
 
         """
         parms = super(NeedMarker, self).resolve( **kwa)
+
+        if frame == 'me':
+            frame = self.act.frame
 
         parms['frame'] = frame = framing.resolveFrame(frame,
                                                       who=self.name,

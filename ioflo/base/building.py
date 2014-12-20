@@ -300,7 +300,6 @@ class Builder(object):
                 for house in self.houses:
                     house.orderTaskables()
                     house.resolve()
-                    #house.traceOutlines() #traces the outlines in each frame
 
                     if console._verbosity >= console.Wordage.concise:
                         house.showAllTaskers()
@@ -1365,13 +1364,13 @@ class Builder(object):
             if clone == 'moot':  # insular clone
                 aux = data # create clone when resolve aux
             else:  # named clone create clone when resolve framer.moots
-                self.currentFramer.moots.append(data)
+                self.currentFramer.moots.append(data) # should change back to house
                 aux = clone # assign aux to clone as original aux is to be cloned
 
         if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later
-            parms = dict(needs = needs, main = self.currentFrame.name, aux = aux, human = human)
+            parms = dict(needs = needs, main = 'me', aux = aux, human = human)
             act = acting.Act(   actor='Suspender',
                                 registrar=acting.Actor,
                                 parms=parms,
@@ -1491,7 +1490,7 @@ class Builder(object):
         # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later
-        parms = dict(needs = needs, near = self.currentFrame.name, far = far, human = human)
+        parms = dict(needs = needs, near = 'me', far = far, human = human)
         act = acting.Act(actor='Transiter',
                          registrar=acting.Actor,
                          parms=parms,
@@ -1544,7 +1543,7 @@ class Builder(object):
         # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
         far = 'next' #resolve far link later
-        parms = dict(needs = needs, near = self.currentFrame.name, far = far, human = human)
+        parms = dict(needs = needs, near = 'me', far = far, human = human)
         act = acting.Act(    actor='Transiter',
                              registrar=acting.Actor,
                              parms=parms,
@@ -2027,7 +2026,7 @@ class Builder(object):
         # build transact
         human = ' '.join(tokens) #recreate transition command string for debugging
         #resolve far link later
-        parms = dict(needs = needs, near = self.currentFrame.name, far = far, human = human)
+        parms = dict(needs = needs, near = 'me', far = far, human = human)
         act = acting.Act(   actor='Transiter',
                             registrar=acting.Actor,
                             parms=parms,
@@ -2583,7 +2582,7 @@ class Builder(object):
         """
         #name is used as name of goal relative to current framer
         #create goal relative to current framer destination is goal
-        dstPath = 'framer.' + self.currentFramer.name + '.goal.' + name
+        dstPath = 'framer.' + 'me' + '.goal.' + name
         dstField = 'value'
         dstFields = [dstField]
         #required connective
@@ -2682,7 +2681,7 @@ class Builder(object):
            need:
               always
               done taskername
-              done (any, all) [in frame [framename] [of framer [framername]]]
+              done (any, all) [in frame [(me, framename)] [of framer [(me, framername)]]]
               status tasker is (readied, started, running, stopped, aborted)
               update [in frame] share
               change [in frame] share
@@ -2842,11 +2841,11 @@ class Builder(object):
                                 framer = tokens[index]
                                 index += 1
                             else:
-                                framer = self.currentFramer.name
+                                framer = 'me'
 
                 else:
-                    frame = self.currentFrame.name
-                    framer = self.currentFramer.name
+                    frame = 'me'
+                    framer = 'me'
 
         if frame and tasker not in ['any', 'all']:
             msg = ("ParseError: Building verb '{0}'. Named tasker '{1}'  not "
@@ -2854,8 +2853,8 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         if not frame and tasker in ['any', 'all']:
-            frame = self.currentFrame.name
-            framer = self.currentFramer.name
+            frame = 'me'
+            framer = 'me'
 
         actorName = 'Need' + kind.capitalize()
         if actorName not in needing.Need.Registry:
@@ -2880,7 +2879,7 @@ class Builder(object):
 
            method must be wrapped in appropriate try excepts
 
-           status tasker is (readied, started, running, stopped, aborted)
+           status (me, tasker) is (readied, started, running, stopped, aborted)
         """
         tasker = tokens[index]
         index += 1
@@ -2952,7 +2951,7 @@ class Builder(object):
             index += 1 #eat token
 
         if not frame: #default to current frame
-            frame = self.currentFrame.name
+            frame = 'me'
 
         sharePath, index = self.parseIndirect(tokens, index)
 
@@ -3638,7 +3637,7 @@ class Builder(object):
                         name = ''
 
                 if not name: #no name given so substitute default
-                    name = 'me'  # self.currentFrame.name
+                    name = 'me'
 
                 relation += '.' + name  #append name
 

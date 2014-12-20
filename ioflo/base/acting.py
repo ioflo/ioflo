@@ -815,6 +815,9 @@ class Transiter(Interrupter):
 
         parms = super(Transiter, self).resolve( **kwa)
 
+        if near == 'me':
+            near = self.act.frame
+
         parms['near'] = near = framing.resolveFrame(near,
                                                     who=self.name,
                                                     desc='near',
@@ -864,7 +867,7 @@ class Transiter(Interrupter):
         #find uncommon entry and exit lists associated with transition
         #exits, enters = framing.Framer.Uncommon(framer.actives,far.outline)
         #find uncommon and common entry and exit lists associated with transition
-        exits, enters, reexens = framing.Framer.ExEn(framer.actives,far)
+        exits, enters, reexens = framing.Framer.ExEn(framer.actives, far)
 
         #check enters, if successful, perform transition
         if not framer.checkEnter(enters):
@@ -911,6 +914,9 @@ class Suspender(Interrupter):
     def resolve(self, needs, main, aux, human, **kwa):
         """Resolve any links aux and in associated parms for actors"""
         parms = super(Suspender, self).resolve( **kwa)
+
+        if main == 'me':
+            main = self.act.frame
 
         parms['main'] = main = framing.resolveFrame(main,
                                                     who=main,
@@ -1144,7 +1150,7 @@ class Cloner(Actor):
                 index += 1
                 name = "{0}{1}".format(prefix, index)
 
-        console.profuse("       Cloning '{0}' as '{1}' be '{2}'\n".format(
+        console.profuse("         Cloning '{0}' as '{1}' be '{2}'\n".format(
                 original.name, name, ScheduleNames.get(schedule, schedule)))
 
 

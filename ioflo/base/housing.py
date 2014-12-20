@@ -148,15 +148,6 @@ class House(registering.StoriedRegistry):
             tasker = self.resolvables.popleft()
             tasker.resolve()
 
-    def traceOutlines(self):
-        """ trace and assign outlines for each frame
-        """
-        console.terse("   Tracing outlines for House {0}\n".format(self.name))
-        self.assignRegistries()
-
-        for framer in self.framers:
-            framer.traceOutlines()
-
     def showAllTaskers(self):
         """Show all Taskers and Slaves and Auxes and Moots and Framers."""
 
@@ -174,32 +165,3 @@ class House(registering.StoriedRegistry):
 
         console.terse("Framers in House '{0}':\n     {1}\n".format(
             self.name, ' '.join([tasker.name for tasker in self.framers])))
-
-    def cloneFramer(self, original, name, schedule):
-        """
-        Create a clone named name of Framer original and return
-        Assumes name is already valid and unique framer name
-        """
-        self.assignRegistries()
-        console.concise("       Cloning original '{0}' as clone '{1}' be '{2}'\n"
-                                    "".format(original, clone, ))
-
-        clone = original.clone(name=name, schedule=schedule)
-        clone.original = False  # main frame will be fixed
-        self.taskers.append(clone)
-        self.framers.append(clone)
-
-        if schedule == AUX:
-            self.auxes.append(clone)
-        elif schedule == SLAVE:
-            self.slaves.append(clone)
-        elif schedule in [ACTIVE, INACTIVE]:
-            self.metas['taskables'].add(clone)
-
-        clone.resolve() # resolve links in clone
-        clone.traceOutlines()  # traceoutlines in clone
-
-        console.concise("       Cloned '{0}' as '{1}' be '{2}'\n".format(
-                original.name, name, ScheduleNames.get(schedule, schedule)))
-
-        return clone

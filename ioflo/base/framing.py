@@ -186,7 +186,7 @@ class Framer(tasking.Tasker):
             schedule = data['schedule']
             human = data['human']
             count = data['count']
-            console.terse("       Cloning original '{0}' as named clone '{1}'\n"
+            console.terse("         Cloning original '{0}' as named clone '{1}'\n"
                             "".format(original, clone))
             original = resolveFramer(original,
                                      who=self.name,
@@ -219,7 +219,7 @@ class Framer(tasking.Tasker):
     def traceOutlines(self):
         """Trace and assign outlines for each frame in framer
         """
-        console.terse("     Tracing outlines for framer {0}\n".format(self.name))
+        console.terse("       Tracing outlines for framer {0}\n".format(self.name))
 
         self.assignFrameRegistry()
 
@@ -946,7 +946,7 @@ class Frame(registering.StoriedRegistry):
                 while (clone in Framer.Names): # ensure unique
                     clone = Framer.nameUid(prefix=original)
 
-                console.terse("       Cloning original '{0}' as insular clone '{1}'\n"
+                console.terse("         Cloning original '{0}' as insular clone '{1}'\n"
                                             "".format(original, clone))
                 original = resolveFramer(original,
                                          who=self.name,
