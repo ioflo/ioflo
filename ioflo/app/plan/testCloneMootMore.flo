@@ -1,0 +1,57 @@
+house cloner
+
+   framer mission be active first cloner4
+
+      frame start
+         print start
+         go abort if elapsed > 3
+
+         frame cloner4 in start
+            print cloner4
+            aux orig4 as clone1
+            go next if done all
+
+         #frame cloner5 in start
+         #   print cloner5
+         #   aux orig4 as moot
+         #   go next if done all
+
+      frame done
+          print "Success"
+          bid stop all
+
+      frame abort
+          print "Failure"
+          put "Clone" into meta.failure
+          bid stop all
+
+
+   framer orig4 be moot first D
+
+      frame D
+         print D
+         aux orig5 as clone2
+         go next if done all
+
+      frame E
+         print E
+         inc counter of framer with 1
+         go next
+
+      frame F
+         done
+
+   framer orig5 be moot first G
+
+      frame G
+         print G
+         put 0 into counter of framer
+         go next
+
+      frame H
+         print H
+         inc counter of framer with 1
+         go next
+
+      frame I
+         done

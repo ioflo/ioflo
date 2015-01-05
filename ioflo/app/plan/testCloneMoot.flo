@@ -1,0 +1,124 @@
+house cloner
+
+   framer mission be active first cloner1
+
+      frame start
+         print start
+         go abort if elapsed > 3
+
+         frame cloner1 in start
+            print cloner1
+            put 0 into counter of framer
+            put 1 into limit of frame
+            aux orig1 as moot
+            go next if done all
+
+         frame cloner2 in start
+            print cloner2
+            put 0 into counter of framer
+            aux orig2 as moot
+            go next if done all
+
+         frame cloner3 in start
+            print cloner3
+            put 0 into counter of framer
+            put 1 into limit of frame
+            aux orig1 as moot
+            go next if done all
+
+         frame cloner4 in start
+            print cloner4
+            aux orig4 as moot
+            go next if done all
+
+         frame cloner5 in start
+            print cloner5
+            aux orig4 as moot
+            go next if done all
+
+      frame done
+          print "Success"
+          bid stop all
+
+      frame abort
+          print "Failure"
+          put "Clone" into meta.failure
+          bid stop all
+
+
+   framer orig1 be moot first A
+
+      frame A
+         print A
+         put 2 into counter of framer
+         go next if counter of framer main == 0
+
+      frame B
+         print B
+         inc counter of framer with 1
+         go next if limit of frame main  == 1
+
+      frame C
+         done
+
+
+   framer orig2 be moot first R
+
+      frame R
+         print R
+         aux orig3 as RCloneOrig3
+         go next if done RCloneOrig3
+
+      frame S
+         print S
+         inc counter of framer with 1
+         go next
+
+      frame T
+         done
+
+   framer orig3 be moot first X
+
+      frame X
+         print X
+         put 0 into counter of framer
+         go next
+
+      frame Y
+         print Y
+         inc counter of framer with 1
+         go next
+
+      frame Z
+         done
+
+
+   framer orig4 be moot first D
+
+      frame D
+         print D
+         aux orig5 as moot
+         go next if done all
+
+      frame E
+         print E
+         inc counter of framer with 1
+         go next
+
+      frame F
+         done
+
+   framer orig5 be moot first G
+
+      frame G
+         print G
+         put 0 into counter of framer
+         go next
+
+      frame H
+         print H
+         inc counter of framer with 1
+         go next
+
+      frame I
+         done
