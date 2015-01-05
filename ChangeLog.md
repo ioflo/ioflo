@@ -9,6 +9,12 @@ v1.1.1
 
 Added preliminary support for insular clones
 Added if done (any, all) [in frame [framename] [of framer [framername]]]
+Added support for
+   aux framer as mine
+   aux framer as mine if ...
+
+Where mine specifies an insular aux clone framer whose name is auto generated
+at resolve time and is not available to floscript verbs
 
 
 ---------
