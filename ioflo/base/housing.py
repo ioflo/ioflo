@@ -99,8 +99,6 @@ class House(registering.StoriedRegistry):
         self.slaves = [] #list of slave taskers in house
         self.moots = [] #list of moot framers in house
 
-        self.clones = [] # list of tuples of clone pair names (original, clone, human, count)
-
         self.resolvables = deque()  # deque of framers to be resolved
 
         self.names = odict() #houses dict of registry Names
