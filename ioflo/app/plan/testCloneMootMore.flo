@@ -13,7 +13,7 @@ house cloner
 
          #frame cloner5 in start
          #   print cloner5
-         #   aux orig4 as moot
+         #   aux orig4 as mine
          #   go next if done all
 
       frame done

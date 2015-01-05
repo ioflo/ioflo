@@ -1297,12 +1297,12 @@ class Builder(object):
               aux framername
 
            Cloned Auxiliary:
-              aux framername as (moot, clonedauxname)
+              aux framername as (mine, clonedauxname)
 
 
            Conditional Auxiliary:
-              aux framername [as (moot, clonedauxname)] if [not] need
-              aux framername [as (moot, clonedauxname)] if [not] need [and [not] need ...]
+              aux framername [as (mine, clonedauxname)] if [not] need
+              aux framername [as (mine, clonedauxname)] if [not] need [and [not] need ...]
 
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
@@ -1361,10 +1361,10 @@ class Builder(object):
                          schedule=AUX,
                          human=self.currentHuman,
                          count=self.currentCount)
-            if clone == 'moot':  # insular clone
+            if clone == 'mine':  # insular clone
                 aux = data # create clone when resolve aux
             else:  # named clone create clone when resolve framer.moots
-                self.currentFramer.moots.append(data) # should change back to house
+                self.currentFramer.moots.append(data)
                 aux = clone # assign aux to clone as original aux is to be cloned
 
         if needs: #conditional auxiliary suspender preact

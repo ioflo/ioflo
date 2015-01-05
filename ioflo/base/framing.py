@@ -178,16 +178,22 @@ class Framer(tasking.Tasker):
         Assumes Framer.names is .house's registry
         """
         #self.store.house.assignRegistries() # ensure Framer.names is houses registry
-        console.terse("       Resolving moots for named clones ...\n")
-        nameds = [data for data in self.moots if data['clone'] != 'moot']
-        for data in nameds:
-            original = data['original']
-            clone = data['clone']
+        console.terse("       Resolving original moots for named clones ...\n")
+        for data in self.moots:
+            original = data['original']  # original name
+            clone = data['clone']  # clone name
             schedule = data['schedule']
             human = data['human']
             count = data['count']
             console.terse("         Cloning original '{0}' as named clone '{1}'\n"
                             "".format(original, clone))
+            if clone == 'mine':  # invalid name for named clone
+                raise excepting.ResolveError("Invalid named clone name of 'mine'",
+                                             name=original,
+                                             value=self.name,
+                                             human=human,
+                                             count=count )
+
             original = resolveFramer(original,
                                      who=self.name,
                                      desc='original',
@@ -934,8 +940,8 @@ class Frame(registering.StoriedRegistry):
                                                  value=self.name,
                                                  human=human,
                                                  count=count)
-                if clone != 'moot':
-                    msg = "Aux clone must be 'moot' not '{0}'".format(clone)
+                if clone != 'mine':
+                    msg = "Aux insular clone name must be 'mine' not '{0}'".format(clone)
                     raise excepting.ResolveError(msg,
                                                  name=clone,
                                                  value=self.name,

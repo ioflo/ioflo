@@ -10,30 +10,30 @@ house cloner
             print cloner1
             put 0 into counter of framer
             put 1 into limit of frame
-            aux orig1 as moot
+            aux orig1 as mine
             go next if done all
 
          frame cloner2 in start
             print cloner2
             put 0 into counter of framer
-            aux orig2 as moot
+            aux orig2 as mine
             go next if done all
 
          frame cloner3 in start
             print cloner3
             put 0 into counter of framer
             put 1 into limit of frame
-            aux orig1 as moot
+            aux orig1 as mine
             go next if done all
 
          frame cloner4 in start
             print cloner4
-            aux orig4 as moot
+            aux orig4 as mine
             go next if done all
 
          frame cloner5 in start
             print cloner5
-            aux orig4 as moot
+            aux orig4 as mine
             go next if done all
 
       frame done
@@ -97,7 +97,7 @@ house cloner
 
       frame D
          print D
-         aux orig5 as moot
+         aux orig5 as mine
          go next if done all
 
       frame E
