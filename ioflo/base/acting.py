@@ -1258,7 +1258,7 @@ class Razer(Actor):
         """Action called by Actor  """
 
         razeables = []
-        if who == all:
+        if who == 'all':
             for aux in frame.auxes:
                 if aux.insular and aux.razeable:
                     razeables.append(aux)
@@ -1276,6 +1276,6 @@ class Razer(Actor):
                     break
 
         for aux in razeables:
-            console.profuse("         Razing '{0}' in '{1}'\n".format(who, frame.name))
+            console.concise("         Razing '{0}' in '{1}'\n".format(who, frame.name))
             aux.prune()
             frame.auxes.remove(aux)

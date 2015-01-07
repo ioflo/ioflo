@@ -1,27 +1,47 @@
 house cloner
 
-   framer mission be active first cloner
+   framer mission be active first cloner1
 
       frame start
          print start
          go abort if elapsed > 3
 
-         frame cloner in start
-            print cloner
-            rear orig1 as mine be aux in frame clonage
-            rear orig2 in frame clonage
-            rear orig4 in frame clonage
+         frame cloner1 in start
+            print cloner1
+            rear orig1 as mine be aux in frame clonage1
+            rear orig2 in frame clonage1
+            rear orig4 in frame clonage1
             go next
 
-         frame clonage in start
-            print clonage
+         frame clonage1 in start
+            print clonage1
             put 0 into counter of framer
             put 1 into limit of frame
             go next if done all
 
-         frame pruner in start
-            print pruner
-            raze all in frame clonage
+         frame pruner1 in start
+            print pruner1
+            raze all in frame clonage1
+            go next
+
+         frame cloner2 in start
+            print cloner2
+            rear orig4 as mine be aux in frame clonage2
+            rear orig4 in frame clonage2
+            rear orig4 in frame clonage2
+            go next
+
+         frame clonage2 in start
+            print clonage2
+            put 0 into counter of framer
+            put 1 into limit of frame
+            raze last
+            raze first
+            go next if done all
+
+         frame pruner2 in start
+            print pruner2
+            raze all in frame clonage2
             go next
 
       frame done
