@@ -3,7 +3,22 @@ CHANGE LOG
 -------------------
 
 ---------
-201412XX
+20141207
+---------
+v1.1.2
+
+Added support for rear and raze verbs.
+the rear verb enables runtime as opposed to resolve time creation of insular auxiliary clones
+These reared auxes can be destroyed at runtime using the raze verb
+This enables the creation of temporary insular auxiliary clones. When razed
+the memory for the clone is released.
+
+rear original [as mine] [be aux] in frame framename
+
+raze (all, last, first) [in frame [(me, framename)]]
+
+---------
+20141205
 ---------
 v1.1.1
 
