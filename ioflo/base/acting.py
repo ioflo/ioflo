@@ -1204,17 +1204,18 @@ class Cloner(Actor):
 
             console.terse("         Cloning original '{0}' as aux insular clone"
                           " '{1}' of Frame '{2}'\n".format(original.name,
-                                                           clone.name,
+                                                           clone,
                                                            frame.name))
 
             clone = original.clone(name=clone, schedule=schedule)
-            self.act.framer.assignFrameRegistry()  # restore original.clone changes
+            self.act.frame.framer.assignFrameRegistry()  # restore original.clone changes
             clone.original = False  # main frame will be fixed
             clone.insular = True  #  local to this framer
             clone.razeable = True  # can be razed
-            frame.auxAux(clone)
+            frame.addAux(clone)
             clone.main = frame
-            clone.resolve()
+            self.store.house.resolvables.append(clone)
+            self.store.house.resolveResolvables()
 
 
     def expose(self):

@@ -1416,7 +1416,6 @@ class Builder(object):
             clone = 'mine'  # default is insular clone
             schedule = 'aux' # default schedule is aux
             frame = 'me' # default frame is current
-            framer = 'me' # framer is always current
 
             original = tokens[index]
             index +=1  # eat token
@@ -1436,8 +1435,7 @@ class Builder(object):
                     schedule = tokens[index]
                     index += 1
 
-                if connective == 'in': #optional in frame or in framer clause
-                    index += 1  # eat token only
+                elif connective == 'in': #optional in frame or in framer clause
                     place = tokens[index] #need to resolve
                     index += 1  # eat token
 
@@ -1480,11 +1478,14 @@ class Builder(object):
                        " 'mine' allowed. Got '{1}'.".format(command, clone))
                 raise excepting.ParseError(msg, tokens, index)
 
+            if frame == 'me':
+                msg = ("Error building {0}. Frame clause required.".format(command, clone))
+                raise excepting.ParseError(msg, tokens, index)
+
         parms = dict(original=original,
                      clone=clone,
                      schedule=schedule,
-                     frame=frame,
-                     framer=framer)
+                     frame=frame)
 
         actorName = 'Cloner'
         if actorName not in acting.Actor.Registry:
