@@ -139,6 +139,24 @@ class Framer(tasking.Tasker):
 
         return clone
 
+    def prune(self):
+        """
+        Recursively Prune (destroy) all insular auxiliary clones in all frames
+        Force exit if not done
+        """
+        if not self.done:
+            console.profuse("Force exiting '{0}'\n".format(self.name))
+            self.exitAll()
+
+        for frame in self.frameNames.values():
+            prunables = [aux for aux in frame.auxes if aux.insular]
+            for aux in prunables:
+                aux.prune()
+                frame.auxes.remove(aux)
+
+        if self.name in Framer.Names and Framer.Names[self.name] == self:
+            del Framer.Names[self.name]
+
     def resolve(self):
         """Convert all the name strings for links to references to instance
            by that name

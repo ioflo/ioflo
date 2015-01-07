@@ -150,7 +150,7 @@ CommandList = ['load', 'house', 'init',
                'frame', 'over', 'under', 'next', 'done', 'timeout', 'repeat',
                'native', 'benter', 'enter', 'recur', 'exit', 'precur', 'renter', 'rexit',
                'print', 'put', 'inc', 'copy', 'set',
-               'aux', 'rear',
+               'aux', 'rear', 'raze',
                'go', 'let',
                'do',
                'bid', 'ready', 'start', 'stop', 'run', 'abort',
@@ -1487,7 +1487,7 @@ class Builder(object):
                      schedule=schedule,
                      frame=frame)
 
-        actorName = 'Cloner'
+        actorName = 'Rearer'
         if actorName not in acting.Actor.Registry:
             msg = "Error building '{0}'. No actor named '{1}'.".format(command, actorName)
             raise excepting.ParseError(msg, tokens, index)
@@ -1501,6 +1501,88 @@ class Builder(object):
         context = self.currentContext
         if context == NATIVE:
             context = ENTER  # what is native for this command
+
+        if not self.currentFrame.addByContext(act, context):
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
+
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
+
+        return True
+
+    def buildRaze(self, command, tokens, index):
+        """
+        Parse 'raze' verb
+
+        raze (all, last, first) [in frame [(me, framename)]]
+
+
+        """
+        self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
+
+        try:
+            connective = None
+            who = None  # default is insular clone
+            frame = 'me' # default frame is current
+
+            who = tokens[index]
+            index +=1  # eat token
+            if who not in ['all', 'first', 'last']:
+                msg = ("ParseError: Building verb '{0}'. Invalid target of"
+                    " raze. Expected one of ['all', 'first', 'last'] but got "
+                    "'{2}'".format(command, connective, who))
+                raise excepting.ParseError(msg, tokens, index)
+
+            while index < len(tokens): #options
+                connective = tokens[index]
+                index += 1
+
+                if connective == 'in': #optional in frame or in framer clause
+                    place = tokens[index] #need to resolve
+                    index += 1  # eat token
+
+                    if place != 'frame':
+                        msg = ("ParseError: Building verb '{0}'. Invalid "
+                            " '{1}' clause. Expected 'frame' got "
+                            "'{2}'".format(command, connective, place))
+                        raise excepting.ParseError(msg, tokens, index)
+
+                    if index < len(tokens):
+                        frame = tokens[index]
+                        index += 1
+
+                else:
+                    msg = ("Error building {0}. Invalid connective"
+                          " '{1}'.".format(command, connective))
+                    raise excepting.ParseError(msg, tokens, index)
+
+        except IndexError:
+            msg = "Error building {0}. Not enough tokens.".format(command,)
+            raise excepting.ParseError(msg, tokens, index)
+
+        if index != len(tokens):
+            msg = "Error building {0}. Unused tokens.".format(command,)
+            raise excepting.ParseError(msg, tokens, index)
+
+
+        parms = dict(who=who,
+                     frame=frame)
+
+        actorName = 'Razer'
+        if actorName not in acting.Actor.Registry:
+            msg = "Error building '{0}'. No actor named '{1}'.".format(command, actorName)
+            raise excepting.ParseError(msg, tokens, index)
+
+        act = acting.Act(actor=actorName,
+                         registrar=acting.Actor,
+                         parms=parms,
+                         human=self.currentHuman,
+                         count=self.currentCount)
+
+        context = self.currentContext
+        if context == NATIVE:
+            context = EXIT  # what is native for this command
 
         if not self.currentFrame.addByContext(act, context):
             msg = "Error building %s. Bad context '%s'." % (command, context)

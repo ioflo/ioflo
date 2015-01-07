@@ -19,6 +19,11 @@ house cloner
             put 1 into limit of frame
             go next if done all
 
+         frame pruner in start
+            print pruner
+            raze all in frame clonage
+            go next
+
       frame done
           print "Success"
           bid stop all

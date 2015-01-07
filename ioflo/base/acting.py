@@ -1104,24 +1104,23 @@ class MarkerChange(Marker):
         """   """
         console.terse("MarkerChange {0}\n".format(self.name))
 
-class Cloner(Actor):
+class Rearer(Actor):
     """
-    Cloner Actor Class
-    Cloner is a special actor that clones a moot framer at runtime
+    Rearer Actor Class
+    Rearer is a special actor that clones a moot framer at runtime
 
        Parameters
             original = moot framer to be cloned
             clone = name of clone
             schedule = schedule kind of clone
             frame = frame to put auxiliary clone in
-            framer = framer holding frame to put auxiliary clone
 
     """
     def resolve(self, original, clone, schedule, frame, **kwa):
         """
         Resolve any links
         """
-        parms = super(Cloner, self).resolve( **kwa)
+        parms = super(Rearer, self).resolve( **kwa)
 
         parms['original'] = original = framing.resolveFramer(original,
                                                     who=self.name,
@@ -1218,6 +1217,65 @@ class Cloner(Actor):
             self.store.house.resolveResolvables()
 
 
-    def expose(self):
-        """      """
-        console.terse("Cloner {0}\n".format(self.name))
+class Razer(Actor):
+    """
+    Razer Actor Class
+    Razer is a special actor that destroys a  framer clone at runtime
+
+       Parameters
+            who = auxiliary clones to be destroyed
+            frame = frame holding clones to be destroyed
+
+    """
+    def resolve(self, who, frame, **kwa):
+        """
+        Resolve any links
+        """
+        parms = super(Razer, self).resolve( **kwa)
+
+
+        framer = framing.resolveFramer(self.act.frame.framer,
+                                        who=self.act.frame.name,
+                                        desc='rear aux clone',
+                                        contexts=[],
+                                        human=self.act.human,
+                                        count=self.act.count)
+
+        if frame == 'me':  # cannot rear in current frame
+            frame = self.act.frame
+
+        # frame required
+        parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
+                                                              framer,
+                                                              who=self.act.frame.name,
+                                                              desc='rear aux clone',
+                                                              human=self.act.human,
+                                                              count=self.act.count)
+
+        return parms
+
+    def action(self, who, frame, **kw):
+        """Action called by Actor  """
+
+        razeables = []
+        if who == all:
+            for aux in frame.auxes:
+                if aux.insular and aux.razeable:
+                    razeables.append(aux)
+
+        elif who == 'first':
+            for aux in frame.auxes:
+                if aux.insular and aux.razeable:
+                    razeables.append(aux)
+                    break
+
+        elif who == 'last':
+            for aux in reversed(frame.auxes):
+                if aux.insular and aux.razeable:
+                    razeables.append(aux)
+                    break
+
+        for aux in razeables:
+            console.profuse("         Razing '{0}' in '{1}'\n".format(who, frame.name))
+            aux.prune()
+            frame.auxes.remove(aux)
