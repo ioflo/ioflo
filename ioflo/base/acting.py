@@ -1111,12 +1111,13 @@ class Cloner(Actor):
 
        Parameters
             original = moot framer to be cloned
-            name = name of clone
-            prefix = name prefix
+            clone = name of clone
             schedule = schedule kind of clone
+            frame = frame to put auxiliary clone in
+            framer = framer holding frame to put auxiliary clone
 
     """
-    def resolve(self, original, name, prefix, schedule, **kwa):
+    def resolve(self, original, clone, schedule, frame, **kwa):
         """
         Resolve any links
         """
@@ -1129,7 +1130,7 @@ class Cloner(Actor):
                                                     human=self.act.human,
                                                     count=self.act.count)
 
-        if schedule not in [ACTIVE, INACTIVE, SLAVE, AUX]:
+        if schedule not in [AUX]:
             msg = ("ResolveError: Invalid schedule '{0}' for clone"
                   "of '{1}'".format(ScheduleNames.get(schedule, schedule),
                                   original.name))
@@ -1139,20 +1140,81 @@ class Cloner(Actor):
                                          human=self.act.human,
                                          count=self.act.count)
 
+        if schedule == AUX:  # only current framer
+            framer = framing.resolveFramer(self.act.frame.framer,
+                                            who=self.act.frame.name,
+                                            desc='rear aux clone',
+                                            contexts=[],
+                                            human=self.act.human,
+                                            count=self.act.count)
+
+            if frame == 'me':  # cannot rear in current frame
+                msg = ("ResolveError: Invalid frame 'me' for reared clone.")
+                raise excepting.ResolveError(msg,
+                                             name=clone,
+                                             value=self.name,
+                                             human=self.act.human,
+                                             count=self.act.count)
+
+            # frame required
+            parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
+                                                                  framer,
+                                                                  who=self.act.frame.name,
+                                                                  desc='rear aux clone',
+                                                                  human=self.act.human,
+                                                                  count=self.act.count)
+
+            if clone != 'mine':
+                msg = "ResolveError: Aux insular clone name must be 'mine' not '{0}'".format(clone)
+                raise excepting.ResolveError(msg,
+                                             name=clone,
+                                             value=self.name,
+                                             human=self.act.human,
+                                             count=self.act.count)
+
+        else:
+            msg = ("ResolveError: Invalid insular clone schedule '{0}' "
+                                               "for {1}.".format(schedule, original))
+            raise excepting.ResolveError(msg,
+                                         name=clone,
+                                         value=self.name,
+                                         human=self.act.human,
+                                         count=self.act.count)
+
         return parms
 
-    def action(self, original, name, prefix, schedule, **kw):
+    def action(self, original, clone, schedule, frame, **kw):
         """Action called by Actor  """
-        if not name:
-            index = 1
-            name = "{0}{1}".format(prefix, index)
-            while name in self.act.frame.framer.Names:
-                index += 1
-                name = "{0}{1}".format(prefix, index)
 
         console.profuse("         Cloning '{0}' as '{1}' be '{2}'\n".format(
-                original.name, name, ScheduleNames.get(schedule, schedule)))
+                original.name, clone, ScheduleNames.get(schedule, schedule)))
 
+        if schedule == AUX:
+            if frame in self.act.frame.outline:
+                console.terse("         Error: Cannot rear clone in own"
+                              " '{0}' outline. {1} in line {2}\n".format(frame.name,
+                                                                         self.act.human,
+                                                                         self.act.count))
+                return
+
+
+            clone = framing.Framer.nameUid(prefix=original.name)
+            while (clone in framing.Framer.Names): # ensure unique
+                clone = framing.Framer.nameUid(prefix=original.name)
+
+            console.terse("         Cloning original '{0}' as aux insular clone"
+                          " '{1}' of Frame '{2}'\n".format(original.name,
+                                                           clone.name,
+                                                           frame.name))
+
+            clone = original.clone(name=clone, schedule=schedule)
+            self.act.framer.assignFrameRegistry()  # restore original.clone changes
+            clone.original = False  # main frame will be fixed
+            clone.insular = True  #  local to this framer
+            clone.razeable = True  # can be razed
+            frame.auxAux(clone)
+            clone.main = frame
+            clone.resolve()
 
 
     def expose(self):

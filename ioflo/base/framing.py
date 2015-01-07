@@ -40,6 +40,7 @@ class Framer(tasking.Tasker):
             .main = main frame when this framer is an auxiliary
             .original = clone state, False if clone True if not clone
             .insular = clone that is visible only to main framer
+            .razeable = clone that can be explicitly razed at run time
             .done = auxiliary completion state True or False when an auxiliary
             .elapsed = elapsed time from outline change
             .elapsedShr = share where .elapsed is stored for logging and need checks
@@ -77,6 +78,7 @@ class Framer(tasking.Tasker):
         self.main = None  #when aux framer, frame that is running this aux
         self.original = True  # as in not a clone
         self.insular = False  # as in a clone that is visible only to the main framer
+        self.razeable = False  # as in a clone that can be explicitly razed at run time
         self.done = True #when aux or slave framer, completion state, set to False on enterAll
 
         self.stamp = 0.0 #beginning time to compute elapsed time since last outline change
@@ -961,11 +963,11 @@ class Frame(registering.StoriedRegistry):
                                          human=human,
                                          count=count)
                 clone = original.clone(name=clone, schedule=schedule)
+                self.framer.assignFrameRegistry()  # restore original.clone changes above
                 clone.original = False  # main frame will be fixed
                 clone.insular =  True #  local to this framer
                 self.auxes[i] = aux = clone
                 self.store.house.resolvables.append(clone)
-                self.framer.assignFrameRegistry()  # restore
             else:
                 self.auxes[i] = aux = resolveFramer(aux,
                                                 who=self.name,

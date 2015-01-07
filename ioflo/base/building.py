@@ -150,7 +150,7 @@ CommandList = ['load', 'house', 'init',
                'frame', 'over', 'under', 'next', 'done', 'timeout', 'repeat',
                'native', 'benter', 'enter', 'recur', 'exit', 'precur', 'renter', 'rexit',
                'print', 'put', 'inc', 'copy', 'set',
-               'aux',
+               'aux', 'rear',
                'go', 'let',
                'do',
                'bid', 'ready', 'start', 'stop', 'run', 'abort',
@@ -1387,6 +1387,126 @@ class Builder(object):
         else: # Simple auxiliary
             self.currentFrame.addAux(aux) #need to resolve later
             console.profuse("     Added aux framer {0}\n".format(aux))
+
+        return True
+
+    def buildRear(self, command, tokens, index):
+        """
+        Parse 'rear' verb
+
+        Two Forms: only first form is currently supported
+
+        rear original [as mine] [be aux] in frame framename
+
+                framename cannot be me or in outline of me
+
+        rear original as clonename be schedule
+
+               schedule cannot be aux
+               clonename cannot be mine
+
+
+
+        """
+        self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
+
+        try:
+            original = None
+            connective = None
+            clone = 'mine'  # default is insular clone
+            schedule = 'aux' # default schedule is aux
+            frame = 'me' # default frame is current
+            framer = 'me' # framer is always current
+
+            original = tokens[index]
+            index +=1  # eat token
+            self.verifyName(original, command, tokens, index)
+
+            while index < len(tokens): #options
+                connective = tokens[index]
+                index += 1
+
+                if connective == 'as':
+                    clone = tokens[index]
+                    index += 1
+
+                    self.verifyName(clone, command, tokens, index)
+
+                elif connective == 'be':
+                    schedule = tokens[index]
+                    index += 1
+
+                if connective == 'in': #optional in frame or in framer clause
+                    index += 1  # eat token only
+                    place = tokens[index] #need to resolve
+                    index += 1  # eat token
+
+                    if place != 'frame':
+                        msg = ("ParseError: Building verb '{0}'. Invalid "
+                            " '{1}' clause. Expected 'frame' got "
+                            "'{2}'".format(command, connective, place))
+                        raise excepting.ParseError(msg, tokens, index)
+
+                    if index < len(tokens):
+                        frame = tokens[index]
+                        index += 1
+
+                else:
+                    msg = ("Error building {0}. Invalid connective"
+                          " '{1}'.".format(command, connective))
+                    raise excepting.ParseError(msg, tokens, index)
+
+        except IndexError:
+            msg = "Error building {0}. Not enough tokens.".format(command,)
+            raise excepting.ParseError(msg, tokens, index)
+
+        if index != len(tokens):
+            msg = "Error building {0}. Unused tokens.".format(command,)
+            raise excepting.ParseError(msg, tokens, index)
+
+        # only allow schedule of aux for now
+        if schedule not in ScheduleValues or schedule not  in ['aux']:
+            msg = "Error building {0}. Bad scheduled option got '{1}'.".format(command, schedule)
+            raise excepting.ParseError(msg, tokens, index)
+
+        schedule = ScheduleValues[schedule] #replace text with value
+
+        # when clone is insular and schedule is aux then frame cannot be
+        # current frames outline. This is validated in the actor resolve
+
+        if schedule == AUX:
+            if clone != 'mine':
+                msg = ("Error building {0}. Only insular clonename of"
+                       " 'mine' allowed. Got '{1}'.".format(command, clone))
+                raise excepting.ParseError(msg, tokens, index)
+
+        parms = dict(original=original,
+                     clone=clone,
+                     schedule=schedule,
+                     frame=frame,
+                     framer=framer)
+
+        actorName = 'Cloner'
+        if actorName not in acting.Actor.Registry:
+            msg = "Error building '{0}'. No actor named '{1}'.".format(command, actorName)
+            raise excepting.ParseError(msg, tokens, index)
+
+        act = acting.Act(actor=actorName,
+                         registrar=acting.Actor,
+                         parms=parms,
+                         human=self.currentHuman,
+                         count=self.currentCount)
+
+        context = self.currentContext
+        if context == NATIVE:
+            context = ENTER  # what is native for this command
+
+        if not self.currentFrame.addByContext(act, context):
+            msg = "Error building %s. Bad context '%s'." % (command, context)
+            raise excepting.ParseError(msg, tokens, index)
+
+        console.profuse("     Added {0} '{1}' with parms '{2}'\n".format(
+            ActionContextNames[context], act.actor, act.parms))
 
         return True
 
@@ -2855,6 +2975,13 @@ class Builder(object):
         if not frame and tasker in ['any', 'all']:
             frame = 'me'
             framer = 'me'
+
+        # a frame of me is nonsensical if framer is not current framer
+        if (frame == 'me' and
+                not (framer == 'me' or  framer == self.currentFramer.name)):
+            msg = ("Error building {0}. Frame '{0}' nonsensical given"
+                   " Framer '{1}'.".format(command, frame, framer))
+            raise excepting.ParseError(msg, tokens, index)
 
         actorName = 'Need' + kind.capitalize()
         if actorName not in needing.Need.Registry:
