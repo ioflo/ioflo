@@ -3,6 +3,14 @@ CHANGE LOG
 -------------------
 
 ---------
+201412XX
+---------
+v1.1.X
+
+More consistent usage of resolveFrameOfFramer
+
+
+---------
 20141207
 ---------
 v1.1.2
