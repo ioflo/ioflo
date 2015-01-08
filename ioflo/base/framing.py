@@ -1419,6 +1419,8 @@ def resolveFrame(frame, who='', desc='act', human='', count=None):
         frame may be name of frame or instance
 
         Frame.Names registry must be setup
+        This is usuall done in the Framer and Frame .resolve since the registry
+        is setup in this case. In other cases use resolveFrameOfFramer
     """
     if not isinstance(frame, Frame): # not instance so name
         if frame not in Frame.Names:
@@ -1440,6 +1442,8 @@ def resolveFrameOfFramer(frame, framer, who='', desc='act', human='', count=None
         frame may be name of frame or instance
 
         Resolves relative to the framer's .frameNames registry
+        This is appropriate for Actor.resolve since it guarantees the context
+        of the frame name space
     """
     if not isinstance(frame, Frame): # not instance so name
         if frame not in framer.frameNames:
