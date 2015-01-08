@@ -324,12 +324,18 @@ class NeedMarker(Need):
         """
         parms = super(NeedMarker, self).resolve( **kwa)
 
+        framer = self.act.frame.framer
+
         if frame == 'me':
             frame = self.act.frame
 
-        parms['frame'] = frame = framing.resolveFrame(frame,
-                                                      who=self.name,
-                                                      desc='need marker')
+        parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
+                                                              framer,
+                                                              who=self.name,
+                                                              desc='need marker',
+                                                              human=self.act.human,
+                                                              count=self.act.count)
+
         parms['share'] = share = self.resolvePath(ipath=share,
                                                   warn=True) # now a share
 
