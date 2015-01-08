@@ -399,9 +399,16 @@ class Share(object):
 
 
     """
-    def __init__(self, name = '',store = None,
-                 value = None, data = None, truth = None, stamp = None,
-                 unit = None, owner = None,  **kwa):
+    def __init__(self,
+                 name='',
+                 store=None,
+                 value=None,
+                 data=None,
+                 truth=None,
+                 stamp=None,
+                 unit=None,
+                 owner=None,
+                 **kwa):
         """Initialize instance
 
            Parameters:
@@ -418,8 +425,8 @@ class Share(object):
         self._data = Data() #new data object
         self._truth = None
         self._unit = None
-
         self._owner = None
+
         self.stamp = None
 
         if not isinstance(name,str): #name must be string
@@ -538,48 +545,53 @@ class Share(object):
         """  """
         return [self[key] for key in self.keys()]
 
-    # store management
-    def changeStore(self, store = None):
+    def changeStore(self, store = None):  # store management
         """Replace .store """
         if store is not None:
             if  not isinstance(store, Store):
                 raise ValueError("Not store %s" % store)
         self.store = store
 
-    #property owner
-    def getOwner(self):
+    def stampNow(self):
+        """Force time stamp of this share to store.stamp
+           This is useful when share field is a collection that is modified
+           in place, i.e. can't use update since update copies
+           so stampNow updates the stamp.
+        """
+        self.stamp = self.store.stamp
+        return self.stamp
+
+    # properties
+    def getOwner(self):  # owner property
         """getter for  owner property """
         return self._owner
 
-    def setOwner(self, owner):
+    def setOwner(self, owner):  # owner property
         """setter for owner property """
         self._owner = owner
-
     owner = property(fget = getOwner, fset = setOwner, doc = "Owner of share")
 
-    def stampNow(self):
-        """Force time stamp this share to store.stamp
-           This is useful when share field is a collection that is modified
-           in place, i.e. can't use update since update copies
-           so stampNow update the stamp.
-        """
-        self.stamp = self.store.stamp
-
-        return self.stamp
-
-    #property truth
-    def getTruth(self):
+    def getTruth(self):  # truth property
         """getter for truth property """
         return self._truth
 
-    def setTruth(self, truth):
+    def setTruth(self, truth):  # truth property
         """setter for value property """
         self._truth = truth
-
     truth = property(fget = getTruth, fset = setTruth, doc = "Truth for this share")
 
-    #property value
-    def getValue(self):
+    def getUnit(self):   # unit property
+        """getter for unit property """
+        return self._unit
+
+    def setUnit(self, unit): # unit property
+        """setter for unit property """
+        if not isinstance(unit, Data):
+            raise ValueError("Not Data object %s" % unit)
+        self._unit = unit
+    unit = property(fget = getUnit, fset = setUnit, doc = "Unit(s) for this share")
+
+    def getValue(self):  # value property
         """getter for value property
            returns none if no field in data of name 'value'
         """
@@ -588,25 +600,22 @@ class Share(object):
         except AttributeError:
             return None
 
-    def setValue(self, value):
+    def setValue(self, value):  # value property
         """setter for value property """
         setattr(self._data, 'value', value)
         self.stamp = self.store.stamp
-
     value = property(fget = getValue, fset = setValue, doc = "Value for this share")
 
-    #property data
-    def getData(self):
+    def getData(self):  # data property
         """getter for data property """
         return self._data
 
-    def setData(self, data):
+    def setData(self, data):  # data property
         """setter for data property """
         if not isinstance(data, Data):
             raise ValueError("Not Data object %s" % data)
         self._data = data
         self.stamp = self.store.stamp
-
     data = property(fget = getData, fset = setData, doc = "Data for this share")
 
     def change(self, *pa, **kwa):
@@ -622,7 +631,6 @@ class Share(object):
                     setattr(self._data, k, v)
         for k,v in kwa.items():
             setattr(self._data, k, v)
-
         return self
 
     def update(self, *pa, **kwa):
@@ -633,7 +641,6 @@ class Share(object):
         self.change(*pa, **kwa)
         #self.stamp = None #update stamp with default
         self.stamp = self.store.stamp
-
         return self
 
     def create(self, *pa, **kwa):
@@ -660,7 +667,6 @@ class Share(object):
         if update:
             #self.stamp = None #update stamp with default
             self.stamp = self.store.stamp
-
         return self
 
     def fetch(self, field, default = None):
@@ -673,19 +679,6 @@ class Share(object):
         """returns a copy of the data odict dictionary
         """
         return self._data.__dict__.copy()
-
-    #property unit
-    def getUnit(self):
-        """getter for unit property """
-        return self._unit
-
-    def setUnit(self, unit):
-        """setter for unit property """
-        if not isinstance(unit, Data):
-            raise ValueError("Not Data object %s" % unit)
-        self._unit = unit
-
-    unit = property(fget = getUnit, fset = setUnit, doc = "Unit(s) for this share")
 
     def changeUnit(self, *pa, **kwa):
         """update unit from kw """
