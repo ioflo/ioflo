@@ -460,8 +460,8 @@ class Share(object):
             self.changUnit(**unit)
         if owner is not None:
             self.owner = owner
-        if deck is not None and isinstance(deck, Deck):
-            self.deck = deck
+        if deck is not None:
+            self.deck.extend(deck)
 
         self.marks = odict() #odict of marks
 
