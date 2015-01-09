@@ -1,16 +1,20 @@
+from ioflo.base.globaling import *
+from ioflo.base import storing
+from ioflo.base import logging
+
 def TestLog(rule = UPDATE):
     """Module Common self test
 
     """
     storing.Store.Clear() #clear registry
-    Log.clear()
+    logging.Log.Clear()
 
 
-    store = storing.Store(name = 'Test')
+    store = storing.Store(name = 'Test',  stamp=0.0)
     heading = store.create('pose.heading').create(value = 0.0)
     position = store.create('pose.position').create(north = 10.0, east = 5.0)
 
-    log = Log(name = 'test', store = store, kind = 'console',
+    log = logging.Log(name = 'test', store = store, kind = 'console',
               prefix = 'log', path = './logs/', rule = rule)
     log.addLoggee(tag = 'heading', loggee = 'pose.heading')
     log.addLoggee(tag = 'pos', loggee = 'pose.position')
@@ -47,21 +51,21 @@ def Test(rule = UPDATE):
     """
 
     storing.Store.Clear()
-    Logger.clear()
-    Log.clear()
+    logging.Logger.Clear()
+    logging.Log.Clear()
 
-    store = storing.Store(name = 'Test')
+    store = storing.Store(name = 'Test', stamp=0.0)
 
     heading = store.create('pose.heading').create(value = 0.0)
     position = store.create('pose.position').create(north = 10.0, east = 5.0)
 
-    log = Log(name = 'test', store = store, kind = 'text',
+    log = logging.Log(name = 'test', store = store, kind = 'text',
               prefix = 'log', path = './logs/', rule = rule)
     log.addLoggee(tag = 'heading', loggee = 'pose.heading')
     log.addLoggee(tag = 'pos', loggee = 'pose.position')
     log.resolve()
 
-    logger = Logger(name = 'Test', store = store)
+    logger = logging.Logger(name = 'Test', store = store)
     logger.addLog(log)
 
     status = logger.runner.send(START) #also prepares logs
