@@ -357,46 +357,47 @@ class Mark(object):
 
 
 class Share(object):
-    """Shared item in data store
+    """
+    Shared item in data store
 
-        so it functions somewhat like a dictionary defines:
-        __setitem__
-        __getitem__
-        __delitem__
-        __contains__
-        __iter__
-        __len__
-        clear()
-        items()
-        iteritems()
-        iterkeys()
-        itervalues()
-        keys()
-        values()
+    so it functions somewhat like a dictionary defines:
+    __setitem__
+    __getitem__
+    __delitem__
+    __contains__
+    __iter__
+    __len__
+    clear()
+    items()
+    iteritems()
+    iterkeys()
+    itervalues()
+    keys()
+    values()
 
-        instance attributes:
-            .name = holds unique store path entry name of share '.' notation
-            .store = data store holding share
-            .stamp = time stamp of this share
+    instance attributes:
+        .name = holds unique store path entry name of share '.' notation
+        .store = data store holding share
+        .stamp = time stamp of this share
+        .deck = Deck instance for this share
 
-            ._owner used by owner property
-            ._data used by data property and also by private accessor methods
-            ._truth used by truth property
-            ._unit used by unit property
+        ._owner used by owner property
+        ._data used by data property and also by private accessor methods
+        ._truth used by truth property
+        ._unit used by unit property
 
 
-        properties are used so that time stamps etc are updated properly for logging
+    properties are used so that time stamps etc are updated properly for logging
 
-        properties (properites are stored in class):
-            .owner property holds a reference to owner of share (writer)
-            .data property holds data record
-                one time stamp applies to the whole data structure
-            .value property manages default single field value in data
-            .truth property holds the confidence of the value/data. may be None, True, False, [0.0, 1.0]
-                truth should not be updated unless value/data is, they are coupled
-                thus log if changed on truth also uses last value
-            .unit property hold units for fields
-
+    properties (properites are stored in class):
+        .owner property holds a reference to owner of share (writer)
+        .data property holds data record
+            one time stamp applies to the whole data structure
+        .value property manages default single field value in data
+        .truth property holds the confidence of the value/data. may be None, True, False, [0.0, 1.0]
+            truth should not be updated unless value/data is, they are coupled
+            thus log if changed on truth also uses last value
+        .unit property hold units for fields
 
     """
     def __init__(self,
@@ -408,10 +409,12 @@ class Share(object):
                  stamp=None,
                  unit=None,
                  owner=None,
+                 deck=None,
                  **kwa):
-        """Initialize instance
+        """
+        Initialize instance
 
-           Parameters:
+        Parameters:
            name = path name of share in store if created by store
            store = shared data store
            value = value of data field 'value' if any
@@ -422,12 +425,13 @@ class Share(object):
            owner = owner framework for this share
         """
 
-        self._data = Data() #new data object
+        self._data = Data()  # new data object
         self._truth = None
         self._unit = None
         self._owner = None
 
         self.stamp = None
+        self.deck = Deck()
 
         if not isinstance(name,str): #name must be string
             name = ''
@@ -456,6 +460,8 @@ class Share(object):
             self.changUnit(**unit)
         if owner is not None:
             self.owner = owner
+        if deck is not None and isinstance(deck, Deck):
+            self.deck = deck
 
         self.marks = odict() #odict of marks
 
@@ -560,6 +566,18 @@ class Share(object):
         """
         self.stamp = self.store.stamp
         return self.stamp
+
+    def push(self,  elem):
+        """
+        Convenience method to push to .deck
+        """
+        self.deck.push(elem)
+
+    def pull(self):
+        """
+        Convenience method to pull from .deck
+        """
+        return self.deck.pull()
 
     # properties
     def getOwner(self):  # owner property
@@ -806,10 +824,10 @@ class Deck(deque):
     Extends deque to support deque access convenience methods .push and .pull
     to remove confusion  about which side of the deque to use (left or right).
 
-    Extends deque to support deque access convenience methods .put and .get
-    for enable different pattern for access. .put does not allow  a value
-    of None to be added to the Deck so retrieval can be done without
-    checking for empty. .put returns None when empty
+    Extends deque to support deque access convenience methods .gulp and .spew
+    to enable a different pattern for access. .gulp does not allow  a value
+    of None to be added to the Deck so retrieval with .spew can be done without
+    checking for empty. .spew returns None when empty
 
     To determine if deck or deque is empty use
        if d:
@@ -845,8 +863,8 @@ class Deck(deque):
     .push(x)   = add x to the right side of deque (alias of append)
     .pull(x)   = remove and return element from left side of deque (alias of popleft)
 
-    .put(x)    = If not None, add x to right side of deque, Otherwise ignore
-    .get()     = remove and return element from left side of deque,
+    .gulp(x)    = If not None, add x to right side of deque, Otherwise ignore
+    .spew()     = remove and return element from left side of deque,
                  If empty return None
 
 
@@ -854,20 +872,20 @@ class Deck(deque):
     push = deque.append  # alias
     pull = deque.popleft  # alias
 
-    def put(self, item):
+    def gulp(self, elem):
         """
-        If not None, add item to right side of deque, Otherwise ignore
+        If not None, add elem to right side of deque, Otherwise ignore
         """
-        if item is not None:
-            self.append(item)
+        if elem is not None:
+            self.append(elem)
 
-    def get(self):
+    def spew(self):
         """
-        Remove and return item from left side of deque,
+        Remove and return elem from left side of deque,
         If empty return None
         """
         try:
-            item = self.popleft()
+            elem = self.popleft()
         except IndexError:
-            item = None
-        return item
+            elem = None
+        return elem

@@ -120,48 +120,6 @@ def nonStringSequence(obj):
     """
     return (not isinstance(obj, basestring) and isinstance(obj, Sequence) )
 
-class Fifo(deque):  #new-style class to add put get methods
-    """ Extends deque to support more convenient FIFO queue access
-
-       for any python sequence to determine if it is empty just use "if s:"
-
-       local methods
-       .put inserts non-None item at tail, back (right side) of deque
-       .get retrieves item from head, front, (left side) of deque, None if empty
-
-
-       inherited methods:
-       .append()  = add to right side of deque
-       .appendleft() = add to left side of deque
-       .clear()  = clear items from deque
-       .extend() = append iterable
-       .extendleft = appendleft iterable
-       .pop() = remove from right side
-       .popleft() = remove from left side
-       .remove() = remove first occurence of value left to right
-       .rotate() = rotate to right if neg rotate to left
-       .reversed() = copy of deque reversed
-    """
-
-    def put(self, item):
-        """Puts item at tail of queue = back of deque
-           If item is None don't put on Queue. Symmetric with get which returns
-           None if queue empty
-        """
-        if item is not None:
-            self.append(item)
-
-    def get(self):
-        """Returns item from head of fifo = front of deque
-           If empty returns None  (therefore None is not allowed as item in fifo)
-        """
-        try:
-            item = self.popleft()
-        except IndexError:
-            item = None
-
-        return item
-
 class Timer(object):
     """ Class to manage real elaspsed time.  needs time module
         attributes:
