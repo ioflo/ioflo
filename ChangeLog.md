@@ -3,7 +3,7 @@ CHANGE LOG
 -------------------
 
 ---------
-201412XX
+20150109
 ---------
 v1.1.3
 
@@ -41,7 +41,7 @@ single value or multivalued fields of values (data)
 
 
 ---------
-20141207
+20150107
 ---------
 v1.1.2
 
@@ -56,7 +56,7 @@ rear original [as mine] [be aux] in frame framename
 raze (all, last, first) [in frame [(me, framename)]]
 
 ---------
-20141205
+20150105
 ---------
 v1.1.1
 
