@@ -5,9 +5,39 @@ CHANGE LOG
 ---------
 201412XX
 ---------
-v1.1.X
+v1.1.3
 
 More consistent usage of resolveFrameOfFramer
+
+Added Deck class to storing.py
+
+
+## Deck for streaming data
+
+Added .deck attribute to share that is the dual of .data but for streams.
+A share now has both .data and .deck so it can have both streams and other data.
+
+Deck Object is subclass of python deque but with convenience methods
+to avoid ambiguity about which side of deque to use.
+these are .push .pull  which are aliases for
+.append .popleft
+Also convenience methods .gulp .spew. .gulp will ignore non None elements
+and .spew will return None when empty instead of raising IndexError
+
+Decks are not time stamped.  The philosophy is that the elements
+on a deck are dicts or objects that encapsulate their time stamps.
+The use case is to flush a deck when processing so time stamps are not
+meaningful
+
+
+This means that Shares who's main purpose is to hold a  message queue
+don't have to assign a deque to their .value
+but can just use their .deck attribute.
+This supports the alternate but important use case
+where a share is used to hold a buffer of messages or events (stream) and not a
+single value or multivalued fields of values (data)
+
+
 
 
 ---------
