@@ -80,8 +80,7 @@ def Convert2Num(text):
         pass
 
     raise ValueError("Expected Number got '{0}'".format(text))
-
-    return None
+    # return None
 
 
 def Convert2CoordNum(text):
@@ -396,8 +395,6 @@ class Builder(object):
                           "creating instances ...\n".format(name))
 
             self.currentHouse.assignRegistries()
-
-
 
             console.profuse("     Clearing current Framer, Frame, Log etc.\n")
             #changed store so need to make new frameworks and frames
