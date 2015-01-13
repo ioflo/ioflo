@@ -231,7 +231,8 @@ class FrameIofloTestCase(FramerIofloTestCase):
                 parms=None,
                 prerefs=None ):
         """
-        Create act to run deed class name given by kind
+        Create act to run deed class name given by kind and
+        add to context.
         """
         act = acting.Act(actor=kind,
                          registrar=deeding.Deed,
@@ -245,6 +246,48 @@ class FrameIofloTestCase(FramerIofloTestCase):
 
         self.frame.addByContext(act, context)
         return act
+
+    def addBenterDeed(self, kind, **kwa):
+        """
+        Create Act with actor of kind and add deed at BENTER context
+        """
+        self.addDeed(kind, context=globaling.BENTER, **kwa)
+
+    def addEnterDeed(self, kind, **kwa):
+        """
+        Create Act with actor of kind and add deed at ENTER context
+        """
+        self.addDeed(kind, context=globaling.ENTER, **kwa)
+
+    def addRenterDeed(self, kind, **kwa):
+        """
+        Create Act with actor of kind and add deed at RENTER context
+        """
+        self.addDeed(kind, context=globaling.RENTER, **kwa)
+
+    def addRecurDeed(self, kind, **kwa):
+        """
+        Create Act with actor of kind and add deed at RECUR context
+        """
+        self.addDeed(kind, context=globaling.RECUR, **kwa)
+
+    def addPrecurDeed(self, kind, **kwa):
+        """
+        Create Act with actor of kind and add deed at PRECUR context
+        """
+        self.addDeed(kind, context=globaling.PRECUR, **kwa)
+
+    def addExitDeed(self, kind, **kwa):
+        """
+        Create Act with actor of kind and add deed at EXIT context
+        """
+        self.addDeed(kind, context=globaling.EXIT, **kwa)
+
+    def addRexitDeed(self, kind, **kwa):
+        """
+        Create Act with actor of kind and add deed at REXIT context
+        """
+        self.addDeed(kind, context=globaling.REXIT, **kwa)
 
 
 
