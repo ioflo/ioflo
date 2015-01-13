@@ -15,15 +15,19 @@ else:
 import os
 import importlib
 
-from ..base import globaling
+from ..base.consoling import getConsole
+console = getConsole()
+
 from ..base.odicting import odict
+
+from ..base import globaling
 from ..base import storing
 from ..base import housing
 from ..base import framing
+from ..base import acting
 from ..base import deeding
 
-from ..base.consoling import getConsole
-console = getConsole()
+
 
 from .. import __version__
 
@@ -240,6 +244,7 @@ class FrameIofloTestCase(FramerIofloTestCase):
             context = globaling.RECUR
 
         self.frame.addByContext(act, context)
+        return act
 
 
 
