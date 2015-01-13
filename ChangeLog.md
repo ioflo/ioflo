@@ -3,6 +3,17 @@ CHANGE LOG
 -------------------
 
 ---------
+20150113
+---------
+v1.1.4
+
+
+Add scaffolding for unit tests of Deeds (behaviors) inside House, Framer, Frame
+contexts in file ioflo.test.testing
+
+
+
+---------
 20150109
 ---------
 v1.1.3
