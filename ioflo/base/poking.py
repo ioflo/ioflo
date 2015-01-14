@@ -37,8 +37,8 @@ class Poke(acting.Actor):
 class PokeDirect(Poke):
     """Class to put direct data values into destination share"""
 
-    def resolve(self, sourceData, destination, destinationFields, **kwa):
-        parms = super(PokeDirect, self).resolve( **kwa)
+    def _resolve(self, sourceData, destination, destinationFields, **kwa):
+        parms = super(PokeDirect, self)._resolve( **kwa)
 
         destination = self._resolvePath(ipath=destination,  warn=True) # now a share
         srcFields = sourceData.keys()
@@ -68,8 +68,8 @@ class PokeIndirect(Poke):
        based on source and destination field lists
 
     """
-    def resolve(self, source, sourceFields, destination, destinationFields, **kwa):
-        parms = super(PokeIndirect, self).resolve( **kwa)
+    def _resolve(self, source, sourceFields, destination, destinationFields, **kwa):
+        parms = super(PokeIndirect, self)._resolve( **kwa)
 
         source = self._resolvePath(ipath=source,  warn=True) # now a share
         destination = self._resolvePath(ipath=destination,  warn=True) # now a share
@@ -118,8 +118,8 @@ class PokeIndirect(Poke):
 class IncDirect(Poke):
     """Class to incremate destination share by direct data values"""
 
-    def resolve(self, destination, destinationFields, sourceData, **kwa):
-        parms = super(IncDirect, self).resolve( **kwa)
+    def _resolve(self, destination, destinationFields, sourceData, **kwa):
+        parms = super(IncDirect, self)._resolve( **kwa)
 
         destination = self._resolvePath(ipath=destination,  warn=True) # now a share
         sourceFields = sourceData.keys()
@@ -163,8 +163,8 @@ class IncIndirect(Poke):
        based on source and destination field lists
 
     """
-    def resolve(self, destination, destinationFields, source, sourceFields, **kwa):
-        parms = super(IncIndirect, self).resolve( **kwa)
+    def _resolve(self, destination, destinationFields, source, sourceFields, **kwa):
+        parms = super(IncIndirect, self)._resolve( **kwa)
 
         destination = self._resolvePath(ipath=destination,  warn=True) # now a share
         source = self._resolvePath(ipath=source,  warn=True) # now a share

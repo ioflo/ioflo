@@ -184,7 +184,7 @@ class Act(object):
                                                              self.count)
                             setattr(actor, key, share)
             self.parms = parms
-            self.parms.update(self.actor.resolve(**self.parms)) # resolve sub acts
+            self.parms.update(self.actor._resolve(**self.parms)) # resolve sub acts
             self.actor.postinitio(**self.parms)
 
     def resolvePath(self, ipath, ival=None, iown=None, warn=False):
@@ -480,7 +480,7 @@ class Actor(object):
         """Show Actor."""
         console.terse("Actor {0}".format(self.name))
 
-    def resolve(self, **kwa):
+    def _resolve(self, **kwa):
         """ Return updated parms
             Extend in subclass to resolve specific kwa items that are links or
             share refs and update parms
@@ -810,10 +810,10 @@ class Transiter(Interrupter):
             human = text version of transition
 
     """
-    def resolve(self, needs, near, far, human, **kwa):
+    def _resolve(self, needs, near, far, human, **kwa):
         """Resolve any links in far and in associated parms for actors"""
 
-        parms = super(Transiter, self).resolve( **kwa)
+        parms = super(Transiter, self)._resolve( **kwa)
 
         if near == 'me':
             near = self.act.frame
@@ -911,9 +911,9 @@ class Suspender(Interrupter):
         """Initialization method for instance. """
         super(Suspender,self).__init__(**kw)
 
-    def resolve(self, needs, main, aux, human, **kwa):
+    def _resolve(self, needs, main, aux, human, **kwa):
         """Resolve any links aux and in associated parms for actors"""
-        parms = super(Suspender, self).resolve( **kwa)
+        parms = super(Suspender, self)._resolve( **kwa)
 
         if main == 'me':
             main = self.act.frame
@@ -1116,11 +1116,11 @@ class Rearer(Actor):
             frame = frame to put auxiliary clone in
 
     """
-    def resolve(self, original, clone, schedule, frame, **kwa):
+    def _resolve(self, original, clone, schedule, frame, **kwa):
         """
         Resolve any links
         """
-        parms = super(Rearer, self).resolve( **kwa)
+        parms = super(Rearer, self)._resolve( **kwa)
 
         parms['original'] = original = framing.resolveFramer(original,
                                                     who=self.name,
@@ -1227,11 +1227,11 @@ class Razer(Actor):
             frame = frame holding clones to be destroyed
 
     """
-    def resolve(self, who, frame, **kwa):
+    def _resolve(self, who, frame, **kwa):
         """
         Resolve any links
         """
-        parms = super(Razer, self).resolve( **kwa)
+        parms = super(Razer, self)._resolve( **kwa)
 
 
         framer = framing.resolveFramer(self.act.frame.framer,

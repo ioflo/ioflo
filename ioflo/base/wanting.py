@@ -33,12 +33,12 @@ class Want(acting.Actor):
     """
     Registry = odict()
 
-    def resolve(self, taskers, **kwa):
+    def _resolve(self, taskers, **kwa):
         """Resolves value taskers list of links that is passed in as parm
            resolved links are passed back to act to store in parms
            since tasker may not be current framer at build time
         """
-        parms = super(Want, self).resolve( **kwa)
+        parms = super(Want, self)._resolve( **kwa)
         links = set()
         for tasker in taskers:
             if tasker == 'all':

@@ -30,12 +30,12 @@ class Fiat(acting.Actor):
     """
     Registry = odict()
 
-    def resolve(self, tasker, **kwa):
+    def _resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as parm
            resolved link is passed back to act to store in parms
            since framer may not be current framer at build time
         """
-        parms = super(Fiat, self).resolve( **kwa)
+        parms = super(Fiat, self)._resolve( **kwa)
 
         parms['tasker'] = tasker = tasking.resolveTasker(tasker,
                                                  who=self.name,

@@ -154,9 +154,9 @@ class DeedLapse(Deed):
         """     """
         print("Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse))
 
-    def resolve(self, **kwa):
+    def _resolve(self, **kwa):
         """ Create enact with restart SideAct to restart this Actor """
-        parms = super(DeedLapse, self).resolve( **kwa)
+        parms = super(DeedLapse, self)._resolve( **kwa)
 
         restartActParms = {}
         restartAct = acting.SideAct(   actor=self,

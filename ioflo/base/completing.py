@@ -29,11 +29,11 @@ class Complete(acting.Actor):
     """
     Registry = odict()
 
-    def resolve(self, taskers, **kwa):
+    def _resolve(self, taskers, **kwa):
         """Resolves value (taskers) list of link names that is passed in as parm
            resolved links are passed back to act to store in parms
         """
-        parms = super(Complete, self).resolve( **kwa)
+        parms = super(Complete, self)._resolve( **kwa)
 
         links = set()
         for tasker in taskers:

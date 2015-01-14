@@ -70,11 +70,11 @@ class NeedAlways(Need):
 
 class NeedDone(Need):
     """NeedDone Need Special Need"""
-    def resolve(self, tasker, framer, frame, **kwa):
+    def _resolve(self, tasker, framer, frame, **kwa):
         """Resolves value (tasker) link that is passed in as tasker parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(NeedDone, self).resolve( **kwa)
+        parms = super(NeedDone, self)._resolve( **kwa)
         if framer:
             if framer == 'me':
                 framer = self.act.frame.framer
@@ -130,11 +130,11 @@ class NeedDone(Need):
 class NeedStatus(Need):
     """NeedStatus Need Special Need """
 
-    def resolve(self, tasker, **kwa):
+    def _resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as parm
            resolved link is passed back to container act to update in act's parms
         """
-        parms = super(NeedStatus, self).resolve( **kwa)
+        parms = super(NeedStatus, self)._resolve( **kwa)
         if tasker == 'me':
             tasker = self.act.frame.framer
 
@@ -165,7 +165,7 @@ class NeedState(Need):
     """
     NeedState is a base class for Needs that must resolve a state share ref
     """
-    def resolve(self, state, stateField, **kwa):
+    def _resolve(self, state, stateField, **kwa):
         """
         Resolves state share
 
@@ -173,7 +173,7 @@ class NeedState(Need):
             state       share path of state
             stateField  state share field name
         """
-        parms = super(NeedState, self).resolve( **kwa)
+        parms = super(NeedState, self)._resolve( **kwa)
 
         #convert state path to share and create field if necessary
         parms['state'] = state = self._resolvePath(ipath=state,
@@ -250,7 +250,7 @@ class NeedIndirect(NeedState):
 
        if state comparison goal [+- tolerance]
     """
-    def resolve(self, goal, goalField, **kwa):
+    def _resolve(self, goal, goalField, **kwa):
         """
         Resolves state share
 
@@ -261,7 +261,7 @@ class NeedIndirect(NeedState):
             tolerance   tolerance value
 
         """
-        parms = super(NeedIndirect, self).resolve( **kwa)
+        parms = super(NeedIndirect, self)._resolve( **kwa)
 
         #convert goal path to share and create field if necessary
         parms['goal'] = goal = self._resolvePath(ipath=goal,
@@ -310,7 +310,7 @@ class NeedMarker(Need):
     Special Need
 
     """
-    def resolve(self, share, frame, marker, **kwa):
+    def _resolve(self, share, frame, marker, **kwa):
         """
         Resolves frame name link and then
            inserts marker as first enact in the resolved frame
@@ -322,7 +322,7 @@ class NeedMarker(Need):
             marker      only used in resolvelinks
 
         """
-        parms = super(NeedMarker, self).resolve( **kwa)
+        parms = super(NeedMarker, self)._resolve( **kwa)
 
         framer = self.act.frame.framer
 

@@ -42,8 +42,8 @@ class GoalDirect(Goal):
         super(GoalDirect, self).__init__(**kw)  #.goal inited here
 
 
-    def resolve(self, destination, destinationFields, sourceData, **kwa):
-        parms = super(GoalDirect, self).resolve( **kwa)
+    def _resolve(self, destination, destinationFields, sourceData, **kwa):
+        parms = super(GoalDirect, self)._resolve( **kwa)
 
         destination = self._resolvePath(ipath=destination,  warn=True) # now a share
         sourceFields = sourceData.keys()
@@ -79,8 +79,8 @@ class GoalIndirect(Goal):
 
         super(GoalIndirect, self).__init__(**kw)  #.goal inited here
 
-    def resolve(self, destination, destinationFields, source, sourceFields, **kwa):
-        parms = super(GoalIndirect, self).resolve( **kwa)
+    def _resolve(self, destination, destinationFields, source, sourceFields, **kwa):
+        parms = super(GoalIndirect, self)._resolve( **kwa)
 
         destination = self._resolvePath(ipath=destination,  warn=True) # now a share
         source = self._resolvePath(ipath=source,  warn=True) # now a share
