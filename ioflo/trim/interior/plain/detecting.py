@@ -45,7 +45,7 @@ class DetectorPositionBox(deeding.Deed):
         super(DetectorPositionBox,self).__init__(**kw)
 
 
-    def initio(self, group, output, input, parms = None, **kw):
+    def _initio(self, group, output, input, parms = None, **kw):
         """ Override since uses legacy interface
 
             output
@@ -208,10 +208,10 @@ class DetectorPositionBox(deeding.Deed):
         #   (cn,ce,sn,se,rn,re,side))
 
         if console._verbosity >= console.Wordage.profuse:
-            self.expose()
+            self._expose()
             console.profuse("doing {0} with output (itblf) = {1}\n".format(self.name, self.output))
 
-    def expose(self):
+    def _expose(self):
         """
            prints out detector state
 

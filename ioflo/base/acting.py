@@ -50,7 +50,7 @@ class Act(object):
             .registrar = ref to Actor class holding .Registry
             .parms = dictionary of keyword arguments for Actor instance call
             .inits = dictionary of arguments to Actor.__init__()
-            .ioinits = dictionary of arguments to Actor.initio()
+            .ioinits = dictionary of arguments to Actor._initio()
             .prerefs = dictionary of init, ioinit, and parm refs to resolve
             .human = human friendly version of action declaration
             .count = line count in floscript of action declaration
@@ -111,7 +111,7 @@ class Act(object):
         console.terse("Act Actor {0} Parms {1} in Frame {2} Context {3} SuperAct {4}\n".format(
                     self.actor, self.parms, self.frame, self.context, self.act))
         if self.actor:
-            self.actor.expose()
+            self.actor._expose()
 
     def resolve(self, **kwa):
         """ Resolve .frame attribute and .actor. Cause .actor to resolve its parms """
@@ -159,10 +159,10 @@ class Act(object):
                         if field in src:  # only update if src has field
                             ioinits[field] = src[field]
             if ioinits:
-                iois = actor.initio(**ioinits)
+                iois = actor._initio(**ioinits)
                 if iois:
                     for key, ioi in iois.items():
-                        share = actor.resolvePath(   ipath=ioi['ipath'],
+                        share = actor._resolvePath(   ipath=ioi['ipath'],
                                                      ival=ioi.get('ival'),
                                                      iown=ioi.get('iown'))
                         if actor._Parametric:
@@ -350,7 +350,7 @@ class Nact(Act):
         console.terse("Nact Actor {0} Parms {1} in Frame {2} Context {3} SuperAct {4}\n".format(
                     self.actor, self.parms, self.frame, self.context, self.act))
         if self.actor:
-            self.actor.expose()
+            self.actor._expose()
 
 class SideAct(Act):
     """ Anciliary act to a main Act/Actor used to call a different 'action' method
@@ -476,7 +476,7 @@ class Actor(object):
         console.profuse("Actioning {0} with {1}\n".format(self.name, str(kwa)))
         pass
 
-    def expose(self):
+    def _expose(self):
         """Show Actor."""
         console.terse("Actor {0}".format(self.name))
 
@@ -489,7 +489,7 @@ class Actor(object):
 
         return parms
 
-    def initio(self, inode='', **kwa):
+    def _initio(self, inode='', **kwa):
         """ Intialize and hookup ioflo shares from node pathname inode and kwa arguments.
             This implements a generic Actor interface protocol for associating the
             io data flow shares to the Actor.
@@ -622,7 +622,7 @@ class Actor(object):
         """
         pass
 
-    def resolvePath(self, ipath, ival=None, iown=None, warn=False):
+    def _resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
             Calls self.act.resolvePath()
             See doc string from Act.resolvePath for detailed description of
@@ -640,7 +640,7 @@ class Actor(object):
 
         return ipath
 
-    def prepareDstFields(self, srcFields, dst, dstFields):
+    def _prepareDstFields(self, srcFields, dst, dstFields):
         """
         Prepares  for a transfer of data
         from srcFields to dstFields in dst
@@ -659,7 +659,7 @@ class Actor(object):
             else: #use srcFields
                 dstFields = srcFields
 
-        self.verifyShareFields(dst, dstFields)
+        self._verifyShareFields(dst, dstFields)
 
         if len(srcFields) != len(dstFields):
             msg = ("ResolveError: Unequal number of source = {0} and "
@@ -685,7 +685,7 @@ class Actor(object):
 
         return dstFields
 
-    def prepareSrcDstFields(self, src, srcFields, dst, dstFields):
+    def _prepareSrcDstFields(self, src, srcFields, dst, dstFields):
         """
         Prepares and verifys a transfer of data
            from srcFields in src
@@ -707,7 +707,7 @@ class Actor(object):
             else: # empty src
                 srcFields = ['value'] #use value field
 
-        self.verifyShareFields(src, srcFields)
+        self._verifyShareFields(src, srcFields)
 
         if not dstFields: #no destination fields so assign defaults
             if 'value' in dst:
@@ -715,7 +715,7 @@ class Actor(object):
             else: #use source fields for destination fields
                 dstFields = srcFields
 
-        self.verifyShareFields(dst, dstFields)
+        self._verifyShareFields(dst, dstFields)
 
         if len(srcFields) != len(dstFields):
             msg = ("ResolveError: Unequal number of fields, source = {0} and"
@@ -747,7 +747,7 @@ class Actor(object):
 
         return (srcFields, dstFields)
 
-    def verifyShareFields(self, share, fields):
+    def _verifyShareFields(self, share, fields):
         """Verify that updating fields in share won't violate the
            condition that when a share has field == 'value'
            it will be the only field
@@ -889,7 +889,7 @@ class Transiter(Interrupter):
         framer.activate(active = far)
         return far
 
-    def expose(self):
+    def _expose(self):
         """      """
         console.terse("Transiter {0}\n".format(self.name))
 
@@ -1004,7 +1004,7 @@ class Suspender(Interrupter):
             return aux
 
 
-    def expose(self):
+    def _expose(self):
         """      """
         console.terse("Suspender {0}\n".format(self.name))
 
@@ -1036,7 +1036,7 @@ class Printer(Actor):
         #console.terse("{0} printer {1}\n".format(self.name, message))
         console.terse("*** {0} ***\n".format(message))
 
-    def expose(self):
+    def _expose(self):
         """   """
         console.terse("Printer {0}\n".format(self.name))
 
@@ -1070,7 +1070,7 @@ class MarkerUpdate(Marker):
         if mark:
             mark.stamp = self.store.stamp #stamp when marker runs
 
-    def expose(self):
+    def _expose(self):
         """   """
         console.terse("MarkerUpdate {0}\n".format(self.name))
 
@@ -1100,7 +1100,7 @@ class MarkerChange(Marker):
         if mark:
             mark.data = storing.Data(share.items())
 
-    def expose(self):
+    def _expose(self):
         """   """
         console.terse("MarkerChange {0}\n".format(self.name))
 

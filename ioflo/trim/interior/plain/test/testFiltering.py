@@ -21,7 +21,7 @@ def TestTemperature():
     output = store.fetch('state.temperature').update(value = 10.0)
     output = store.fetch('state.depth').update(value = 40.0)
     store.expose()
-    filter.expose()
+    filter._expose()
 
     for k in range(1, 300):
         print("")
@@ -29,7 +29,7 @@ def TestTemperature():
         s = 10.0 + 2.0 * math.sin(math.pi * 2.0 * k/300.0)
         input = store.fetch('ctd').update(temperature = s)
         filter.update()
-        filter.expose()
+        filter._expose()
         print(s)
 
 
@@ -51,7 +51,7 @@ def TestSalinity():
 
     output = store.fetch('state.salinity').update(value = 32.0)
     store.expose()
-    filter.expose()
+    filter._expose()
 
     for k in range(1, 300):
         print("")
@@ -59,7 +59,7 @@ def TestSalinity():
         s = 32.0 + 2.0 * math.sin(math.pi * 2.0 * k/300.0)
         input = store.fetch('ctd.salinity').update(value = s)
         filter.update()
-        filter.expose()
+        filter._expose()
 
 
 

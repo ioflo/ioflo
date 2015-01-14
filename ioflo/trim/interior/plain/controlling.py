@@ -46,7 +46,7 @@ class ControllerPid(deeding.DeedLapse):
         self.lapse = 0.0 #time lapse in seconds calculated on update
 
 
-    def initio(self, group, output, input, rate, rsp, parms = None, **kw):
+    def _initio(self, group, output, input, rate, rsp, parms = None, **kw):
         """ Override default since legacy deed interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -173,7 +173,7 @@ class ControllerPid(deeding.DeedLapse):
 
         return None
 
-    def expose(self):
+    def _expose(self):
         """
            prints out controller state
 

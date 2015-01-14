@@ -98,7 +98,7 @@ class DeedSince(Deed):
         console.profuse("Actioning DeedSince  {0}\n".format(self.name))
         self.stamp = self.store.stamp
 
-    def expose(self):
+    def _expose(self):
         """     """
         print("Deed %s stamp = %s" % (self.name, self.stamp))
 
@@ -150,7 +150,7 @@ class DeedLapse(Deed):
         console.profuse("Actioning DeedLapse  {0}\n".format(self.name))
         self.updateLapse()
 
-    def expose(self):
+    def _expose(self):
         """     """
         print("Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse))
 

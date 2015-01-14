@@ -49,7 +49,7 @@ class EstimatorPositionNfl(deeding.DeedLapse):
         #call super class method
         super(EstimatorPositionNfl,self).__init__(**kw)
 
-    def initio(self, group, position, drPosition, drBias,
+    def _initio(self, group, position, drPosition, drBias,
                  speed, heading, current, dvlVelocity, gpsPosition, gpsVelocity,
                  parms = None, **kw):
         """ Override since uses legacy interface
@@ -277,7 +277,7 @@ class EstimatorPositionNfl(deeding.DeedLapse):
         self.position.update(north = north, east = east)
 
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 

@@ -56,7 +56,7 @@ class SimulatorMotionUuv(deeding.DeedLapse):
                              heading = None, headingRate = None)
 
 
-    def initio(self, group, speed, speedRate, velocity,
+    def _initio(self, group, speed, speedRate, velocity,
                  depth, depthRate, pitch, pitchRate, altitude,
                  heading, headingRate, position, location,
                  rpm, stern, rudder, current, bottom, onset, origin, parms = None, **kw):
@@ -303,7 +303,7 @@ class SimulatorMotionUuv(deeding.DeedLapse):
         lat, lon = aiding.SphereLLByDNDEToLL(self.location.data.lat,self.location.data.lon,deltaNorth,deltaEast)
         self.location.update(lat = lat, lon = lon)
 
-    def expose(self):
+    def _expose(self):
         """
            prints out motion state
 
@@ -342,7 +342,7 @@ class SimulatorMotionUsv(deeding.DeedLapse):
         self.ionames = dict( speed = None, speedRate = None,
                              heading = None, headingRate = None)
 
-    def initio(self, group, speed, speedRate,  velocity,
+    def _initio(self, group, speed, speedRate,  velocity,
                  heading, headingRate, position,
                  rpm, rudder, current, onset, parms = None, **kw):
         """ Override since legacy interface
@@ -505,7 +505,7 @@ class SimulatorMotionUsv(deeding.DeedLapse):
 
         self.position.update(north = north + deltaNorth, east = east + deltaEast)
 
-    def expose(self):
+    def _expose(self):
         """
            prints out motion state
 
@@ -536,7 +536,7 @@ class SimulatorSensorGps(deeding.DeedLapse):
         #call super class method
         super(SimulatorSensorGps,self).__init__(**kw)
 
-    def initio(self, group, positionOut, velocityOut, error,
+    def _initio(self, group, positionOut, velocityOut, error,
                  heading, speed,  positionIn, velocityIn,
                  scenario, parms = None, **kw):
         """ Override since legacy interface
@@ -678,7 +678,7 @@ class SimulatorSensorGps(deeding.DeedLapse):
                                 east = self.velocityIn.data.east + eve)
         self.error.update(north = en, east = ee)
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 
@@ -708,7 +708,7 @@ class SimulatorSensorDvl(deeding.DeedLapse):
         #call super class method
         super(SimulatorSensorDvl,self).__init__(**kw)
 
-    def initio(self, group, velocity, currentOut, altitude,
+    def _initio(self, group, velocity, currentOut, altitude,
                  heading, speed, currentIn, bottom,
                  scenario, parms = None, **kw):
         """ Override since legacy interface
@@ -846,7 +846,7 @@ class SimulatorSensorDvl(deeding.DeedLapse):
         self.currentOut.update(forward = cf, starboard = cs, north = cn, east = ce)
         self.altitude.value = alt
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 
@@ -875,7 +875,7 @@ class SimulatorSensorCompass(deeding.DeedLapse):
         #call super class method
         super(SimulatorSensorCompass,self).__init__(**kw)
 
-    def initio(self, group, output,input, scenario, parms = None, **kw):
+    def _initio(self, group, output,input, scenario, parms = None, **kw):
         """ Override since legacy interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -961,7 +961,7 @@ class SimulatorSensorCompass(deeding.DeedLapse):
 
         self.output.value = heading
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 
@@ -998,7 +998,7 @@ class SimulatorSalinityLinear(deeding.DeedLapse):
         super(SimulatorSalinityLinear,self).__init__(**kw)
 
 
-    def initio(self, group, output,input, depth, parms = None, **kw):
+    def _initio(self, group, output,input, depth, parms = None, **kw):
         """ Override since legacy interface
 
                        group is path name of group in store, group has following subgroups or shares:
@@ -1102,7 +1102,7 @@ class SimulatorSalinityLinear(deeding.DeedLapse):
 
         self.output.update(salinity = salinity)
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 
@@ -1135,7 +1135,7 @@ class SimulatorSalinitySinusoid(deeding.DeedLapse):
         #call super class method
         super(SimulatorSalinitySinusoid,self).__init__(**kw)
 
-    def initio(self, group, output,input, parms = None, **kw):
+    def _initio(self, group, output,input, parms = None, **kw):
         """ Override since legacy interface
 
                        group is path name of group in store, group has following subgroups or shares:
@@ -1231,7 +1231,7 @@ class SimulatorSalinitySinusoid(deeding.DeedLapse):
 
         self.output.update(salinity = salinity)
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 
@@ -1261,7 +1261,7 @@ class SimulatorGradient(deeding.DeedLapse):
         #call super class method
         super(SimulatorGradient,self).__init__(**kw)
 
-    def initio(self, group, output, field, position, depth, parms = None, **kw):
+    def _initio(self, group, output, field, position, depth, parms = None, **kw):
         """ Override since legacy interface
 
                        group is path name of group in store, group has following subgroups or shares:
@@ -1392,7 +1392,7 @@ class SimulatorGradient(deeding.DeedLapse):
 
         self.output.update({self.field : out, 'depth' : self.depth.value})
 
-    def expose(self):
+    def _expose(self):
         """
            prints out gradient state
 

@@ -15,52 +15,52 @@ def TestBox():
 
 
     store.expose()
-    detector.expose()
+    detector._expose()
 
     print("")
     input = store.fetch('state.position').update(north = 9950.0, east = 0.0)
     detector.action()
-    detector.expose()
+    detector._expose()
     print("")
     input = store.fetch('state.position').update(north = 9949.0, east = 0.0)
     detector.action()
-    detector.expose()
+    detector._expose()
     print("")
     input = store.fetch('state.position').update(north = 9951, east = 0.0)
     detector.action()
-    detector.expose()
+    detector._expose()
     print("")
     input = store.fetch('state.position').update(north = 9900.0, east = 500.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
     input = store.fetch('state.position').update(north = 1000.0, east = 2000.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
     input = store.fetch('state.position').update(north = 1000.0, east = -2000.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
     input = store.fetch('state.position').update(north = 11000.0, east = 500.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
     input = store.fetch('state.position').update(north = 11000.0, east = 2000.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
     input = store.fetch('state.position').update(north = 11000.0, east = -2000.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
     input = store.fetch('state.position').update(north = -1000.0, east = 2000.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
     input = store.fetch('state.position').update(north = -1000.0, east = -2000.0)
     detector.action()
-    detector.expose()
+    detector._expose()
 
 
 def Test():

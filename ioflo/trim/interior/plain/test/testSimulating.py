@@ -16,7 +16,7 @@ def TestSalinity():
 
     output = store.fetch('ctd').update(salinity = 32.0)
     store.expose()
-    sim.expose()
+    sim._expose()
 
     for k in range(1, 100):
         print("")
@@ -24,7 +24,7 @@ def TestSalinity():
 
         input = store.fetch('state.position').update(north = k * -50.0, east = 0.0)
         sim.update()
-        sim.expose()
+        sim._expose()
 
 
 
@@ -67,10 +67,10 @@ def TestMotion():
     prevPosition = store.fetch('scenario.startposition').update(north = 0.0, east = 0.0)
 
     simulator.restart()
-    simulator.expose()
+    simulator._expose()
     store.advanceStamp(0.125)
     simulator.update()
-    simulator.expose()
+    simulator._expose()
 
 
 
@@ -99,11 +99,11 @@ def Test():
 
     simulatorMotionUuv.restart()
 
-    controllerPidSpeed.expose()
-    controllerPidHeading.expose()
-    controllerPidDepth.expose()
-    controllerPidPitch.expose()
-    simulatorMotionUuv.expose()
+    controllerPidSpeed._expose()
+    controllerPidHeading._expose()
+    controllerPidDepth._expose()
+    controllerPidPitch._expose()
+    simulatorMotionUuv._expose()
 
     while (store.stamp <= duration):
         print("")
@@ -112,7 +112,7 @@ def Test():
         controllerPidDepth.action()
         controllerPidPitch.action()
         simulatorMotionUuv.action()
-        simulatorMotionUuv.expose()
+        simulatorMotionUuv._expose()
 
         store.advanceStamp(0.125)
 

@@ -43,7 +43,7 @@ class FilterSensorHeading(deeding.DeedLapse):
         #call super class method
         super(FilterSensorHeading,self).__init__(**kw)
 
-    def initio(self, group, output, input, scenario, parms = None, **kw):
+    def _initio(self, group, output, input, scenario, parms = None, **kw):
         """ Override since legacy init interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -128,7 +128,7 @@ class FilterSensorHeading(deeding.DeedLapse):
 
         self.output.value = heading
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 
@@ -159,7 +159,7 @@ class FilterWindowed(deeding.DeedLapse):
         #call super class method
         super(FilterWindowed,self).__init__(**kw)
 
-    def initio(self, group, output, input, field, depth, parms = None, **kw):
+    def _initio(self, group, output, input, field, depth, parms = None, **kw):
         """ Override since legacy init interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -266,7 +266,7 @@ class FilterWindowed(deeding.DeedLapse):
 
         self.output.value = new
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 
@@ -320,7 +320,7 @@ class FilterCtdMin(deeding.DeedLapse):
         super(FilterCtdMin,self).__init__(**kw)
 
 
-    def initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
+    def _initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
         """ Override since legacy init interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -474,7 +474,7 @@ class FilterCtdMin(deeding.DeedLapse):
 
             self.output.update(out)
 
-    def expose(self):
+    def _expose(self):
         """
            prints out sensor state
 

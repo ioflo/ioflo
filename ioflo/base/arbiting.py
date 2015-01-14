@@ -107,7 +107,7 @@ class Arbiter(deeding.Deed):
                 self.inimps.create(**{tag : imp}) #initialize importance if not exist
 
 
-    def expose(self):
+    def _expose(self):
         """prints out arbiter parameters
 
         """

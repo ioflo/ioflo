@@ -27,7 +27,7 @@ class Need(acting.Actor):
     """
     Registry = odict()
 
-    def expose(self):
+    def _expose(self):
         """
         """
         print("Need %s " % (self.name))
@@ -176,7 +176,7 @@ class NeedState(Need):
         parms = super(NeedState, self).resolve( **kwa)
 
         #convert state path to share and create field if necessary
-        parms['state'] = state = self.resolvePath(ipath=state,
+        parms['state'] = state = self._resolvePath(ipath=state,
                                                   warn=True) # now a share
 
         if not stateField: #default rules for field
@@ -264,7 +264,7 @@ class NeedIndirect(NeedState):
         parms = super(NeedIndirect, self).resolve( **kwa)
 
         #convert goal path to share and create field if necessary
-        parms['goal'] = goal = self.resolvePath(ipath=goal,
+        parms['goal'] = goal = self._resolvePath(ipath=goal,
                                                 warn=True) # now a share
 
         if not goalField: #default rules for field
@@ -336,7 +336,7 @@ class NeedMarker(Need):
                                                               human=self.act.human,
                                                               count=self.act.count)
 
-        parms['share'] = share = self.resolvePath(ipath=share,
+        parms['share'] = share = self._resolvePath(ipath=share,
                                                   warn=True) # now a share
 
         if not share.marks.get(frame.name):

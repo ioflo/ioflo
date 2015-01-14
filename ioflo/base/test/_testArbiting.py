@@ -27,31 +27,31 @@ def Test():
     output = 'switch.output'
     arbiter = ArbiterSwitch(name = 'Switch', store = store, output = output,
                             group = group, inputs = inputs)
-    arbiter.expose()
+    arbiter._expose()
     store.expose()
 
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     arbiter.insels.data.one = False
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     print("\nTesting ArbiterPriority")
     group = 'arbiters.priority'
     output = 'priority.output'
     arbiter = ArbiterPriority(name = 'Priority', store = store, output = output,
                               group = group, inputs = inputs)
-    arbiter.expose()
+    arbiter._expose()
     store.expose()
 
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     in2.truth = True
     arbiter.insels.data.one = False
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     in1.truth = 0.5
     in2.truth = 0.6
@@ -60,7 +60,7 @@ def Test():
     in5.truth = 0.3
     arbiter.default.truth = 0.7
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
 
     print("\nTesting ArbiterTrusted")
@@ -68,26 +68,26 @@ def Test():
     output = 'trusted.output'
     arbiter = ArbiterTrusted(name = 'Trusted', store = store, output = output,
                              group = group, inputs = inputs)
-    arbiter.expose()
+    arbiter._expose()
     store.expose()
 
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     in4.truth = 0.7
     arbiter.insels.data.one = False
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     in5.truth = True
     #arbiter.default.truth = 0.7
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     in5.truth = False
     arbiter.default.truth = 0.8
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
 
     print("\nTesting ArbiterWeighted")
@@ -95,24 +95,24 @@ def Test():
     output = 'weighted.output'
     arbiter = ArbiterWeighted(name = 'Weighted', store = store, output = output,
                               group = group, inputs = inputs)
-    arbiter.expose()
+    arbiter._expose()
     store.expose()
 
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     in4.truth = 0.7
     arbiter.insels.data.one = False
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     in5.truth = True
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
     arbiter.default.truth = 0.8
     arbiter.update()
-    arbiter.expose()
+    arbiter._expose()
 
 
 if __name__ == "__main__":

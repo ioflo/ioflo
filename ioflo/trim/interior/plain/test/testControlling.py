@@ -25,48 +25,48 @@ def TestPID():
     rate = store.fetch('state.testrate').update(value = 0.0)
     rsp = store.fetch('goal.testrsp').update(value = 45.0)
     controller.update()
-    controller.expose()
+    controller._expose()
 
     input.value = 22.5
     store.advanceStamp(0.125)
     controller.update()
-    controller.expose()
+    controller._expose()
 
     print("\nTesting Speed PID Controller")
     input = store.fetch('state.speed').update(value = 0.0)
     rate = store.fetch('state.speedRate').update(value = 0.0)
     rsp = store.fetch('goal.speed').update(value = 2.0)
-    controllerPIDSpeed.expose()
+    controllerPIDSpeed._expose()
     store.advanceStamp(0.125)
     controllerPIDSpeed.update()
-    controllerPIDSpeed.expose()
+    controllerPIDSpeed._expose()
 
     print("\nTesting Heading PID Controller")
     input = store.fetch('state.heading').update(value = 0.0)
     rate = store.fetch('state.headingRate').update(value = 0.0)
     rsp = store.fetch('goal.heading').update(value = 45.0)
-    controllerPIDHeading.expose()
+    controllerPIDHeading._expose()
     store.advanceStamp(0.125)
     controllerPIDHeading.update()
-    controllerPIDHeading.expose()
+    controllerPIDHeading._expose()
 
     print("\nTesting Depth PID Controller")
     input = store.fetch('state.depth').update(value = 0.0)
     rate = store.fetch('state.depthRate').update(value = 0.0)
     rsp = store.fetch('goal.depth').update(value = 5.0)
-    controllerPIDDepth.expose()
+    controllerPIDDepth._expose()
     store.advanceStamp(0.125)
     controllerPIDDepth.update()
-    controllerPIDDepth.expose()
+    controllerPIDDepth._expose()
 
     print("\nTesting Pitch PID Controller")
     input = store.fetch('state.pitch').update(value = 0.0)
     rate = store.fetch('state.pitchRate').update(value = 0.0)
     rsp = store.fetch('goal.pitch').update(value = 5.0)
-    controllerPIDPitch.expose()
+    controllerPIDPitch._expose()
     store.advanceStamp(0.125)
     controllerPIDPitch.update()
-    controllerPIDPitch.expose()
+    controllerPIDPitch._expose()
 
 
 
@@ -107,10 +107,10 @@ def TestMotion():
     prevPosition = store.fetch('scenario.startposition').update(north = 0.0, east = 0.0)
 
     controller.restart()
-    controller.expose()
+    controller._expose()
     store.advanceStamp(0.125)
     controller.update()
-    controller.expose()
+    controller._expose()
 
 
 
@@ -139,11 +139,11 @@ def Test():
 
     controllerMotionVehicle.restart()
 
-    controllerPidSpeed.expose()
-    controllerPidHeading.expose()
-    controllerPidDepth.expose()
-    controllerPidPitch.expose()
-    controllerMotionVehicle.expose()
+    controllerPidSpeed._expose()
+    controllerPidHeading._expose()
+    controllerPidDepth._expose()
+    controllerPidPitch._expose()
+    controllerMotionVehicle._expose()
 
     while (store.stamp <= duration):
         print("")
@@ -152,7 +152,7 @@ def Test():
         controllerPidDepth.action()
         controllerPidPitch.action()
         controllerMotionVehicle.action()
-        controllerMotionVehicle.expose()
+        controllerMotionVehicle._expose()
 
         store.advanceStamp(0.125)
 

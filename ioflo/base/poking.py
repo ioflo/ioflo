@@ -40,9 +40,9 @@ class PokeDirect(Poke):
     def resolve(self, sourceData, destination, destinationFields, **kwa):
         parms = super(PokeDirect, self).resolve( **kwa)
 
-        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        destination = self._resolvePath(ipath=destination,  warn=True) # now a share
         srcFields = sourceData.keys()
-        dstFields = self.prepareDstFields(srcFields, destination, destinationFields)
+        dstFields = self._prepareDstFields(srcFields, destination, destinationFields)
 
         dstData = odict()
         for dstField, srcField in izip(dstFields, srcFields):
@@ -71,10 +71,10 @@ class PokeIndirect(Poke):
     def resolve(self, source, sourceFields, destination, destinationFields, **kwa):
         parms = super(PokeIndirect, self).resolve( **kwa)
 
-        source = self.resolvePath(ipath=source,  warn=True) # now a share
-        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        source = self._resolvePath(ipath=source,  warn=True) # now a share
+        destination = self._resolvePath(ipath=destination,  warn=True) # now a share
 
-        sourceFields, destinationFields = self.prepareSrcDstFields(source,
+        sourceFields, destinationFields = self._prepareSrcDstFields(source,
                                                         sourceFields,
                                                         destination,
                                                         destinationFields)
@@ -121,9 +121,9 @@ class IncDirect(Poke):
     def resolve(self, destination, destinationFields, sourceData, **kwa):
         parms = super(IncDirect, self).resolve( **kwa)
 
-        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
+        destination = self._resolvePath(ipath=destination,  warn=True) # now a share
         sourceFields = sourceData.keys()
-        destinationFields = self.prepareDstFields(sourceFields,
+        destinationFields = self._prepareDstFields(sourceFields,
                                           destination,
                                           destinationFields)
 
@@ -166,10 +166,10 @@ class IncIndirect(Poke):
     def resolve(self, destination, destinationFields, source, sourceFields, **kwa):
         parms = super(IncIndirect, self).resolve( **kwa)
 
-        destination = self.resolvePath(ipath=destination,  warn=True) # now a share
-        source = self.resolvePath(ipath=source,  warn=True) # now a share
+        destination = self._resolvePath(ipath=destination,  warn=True) # now a share
+        source = self._resolvePath(ipath=source,  warn=True) # now a share
 
-        sourceFields, destinationFields = self.prepareSrcDstFields(source,
+        sourceFields, destinationFields = self._prepareSrcDstFields(source,
                                                         sourceFields,
                                                         destination,
                                                         destinationFields)
