@@ -405,8 +405,6 @@ def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=Non
         msg = "Base class '{0}' not subclass of Actor".format(base)
         raise excepting.RegisterError(msg)
 
-    #name = aiding.reverseCamel(name, lower=False)
-
     attrs = odict()
     if registry:
         attrs['Registry'] = odict()
@@ -433,7 +431,6 @@ class Actor(object):
     """ Actor Base Class
         Has Actor specific Registry of classes
     """
-    #__metaclass__ = registering.RegisterType
     Registry = odict() # Actor Registry
     Inits = odict() # class defaults support for
     Ioinits = odict() # class defaults
