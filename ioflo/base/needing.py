@@ -72,40 +72,40 @@ class NeedDone(Need):
     """NeedDone Need Special Need"""
     def _resolve(self, tasker, framer, frame, **kwa):
         """Resolves value (tasker) link that is passed in as tasker parm
-           resolved link is passed back to container act to update in act's parms
+           resolved link is passed back to container ._act to update in act's parms
         """
         parms = super(NeedDone, self)._resolve( **kwa)
         if framer:
             if framer == 'me':
-                framer = self.act.frame.framer
+                framer = self._act.frame.framer
             parms['framer'] = framer = framing.resolveFramer(framer,
-                                                            who=self.act.frame.name,
+                                                            who=self._act.frame.name,
                                                             desc='need done',
                                                             contexts=[],
-                                                            human=self.act.human,
-                                                            count=self.act.count)
+                                                            human=self._act.human,
+                                                            count=self._act.count)
 
         if frame: # framer required
             if frame == 'me':
-                frame = self.act.frame
+                frame = self._act.frame
             parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
                                                                   framer,
-                                                                  who=self.act.frame.name,
+                                                                  who=self._act.frame.name,
                                                                   desc='need done',
-                                                                  human=self.act.human,
-                                                                  count=self.act.count)
+                                                                  human=self._act.human,
+                                                                  count=self._act.count)
 
 
         if tasker not in ['any', 'all']:
             parms['tasker'] = tasker = tasking.resolveTasker(tasker,
-                                                             who=self.act.frame.name,
+                                                             who=self._act.frame.name,
                                                              desc='need done',
                                                              contexts=[],
-                                                             human=self.act.human,
-                                                             count=self.act.count)
+                                                             human=self._act.human,
+                                                             count=self._act.count)
 
 
-        return parms #return items are updated in original act parms
+        return parms #return items are updated in original ._act parms
 
     def action(self, tasker, framer, frame, **kw):
         """
@@ -132,19 +132,19 @@ class NeedStatus(Need):
 
     def _resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as parm
-           resolved link is passed back to container act to update in act's parms
+           resolved link is passed back to container ._act to update in act's parms
         """
         parms = super(NeedStatus, self)._resolve( **kwa)
         if tasker == 'me':
-            tasker = self.act.frame.framer
+            tasker = self._act.frame.framer
 
         parms['tasker'] = tasker = tasking.resolveTasker(tasker,
                                                          who=self.name,
                                                          desc='need status tasker',
                                                          contexts=[],
-                                                         human=self.act.human,
-                                                         count=self.act.count)
-        return parms #return items are updated in original act parms
+                                                         human=self._act.human,
+                                                         count=self._act.count)
+        return parms #return items are updated in original ._act parms
 
     def action(self, tasker, status, **kw):
         """
@@ -188,7 +188,7 @@ class NeedState(Need):
                     msg = ("ResolveError: Can't determine field for state"
                           " '{0}'".format(state.name))
                     raise excepting.ResolveError(msg, 'state', self.name,
-                                            self.act.human, self.act.count)
+                                            self._act.human, self._act.count)
             else:
                 stateField = 'value'
 
@@ -199,7 +199,7 @@ class NeedState(Need):
 
         parms['stateField'] = stateField
 
-        return parms #return items are updated in original act parms
+        return parms #return items are updated in original ._act parms
 
 class NeedBoolean(NeedState):
     """NeedBoolean Need Special Need
@@ -284,7 +284,7 @@ class NeedIndirect(NeedState):
 
         parms['goalField'] = goalField
 
-        return parms #return items are updated in original act parms
+        return parms #return items are updated in original ._act parms
 
     def action(self, state, stateField, comparison, goal, goalField, tolerance, **kwa):
         """ Check if state[field] comparison to goal[goalField] +- tolerance is True
@@ -324,17 +324,17 @@ class NeedMarker(Need):
         """
         parms = super(NeedMarker, self)._resolve( **kwa)
 
-        framer = self.act.frame.framer
+        framer = self._act.frame.framer
 
         if frame == 'me':
-            frame = self.act.frame
+            frame = self._act.frame
 
         parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
                                                               framer,
                                                               who=self.name,
                                                               desc='need marker',
-                                                              human=self.act.human,
-                                                              count=self.act.count)
+                                                              human=self._act.human,
+                                                              count=self._act.count)
 
         parms['share'] = share = self._resolvePath(ipath=share,
                                                   warn=True) # now a share
@@ -355,14 +355,14 @@ class NeedMarker(Need):
             if marker not in acting.Actor.Registry:
                 msg = "ResolveError: Bad need marker link"
                 raise excepting.ResolveError(msg, marker, self.name,
-                                self.act.human, self.act.count)
+                                self._act.human, self._act.count)
 
             markerParms = dict(share=share, frame=frame.name)
             parms['marker'] = marker = acting.Act(  actor=marker,
                                                     registrar=acting.Actor,
                                                     parms=markerParms,
-                                                    human=self.act.human,
-                                                    count=self.act.count)
+                                                    human=self._act.human,
+                                                    count=self._act.count)
 
             frame.insertEnact(marker)
             console.profuse("     Added {0} {1} with {2} in {3}\n".format(
@@ -372,7 +372,7 @@ class NeedMarker(Need):
                 marker.parms['frame']))
             marker.resolve()
 
-        return parms #return items are updated in original act parms
+        return parms #return items are updated in original ._act parms
 
 class NeedUpdate(NeedMarker):
     """ NeedUpdate Need Special Need """

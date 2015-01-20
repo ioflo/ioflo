@@ -45,7 +45,7 @@ class Want(acting.Actor):
                 for tasker in self.store.house.taskables:
                     links.add(tasker)
             elif tasker == 'me':
-                tasker = self.act.frame.framer
+                tasker = self._act.frame.framer
                 links.add(tasker)
 
             else:
@@ -53,8 +53,8 @@ class Want(acting.Actor):
                                                who=self.name,
                                                desc='tasker',
                                                contexts=[ACTIVE, INACTIVE],
-                                               human=self.act.human,
-                                               count=self.act.count)
+                                               human=self._act.human,
+                                               count=self._act.count)
                 links.add(tasker)
 
         parms['taskers'] = links #replace with valid list

@@ -162,19 +162,19 @@ class DeedLapse(Deed):
         restartAct = acting.SideAct(   actor=self,
                                 parms=restartActParms,
                                 action='restart',
-                                human=self.act.human,
-                                count=self.act.count)
-        # need to insert restartAct before self.act so restartAct runs first
+                                human=self._act.human,
+                                count=self._act.count)
+        # need to insert restartAct before self._act so restartAct runs first
         found = False
-        for i, enact in enumerate(self.act.frame.enacts):
-            if enact is self.act:
+        for i, enact in enumerate(self._act.frame.enacts):
+            if enact is self._act:
                 found = True
-                self.act.frame.insertEnact(restartAct, i)
+                self._act.frame.insertEnact(restartAct, i)
                 break
         if not found:
-            self.act.frame.addEnact(restartAct)
+            self._act.frame.addEnact(restartAct)
 
         console.profuse("{0}Added enact {1} SideAct for {2} with {3} in {4}\n".format(
-                INDENT_ADD, 'restart', self.name, restartAct.parms, self.act.frame.name))
+                INDENT_ADD, 'restart', self.name, restartAct.parms, self._act.frame.name))
         restartAct.resolve()
         return parms

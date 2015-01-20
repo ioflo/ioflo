@@ -31,14 +31,14 @@ class Complete(acting.Actor):
 
     def _resolve(self, taskers, **kwa):
         """Resolves value (taskers) list of link names that is passed in as parm
-           resolved links are passed back to act to store in parms
+           resolved links are passed back to ._act to store in parms
         """
         parms = super(Complete, self)._resolve( **kwa)
 
         links = set()
         for tasker in taskers:
             if tasker == 'me':
-                tasker = self.act.frame.framer
+                tasker = self._act.frame.framer
                 links.add(tasker)
 
             else:
@@ -46,8 +46,8 @@ class Complete(acting.Actor):
                                                who=self.name,
                                                desc='tasker',
                                                contexts=[AUX, SLAVE],
-                                               human=self.act.human,
-                                               count=self.act.count)
+                                               human=self._act.human,
+                                               count=self._act.count)
                 links.add(tasker)
 
         parms['taskers'] = links #replace with valid list

@@ -89,15 +89,6 @@ class Act(object):
                 "  '{0}'.".format(self.actor.name))
             raise excepting.CloneError(msg)
 
-        #clone = Act(act=self.act,
-                    #actor=self.actor,
-                    #registrar=self.registrar,
-                    #parms=copy.deepcopy(self.parms),
-                    #inits=copy.deepcopy(self.inits),
-                    #ioinits=copy.deepcopy(self.ioinits),
-                    #prerefs=copy.deepcopy(self.prerefs),
-                    #human=self.human,
-                    #count=self.count)
         # frame and context for Act set when add Act to frame later
         clone = copy.deepcopy(self)
         return clone
@@ -448,7 +439,7 @@ class Actor(object):
     Ioinits = odict() # class defaults
     Parms = odict() # class defaults
     _Parametric = True # Convert iois to action method parameters if Truthy
-    __slots__ = ('name', 'store', 'act')
+    __slots__ = ('name', 'store', '_act')
 
     def __init__(self, name='', store=None, act=None, **kwa ):
         """ Initialization method for instance.
@@ -456,7 +447,7 @@ class Actor(object):
             Instance attributes
                 .name = name string for Actor variant in class Registry
                 .store = reference to shared data Store
-                .act = reference to containing Act
+                ._act = reference to containing Act
         """
         super(Actor,self).__init__(**kwa) # in case of MRO
 
@@ -465,7 +456,7 @@ class Actor(object):
             if  not isinstance(store, storing.Store):
                 raise ValueError("Not store {0}".format(store))
             self.store = store
-        self.act = act
+        self._act = act
 
     def __call__(self, **kwa):
         """ run .action  """
@@ -624,19 +615,19 @@ class Actor(object):
 
     def _resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
-            Calls self.act.resolvePath()
+            Calls self._act.resolvePath()
             See doc string from Act.resolvePath for detailed description of
             functionality
 
             Requires that
-               self.act exist
+               self._act exist
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
-            if not self.act:
+            if not self._act:
                 raise excepting.ResolveError("ResolveError: Missing act context"
                         " to resolve relative pathname.", ipath, self,
-                        self.act.human, self.act.count)
-            ipath = self.act.resolvePath(ipath, ival, iown, warn)
+                        self._act.human, self._act.count)
+            ipath = self._act.resolvePath(ipath, ival, iown, warn)
 
         return ipath
 
@@ -667,8 +658,8 @@ class Actor(object):
             raise excepting.ResolveError(msg,
                                          self.name,
                                          '',
-                                         self.act.human,
-                                         self.act.count)
+                                         self._act.human,
+                                         self._act.count)
 
         for dstField, srcField in izip(dstFields, srcFields):
             if (dstField != srcField) and (srcField != 'value'):
@@ -723,8 +714,8 @@ class Actor(object):
             raise excepting.ResolveError(msg,
                                          self.name,
                                          '',
-                                         self.act.human,
-                                         self.act.count)
+                                         self._act.human,
+                                         self._act.count)
 
         for dstField, srcField in izip(dstFields, srcFields):
             if (dstField != srcField) and (srcField != 'value'):
@@ -762,8 +753,8 @@ class Actor(object):
             raise excepting.ResolveError(msg,
                                          self.name,
                                          '',
-                                         self.act.human,
-                                         self.act.count)
+                                         self._act.human,
+                                         self._act.count)
 
         if share: #does share have fields already
             for field in fields:
@@ -774,8 +765,8 @@ class Actor(object):
                         raise excepting.ResolveError(msg,
                                                      self.name,
                                                      '',
-                                                     self.act.human,
-                                                     self.act.count)
+                                                     self._act.human,
+                                                     self._act.count)
 
 class Interrupter(Actor):
     """Interrupter Actor Class
@@ -816,20 +807,20 @@ class Transiter(Interrupter):
         parms = super(Transiter, self)._resolve( **kwa)
 
         if near == 'me':
-            near = self.act.frame
+            near = self._act.frame
 
         parms['near'] = near = framing.resolveFrame(near,
                                                     who=self.name,
                                                     desc='near',
-                                                    human=self.act.human,
-                                                    count=self.act.count)
+                                                    human=self._act.human,
+                                                    count=self._act.count)
 
 
         if far == 'next':
             if not isinstance(near.next_, framing.Frame):
                 raise excepting.ResolveError("ResolveError: Bad next frame",
                                              near.name, near.next_,
-                                             self.act.human, self.act.count)
+                                             self._act.human, self._act.count)
             far = near.next_
 
         elif far == 'me':
@@ -838,13 +829,13 @@ class Transiter(Interrupter):
         far = framing.resolveFrame(far,
                                    who=self.name,
                                    desc='far',
-                                   human=self.act.human,
-                                   count=self.act.count)
+                                   human=self._act.human,
+                                   count=self._act.count)
 
         parms['far'] = far
 
         for act in needs:
-            act.act = self.act
+            act.act = self._act
             act.resolve()
 
         return parms
@@ -916,34 +907,34 @@ class Suspender(Interrupter):
         parms = super(Suspender, self)._resolve( **kwa)
 
         if main == 'me':
-            main = self.act.frame
+            main = self._act.frame
 
         parms['main'] = main = framing.resolveFrame(main,
                                                     who=main,
                                                     desc='main',
-                                                    human=self.act.human,
-                                                    count=self.act.count)
+                                                    human=self._act.human,
+                                                    count=self._act.count)
 
         parms['aux'] = aux = framing.resolveFramer(aux,
                                                    who=main.name,
                                                    desc='aux',
                                                    contexts=[AUX],
-                                                   human=self.act.human,
-                                                   count=self.act.count)
+                                                   human=self._act.human,
+                                                   count=self._act.count)
 
         for act in needs:
-            act.act = self.act
+            act.act = self._act
             act.resolve()
 
         deActParms = odict(aux=aux)
         deAct = SideAct( actor=self,
                         parms=deActParms,
                         action='deactivize',
-                        human=self.act.human,
-                        count=self.act.count)
-        self.act.frame.addExact(deAct)
+                        human=self._act.human,
+                        count=self._act.count)
+        self._act.frame.addExact(deAct)
         console.profuse("{0}Added exact {1} SideAct for {2} with {3} in {4}\n".format(
-                INDENT_ADD, 'deactivize', self.name, deAct.parms, self.act.frame.name))
+                INDENT_ADD, 'deactivize', self.name, deAct.parms, self._act.frame.name))
         deAct.resolve()
 
         return parms
@@ -966,7 +957,7 @@ class Suspender(Interrupter):
 
             # if aux.main is not None then it has not been released and so
             # we can't enter unless it is our act's frame
-            if aux.main and (aux.main is not self.act.frame):
+            if aux.main and (aux.main is not self._act.frame):
                 console.concise("    Invalid aux '{0}' in use "
                         "by another frame '{1}'\n".format(aux.name, aux.main.name))
                 return None
@@ -1126,8 +1117,8 @@ class Rearer(Actor):
                                                     who=self.name,
                                                     desc='original',
                                                     contexts=[MOOT],
-                                                    human=self.act.human,
-                                                    count=self.act.count)
+                                                    human=self._act.human,
+                                                    count=self._act.count)
 
         if schedule not in [AUX]:
             msg = ("ResolveError: Invalid schedule '{0}' for clone"
@@ -1136,40 +1127,40 @@ class Rearer(Actor):
             raise excepting.ResolveError(msg=msg,
                                          name=self.name,
                                          value=schedule,
-                                         human=self.act.human,
-                                         count=self.act.count)
+                                         human=self._act.human,
+                                         count=self._act.count)
 
         if schedule == AUX:  # only current framer
-            framer = framing.resolveFramer(self.act.frame.framer,
-                                            who=self.act.frame.name,
+            framer = framing.resolveFramer(self._act.frame.framer,
+                                            who=self._act.frame.name,
                                             desc='rear aux clone',
                                             contexts=[],
-                                            human=self.act.human,
-                                            count=self.act.count)
+                                            human=self._act.human,
+                                            count=self._act.count)
 
             if frame == 'me':  # cannot rear in current frame
                 msg = ("ResolveError: Invalid frame 'me' for reared clone.")
                 raise excepting.ResolveError(msg,
                                              name=clone,
                                              value=self.name,
-                                             human=self.act.human,
-                                             count=self.act.count)
+                                             human=self._act.human,
+                                             count=self._act.count)
 
             # frame required
             parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
                                                                   framer,
-                                                                  who=self.act.frame.name,
+                                                                  who=self._act.frame.name,
                                                                   desc='rear aux clone',
-                                                                  human=self.act.human,
-                                                                  count=self.act.count)
+                                                                  human=self._act.human,
+                                                                  count=self._act.count)
 
             if clone != 'mine':
                 msg = "ResolveError: Aux insular clone name must be 'mine' not '{0}'".format(clone)
                 raise excepting.ResolveError(msg,
                                              name=clone,
                                              value=self.name,
-                                             human=self.act.human,
-                                             count=self.act.count)
+                                             human=self._act.human,
+                                             count=self._act.count)
 
         else:
             msg = ("ResolveError: Invalid insular clone schedule '{0}' "
@@ -1177,8 +1168,8 @@ class Rearer(Actor):
             raise excepting.ResolveError(msg,
                                          name=clone,
                                          value=self.name,
-                                         human=self.act.human,
-                                         count=self.act.count)
+                                         human=self._act.human,
+                                         count=self._act.count)
 
         return parms
 
@@ -1189,11 +1180,11 @@ class Rearer(Actor):
                 original.name, clone, ScheduleNames.get(schedule, schedule)))
 
         if schedule == AUX:
-            if frame in self.act.frame.outline:
+            if frame in self._act.frame.outline:
                 console.terse("         Error: Cannot rear clone in own"
                               " '{0}' outline. {1} in line {2}\n".format(frame.name,
-                                                                         self.act.human,
-                                                                         self.act.count))
+                                                                         self._act.human,
+                                                                         self._act.count))
                 return
 
 
@@ -1207,7 +1198,7 @@ class Rearer(Actor):
                                                            frame.name))
 
             clone = original.clone(name=clone, schedule=schedule)
-            self.act.frame.framer.assignFrameRegistry()  # restore original.clone changes
+            self._act.frame.framer.assignFrameRegistry()  # restore original.clone changes
             clone.original = False  # main frame will be fixed
             clone.insular = True  #  local to this framer
             clone.razeable = True  # can be razed
@@ -1234,23 +1225,23 @@ class Razer(Actor):
         parms = super(Razer, self)._resolve( **kwa)
 
 
-        framer = framing.resolveFramer(self.act.frame.framer,
-                                        who=self.act.frame.name,
+        framer = framing.resolveFramer(self._act.frame.framer,
+                                        who=self._act.frame.name,
                                         desc='rear aux clone',
                                         contexts=[],
-                                        human=self.act.human,
-                                        count=self.act.count)
+                                        human=self._act.human,
+                                        count=self._act.count)
 
         if frame == 'me':  # cannot rear in current frame
-            frame = self.act.frame
+            frame = self._act.frame
 
         # frame required
         parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
                                                               framer,
-                                                              who=self.act.frame.name,
+                                                              who=self._act.frame.name,
                                                               desc='rear aux clone',
-                                                              human=self.act.human,
-                                                              count=self.act.count)
+                                                              human=self._act.human,
+                                                              count=self._act.count)
 
         return parms
 
