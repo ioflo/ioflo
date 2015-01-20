@@ -176,7 +176,7 @@ class Act(object):
                             setattr(actor, key, share)
             self.parms = parms
             self.parms.update(self.actor._resolve(**self.parms)) # resolve sub acts
-            self.actor.postinitio(**self.parms)
+            self.actor._prepare(**self.parms)
 
     def resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
@@ -603,12 +603,17 @@ class Actor(object):
 
         return iois # non-empty when _parametric
 
-    def postinitio(self, **kwa):
+    def _prepare(self, **kwa):
         """ Base method to be overriden in sub classes. Perform post initio setup
             after all parms and ioi parms or attributes have been created
-            kwa usually parms
+            kwa usually parms.
+
+            If one is using this method consider refactoring into two different
+            behaviors
         """
         pass
+
+    #postinitio = _prepare  # alias for temporary backwards compat
 
     def _resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
