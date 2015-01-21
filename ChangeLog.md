@@ -3,6 +3,20 @@ CHANGE LOG
 -------------------
 
 ---------
+20150120
+---------
+v1.1.5
+
+Changed interface for Actor Class (Deed subclass)
+.postinitio is not ._prepare
+for backwards compatibility .postinitio  is still supported but is deprecated
+and will no longer be supported in a future version.
+
+Changed Actor .act to ._act
+
+
+
+---------
 20150113
 ---------
 v1.1.4
