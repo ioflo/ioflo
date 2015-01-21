@@ -50,7 +50,7 @@ def ClearRegistries():
 
 #Class definitions
 
-class House(registering.StoriedRegistry):
+class House(registering.StoriedRegistrar):
     """House Class for managing framework(s)
        includes store for framework and name registries for framers, frames, and actions
 

@@ -52,7 +52,7 @@ class RegisterType(type):
                 odict(ioinits or odict()),
                 odict(parms or odict()))
 
-class Registry(object):
+class Registrar(object):
     """Class that ensures every instance has a unique name
        uses class variable Counter and  Names dictionary
     """
@@ -119,7 +119,7 @@ class Registry(object):
         return cls.Names.get(name, None)
 
 
-class StoriedRegistry(Registry):
+class StoriedRegistrar(Registrar):
     """Adds store attribute to Registry instances
     """
     __slots__ = ('store', )
@@ -133,7 +133,7 @@ class StoriedRegistry(Registry):
            .store = reference to shared data store
 
         """
-        super(StoriedRegistry, self).__init__(**kw)
+        super(StoriedRegistrar, self).__init__(**kw)
         self.changeStore(store=store)
 
     def changeStore(self, store=None):

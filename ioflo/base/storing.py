@@ -52,7 +52,7 @@ class Node(odict):
         return self
 
 
-class Store(registering.Registry):
+class Store(registering.Registrar):
     """global data store to be shared amoungst all taskers.
 
        Each object has the concept of ownership in the datashare.

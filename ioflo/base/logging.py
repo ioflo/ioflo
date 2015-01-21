@@ -230,7 +230,7 @@ class Logger(tasking.Tasker):
             self.desire = ABORT
             self.status = ABORTED
 
-class Log(registering.StoriedRegistry):
+class Log(registering.StoriedRegistrar):
     """Log Class for logging to file
 
        Iherited instance attributes:

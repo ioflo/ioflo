@@ -726,7 +726,7 @@ class Framer(tasking.Tasker):
         return (exits, enters)
 
 
-class Frame(registering.StoriedRegistry):
+class Frame(registering.StoriedRegistrar):
     """ Frame Class for hierarchical action framework object
 
         inherited instance attributes

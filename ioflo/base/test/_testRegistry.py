@@ -4,16 +4,16 @@ import ioflo.base.registering as registering
 def TestRegistry():
     """Module self test
     """
-    x = Registry()
+    x = Registrar()
     print(x.name)
-    y = Registry()
+    y = Registrar()
     print(y.name)
 
     name = "Hello"
-    if Registry.VerifyName(name):
-        z = Registry(name=name)
-    print(Registry.Names)
-    print(Registry.VerifyName(name))
+    if Registrar.VerifyName(name):
+        z = Registrar(name=name)
+    print(Registrar.Names)
+    print(Registrar.VerifyName(name))
 
 if __name__ == "__main__":
     TestRegistry()
