@@ -611,9 +611,10 @@ class Actor(object):
             If one is using this method consider refactoring into two different
             behaviors
         """
-        pass
-
-    #postinitio = _prepare  # alias for temporary backwards compat
+        # eventually replace postinitio with _prepare
+        # for temporary backwards compatibility call postinitio
+        if hasattr(self, 'postinitio'):
+            self.postinitio(**kwa)
 
     def _resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
