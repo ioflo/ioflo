@@ -619,7 +619,7 @@ class SocketUdpNb(object):
             return (data,sa)
         except socket.error as ex: # 2.6 socket.error is subclass of IOError
             # Some OSes define errno differently so check for both
-            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
+            if ex.errno in (errno.EAGAIN, errno.ECONNRESET, errno.EWOULDBLOCK):
                 return ('',None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
