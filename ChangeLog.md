@@ -3,6 +3,17 @@ CHANGE LOG
 -------------------
 
 ---------
+20150129
+---------
+v1.1.6
+
+Renamed Registry class to Registrar class to avoid confusion with .Registry
+in RegisterType metaclass
+
+Added Ordered Set class called oset or OSet in base.osetting.py
+
+
+---------
 20150120
 ---------
 v1.1.5

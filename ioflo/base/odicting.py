@@ -22,9 +22,7 @@ class odict(dict):
         Changing the value of a key does not affect the order of the key
 
     """
-
     __slots__ = ['_keys']
-
 
     def __new__(cls, *args, **kwargs):
         self = dict.__new__(cls,*args, **kwargs)
@@ -73,7 +71,6 @@ class odict(dict):
 
         for k in kwa:
             self[k] = kwa[k]
-
 
     def __delitem__(self, key):
         """ del x[y] """
@@ -148,7 +145,6 @@ class odict(dict):
             if k not in self._keys:
                 self[k] = kwa[k]
 
-
     def insert(self, index, key, val):
         """ Insert val at index if key not in odict"""
         if key in self:
@@ -196,7 +192,6 @@ class odict(dict):
         del self[key]
         return (key, value)
 
-
     def reorder(self, other):
         """ Update values in this odict based on the `other` odict or dict.
            reorder is ignored if other is not an odict
@@ -215,7 +210,6 @@ class odict(dict):
             if key in keys:
                 keys.remove(key)
             keys.append(key)
-
 
     def setdefault(self, key, default=None):
         """ If key in odict, return value at key
@@ -245,6 +239,7 @@ class odict(dict):
     def values(self):
         return [self[key] for key in self._keys]
 
+ODict = odict  # alias
 
 #from . import optimize
 #optimize.bind_all(odict)
@@ -280,7 +275,6 @@ def TestPickle():
     y = pickle.load(s)
     print(x)
     print(y)
-
 
 def Test():
     """Self test
