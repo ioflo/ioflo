@@ -35,7 +35,7 @@ def run(start=None):
 
     console.terse("\nRunning ioflo tests starting at '{0}' from '{1}', \n".format(start, top))
     loader = unittest.TestLoader()
-    suite = loader.discover(start, 'test*.py', top )
+    suite = loader.discover(start, 'test_*.py', top )
     unittest.TextTestRunner(verbosity=2).run(suite)
 
 if __name__ == "__main__":
