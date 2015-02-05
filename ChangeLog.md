@@ -3,6 +3,14 @@ CHANGE LOG
 -------------------
 
 ---------
+20150204
+---------
+v1.1.7
+
+Added binary create mode for OCFN utility function. Needed for P3 support
+if using msgpack.
+
+---------
 20150129
 ---------
 v1.1.6
