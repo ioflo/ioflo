@@ -2178,16 +2178,22 @@ def CRC64(inpkt) :
 
 crc64 = CRC64 # alias
 
-def Ocfn(filename, openMode = 'r+'):
+def Ocfn(filename, openMode = 'r+', binary=False):
     """Atomically open or create file from filename.
 
        If file already exists, Then open file using openMode
-       Else create file using write update mode
+       Else create file using write update mode If not binary Else
+           write update binary mode
        Returns file object
+       
+       If binary Then If new file open with write update binary mode
     """
     try:
         newfd = os.open(filename, os.O_EXCL | os.O_CREAT | os.O_RDWR, 436) # 436 == octal 0664
-        newfile = os.fdopen(newfd,"w+")
+        if not binary:
+            newfile = os.fdopen(newfd,"w+")
+        else:
+            newfile = os.fdopen(newfd,"w+b")
     except OSError as ex:
         if ex.errno == errno.EEXIST:
             newfile = open(filename, openMode)
