@@ -207,7 +207,7 @@ class Timer(object):
         return self.restart(start=self.start, duration=duration)
 
 class StoreTimer(object):
-    """ Class to manage realtive Store based time.
+    """ Class to manage relative Store based time.
         Uses Store instance .stamp attribute as current time
         Attributes:
         .duration = time duration of timer start to stop
