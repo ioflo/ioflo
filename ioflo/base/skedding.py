@@ -126,7 +126,7 @@ class Skedder(object):
         #real time or sim time mode
         self.real = True if real else False
         self.timer = aiding.MonoTimer(duration = self.period, adjust=True)
-        self.elapsed = aiding.Timer()
+        self.elapsed = aiding.MonoTimer(adjust=True)
 
         self.filepath = os.path.abspath(filepath)
         self.plan = os.path.split(self.filepath)[1]
