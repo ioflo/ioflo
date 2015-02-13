@@ -3,6 +3,13 @@ CHANGE LOG
 -------------------
 
 ---------
+20150213
+---------
+v1.1.8
+
+Added MonoTimer to Skeddar that detects if system clock is retrograded.
+
+---------
 20150204
 ---------
 v1.1.7
