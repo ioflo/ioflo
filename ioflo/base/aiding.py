@@ -361,7 +361,7 @@ class StoreTimer(object):
         """ Computes elapsed time in seconds (fractional) since start.
             if zero then hasn't started yet
         """
-        return abs(self.store.stamp - self.start)
+        return max(0.0, self.store.stamp - self.start)
     elapsed = property(getElapsed, doc='Elapsed time.')
 
     def getRemaining(self):# for property
