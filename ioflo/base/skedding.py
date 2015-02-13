@@ -125,7 +125,8 @@ class Skedder(object):
         self.stamp = float(abs(stamp))
         #real time or sim time mode
         self.real = True if real else False
-        self.timer = aiding.Timer(duration = self.period)
+        #self.timer = aiding.Timer(duration = self.period)
+        self.timer = aiding.MonoTimer(duration = self.period)
         self.elapsed = aiding.Timer()
 
         self.filepath = os.path.abspath(filepath)

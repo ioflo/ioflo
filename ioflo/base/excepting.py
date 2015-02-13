@@ -118,6 +118,20 @@ class RegisterError(Exception):
     def __str__(self):
         return ("{0}: {1}.\n".format(self.__class__.__name__, self.message))
 
+class TimerRetroError(Exception):
+    """Used to indicate timer base has retrograded while timer is running
+
+       usage:
+
+       raise excepting.TimerRetrogradeError(msg)
+    """
+    def __init__(self, message = None):
+        self.message = message #description of error
+        self.args = (message)
+
+    def __str__(self):
+        return ("{0}: {1}.\n".format(self.__class__.__name__, self.message))
+
 def Test():
     """Module self test
 
