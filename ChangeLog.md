@@ -1,6 +1,23 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+201503XX
+---------
+v1.2.2
+
+Updated docs
+
+
+
+---------
+20150305
+---------
+v1.2.1
+
+Moved nonblocking io classes to ioflo.base.nonblocking from ioflo.base.aiding
+
+
 
 ---------
 20150305
