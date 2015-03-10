@@ -16,15 +16,15 @@ framer test be active first test0
       do deed at enter by depth in .trial
       do deed at enter per trial ".trial"
       do deed at enter for trial in .init.test
-      #do deed at enter with stuff 7
-      #do deed at enter from width in .trial
+      do deed at enter cum stuff 7
+      do deed at enter via width in .trial
 
       do deed param at enter to stuff 5
       do deed param at enter by depth in .trial
       do deed param at enter per trial ".trial"
       do deed param at enter for trial in .init.test
-      #do deed param at enter with stuff 7
-      #do deed param at enter from width in .trial
+      do deed param at enter cum stuff 7
+      do deed param at enter via width in .trial
 
       set elapsed to 1.0
       go next if elapsed >= goal
