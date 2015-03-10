@@ -31,9 +31,10 @@ $ sudo pip install ioflo
 $ ioflo -h
 ```
 ```text
-usage: ioflo [-h] [-V] [-v VERBOSE] -c CONSOLE [-p PERIOD] [-r] [-n NAME] -f
-             FILENAME [-b [BEHAVIORS [BEHAVIORS ...]]] [-U USERNAME]
-             [-P PASSWORD] [-S [STATISTICS]]
+
+usage: ioflo [-h] [-V] [-v VERBOSE] [-c CONSOLE] [-p PERIOD] [-r] [-R]
+             [-n NAME] -f FILENAME [-b [BEHAVIORS [BEHAVIORS ...]]]
+             [-m PARSEMODE] [-U USERNAME] [-P PASSWORD] [-S [STATISTICS]]
 
 Runs ioflo. Example: ioflo -f filename -p period -v level -r -h -b
 'mybehaviors.py'
@@ -48,11 +49,14 @@ optional arguments:
   -p PERIOD, --period PERIOD
                         Period per skedder run in seconds.
   -r, --realtime        Run skedder at realtime.
+  -R, --retrograde      Shift skedder timers when retrograde clock detected.
   -n NAME, --name NAME  Skedder name.
   -f FILENAME, --filename FILENAME
                         File path to FloScript file.
   -b [BEHAVIORS [BEHAVIORS ...]], --behaviors [BEHAVIORS [BEHAVIORS ...]]
                         Module name strings to external behavior packages.
+  -m PARSEMODE, --parsemode PARSEMODE
+                        FloScript parsing mode.
   -U USERNAME, --username USERNAME
                         Username.
   -P PASSWORD, --password PASSWORD
