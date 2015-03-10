@@ -988,7 +988,7 @@ class Builder(object):
                 index += 1
 
                 if connective == 'at':
-                    period = abs(Convert2Num(tokens[index]))
+                    period = max(0.0, Convert2Num(tokens[index]))
                     index +=1
 
                 elif connective == 'be':
@@ -2313,8 +2313,10 @@ class Builder(object):
         return True
 
     def buildDo(self, command, tokens, index):
-        """ do kind [part ...] [as name [part ...]] [at context] [to data]
-                   [by source] [per data] [for source] [with data] [from source]
+        """ do kind [part ...] [as name [part ...]] [at context]
+               [to data][by source] [with data] [from source]
+               [per data] [for source]
+               [cum data] [via source]
 
             deed:
                 name [part ...]
@@ -2357,7 +2359,8 @@ class Builder(object):
             context = self.currentContext
 
             while index < len(tokens):
-                if tokens[index] in ['as', 'at', 'to', 'by', 'with', 'from', 'per', 'for']: # end of parts
+                if (tokens[index] in ['as', 'at', 'to', 'by', 'with', 'from',
+                                      'per', 'for', 'cum', 'via']): # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -2391,29 +2394,29 @@ class Builder(object):
                         raise excepting.ParseError(msg, tokens, index)
                     context = ActionContextValues[context]
 
-                elif connective in ['to']:
+                elif connective in ['to', 'with']:
                     data, index = self.parseDirect(tokens, index)
                     parms.update(data)
 
-                elif connective in ['by']:
+                elif connective in ['by', 'from']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['parms'][srcPath] = srcFields
 
-                elif connective == 'per':
+                elif connective in ['per']:
                     data, index = self.parseDirect(tokens, index)
                     ioinits.update(data)
 
-                elif connective == 'for':
+                elif connective in ['for']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['ioinits'][srcPath] = srcFields
 
-                elif connective in ['with']:
+                elif connective in ['cum']:
                     data, index = self.parseDirect(tokens, index)
                     inits.update(data)
 
-                elif connective in ['from']:
+                elif connective in ['via']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['inits'][srcPath] = srcFields
@@ -2467,19 +2470,32 @@ class Builder(object):
 
     def buildBid(self, command, tokens, index):
         """
-           bid control tasker [tasker ...]
-           bid control [me]
-           bid control all
+        bid control tasker [tasker ...] [at period]
+        bid control [me] [at period]
+        bid control all [at period]
 
-           control:
-              (stop, start, run, abort, ready)
+        control:
+           (stop, start, run, abort, ready)
 
-           tasker:
-              (tasker, me, all)
+        tasker:
+           (tasker, me, all)
+
+        period:
+            number
+            indirectOne
+
+        indirectOne:
+            sharepath [of relative]
+            (field, value) in sharepath [of relative]
+
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
 
         try:
+            period = None  # no period provided
+            sourcePath = None
+            sourceField = None
+            parms = odict([('taskers', []), ('period', None), ('sources', odict())])
             control = tokens[index]
             index +=1
             if control not in ['start', 'run', 'stop', 'abort', 'ready']:
@@ -2488,6 +2504,9 @@ class Builder(object):
 
             taskers = []
             while index < len(tokens):
+                if (tokens[index] in ['at']):
+                    break  # end of taskers so do not eat yet
+
                 tasker = tokens[index]
                 index +=1
 
@@ -2497,13 +2516,34 @@ class Builder(object):
             if not taskers:
                 taskers.append('me')
 
+            while index < len(tokens):  # at option
+                connective = tokens[index]
+                index += 1
+
+                if connective in ['at']:
+                    # parse period direct or indirect
+                    try:  #parse direct
+                        period = max(0.0, Convert2Num(tokens[index]))  # period is number
+                        index += 1  # eat token
+
+                    except ValueError:  # parse indirect
+                        sourceField, index = self.parseField(tokens, index)
+                        sourcePath, index =  self.parseIndirect(tokens, index)
+
+                else:
+                    msg = ("Error building {0}. Invalid connective"
+                          " '{1}'.".format(command, connective))
+                    raise excepting.ParseError(msg, tokens, index)
+
             actorName = 'Want' + control.capitalize()
             if actorName not in wanting.Want.Registry:
                 msg = "Error building  %s. No actor named %s." % (command, actorName)
                 raise excepting.ParseError(msg, tokens, index)
 
-            parms = {}
             parms['taskers'] = taskers #resolve later
+            parms['period'] = period
+            parms['source'] = sourcePath
+            parms['sourceField'] = sourceField
             act = acting.Act(   actor=actorName,
                                 registrar=wanting.Want,
                                 parms=parms,

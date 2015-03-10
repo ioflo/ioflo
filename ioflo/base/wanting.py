@@ -33,7 +33,7 @@ class Want(acting.Actor):
     """
     Registry = odict()
 
-    def _resolve(self, taskers, **kwa):
+    def _resolve(self, taskers, period, source, sourceField, **kwa):
         """Resolves value taskers list of links that is passed in as parm
            resolved links are passed back to act to store in parms
            since tasker may not be current framer at build time
@@ -57,7 +57,24 @@ class Want(acting.Actor):
                                                count=self._act.count)
                 links.add(tasker)
 
-        parms['taskers'] = links #replace with valid list
+
+        if  period is None and source is not None:
+            parms['source'] = source = self._resolvePath(ipath=source, warn=True) # now a share
+            if not sourceField: #default rules for field
+                sourceField = 'value'
+
+            if sourceField not in source:
+                console.profuse("     Warning: Non-existent field '{0}' in source"
+                                " {1} ... creating anyway".format(sourceField, source.name))
+                source[sourceField] = 0.0  # create
+
+            parms['sourceField'] = sourceField
+        else:
+            parms['source'] = None
+            parms['sourceField'] = None
+
+        parms['taskers'] = links #replace with valid set/list
+        parms['period'] = period
 
         return parms
 
@@ -82,11 +99,15 @@ class WantStart(Want):
        bid start all
        bid start [me] #won't cahnge anything since must be already started
     """
-    def action(self, taskers, **kw):
+    def action(self, taskers, period, source, sourceField, **kw):
         """start taskers  """
+        if source is not None:
+            period = source[sourceField]
         for tasker in taskers:
+            if period is not None:
+                tasker.period = max(0.0, period)
             tasker.desire = START
-            console.profuse( "Bid start {0}\n".format(tasker.name))
+            console.profuse( "Bid start {0} at {1}\n".format(tasker.name, tasker.period))
 
         return None
 
@@ -96,11 +117,15 @@ class WantRun(Want):
        bid run all
        bid run [me] #won't cahnge anything since must be already running
     """
-    def action(self, taskers, **kw):
+    def action(self, taskers, period, source, sourceField, **kw):
         """run taskers """
+        if source is not None:
+            period = source[sourceField]
         for tasker in taskers:
+            if period is not None:
+                tasker.period = max(0.0, period)
             tasker.desire = RUN
-            console.profuse( "Bid run {0}\n".format(tasker.name))
+            console.profuse( "Bid run {0} at (1)\n".format(tasker.name, tasker.period))
 
         return None
 
@@ -124,10 +149,14 @@ class WantReady(Want):
        bid ready all
        bid ready [me]  # won't change anything since must be already ready
     """
-    def action(self, taskers, **kw):
-        """readt taskers """
+    def action(self, taskers, period, source, sourceField, **kw):
+        """readty taskers """
+        if source is not None:
+            period = source[sourceField]
         for tasker in taskers:
+            if period is not None:
+                tasker.period = max(0.0, period)
             tasker.desire = READY
-            console.profuse( "Bid ready {0}\n".format(tasker.name))
+            console.profuse( "Bid ready {0} at {1}\n".format(tasker.name, tasker.period))
 
         return None

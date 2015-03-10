@@ -52,7 +52,7 @@ class Need(acting.Actor):
             result = ( state > goal)
         elif comparison == '!=':
             try: #in case goal is string
-                result = ( state <= (goal - abs(tolerance)) or state >= (goal + abs(tolerance)) )
+                result = not ( (goal - abs(tolerance)) <= state <= (goal + abs(tolerance)) )
             except TypeError:
                 result = (goal != state)
         else:

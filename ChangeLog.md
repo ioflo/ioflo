@@ -3,6 +3,26 @@ CHANGE LOG
 -------------------
 
 ---------
+20150305
+---------
+v1.2.0
+
+Added script alises ioflo3 for ioflo on python3 and ioflo2 for ioflo on python2
+
+Changed syntax of "bid" verb: Now supports optional "at period" clause that
+allows changing the iteration period of framer
+
+Added retrograde and parsemode options to ioflo script
+
+Changed syntax of "do" verb:  Made with and from connectives aliases for to and by
+repectively to be consistent with other verbs. Replaced with and from in do verb
+with cum and via respectively
+
+Changed interface for Actor Class (Deed subclass)
+.postinitio is no longer supported. It was deprecated in version 1.1.5.
+The correct one to use is ._prepare
+
+---------
 20150213
 ---------
 v1.1.9

@@ -1,0 +1,75 @@
+# Example periodChange.flo  uses bid to change period
+
+house pchange
+
+init .runs.fastslow to 0
+init .runs.slowfast to 0
+init .periods.fastslow to 0.75
+init .periods.slowfast to 0.25
+
+framer mission be active first start at 0.25
+    frame timeout
+        go abort if elapsed > 7
+
+        frame start in timeout
+            print mission start
+            go next
+
+        frame begin in timeout
+            bid start fastslow
+            bid start slowfast
+            go next if elapsed >= 2
+
+        frame change in timeout
+            bid run fastslow at 1.0
+            bid run slowfast at 0.5
+            go next if elapsed >= 2
+
+        frame again in timeout
+            bid run fastslow at .periods.fastslow
+            bid run slowfast at value in .periods.slowfast
+            go next if elapsed >= 2
+
+    frame done
+        bid stop fastslow
+        bid stop slowfast
+        go next
+
+    frame check
+        go abort if .runs.fastslow != 8
+        go abort if .runs.slowfast != 11
+        go abort if value in .periods.fastslow != 0.75
+        go abort if .periods.slowfast != 0.25
+        go next
+
+    frame success
+        print "Success"
+        bid stop all
+
+    frame abort
+        print "Failure"
+        put "Period" into meta.failure
+        bid stop all
+
+
+framer fastslow be inactive first start at 0.5
+    frame start
+        print fastslow start
+        go next
+
+    frame run
+        recur
+            print fastslow run
+            inc .runs.fastslow with 1
+
+framer slowfast be inactive first start at 1.0
+    frame start
+        print slowfast start
+        go next
+
+    frame run
+        recur
+            print slowfast run
+            inc .runs.slowfast with 1
+
+
