@@ -1,7 +1,7 @@
 
 ![Logo](docs/images/ioflo_logo_cap.png?raw=true)
 
-#ioflo
+#Ioflo
 
 ##Enabling The Programmable World
 
