@@ -36,6 +36,11 @@ def parseArgs():
             const=True,
             default=False,
             help="Run skedder at realtime.")
+    p.add_argument('-R', '--retrograde',
+            action='store_const',
+            const=True,
+            default=True,
+            help="Shift skedder timers when retrograde clock detected.")
     p.add_argument('-n', '--name',
             action='store',
             default='skedder',
@@ -49,6 +54,10 @@ def parseArgs():
             nargs='*',
             default=None,
             help="Module name strings to external behavior packages.")
+    p.add_argument('-m', '--parsemode',
+            action='store',
+            default='',
+            help="FloScript parsing mode.")
     p.add_argument('-U', '--username',
             action='store',
             default='',
@@ -81,19 +90,20 @@ def parseArgs():
 
 def run(name="skedder",
         period=0.1,
-        stamp=0.0,
         real=False,
+        retro=True,
+        stamp=0.0,
         filepath="",
         behaviors=None,
+        mode=None,
         username="",
         password="",
-        mode=None,
-        houses=None,
-        metas=None,
-        preloads=None,
         verbose=0,
         consolepath="",
-        statistics=""):
+        statistics="",
+        houses=None,
+        metas=None,
+        preloads=None,        ):
     """ Run Skedder"""
     console = consoling.getConsole(verbosity=consoling.Console.Wordage[verbose],
                                    path=consolepath)
@@ -103,12 +113,13 @@ def run(name="skedder",
     skedder = skedding.Skedder(name=name,
                                period=period,
                                real=real,
+                               retro=retro,
                                stamp=stamp,
                                filepath=filepath,
                                behaviors=behaviors,
+                               mode=mode,
                                username=username,
                                password=password,
-                               mode=mode,
                                houses=houses,
                                metas=metas,
                                preloads=preloads)

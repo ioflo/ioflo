@@ -93,6 +93,7 @@ class Skedder(object):
                    period=0.125,
                    stamp=0.0,
                    real=False,
+                   retro=True,
                    filepath='',
                    behaviors=None,
                    username='',
@@ -108,6 +109,7 @@ class Skedder(object):
             period = iteration period
             stamp = initial time stamp value
             real = time mode real time True or simulated time False
+            retro = shift timers if retrograded system clock detected
             filepath = filepath to build file
             behaviors = list of pathnames to packages with external behavior modules
             username = username
@@ -125,8 +127,8 @@ class Skedder(object):
         self.stamp = float(abs(stamp))
         #real time or sim time mode
         self.real = True if real else False
-        self.timer = aiding.MonoTimer(duration = self.period, adjust=True)
-        self.elapsed = aiding.MonoTimer(adjust=True)
+        self.timer = aiding.MonoTimer(duration = self.period, retro=retro)
+        self.elapsed = aiding.MonoTimer(retro=retro)
 
         self.filepath = os.path.abspath(filepath)
         self.plan = os.path.split(self.filepath)[1]
@@ -273,10 +275,12 @@ class Skedder(object):
                                     aborted.append((tasker, stamp, period))
                                     console.profuse("     Tasker Self Aborted: {0}\n".format(tasker.name))
                                 else:
-                                    ready.append((tasker, retime + period, period)) #append
+                                    ready.append((tasker,
+                                                  retime + tasker.period,
+                                                  tasker.period))  # append allows for period change
 
                             except StopIteration: #generator returned instead of yielded
-                                aborted.append((tasker,stamp,period))
+                                aborted.append((tasker, stamp, period))
                                 console.profuse("     Tasker Aborted due to StopIteration: {0}\n".format(tasker.name))
 
                         if status == RUNNING or status == STARTED:

@@ -223,8 +223,7 @@ class MonoTimer(object):
         .duration = time duration of timer start to stop
         .start = time started
         .stop = time when timer expires
-        .base = real time when started or restarted
-        .prev = real time when checked
+        .retro = automaticall shift timer if retrograded clock detected
 
         properties:
         .elaspsed = time elasped since start
@@ -237,11 +236,11 @@ class MonoTimer(object):
         .restart() = restarts timer
     """
 
-    def __init__(self, duration = 0.0, adjust=False):
+    def __init__(self, duration = 0.0, retro=False):
         """ Initialization method for instance.
             duration in seconds (fractional)
         """
-        self.adjust = True if adjust else False
+        self.retro = True if retro else False
         self.start = None
         self.stop = None
         self.latest = time.time()  # last time checked current time
@@ -255,7 +254,7 @@ class MonoTimer(object):
         '''
         delta = time.time() - self.latest  # current time - last time checked
         if delta < 0:  # system clock has retrograded
-            if not self.adjust:
+            if not self.retro:
                 raise excepting.TimerRetroError("Timer retrograded by {0} "
                                                 "seconds\n".format(delta))
             self.start = self.start + delta

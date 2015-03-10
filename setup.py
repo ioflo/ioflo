@@ -39,6 +39,11 @@ if sys.version_info < (2, 7): #tuple comparison element by element
     PYTHON26_REQUIRES.extend(['importlib>=1.0.3',
                               'argparse>=1.2.1'])
 
+if sys.version_info > (3,):
+    PYTHON_SCRIPTS = ['scripts/ioflo', 'scripts/ioflo3',]
+else:
+    PYTHON_SCRIPTS = ['scripts/ioflo', 'scripts/ioflo2',]
+
 setup(
     name='ioflo',
     version=__version__,
@@ -61,5 +66,5 @@ setup(
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
     install_requires=PYTHON26_REQUIRES,
     extras_require={},
-    scripts=['scripts/ioflo'],)
+    scripts=PYTHON_SCRIPTS,)
 
