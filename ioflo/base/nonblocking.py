@@ -155,7 +155,7 @@ class ConsoleNB(object):
         """
         self.fd = None #console file descriptor needs to be opened
 
-    def open(self, port = '', canonical = True):
+    def open(self, port='', canonical=True):
         """Opens fd on terminal console in non blocking mode.
 
            port is the serial port or if '' then use os.ctermid() which
@@ -181,8 +181,12 @@ class ConsoleNB(object):
         if not port:
             port = os.ctermid() #default to console
 
-        self.fd = os.open(port, os.O_NONBLOCK | os.O_RDWR | os.O_NOCTTY)
-
+        try:
+            self.fd = os.open(port, os.O_NONBLOCK | os.O_RDWR | os.O_NOCTTY)
+        except OSError as ex:
+            console.terse("os.error = {0}\n".format(ex))
+            return False
+        return True
 
     def close(self):
         """Closes fd.
@@ -191,7 +195,6 @@ class ConsoleNB(object):
         if self.fd:
             os.close(self.fd)
             self.fd = None
-
 
     def getLine(self,bs = 80):
         """Gets nonblocking line from console up to bs characters including newline.
@@ -305,7 +308,6 @@ class SocketUdpNb(object):
             return False
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
-        #self.host, self.port = self.ha
 
         if self.log:
             if not self.openLogs():
@@ -726,4 +728,420 @@ class WinMailslotNb(object):
         if self.rxLog and not self.rxLog.closed:
             self.rxLog.close()
 
+
+class SocketTcpNb(object):
+    """Class to manage non blocking io on TCP socket.
+
+       Opens non blocking socket
+       Use instance method close to close socket
+
+       Needs socket module
+    """
+
+    def __init__(self, ha=None, host='', port=56000, bufsize=1024,
+                 path='', log=False):
+        """Initialization method for instance.
+
+           ha = host address duple (host, port)
+           host = '' equivalant to any interface on host
+           port = socket port
+           bufsize = buffer size
+           path = path to log directory
+           log = boolean flag, creates logs if True
+        """
+        self.ha = ha or (host,port) #ha = host address
+        self.bs = bufsize
+        self.ss = None  # own socket needs to be opened
+        self.peers = odict()  # keys are ha (duples) values are connected sockets
+
+        self.path = path #path to directory where log files go must end in /
+        self.txLog = None #transmit log
+        self.rxLog = None #receive log
+        self.log = log
+        self.client = client
+
+    def openLogs(self, path = ''):
+        """Open log files
+
+        """
+        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
+        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.txLog = open(name, 'w+')
+        except IOError:
+            self.txLog = None
+            self.log = False
+            return False
+        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.rxLog = open(name, 'w+')
+        except IOError:
+            self.rxLog = None
+            self.log = False
+            return False
+
+        return True
+
+    def closeLogs(self):
+        """Close log files
+
+        """
+        if self.txLog and not self.txLog.closed:
+            self.txLog.close()
+        if self.rxLog and not self.rxLog.closed:
+            self.rxLog.close()
+
+    def open(self):
+        """Opens socket in non blocking mode.
+
+           if socket not closed properly, binding socket gets error
+              socket.error: (48, 'Address already in use')
+        """
+        #create socket ss = server socket
+        self.ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # make socket address reusable. doesn't seem to have an effect.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
+        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+        self.ss.setblocking(0) #non blocking socket
+
+        # TCP connection Server
+        try:  # bind to host address port to receive connections
+            self.ss.bind(self.ha)
+            self.ss.listen(5)
+        except socket.error as ex:
+            console.terse("socket.error = {0}\n".format(ex))
+            return False
+
+        self.ha = self.ss.getsockname() #get resolved ha after bind
+
+        if self.log:
+            if not self.openLogs():
+                return False
+
+        return True
+
+    def reopen(self):
+        """
+        Idempotently opens socket
+        """
+        self.close()
+        return self.open()
+
+    def close(self):
+        """
+        Closes socket.
+        """
+        if self.ss:
+            self.ss.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            self.ss.close()  #close socket
+            self.ss = None
+
+        self.closeLogs()
+
+    def connect(ca):
+        """
+        Create a connection to ca
+        """
+        if ca not in self.peers or not self.peers[ca]:
+            cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            # make socket address reusable. doesn't seem to have an effect.
+            # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+            # TIME_WAIT state, without waiting for its natural timeout to expire.
+            cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+                cs.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+                cs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+            cs.setblocking(0) #non blocking socket
+
+            try:
+                cs.connect(ca)
+            except socket.error as ex:
+                console.terse("socket.error = {0}\n".format(ex))
+                return False
+
+            ca = cs.getsockname() #get resolved ca after connection
+            self.peers[ca] = cs
+
+        return True
+
+    def reconnect(ca):
+        """
+        Idempotently reconnects socket
+        """
+        if ca not in self.peers:
+            return self.connect(ca)
+
+        cs = self.peers[ca]
+        if not cs:
+            cs.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            cs.close()  #close socket
+            self.peers[ca] = None
+
+        return self.connect(ca)
+
+    def accept():
+        """
+        Accept any pending connections
+        """
+        # accept new connected socket created from server socket
+        cs, ca = self.ss.accept()  # duple of connected (socket, host address)
+        while cs: # keep accepting until no more to accept
+            self.peers[ca] = cs
+            cs, ca = self.ss.accept()
+
+    def receiveAny(self):
+        """
+        Select and receive from any connected sockets that have data
+        """
+        receptions = []
+        return receptions
+
+    def receiveAll(self):
+        """
+        Attempt nonblocking receive all all peers.
+        Returns list of duples of receptions
+        """
+        receptions = []
+        for ca in self.peers:
+            data, ca = self.receive(ca)
+            if data:
+                receptions.append((data, ca))
+        return receptions
+
+    def receive(self, ca):
+        """
+        Perform non blocking read on connected socket with by ca (connected address).
+
+        returns tuple of form (data, sa)
+        if no data then returns ('',None)
+        but always returns a tuple with two elements
+        """
+        cs = self.peers.get(ca)
+        if not cs:
+            raise ValueError("Host '{0}' not connected.\n".format(str(ca)))
+
+        try:
+            data = cs.recv(self.bs)
+
+            message = "Server at {0} received {1} from {2}\n".format(
+                str(self.ha), data, str(ca))
+            console.profuse(message)
+
+            if self.log and self.rxLog:
+                self.rxLog.write("%s\n%s\n" % (str(ca), repr(data)))
+            return (data, ca)
+
+        except socket.error as ex: # 2.6 socket.error is subclass of IOError
+            # Some OSes define errno differently so check for both
+            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
+                return ('', None) #receive has nothing empty string for data
+            else:
+                emsg = ("socket.error = {0}: server at {1} receiving "
+                                    "on {2}\n".format(ex, self.ha, ca))
+                console.profuse(emsg)
+                raise #re raise exception ex1
+
+    def send(self, data, ca):
+        """
+        Perform non blocking send on  socket to ca.
+
+        data is string in python2 and bytes in python3
+        da is destination address tuple (destHost, destPort)
+        """
+        cs = self.peers.get(ca)
+        if not cs:
+            raise ValueError("Host '{0}' not connected.\n".format(str(ca)))
+
+        try:
+            result = cs.send(data) #result is number of bytes sent
+        except socket.error as ex:
+            emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, ca)
+            console.profuse(emsg)
+            result = 0
+            raise
+
+        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
+
+        if self.log and self.txLog:
+            self.txLog.write("%s %s bytes\n%s\n" %
+                             (str(ca), str(result), repr(data)))
+
+        return result
+
+class SocketTcpClientNb(object):
+    """Class to manage non blocking IO on TCP socket.
+
+       Opens non blocking socket as client only
+       Use instance method close to close socket
+
+       Needs socket module
+    """
+
+    def __init__(self, ha=None, host='', port=56000, bufsize=1024,
+                 path='', log=False):
+        """Initialization method for instance.
+
+           ha = host address duple (host, port) or server
+           host = '' equivalant to any interface on host
+           port = socket port
+           bufsize = buffer size
+           path = path to log directory
+           log = boolean flag, creates logs if True
+        """
+        self.ha = ha or (host,port)  # ha = host address of server
+        self.bs = bufsize
+        self.ss = None #server's socket needs to be opened
+
+        self.path = path #path to directory where log files go must end in /
+        self.txLog = None #transmit log
+        self.rxLog = None #receive log
+        self.log = log
+
+    def openLogs(self, path = ''):
+        """Open log files
+
+        """
+        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
+        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.txLog = open(name, 'w+')
+        except IOError:
+            self.txLog = None
+            self.log = False
+            return False
+        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        try:
+            self.rxLog = open(name, 'w+')
+        except IOError:
+            self.rxLog = None
+            self.log = False
+            return False
+
+        return True
+
+    def closeLogs(self):
+        """Close log files
+
+        """
+        if self.txLog and not self.txLog.closed:
+            self.txLog.close()
+        if self.rxLog and not self.rxLog.closed:
+            self.rxLog.close()
+
+    def open(self):
+        """Opens socket in non blocking mode.
+
+           if socket not closed properly, binding socket gets error
+              socket.error: (48, 'Address already in use')
+        """
+        #create socket ss = server socket
+        self.ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # make socket address reusable. doesn't seem to have an effect.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
+        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+        self.ss.setblocking(0) #non blocking socket
+
+        try: # TCP Client only
+            self.ss.connect(self.ha)
+        except socket.error as ex:
+            console.terse("socket.error = {0}\n".format(ex))
+            return False
+
+        self.ha = self.ss.getsockname() #get resolved ha after connection
+
+        if self.log:
+            if not self.openLogs():
+                return False
+
+        return True
+
+    def reopen(self):
+        """
+        Idempotently opens socket
+        """
+        self.close()
+        return self.open()
+
+    def close(self):
+        """
+        Closes socket.
+        """
+        if self.ss:
+            self.ss.shutdown()  # shutdown socket
+            self.ss.close()  #close socket
+            self.ss = None
+
+        self.closeLogs()
+
+    def accept():
+        """
+        Accept any pending connections
+        """
+        pass
+
+    def receive(self):
+        """
+        Perform non blocking read on  socket.
+
+        returns tuple of form (data, sa)
+        if no data then returns ('',None)
+        but always returns a tuple with two elements
+        """
+        try:
+            # sa = source address tuple (sourcehost, sourceport)
+            data, sa = self.ss.recv(self.bs)
+
+            message = "Server at {0} received {1} from {2}\n".format(
+                str(self.ha),data, str(sa))
+            console.profuse(message)
+
+            if self.log and self.rxLog:
+                self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
+
+            return (data,sa)
+        except socket.error as ex: # 2.6 socket.error is subclass of IOError
+            # Some OSes define errno differently so check for both
+            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
+                return ('',None) #receive has nothing empty string for data
+            else:
+                emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
+                console.profuse(emsg)
+                raise #re raise exception ex1
+
+    def send(self, data):
+        """
+        Perform non blocking send on  socket.
+
+        data is string in python2 and bytes in python3
+        da is destination address tuple (destHost, destPort)
+        """
+        try:
+            result = self.ss.send(data) #result is number of bytes sent
+        except socket.error as ex:
+            emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, da)
+            console.profuse(emsg)
+            result = 0
+            raise
+
+        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
+
+        if self.log and self.txLog:
+            self.txLog.write("%s %s bytes\n%s\n" %
+                             (str(da), str(result), repr(data)))
+
+        return result
 
