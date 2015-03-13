@@ -752,13 +752,13 @@ class SocketTcpNb(object):
         self.ha = ha or (host,port) #ha = host address
         self.bs = bufsize
         self.ss = None  # own socket needs to be opened
-        self.peers = odict()  # keys are ha (duples) values are connected sockets
+        self.yets = odict()  # keys are ha (duples), values sockets in connection process
+        self.peers = odict()  # keys are ha (duples), values are connected sockets
 
         self.path = path #path to directory where log files go must end in /
         self.txLog = None #transmit log
         self.rxLog = None #receive log
         self.log = log
-        self.client = client
 
     def openLogs(self, path = ''):
         """Open log files
@@ -792,7 +792,7 @@ class SocketTcpNb(object):
             self.rxLog.close()
 
     def open(self):
-        """Opens socket in non blocking mode.
+        """Opens listen socket in non blocking mode.
 
            if socket not closed properly, binding socket gets error
               socket.error: (48, 'Address already in use')
@@ -804,14 +804,19 @@ class SocketTcpNb(object):
         # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
         # TIME_WAIT state, without waiting for its natural timeout to expire.
         self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+        # Linux TCP allocates twice the requested size so get size is twice the set size
+        if sys.platform.startswith('linux'):
+            bs = 2 * self.bs
+        else:
+            bs = self.bs
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) < bs:
             self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
             self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
         self.ss.setblocking(0) #non blocking socket
 
         # TCP connection Server
-        try:  # bind to host address port to receive connections
+        try:  # bind to listen socket host address port to receive connections
             self.ss.bind(self.ha)
             self.ss.listen(5)
         except socket.error as ex:
@@ -828,78 +833,162 @@ class SocketTcpNb(object):
 
     def reopen(self):
         """
-        Idempotently opens socket
+        Idempotently opens listen socket
         """
         self.close()
         return self.open()
 
     def close(self):
         """
-        Closes socket.
+        Closes listen socket.
         """
         if self.ss:
-            self.ss.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            try:
+                self.ss.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
             self.ss.close()  #close socket
             self.ss = None
 
         self.closeLogs()
 
-    def connect(ca):
+    def closeAll(self):
+        """
+        Closes listen socket and all connections
+        """
+        self.close()
+        for ca in self.peers:
+            self.unconnectPeer(ca)
+        for ca in self.yets:
+            self.unconnectYet(ca)
+
+    def connect(self, ca):
         """
         Create a connection to ca
         """
-        if ca not in self.peers or not self.peers[ca]:
+        if ca in self.peers:  # use
+            raise ValueError("Attempt to connect to peer socket {0}. "
+                             "Use reconnect instead.".format(ca))
+
+        if ca in self.yets:
+            cs = self.yets[ca]
+        else:  # ca not in self.yets or ca not in self.peers:
             cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             # make socket address reusable. doesn't seem to have an effect.
             # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
             # TIME_WAIT state, without waiting for its natural timeout to expire.
             cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
+            # Linux TCP allocates twice the requested size so get size is twice the set size
+            if sys.platform.startswith('linux'):
+                bs = 2 * self.bs
+            else:
+                bs = self.bs
+            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) < bs:
                 cs.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < self.bs:
+            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
                 cs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
             cs.setblocking(0) #non blocking socket
+            self.yets[ca] = cs
 
-            try:
-                cs.connect(ca)
-            except socket.error as ex:
-                console.terse("socket.error = {0}\n".format(ex))
-                return False
+        try:
+            result = cs.connect_ex(ca)  # async connect
+        except socket.error as ex:
+            console.terse("socket.error = {0}\n".format(ex))
+            raise
 
-            ca = cs.getsockname() #get resolved ca after connection
-            self.peers[ca] = cs
+        # now has new virtual port and ca != cs.getsockname()
 
+        if result not in [0, errno.EISCONN]:  # not yet connected
+            return False
+
+        if ca in self.yets:
+            del self.yets[ca]
+        if ca not in self.peers:  # may have a simultaneous connection
+            self.peers[ca] = cs  # successfully connected
+        else:
+            self.closeshut(cs)
         return True
 
-    def reconnect(ca):
+    def reconnectPeer(self, ca):
         """
-        Idempotently reconnects socket
+        Idempotently reconnects peer socket or makes new connection
         """
-        if ca not in self.peers:
-            return self.connect(ca)
-
-        cs = self.peers[ca]
-        if not cs:
-            cs.shutdown(socket.SHUT_RDWR)  # shutdown socket
-            cs.close()  #close socket
-            self.peers[ca] = None
-
+        self.unconnectPeer(ca)
         return self.connect(ca)
 
-    def accept():
+    @staticmethod
+    def closeshut(cs):
+        """
+        Shutdown and close connected socket cs
+        """
+        if not cs:
+            try:
+                cs.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
+            cs.close()  #close socket
+
+    def unconnectPeer(self, ca):
+        """
+        Shutdown and close connected socket peer given by ca
+        """
+        if ca in self.peers:
+            cs = self.peers[ca]
+            self.closeshut(cs)
+            del self.peers[ca]
+
+    def unconnectYet(self, ca):
+        """
+        Shutdown and close connected socket yet given by ca
+        """
+        if ca in self.yets:
+            cs = self.yets[ca]
+            self.closeshut(cs)
+            del self.yets[ca]
+
+    def accept(self):
         """
         Accept any pending connections
         """
         # accept new connected socket created from server socket
-        cs, ca = self.ss.accept()  # duple of connected (socket, host address)
-        while cs: # keep accepting until no more to accept
+        try:
+            cs, ca = self.ss.accept()  # duple of connected (socket, host address
+        except socket.error as ex:
+            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                emsg = ("socket.error = {0}: server at {1} while "
+                        "accepting \n".format(ex, self.ha))
+                console.profuse(emsg)
+                raise #re raise exception
+            return False
+        if ca not in self.peers:  # may have simultaneous connection
             self.peers[ca] = cs
-            cs, ca = self.ss.accept()
+        else:
+            self.closeshut(cs)
+
+        return True
+
+    def service(self):
+        """
+        Service any accept requests and any connection attempts
+        """
+        while self.accept():
+            pass
+
+        for ca in self.yets:
+            self.connect(ca)
+
+    def serviceAny(self):
+        """
+        Service any accept requests, connection attempts, or receives using select
+        """
+        pass
 
     def receiveAny(self):
         """
-        Select and receive from any connected sockets that have data
+        Receive from any connected sockets that have data using select
         """
         receptions = []
         return receptions
@@ -941,7 +1030,7 @@ class SocketTcpNb(object):
 
         except socket.error as ex: # 2.6 socket.error is subclass of IOError
             # Some OSes define errno differently so check for both
-            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 return ('', None) #receive has nothing empty string for data
             else:
                 emsg = ("socket.error = {0}: server at {1} receiving "

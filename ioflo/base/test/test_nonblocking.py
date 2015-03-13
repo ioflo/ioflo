@@ -242,6 +242,68 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testSocketTcpNB(self):
+        """
+        Test Class SocketTcpNb
+        """
+        console.terse("{0}\n".format(self.testSocketTcpNB.__doc__))
+
+        alpha = nonblocking.SocketTcpNb(port = 6101)
+        self.assertIs(alpha.reopen(), True)
+        alphaHa = ("127.0.0.1", alpha.ha[1])
+
+        beta = nonblocking.SocketTcpNb(port = 6102)
+        self.assertIs(beta.reopen(), True)
+        betaHa = ("127.0.0.1", beta.ha[1])
+
+        gamma = nonblocking.SocketTcpNb(port = 6103)
+        self.assertIs(gamma.reopen(), True)
+        gammaHa = ("127.0.0.1", gamma.ha[1])
+
+        console.terse("Connecting beta to alpha\n")
+        result = beta.connect(alphaHa)
+        while alphaHa not in beta.peers:
+            beta.service()
+            alpha.service()
+
+        msgOut = "beta sends to alpha"
+        #alpha.send(msgOut, beta.ha)
+        #time.sleep(0.05)
+        #msgIn, src = beta.receive()
+        #self.assertEqual(msgOut, msgIn)
+        #self.assertEqual(src[1], alpha.ha[1])
+
+        #console.terse("Sending alpha to alpha\n")
+        #msgOut = "alpha sends to alpha"
+        #alpha.send(msgOut, alpha.ha)
+        #time.sleep(0.05)
+        #msgIn, src = alpha.receive()
+        #self.assertEqual(msgOut, msgIn)
+        #self.assertEqual(src[1], alpha.ha[1])
+
+
+        #console.terse("Sending beta to alpha\n")
+        #msgOut = "beta sends to alpha"
+        #beta.send(msgOut, alpha.ha)
+        #time.sleep(0.05)
+        #msgIn, src = alpha.receive()
+        #self.assertEqual(msgOut, msgIn)
+        #self.assertEqual(src[1], beta.ha[1])
+
+
+        #console.terse("Sending beta to beta\n")
+        #msgOut = "beta sends to beta"
+        #beta.send(msgOut, beta.ha)
+        #time.sleep(0.05)
+        #msgIn, src = beta.receive()
+        #self.assertEqual(msgOut, msgIn)
+        #self.assertEqual(src[1], beta.ha[1])
+
+        alpha.closeAll()
+        beta.closeAll()
+        gamma.closeAll()
+
+
 def runOne(test):
     '''
     Unittest Runner
@@ -255,7 +317,8 @@ def runSome():
     tests =  []
     names = ['testConsoleNB',
              'testSocketUdpNB',
-             'testSocketUxdNB', ]
+             'testSocketUxdNB',
+             'testSocketTcpNB', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -274,5 +337,5 @@ if __name__ == '__main__' and __package__ is None:
 
     #runSome()#only run some
 
-    runOne('testSocketUxdNB')
+    runOne('testSocketTcpNB')
 
