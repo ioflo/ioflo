@@ -530,10 +530,10 @@ class SocketUxdNb(object):
             if self.log and self.rxLog:
                 self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
 
-            return (data,sa)
+            return (data, sa)
         except socket.error as ex: # 2.6 socket.error is subclass of IOError
             if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
-                return ('',None) #receive has nothing empty string for data
+                return ('', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
                 console.profuse(emsg)

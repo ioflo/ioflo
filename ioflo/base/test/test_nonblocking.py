@@ -13,6 +13,8 @@ else:
 
 import os
 import time
+import tempfile
+import shutil
 
 #from ioflo.test import testing
 from ioflo.base.consoling import getConsole
@@ -69,6 +71,7 @@ class BasicTestCase(unittest.TestCase):
         Test Class SocketUdpNb
         """
         console.terse("{0}\n".format(self.testSocketUdpNB.__doc__))
+        console.reinit(verbosity=console.Wordage.verbose)
         alpha = nonblocking.SocketUdpNb(port = 6101)
         self.assertIs(alpha.reopen(), True)
 
@@ -111,64 +114,133 @@ class BasicTestCase(unittest.TestCase):
 
         alpha.close()
         beta.close()
+        console.reinit(verbosity=console.Wordage.concise)
 
-def TestSocketUxdNB():
-    """Class SocketUxdNb self test """
-    console.reinit(verbosity=console.Wordage.verbose)
-    try:
-        print("Testing SocketUxdNb")
-        serverA = aiding.SocketUxdNb(ha = '/tmp/local/uxdA', umask=0x077)
-        serverA.reopen()
-        serverB = aiding.SocketUxdNb(ha = '/tmp/local/uxdB', umask=0x077)
-        serverB.reopen()
-        serverC = aiding.SocketUxdNb(ha = '/tmp/local/uxdC', umask=0x077)
-        serverC.reopen()
+    def testSocketUxdNB(self):
+        """
+        Test Class SocketUxdNb
+        """
+        console.terse("{0}\n".format(self.testSocketUxdNB.__doc__))
+        console.reinit(verbosity=console.Wordage.verbose)
 
-        serverA.send("A sends to B",serverB.ha)
-        print(serverB.receive())
-        serverA.send("A sends to C",serverC.ha)
-        print(serverC.receive())
-        serverA.send("A sends to A",serverA.ha)
-        print(serverA.receive())
-        serverB.send("B sends to A",serverA.ha)
-        print(serverA.receive())
-        serverC.send("C sends to A",serverA.ha)
-        print(serverA.receive())
-        serverB.send("B sends to B",serverB.ha)
-        print(serverB.receive())
-        serverC.send("C sends to C",serverC.ha)
-        print(serverC.receive())
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
 
-        serverA.send("A sends to B again",serverB.ha)
-        print(serverB.receive())
-        serverA.send("A sends to C again",serverC.ha)
-        print(serverC.receive())
-        serverA.send("A sends to A again",serverA.ha)
-        print(serverA.receive())
-        serverB.send("B sends to A again",serverA.ha)
-        print(serverA.receive())
-        serverC.send("C sends to A again",serverA.ha)
-        print(serverA.receive())
-        serverB.send("B sends to B again",serverB.ha)
-        print(serverB.receive())
-        serverC.send("C sends to C again",serverC.ha)
-        print(serverC.receive())
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="uxd", dir=userDirpath)
+        sockDirpath = os.path.join(tempDirpath, 'uxd')
+        if not os.path.exists(sockDirpath):
+            os.makedirs(sockDirpath)
 
-        print(serverA.receive())
-        print(serverB.receive())
-        print(serverC.receive())
+        ha = os.path.join(sockDirpath, 'alpha.uxd')
+        alpha = nonblocking.SocketUxdNb(ha=ha, umask=0x077)
+        result = alpha.reopen()
+        self.assertIs(result, True)
+        self.assertEqual(alpha.ha, ha)
+
+        ha = os.path.join(sockDirpath, 'beta.uxd')
+        beta = nonblocking.SocketUxdNb(ha=ha, umask=0x077)
+        result = beta.reopen()
+        self.assertIs(result, True)
+        self.assertEqual(beta.ha, ha)
+
+        ha = os.path.join(sockDirpath, 'gamma.uxd')
+        gamma = nonblocking.SocketUxdNb(ha=ha, umask=0x077)
+        result = gamma.reopen()
+        self.assertIs(result, True)
+        self.assertEqual(gamma.ha, ha)
+
+        txMsg = "Alpha sends to Beta"
+        alpha.send(txMsg, beta.ha)
+        rxMsg, sa = beta.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, alpha.ha)
+
+        txMsg = "Alpha sends to Gamma"
+        alpha.send(txMsg, gamma.ha)
+        rxMsg, sa = gamma.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, alpha.ha)
+
+        txMsg = "Alpha sends to Alpha"
+        alpha.send(txMsg, alpha.ha)
+        rxMsg, sa = alpha.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, alpha.ha)
+
+        txMsg = "Beta sends to Alpha"
+        beta.send(txMsg, alpha.ha)
+        rxMsg, sa = alpha.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, beta.ha)
+
+        txMsg = "Beta sends to Gamma"
+        beta.send(txMsg, gamma.ha)
+        rxMsg, sa = gamma.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, beta.ha)
+
+        txMsg = "Beta sends to Beta"
+        beta.send(txMsg, beta.ha)
+        rxMsg, sa = beta.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, beta.ha)
+
+        txMsg = "Gamma sends to Alpha"
+        gamma.send(txMsg, alpha.ha)
+        rxMsg, sa = alpha.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, gamma.ha)
+
+        txMsg = "Gamma sends to Beta"
+        gamma.send(txMsg, beta.ha)
+        rxMsg, sa = beta.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, gamma.ha)
+
+        txMsg = "Gamma sends to Gamma"
+        gamma.send(txMsg, gamma.ha)
+        rxMsg, sa = gamma.receive()
+        self.assertEqual(txMsg, rxMsg)
+        self.assertEqual(sa, gamma.ha)
 
 
-    finally:
-        serverA.close()
-        serverB.close()
-        serverC.close()
+        pairs = [(alpha, beta), (alpha, gamma), (alpha, alpha),
+                 (beta, alpha), (beta, gamma), (beta, beta),
+                 (gamma, alpha), (gamma, beta), (gamma, gamma),]
+        names = [('alpha', 'beta'), ('alpha', 'gamma'), ('alpha', 'alpha'),
+                 ('beta', 'alpha'), ('beta', 'gamma'), ('beta', 'beta'),
+                 ('gamma', 'alpha'), ('gamma', 'beta'), ('gamma', 'gamma'),]
+
+        for i, pair in enumerate(pairs):
+            txer, rxer = pair
+            txName, rxName =  names[i]
+            txMsg = "{0} sends to {1} again".format(txName.capitalize(), rxName.capitalize())
+            txer.send(txMsg, rxer.ha)
+            rxMsg, sa = rxer.receive()
+            self.assertEqual(txMsg, rxMsg)
+            self.assertEqual(sa, txer.ha)
 
 
+        rxMsg, sa = alpha.receive()
+        self.assertIs('', rxMsg)
+        self.assertIs(None, sa)
 
+        rxMsg, sa = beta.receive()
+        self.assertIs('', rxMsg)
+        self.assertIs(None, sa)
 
+        rxMsg, sa = gamma.receive()
+        self.assertIs('', rxMsg)
+        self.assertIs(None, sa)
 
+        alpha.close()
+        beta.close()
+        gamma.close()
 
+        shutil.rmtree(tempDirpath)
+        console.reinit(verbosity=console.Wordage.concise)
 
 def runOne(test):
     '''
@@ -182,7 +254,8 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = ['testConsoleNB',
-             'testSocketUdpNB', ]
+             'testSocketUdpNB',
+             'testSocketUxdNB', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -199,7 +272,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
-    #runOne('testSocketUdpNB')
+    runOne('testSocketUxdNB')
 
