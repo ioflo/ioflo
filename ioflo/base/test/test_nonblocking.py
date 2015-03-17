@@ -253,12 +253,11 @@ class BasicTestCase(unittest.TestCase):
         alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
-        alphaHa = ("127.0.0.1", alpha.ha[1])
 
-        beta = nonblocking.ClientSocketTcpNb(ha=alphaHa, bufsize=131072)
+        beta = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
         self.assertIs(beta.reopen(), True)
 
-        gamma = nonblocking.ClientSocketTcpNb(ha=alphaHa, bufsize=131072)
+        gamma = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
         self.assertIs(gamma.reopen(), True)
 
         console.terse("Connecting beta to alpha\n")
