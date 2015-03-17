@@ -511,6 +511,86 @@ class BasicTestCase(unittest.TestCase):
 
         csBeta.close()
 
+        # reopen gamma
+        self.assertIs(gamma.reopen(), True)
+
+        console.terse("Connecting gamma to alpha\n")
+        accepteds = []
+        while True:
+            if not gamma.connected:
+                gamma.connect()
+            cs, ca = alpha.accept()
+            if cs:
+                accepteds.append((cs, ca))
+            if gamma.connected and accepteds:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(gamma.connected, True)
+        self.assertEqual(len(accepteds), 1)
+        csGamma, caGamma = accepteds[0]
+        self.assertIsNotNone(csGamma)
+        self.assertIsNotNone(caGamma)
+
+        self.assertEqual(csGamma.getsockname(), gamma.cs.getpeername())
+        self.assertEqual(csGamma.getpeername(), gamma.cs.getsockname())
+        self.assertEqual(gamma.ca, gamma.cs.getsockname())
+        self.assertEqual(gamma.ha, gamma.cs.getpeername())
+        self.assertEqual(caGamma, gamma.ca)
+
+        msgOut = "Gamma sends to Alpha"
+        count = gamma.send(msgOut)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = alpha.receive(csGamma)
+        self.assertEqual(msgOut, msgIn)
+
+        gamma.close()
+        time.sleep(0.05)
+        msgIn = alpha.receive(csGamma)
+        self.assertEqual(msgIn, '')  # alpha detects close
+
+        csGamma.close()
+
+        # reopen gamma
+        self.assertIs(gamma.reopen(), True)
+        console.terse("Connecting gamma to alpha\n")
+        accepteds = []
+        while True:
+            if not gamma.connected:
+                gamma.connect()
+            cs, ca = alpha.accept()
+            if cs:
+                accepteds.append((cs, ca))
+            if gamma.connected and accepteds:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(gamma.connected, True)
+        self.assertEqual(len(accepteds), 1)
+        csGamma, caGamma = accepteds[0]
+        self.assertIsNotNone(csGamma)
+        self.assertIsNotNone(caGamma)
+
+        self.assertEqual(csGamma.getsockname(), gamma.cs.getpeername())
+        self.assertEqual(csGamma.getpeername(), gamma.cs.getsockname())
+        self.assertEqual(gamma.ca, gamma.cs.getsockname())
+        self.assertEqual(gamma.ha, gamma.cs.getpeername())
+        self.assertEqual(caGamma, gamma.ca)
+
+        # send from alpha to gamma
+        msgOut = "Alpha sends to Gamma"
+        count = alpha.send(msgOut, csGamma)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = gamma.receive()
+        self.assertEqual(msgOut, msgIn)
+
+        alpha.shutclose(csGamma)
+        time.sleep(0.05)
+        msgIn = gamma.receive()
+        self.assertEqual(msgIn, '')  # gamma detects close
+
         alpha.close()
         beta.close()
         gamma.close()
@@ -623,34 +703,6 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(src, ca)  # means closed if empty but ca not None
 
 
-        #self.assertEqual(src[1], alpha.ha[1])
-
-        #console.terse("Sending alpha to alpha\n")
-        #msgOut = "alpha sends to alpha"
-        #alpha.send(msgOut, alpha.ha)
-        #time.sleep(0.05)
-        #msgIn, src = alpha.receive()
-        #self.assertEqual(msgOut, msgIn)
-        #self.assertEqual(src[1], alpha.ha[1])
-
-
-        #console.terse("Sending beta to alpha\n")
-        #msgOut = "beta sends to alpha"
-        #beta.send(msgOut, alpha.ha)
-        #time.sleep(0.05)
-        #msgIn, src = alpha.receive()
-        #self.assertEqual(msgOut, msgIn)
-        #self.assertEqual(src[1], beta.ha[1])
-
-
-        #console.terse("Sending beta to beta\n")
-        #msgOut = "beta sends to beta"
-        #beta.send(msgOut, beta.ha)
-        #time.sleep(0.05)
-        #msgIn, src = beta.receive()
-        #self.assertEqual(msgOut, msgIn)
-        #self.assertEqual(src[1], beta.ha[1])
-
         alpha.closeAll()
         beta.closeAll()
         gamma.closeAll()
@@ -670,6 +722,7 @@ def runSome():
     names = ['testConsoleNB',
              'testSocketUdpNB',
              'testSocketUxdNB',
+             'testServerClientSocketTcpNB',
              'testSocketTcpNB', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
