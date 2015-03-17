@@ -244,6 +244,277 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testServerClientSocketTcpNB(self):
+        """
+        Test Classes ServerSocketTcpNb and ClientSocketTcpNb
+        """
+        console.terse("{0}\n".format(self.testServerClientSocketTcpNB.__doc__))
+
+        alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        alphaHa = ("127.0.0.1", alpha.ha[1])
+
+        beta = nonblocking.ClientSocketTcpNb(ha=alphaHa, bufsize=131072)
+        self.assertIs(beta.reopen(), True)
+
+        gamma = nonblocking.ClientSocketTcpNb(ha=alphaHa, bufsize=131072)
+        self.assertIs(gamma.reopen(), True)
+
+        console.terse("Connecting beta to alpha\n")
+        accepteds = []
+        while True:
+            if not beta.connected:
+                beta.connect()
+            cs, ca = alpha.accept()
+            if cs:
+                accepteds.append((cs, ca))
+            if beta.connected and accepteds:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.connected, True)
+        self.assertEqual(len(accepteds), 1)
+        csBeta, caBeta = accepteds[0]
+        self.assertIsNotNone(csBeta)
+        self.assertIsNotNone(caBeta)
+
+        self.assertEqual(csBeta.getsockname(), beta.cs.getpeername())
+        self.assertEqual(csBeta.getpeername(), beta.cs.getsockname())
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(caBeta, beta.ca)
+
+        msgOut = "Beta sends to Alpha"
+        count = beta.send(msgOut)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = alpha.receive(csBeta)
+        self.assertEqual(msgOut, msgIn)
+
+        # receive without sending
+        msgIn = alpha.receive(csBeta)
+        self.assertEqual(msgIn, None)
+
+        # send multiple
+        msgOut1 = "First Message"
+        count = beta.send(msgOut1)
+        self.assertEqual(count, len(msgOut1))
+        msgOut2 = "Second Message"
+        count = beta.send(msgOut2)
+        self.assertEqual(count, len(msgOut2))
+        time.sleep(0.05)
+        msgIn  = alpha.receive(csBeta)
+        self.assertEqual(msgIn, msgOut1 + msgOut2)
+
+        # send from alpha to beta
+        msgOut = "Alpha sends to Beta"
+        count = alpha.send(msgOut, csBeta)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = beta.receive()
+        self.assertEqual(msgOut, msgIn)
+
+        # receive without sending
+        msgIn = beta.receive()
+        self.assertEqual(msgIn, None)
+
+        # build message too big to fit in buffer
+        sizes = beta.actualBufSizes()
+        size = sizes[0]
+        msgOut = ""
+        count = 0
+        while (len(msgOut) <= size * 4):
+            msgOut += "{0:0>7d} ".format(count)
+            count += 1
+        self.assertTrue(len(msgOut) >= size * 4)
+
+        msgIn = ''
+        count = 0
+        while len(msgIn) < len(msgOut):
+            if count < len(msgOut):
+                count += beta.send(msgOut[count:])
+            time.sleep(0.05)
+            msgIn += alpha.receive(csBeta)
+        self.assertEqual(count, len(msgOut))
+        self.assertEqual(msgOut, msgIn)
+
+        console.terse("Connecting gamma to alpha\n")
+        accepteds = []
+        while True:
+            if not gamma.connected:
+                gamma.connect()
+            cs, ca = alpha.accept()
+            if cs:
+                accepteds.append((cs, ca))
+            if gamma.connected and accepteds:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(gamma.connected, True)
+        self.assertEqual(len(accepteds), 1)
+        csGamma, caGamma = accepteds[0]
+        self.assertIsNotNone(csGamma)
+        self.assertIsNotNone(caGamma)
+
+        self.assertEqual(csGamma.getsockname(), gamma.cs.getpeername())
+        self.assertEqual(csGamma.getpeername(), gamma.cs.getsockname())
+        self.assertEqual(gamma.ca, gamma.cs.getsockname())
+        self.assertEqual(gamma.ha, gamma.cs.getpeername())
+        self.assertEqual(caGamma, gamma.ca)
+
+        msgOut = "Gamma sends to Alpha"
+        count = gamma.send(msgOut)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = alpha.receive(csGamma)
+        self.assertEqual(msgOut, msgIn)
+
+        # receive without sending
+        msgIn = alpha.receive(csGamma)
+        self.assertEqual(msgIn, None)
+
+        # send from alpha to gamma
+        msgOut = "Alpha sends to Gamma"
+        count = alpha.send(msgOut, csGamma)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = gamma.receive()
+        self.assertEqual(msgOut, msgIn)
+
+        # recieve without sending
+        msgIn = gamma.receive()
+        self.assertEqual(msgIn, None)
+
+        # close beta and then attempt to send
+        beta.close()
+        msgOut = "Send on closed socket"
+        with self.assertRaises(AttributeError) as cm:
+            count = beta.send(msgOut)
+
+        # attempt to receive on closed socket
+        with self.assertRaises(AttributeError) as cm:
+            msgIn = beta.receive()
+
+        # read on alpha after closed beta
+        msgIn = alpha.receive(csBeta)
+        self.assertEqual(msgIn, '')
+
+        # send on alpha after close beta
+        msgOut = "Alpha sends to Beta after close"
+        count = alpha.send(msgOut, csBeta)
+        self.assertEqual(count, len(msgOut)) #apparently works
+
+        csBeta.close()
+
+        # send on gamma then shutdown sends
+        msgOut = "Gamma sends to Alpha"
+        count = gamma.send(msgOut)
+        self.assertEqual(count, len(msgOut))
+        gamma.shutdownSend()
+        time.sleep(0.05)
+        msgIn = alpha.receive(csGamma)
+        self.assertEqual(msgOut, msgIn)
+        msgIn = alpha.receive(csGamma)
+        self.assertEqual(msgIn, '')  # gamma shutdown detected
+        # send from alpha to gamma and shutdown
+        msgOut = "Alpha sends to Gamma"
+        count = alpha.send(msgOut, csGamma)
+        self.assertEqual(count, len(msgOut))
+
+        alpha.shutdown(csGamma)  # shutdown alpha
+        time.sleep(0.05)
+        msgIn = gamma.receive()
+        self.assertEqual(msgOut, msgIn)
+        msgIn = gamma.receive()
+        self.assertEqual(msgIn, None)  # alpha shutdown not detected
+        time.sleep(0.05)
+        msgIn = gamma.receive()
+        self.assertEqual(msgIn, None)  # alpha shutdown not detected
+
+        alpha.shutclose(csGamma)  # close alpha
+        time.sleep(0.05)
+        msgIn = gamma.receive()
+        self.assertEqual(msgIn, '')  # alpha close is detected
+
+        # reopen beta
+        self.assertIs(beta.reopen(), True)
+
+        console.terse("Connecting beta to alpha\n")
+        accepteds = []
+        while True:
+            if not beta.connected:
+                beta.connect()
+            cs, ca = alpha.accept()
+            if cs:
+                accepteds.append((cs, ca))
+            if beta.connected and accepteds:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.connected, True)
+        self.assertEqual(len(accepteds), 1)
+        csBeta, caBeta = accepteds[0]
+        self.assertIsNotNone(csBeta)
+        self.assertIsNotNone(caBeta)
+
+        self.assertEqual(csBeta.getsockname(), beta.cs.getpeername())
+        self.assertEqual(csBeta.getpeername(), beta.cs.getsockname())
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(caBeta, beta.ca)
+
+        msgOut = "Beta sends to Alpha"
+        count = beta.send(msgOut)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = alpha.receive(csBeta)
+        self.assertEqual(msgOut, msgIn)
+
+        # send from alpha to beta
+        msgOut = "Alpha sends to Beta"
+        count = alpha.send(msgOut, csBeta)
+        self.assertEqual(count, len(msgOut))
+        time.sleep(0.05)
+        msgIn = beta.receive()
+        self.assertEqual(msgOut, msgIn)
+
+        # send then shutdown alpha and then attempt to send
+        msgOut1 = "Alpha sends to Beta"
+        count = alpha.send(msgOut, csBeta)
+        self.assertEqual(count, len(msgOut1))
+        alpha.shutdownSend(csBeta)
+        msgOut2 = "Send on shutdown socket"
+        with self.assertRaises(socket.error) as cm:
+            count = alpha.send(msgOut, csBeta)
+        self.assertTrue(cm.exception.errno == errno.EPIPE)
+        time.sleep(0.05)
+        msgIn = beta.receive()
+        self.assertEqual(msgOut1, msgIn)
+        msgIn = beta.receive()
+        self.assertEqual(msgIn, '')  # beta detects shutdown socket
+
+        msgOut = "Beta sends to Alpha"
+        count = beta.send(msgOut)
+        self.assertEqual(count, len(msgOut))
+        beta.shutdown()
+        time.sleep(0.05)
+        msgIn = alpha.receive(csBeta)
+        self.assertEqual(msgOut, msgIn)
+        time.sleep(0.05)
+        msgIn = alpha.receive(csBeta)
+        self.assertEqual(msgIn, None)  # alpha does not detect shutdown
+        beta.close()
+        time.sleep(0.05)
+        msgIn = alpha.receive(csBeta)
+        self.assertEqual(msgIn, '')  # alpha detects closed socket
+
+        csBeta.close()
+
+        alpha.close()
+        beta.close()
+        gamma.close()
+
     def testSocketTcpNB(self):
         """
         Test Class SocketTcpNb
@@ -416,7 +687,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
-    runOne('testSocketTcpNB')
+    #runOne('testServerClientSocketTcpNB')
 
