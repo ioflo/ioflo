@@ -11,6 +11,7 @@ import sys
 import os
 import socket
 import errno
+from collections import deque
 
 try:
     import win32file
@@ -798,7 +799,7 @@ class ServerSocketTcpNb(object):
         date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
 
         if not self.txLog:
-            name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+            name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
             try:
                 self.txLog = open(name, 'w+')
             except IOError:
@@ -808,7 +809,7 @@ class ServerSocketTcpNb(object):
             self.ownTxLog = True
 
         if not self.rxLog:
-            name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+            name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
             try:
                 self.rxLog = open(name, 'w+')
             except IOError:
@@ -985,15 +986,15 @@ class ServerSocketTcpNb(object):
             if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 return None
             else:
-                emsg = ("socket.error = {0}: server at {1} receiving "
-                        "f\n".format(ex, self.ha))
+                emsg = ("socket.error = {0}: server at {1} while receiving"
+                        "\n".format(ex, self.ha))
                 console.profuse(emsg)
                 raise  # re-raise
 
         message = ("Server at {0} received {1}\n".format(self.ha, data))
         console.profuse(message)
         if self.log and self.rxLog:
-            self.rxLog.write("%s\n%s\n" % (str(cs.getpeername()), repr(data)))
+            self.rxLog.write("{0}\n{1}\n".format(self.ha, data))
         return data
 
     def receiveFrom(self, cs):
@@ -1018,7 +1019,7 @@ class ServerSocketTcpNb(object):
         except socket.error as ex:
             result = 0
             if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                emsg = ("socket.error = {0}: server at {1} "
+                emsg = ("socket.error = {0}: server at {1} while"
                         "sending\n".format(ex, self.ha,))
                 console.profuse(emsg)
                 raise
@@ -1027,8 +1028,7 @@ class ServerSocketTcpNb(object):
                         "bytes\n".format(self.ha, result))
 
         if self.log and self.txLog:
-            self.txLog.write("%s %s bytes\n%s\n" %
-                             (str(cs.getpeername()), str(result), repr(data)))
+            self.txLog.write("{0}\n{1}\n".format(self.ha, data))
 
         return result
 
@@ -1084,7 +1084,7 @@ class ClientSocketTcpNb(object):
         date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
 
         if not self.txLog:
-            name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+            name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
             try:
                 self.txLog = open(name, 'w+')
             except IOError:
@@ -1094,7 +1094,7 @@ class ClientSocketTcpNb(object):
             self.ownTxLog = True
 
         if not self.rxLog:
-            name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+            name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
             try:
                 self.rxLog = open(name, 'w+')
             except IOError:
@@ -1206,16 +1206,13 @@ class ClientSocketTcpNb(object):
             self.shutdown()
             self.cs.close()  #close socket
             self.cs = None
+            self.connected = False
 
     def close(self):
         """
         Closes local connection socket
         """
-        if self.cs:
-            self.shutdown()  # shutdown connected socket
-            self.cs.close()  # close socket
-            self.cs = None
-            self.connected = False
+        self.shutclose()
         self.closeLogs()
 
     def connect(self):
@@ -1263,7 +1260,7 @@ class ClientSocketTcpNb(object):
                    "{2}\n".format(self.ca, self.ha, data))
         console.profuse(message)
         if self.log and self.rxLog:
-            self.rxLog.write("%s\n%s\n" % (str(self.ha), repr(data)))
+            self.rxLog.write("{0}\n{1}\n".format(self.ha, data))
         return data
 
     def receiveFrom(self):
@@ -1297,8 +1294,7 @@ class ClientSocketTcpNb(object):
                         "bytes\n".format(self.ca, self.ha, result))
 
         if self.log and self.txLog:
-            self.txLog.write("%s %s bytes\n%s\n" %
-                             (str(self.ha), str(result), repr(data)))
+            self.txLog.write("{0}\n{1}\n".format(self.ha, data))
 
         return result
 
@@ -1333,6 +1329,8 @@ class Incomer(object):
         self.ca = ca
         self.cs = cs
         self.closed  # True when detect connection closed on far side
+        self.txes = deque()  # deque of data to send
+        self.rxes = deque() # deque of data received
         self.log = log
         self.txLog = txLog
         self.rxLog = rxLog
@@ -1375,6 +1373,8 @@ class Incomer(object):
             self.shutdown()
             self.cs.close()  #close socket
             self.cs = None
+
+    close = shutclose  # alias
 
     def receive(self):
         """
@@ -1452,8 +1452,11 @@ class Outgoer(object):
                  uid=0,
                  ha=None,
                  ca=None,
-                 cs=None):
-
+                 cs=None,
+                 bufsize=8096,
+                 log=False,
+                 txLog=None,
+                 rxLog=None):
         """
         Initialization method for instance.
         name = user friendly name for connection
@@ -1461,16 +1464,188 @@ class Outgoer(object):
         ha = host address duple (host, port) far side of connection
         ca = virtual host address duple (host, port) near side of connection
         cs = connection socket object
+        bufsize = size of send and receive socket buffers
+        log = Boolean If True then log rx tx to log files
+        txLog = transmit log file
+        rxLog = receive log file
         """
         self.name = name
         self.uid = uid
         self.ha = ha
         self.ca = ca
         self.cs = cs
+        self.bs = bufsize
         self.closed  # True when detect connection closed on far side
         self.connected  # True once connection completed
+        self.txes = deque()  # deque of data to send
+        self.rxes = deque() # deque of data received
+        self.log = log
+        self.txLog = txLog
+        self.rxLog = rxLog
 
+    def open(self):
+        """
+        Opens connection socket in non blocking mode.
 
+        if socket not closed properly, binding socket gets error
+          socket.error: (48, 'Address already in use')
+        """
+        self.connected = False
+
+        #create connection socket
+        self.cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # make socket address reusable.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
+        self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        # Linux TCP allocates twice the requested size
+        if sys.platform.startswith('linux'):
+            bs = 2 * self.bs  # get size is twice the set size
+        else:
+            bs = self.bs
+
+        if self.cs.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  bs:
+            self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.cs.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
+            self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+
+        self.cs.setblocking(0) #non blocking socket
+
+        return True
+
+    def reopen(self):
+        """
+        Idempotently opens socket
+        """
+        self.close()
+        return self.open()
+
+    def shutdown(self, how=socket.SHUT_RDWR):
+        """
+        Shutdown connected socket .cs
+        """
+        if self.cs:
+            try:
+                self.cs.shutdown(how)  # shutdown socket
+            except socket.error as ex:
+                pass
+
+    def shutdownSend(self):
+        """
+        Shutdown send on connected socket .cs
+        """
+        if self.cs:
+            try:
+                self.shutdown(how=socket.SHUT_WR)  # shutdown socket
+            except socket.error as ex:
+                pass
+
+    def shutdownReceive(self):
+        """
+        Shutdown receive on connected socket .cs
+        """
+        if self.cs:
+            try:
+                self.shutdown(how=socket.SHUT_RD)  # shutdown socket
+            except socket.error as ex:
+                pass
+
+    def shutclose(self):
+        """
+        Shutdown and close connected socket .cs
+        """
+        if self.cs:
+            self.shutdown()
+            self.cs.close()  #close socket
+            self.cs = None
+            self.connected = False
+
+    close = shutclose  # alias
+
+    def connect(self):
+        """
+        Attempt nonblocking connect to .ha
+        Returns True if successful
+        Returns False if not so try again later
+        """
+        try:
+            result = self.cs.connect_ex(self.ha)  # async connect
+        except socket.error as ex:
+            console.terse("socket.error = {0}\n".format(ex))
+            raise
+
+        if result not in [0, errno.EISCONN]:  # not yet connected
+            return False  # try again later
+
+        self.connected = True
+        # now self.cs has new virtual port see self.cs.getsockname()
+        self.ca = self.cs.getsockname()  # resolved local connection address
+        # self.cs.getpeername() is self.ha
+        self.ha = self.cs.getpeername()  # resolved remote connection address
+
+        return True
+
+    def receive(self):
+        """
+        Perform non blocking receive from connected socket .cs
+
+        If no data then returns None
+        If connection closed then returns ''
+        Otherwise returns data
+        """
+        try:
+            data = self.cs.recv(self.bs)
+        except socket.error as ex:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                return None
+            else:
+                emsg = ("socket.error = {0}: server at {1} receiving "
+                        "from {2}\n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                raise  # re-raise
+        message = ("Client at {0} received from {1}, "
+                   "{2}\n".format(self.ca, self.ha, data))
+        console.profuse(message)
+        if self.log and self.rxLog:
+            self.rxLog.write("{0}\n{1}\n".format(self.ha, data))
+        return data
+
+    def receiveFrom(self):
+        """
+        If no data then returns (None, sa)
+        If connection closed on far side then returns ('', sa)
+        Otherwise returns (data, ca)
+
+        Where sa is source socket's ha given by .getpeername()
+        """
+        return (self.receive(), self.ha)
+
+    def send(self, data):
+        """
+        Perform non blocking send on connected socket .cs.
+        Return number of bytes sent
+
+        data is string in python2 and bytes in python3
+        """
+        try:
+            result = self.cs.send(data) #result is number of bytes sent
+        except socket.error as ex:
+            result = 0
+            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                emsg = ("socket.error = {0}: server at {1} sending "
+                        "to {2} \n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                raise
+
+        console.profuse("Client at {0} sent to {1}, {2} "
+                        "bytes\n".format(self.ca, self.ha, result))
+
+        if self.log and self.txLog:
+            self.txLog.write("{0}\n{1}\n".format(self.ha, data))
+
+        return result
 
 class PeerSocketTcpNb(object):
     """
@@ -1520,7 +1695,7 @@ class PeerSocketTcpNb(object):
         date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
 
         if not self.txLog:
-            name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+            name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
             try:
                 self.txLog = open(name, 'w+')
             except IOError:
@@ -1530,7 +1705,7 @@ class PeerSocketTcpNb(object):
             self.ownTxLog = True
 
         if not self.rxLog:
-            name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+            name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
             try:
                 self.rxLog = open(name, 'w+')
             except IOError:
@@ -1644,56 +1819,55 @@ class PeerSocketTcpNb(object):
             raise  # re-raise
         return (cs, ca)
 
-    @staticmethod
-    def shutdown(cs, how=socket.SHUT_RDWR):
+    def serviceAx(self):
         """
-        Shutdown and close connected socket cs
+        Service any accept requests and add to .ixers
+        Returns list of accepted connection socket duples
+        [(cs,ca)]
         """
-        if cs:
-            try:
-                cs.shutdown(how)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
+        accepteds = []
+        while True:
+            cs, ca = self.accept()
+            if not cs:
+                break
+            accepteds.append((cs, ca))
+            if ca != cs.getpeername() or self.ha != cs.getsockename():
+                raise ValueError("Accepted socket host addresses malformed for "
+                                 "peer ha {0} != {1}, ca {2} != {3}\n".format(
+                                 self.ha, cs.getsockname(), ca, cs.getpeername()))
+            incomer = Incomer(ha=cs.getsockname(),
+                              ca=cs.getpeername(),
+                              cs=cs,
+                             log=self.log,
+                             txLog=self.txLog,
+                             rxLog=self.rxLog)
+            self.ixers[ca] = incomer
+        return accepteds
+
+    def _handleOneReceived(self):
+        '''
+        Handle one received message from server
+        assumes that there is a server
+        '''
+        try:
+            rx, ra = self.server.receive()  # if no data the duple is ('',None)
+        except socket.error as ex:
+            if ex.errno == errno.ECONNRESET:
+                return False
+        if not rx:  # no received data
+            return False
+        self.rxes.append((rx, ra))     # duple = ( packet, source address)
+        return True
+
+    def serviceReceives(self):
+        '''
+        Retrieve from server all recieved and put on the rxes deque
+        '''
+        if self.server:
+            while self._handleOneReceived():
                 pass
 
-    @staticmethod
-    def shutdownSend(cs):
-        """
-        Shutdown and close connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(socket.SHUT_WR)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-
-    @staticmethod
-    def shutdownReceive(cs):
-        """
-        Shutdown and close connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(socket.SHUT_RD)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-
-    @staticmethod
-    def shutclose(cs):
-        """
-        Shutdown and close connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(socket.SHUT_RDWR)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-            cs.close()  #close socket
-
-    def receive(self, cs):
+    def serviceReceives(self, ca):
         """
         Perform non blocking receive from connected socket cs
 
@@ -1718,17 +1892,46 @@ class PeerSocketTcpNb(object):
             self.rxLog.write("%s\n%s\n" % (str(cs.getpeername()), repr(data)))
         return data
 
-    def receiveFrom(self, cs):
-        """
-        If no data then returns (None, sa)
-        If connection closed on far side then returns ('', sa)
-        Otherwise returns (data, ca)
+    def _handleOneTx(self, laters, blocks):
+        '''
+        Handle one message on .txes deque
+        Assumes there is a message
+        laters is deque of messages to try again later
+        blocks is list of destinations that already blocked on this service
+        '''
+        tx, ta = self.txes.popleft()  # duple = (packet, destination address)
 
-        Where sa is source socket's ha given by .getpeername()
-        """
-        return (self.receive(cs), cs.getpeername())
+        if ta in blocks: # already blocked on this iteration
+            laters.append((tx, ta)) # keep sequential
+            return
 
-    def send(self, data, cs):
+        try:
+            self.server.send(tx, ta)
+        except socket.error as ex:
+            if (ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK,
+                             errno.ENETUNREACH, errno.ETIME,
+                             errno.EHOSTUNREACH, errno.EHOSTDOWN,
+                             errno.ECONNRESET]):
+                # problem sending such as busy with last message. save it for later
+                laters.append((tx, ta))
+                blocks.append(ta)
+            else:
+                raise
+
+        def serviceTxes(self):
+            '''
+            Service the .txes deque to send  messages through server
+            '''
+            if self.server:
+                laters = deque()
+                blocks = []
+                while self.txes:
+                    self._handleOneTx(laters, blocks)
+                while laters:
+                    self.txes.append(laters.popleft())
+
+
+    def serviceSends(self, data, cs):
         """
         Perform non blocking send on connected socket cs.
         Return number of bytes sent
@@ -1754,19 +1957,6 @@ class PeerSocketTcpNb(object):
 
         return result
 
-    def serviceAx(self):
-        """
-        Service any accept requests
-        Returns list of accepted connection socket duples
-        [(cs,ca)]
-        """
-        accepteds = []
-        while True:
-            cs, ca = self.accept()
-            if not cs:
-                break
-            accepteds.append((cs, ca))
-        return accepteds
 
 
 class OldSocketTcpPeerNb(object):
