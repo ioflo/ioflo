@@ -228,12 +228,8 @@ class ConsoleNB(object):
         return(os.write(self.fd, data))
 
 class SocketUdpNb(object):
-    """Class to manage non blocking io on UDP socket.
-
-       Opens non blocking socket
-       Use instance method close to close socket
-
-       Needs socket module
+    """
+    Class to manage non blocking I/O on UDP socket.
     """
 
     def __init__(self, ha=None, host = '', port = 55000, bufsize = 1024,
@@ -259,15 +255,15 @@ class SocketUdpNb(object):
         """
         Open log files
         """
-        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        date = time.strftime('%Y%m%d_%H%M%S', time.gmtime(time.time()))
+        name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
         try:
             self.txLog = open(name, 'w+')
         except IOError:
             self.txLog = None
             self.log = False
             return False
-        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
         try:
             self.rxLog = open(name, 'w+')
         except IOError:
@@ -298,10 +294,11 @@ class SocketUdpNb(object):
                 self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
 
     def open(self):
-        """Opens socket in non blocking mode.
+        """
+        Opens socket in non blocking mode.
 
-           if socket not closed properly, binding socket gets error
-              socket.error: (48, 'Address already in use')
+        if socket not closed properly, binding socket gets error
+           socket.error: (48, 'Address already in use')
         """
         #create socket ss = server socket
         self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -332,13 +329,15 @@ class SocketUdpNb(object):
         return True
 
     def reopen(self):
-        """     """
+        """
+        Idempotently open socket
+        """
         self.close()
         return self.open()
 
     def close(self):
-        """Closes  socket.
-
+        """
+        Closes  socket and logs if any
         """
         if self.ss:
             self.ss.close() #close socket
@@ -347,39 +346,37 @@ class SocketUdpNb(object):
         self.closeLogs()
 
     def receive(self):
-        """Perform non blocking read on  socket.
+        """
+        Perform non blocking read on  socket.
 
-           returns tuple of form (data, sa)
-           if no data then returns ('',None)
-           but always returns a tuple with two elements
+        returns tuple of form (data, sa)
+        if no data then returns ('',None)
+        but always returns a tuple with two elements
         """
         try:
             #sa = source address tuple (sourcehost, sourceport)
             data, sa = self.ss.recvfrom(self.bs)
-
-            message = "Server at {0} received {1} from {2}\n".format(
-                str(self.ha),data, str(sa))
-            console.profuse(message)
-
-            if self.log and self.rxLog:
-                self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
-
-            return (data,sa)
-        except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            # Some OSes define errno differently so check for both
-            if ex.errno == errno.EAGAIN or ex.errno == errno.EWOULDBLOCK:
-                return ('',None) #receive has nothing empty string for data
+        except socket.error as ex:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                return ('', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
                 console.profuse(emsg)
                 raise #re raise exception ex1
+        message = "Server at {0} received from {1}, {2}\n".format(self.ha, sa, data)
+        console.profuse(message)
+
+        if self.log and self.rxLog:
+            self.rxLog.write("{0}\n{1}\n".format(sa, data))
+
+        return (data, sa)
 
     def send(self, data, da):
-        """Perform non blocking send on  socket.
+        """
+        Perform non blocking send on  socket.
 
-           data is string in python2 and bytes in python3
-           da is destination address tuple (destHost, destPort)
-
+        data is string in python2 and bytes in python3
+        da is destination address tuple (destHost, destPort)
         """
         try:
             result = self.ss.sendto(data, da) #result is number of bytes sent
@@ -389,11 +386,11 @@ class SocketUdpNb(object):
             result = 0
             raise
 
-        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
+        console.profuse("Server at {0} sent to {1}, {2} bytes\n".format(
+                                                self.ha, da, result))
 
         if self.log and self.txLog:
-            self.txLog.write("%s %s bytes\n%s\n" %
-                             (str(da), str(result), repr(data)))
+            self.txLog.write("{0}\n{1}\n".format(da, data))
 
         return result
 
@@ -427,18 +424,18 @@ class SocketUxdNb(object):
         self.umask = umask
 
     def openLogs(self, path = ''):
-        """Open log files
-
+        """
+        Open log files
         """
         date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
         try:
             self.txLog = open(name, 'w+')
         except IOError:
             self.txLog = None
             self.log = False
             return False
-        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
+        name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
         try:
             self.rxLog = open(name, 'w+')
         except IOError:
@@ -551,29 +548,27 @@ class SocketUxdNb(object):
         try:
             #sa = source address tuple (sourcehost, sourceport)
             data, sa = self.ss.recvfrom(self.bs)
-
-            message = "Server at {0} received {1} from {2}\n".format(
-                str(self.ha),data, str(sa))
-            console.profuse(message)
-
-            if self.log and self.rxLog:
-                self.rxLog.write("%s\n%s\n" % (str(sa), repr(data)))
-
-            return (data, sa)
-        except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            if ex.errno == errno.EAGAIN: #Resource temporarily unavailable on os x
+        except socket.error as ex:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 return ('', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
                 console.profuse(emsg)
                 raise #re raise exception ex1
 
+        message = "Server at {0} received from {1}, {2} \n".format(self.ha,sa, data)
+        console.profuse(message)
+
+        if self.log and self.rxLog:
+            self.rxLog.write("{0}\n{1}\n".format(sa, data))
+
+        return (data, sa)
+
     def send(self, data, da):
         """Perform non blocking send on  socket.
 
            data is string in python2 and bytes in python3
            da is destination address tuple (destHost, destPort)
-
         """
         try:
             result = self.ss.sendto(data, da) #result is number of bytes sent
@@ -583,11 +578,11 @@ class SocketUxdNb(object):
             result = 0
             raise
 
-        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
+        console.profuse("Server at {0} sent to {1}, {2} bytes\n".format(
+                                                   self.ha, da, result))
 
         if self.log and self.txLog:
-            self.txLog.write("%s %s bytes\n%s\n" %
-                             (str(da), str(result), repr(data)))
+            self.txLog.write("{0}\n{1}\n".format(da, data))
 
         return result
 
@@ -930,7 +925,7 @@ class ServerSocketTcpNb(object):
     @staticmethod
     def shutdown(cs, how=socket.SHUT_RDWR):
         """
-        Shutdown and close connected socket cs
+        Shutdown connected socket cs
         """
         if cs:
             try:
@@ -942,7 +937,7 @@ class ServerSocketTcpNb(object):
     @staticmethod
     def shutdownSend(cs):
         """
-        Shutdown and close connected socket cs
+        Shutdown send on connected socket cs
         """
         if cs:
             try:
@@ -954,7 +949,7 @@ class ServerSocketTcpNb(object):
     @staticmethod
     def shutdownReceive(cs):
         """
-        Shutdown and close connected socket cs
+        Shutdown receive on connected socket cs
         """
         if cs:
             try:
@@ -1175,35 +1170,32 @@ class ClientSocketTcpNb(object):
 
     def shutdown(self, how=socket.SHUT_RDWR):
         """
-        Shutdown and close connected socket .cs
+        Shutdown connected socket .cs
         """
         if self.cs:
             try:
                 self.cs.shutdown(how)  # shutdown socket
             except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
                 pass
 
     def shutdownSend(self):
         """
-        Shutdown and close connected socket .cs
+        Shutdown send on connected socket .cs
         """
         if self.cs:
             try:
                 self.shutdown(how=socket.SHUT_WR)  # shutdown socket
             except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
                 pass
 
     def shutdownReceive(self):
         """
-        Shutdown and close connected socket .cs
+        Shutdown receive on connected socket .cs
         """
         if self.cs:
             try:
                 self.shutdown(how=socket.SHUT_RD)  # shutdown socket
             except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
                 pass
 
     def shutclose(self):
@@ -1312,41 +1304,171 @@ class ClientSocketTcpNb(object):
 
 class Incomer(object):
     """
-    Containers class for nonblocking incoming TCP connection.
+    Manager class for incoming nonblocking TCP connections.
     """
     def __init__(self,
                  name='',
                  uid=0,
                  ha=None,
                  ca=None,
-                 closed=True):
+                 cs=None,
+                 log=False,
+                 txLog=None,
+                 rxLog=None):
 
         """
         Initialization method for instance.
         name = user friendly name for connection
         uid = unique identifier for connection
-        ha =
-        ha = host address duple (host, port) for listen socket
-        host = host address, '' means any interface on host
-        port = socket port
-        bufsize = buffer size
-        path = path to log directory
-        log = boolean flag, creates logs if True
-        txLog = log file object or None
-        rxLog = log file object or None
+        ha = host address duple (host, port) near side of connection
+        ca = virtual host address duple (host, port) far side of connection
+        cs = connection socket object
+        log = Boolean If True then log rx tx to log files
+        txLog = transmit log file
+        rxLog = receive log file
         """
-        self.ha = ha or (host, port)  # ha = host address
-        self.bs = bufsize
-        self.ss = None  # listen socket for accepts
-        self.ixers = odict()  # incoming connections indexed by ca
-        self.oxers = odict()  # outgoing connections indexed by ha
-
-        self.path = path #path to directory where log files go must end in /
-        self.txLog = txLog  # transmit log file object
-        self.rxLog = rxLog  # receive log file object
+        self.name = name
+        self.uid = uid
+        self.ha = ha
+        self.ca = ca
+        self.cs = cs
+        self.closed  # True when detect connection closed on far side
         self.log = log
-        self.ownTxLog = False  # txLog created not passed in
-        self.ownRxLog = False  # rxLog created not passed in
+        self.txLog = txLog
+        self.rxLog = rxLog
+
+    def shutdown(self, how=socket.SHUT_RDWR):
+        """
+        Shutdown connected socket .cs
+        """
+        if self.cs:
+            try:
+                self.cs.shutdown(how)  # shutdown socket
+            except socket.error as ex:
+                pass
+
+    def shutdownSend(self):
+        """
+        Shutdown send on connected socket .cs
+        """
+        if self.cs:
+            try:
+                self.shutdown(how=socket.SHUT_WR)  # shutdown socket
+            except socket.error as ex:
+                pass
+
+    def shutdownReceive(self):
+        """
+        Shutdown receive on connected socket .cs
+        """
+        if self.cs:
+            try:
+                self.shutdown(how=socket.SHUT_RD)  # shutdown socket
+            except socket.error as ex:
+                pass
+
+    def shutclose(self):
+        """
+        Shutdown and close connected socket .cs
+        """
+        if self.cs:
+            self.shutdown()
+            self.cs.close()  #close socket
+            self.cs = None
+
+    def receive(self):
+        """
+        Perform non blocking receive on connected socket .cs
+
+        If no data then returns None
+        If connection closed then returns ''
+        Otherwise returns data
+
+        data is string in python2 and bytes in python3
+        """
+        try:
+            data = self.cs.recv(self.bs)
+        except socket.error as ex:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                return None
+            else:
+                emsg = ("socket.error = {0}: Incomer at {1} while receiving from {2}\n"
+                        "f\n".format(ex, self.ha, self.ca))
+                console.profuse(emsg)
+                raise  # re-raise
+
+        if data == '':  # far side shutdown or closed
+            self.closed = True
+
+        message = ("Incomer at {0} received from {1}, "
+                   "{2}\n".format(self.ha, self.ca, data))
+        console.profuse(message)
+        if self.log and self.rxLog:
+            self.rxLog.write("{0}\n{1}\n".format(self.ca, data))
+        return data
+
+    def receiveFrom(self):
+        """
+        If no data then returns (None, sa)
+        If connection closed on far side then returns ('', sa)
+        Otherwise returns (data, ca)
+
+        Where sa is source socket's ha given by self.ca = self.cs.getpeername()
+        """
+        return (self.receive(), self.ca)
+
+    def send(self, data):
+        """
+        Perform non blocking send on connected socket .cs.
+        Return number of bytes sent
+
+        data is string in python2 and bytes in python3
+        """
+        try:
+            result = self.cs.send(data) #result is number of bytes sent
+        except socket.error as ex:
+            result = 0
+            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                emsg = ("socket.error = {0}: server at {1} "
+                        "sending\n".format(ex, self.ha,))
+                console.profuse(emsg)
+                raise
+
+        console.profuse("Incomer at {0} sent to {1}, {2} "
+                        "bytes\n".format(self.ha, self.ca, result))
+
+        if self.log and self.txLog:
+            self.txLog.write("{0}\n{2}\n".format(self.ca, data))
+
+        return result
+
+
+class Outgoer(object):
+    """
+    Manager class for outgoing nonblocking TCP connections.
+    """
+    def __init__(self,
+                 name='',
+                 uid=0,
+                 ha=None,
+                 ca=None,
+                 cs=None):
+
+        """
+        Initialization method for instance.
+        name = user friendly name for connection
+        uid = unique identifier for connection
+        ha = host address duple (host, port) far side of connection
+        ca = virtual host address duple (host, port) near side of connection
+        cs = connection socket object
+        """
+        self.name = name
+        self.uid = uid
+        self.ha = ha
+        self.ca = ca
+        self.cs = cs
+        self.closed  # True when detect connection closed on far side
+        self.connected  # True once connection completed
 
 
 
@@ -1355,14 +1477,15 @@ class PeerSocketTcpNb(object):
     Nonblocking Peer TCP Socket Class.
     Supports both incoming and outgoing connections.
     """
-    def __init__(self, ha=None, host='', port=56000, bufsize=8096,
+    def __init__(self, ha=None, host='', port=56000, eha=None, bufsize=8096,
                  path='', log=False, txLog=None, rxLog=None):
         """
         Initialization method for instance.
 
         ha = host address duple (host, port) for listen socket
-        host = host address, '' means any interface on host
-        port = socket port
+        host = host address for listen socket, '' means any interface on host
+        port = socket port for listen socket
+        eha = external destination address for incoming connections
         bufsize = buffer size
         path = path to log directory
         log = boolean flag, creates logs if True
@@ -1370,10 +1493,18 @@ class PeerSocketTcpNb(object):
         rxLog = log file object or None
         """
         self.ha = ha or (host, port)  # ha = host address
+        eha = eha or self.ha
+        if eha:
+            host, port = eha
+            host = socket.gethostbyname(host)
+            if host in ['0.0.0.0', '']:
+                host = '127.0.0.1'
+            eha = (host, port)
+        self.eha = eha
         self.bs = bufsize
         self.ss = None  # listen socket for accepts
-        self.ixers = odict()  # incoming connections indexed by ca
-        self.oxers = odict()  # outgoing connections indexed by ha
+        self.ixers = odict()  # incoming connections indexed by ca far side
+        self.oxers = odict()  # outgoing connections indexed by ha far side
 
         self.path = path #path to directory where log files go must end in /
         self.txLog = txLog  # transmit log file object
