@@ -18,6 +18,7 @@ import shutil
 import socket
 import errno
 
+from ioflo.base.globaling import *
 #from ioflo.test import testing
 from ioflo.base.consoling import getConsole
 console = getConsole()
@@ -81,7 +82,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.reopen(), True)
 
         console.terse("Sending alpha to beta\n")
-        msgOut = "alpha sends to beta"
+        msgOut = b"alpha sends to beta"
         alpha.send(msgOut, beta.ha)
         time.sleep(0.05)
         msgIn, src = beta.receive()
@@ -89,7 +90,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(src[1], alpha.ha[1])
 
         console.terse("Sending alpha to alpha\n")
-        msgOut = "alpha sends to alpha"
+        msgOut = b"alpha sends to alpha"
         alpha.send(msgOut, alpha.ha)
         time.sleep(0.05)
         msgIn, src = alpha.receive()
@@ -98,7 +99,7 @@ class BasicTestCase(unittest.TestCase):
 
 
         console.terse("Sending beta to alpha\n")
-        msgOut = "beta sends to alpha"
+        msgOut = b"beta sends to alpha"
         beta.send(msgOut, alpha.ha)
         time.sleep(0.05)
         msgIn, src = alpha.receive()
@@ -107,7 +108,7 @@ class BasicTestCase(unittest.TestCase):
 
 
         console.terse("Sending beta to beta\n")
-        msgOut = "beta sends to beta"
+        msgOut = b"beta sends to beta"
         beta.send(msgOut, beta.ha)
         time.sleep(0.05)
         msgIn, src = beta.receive()
@@ -153,55 +154,55 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(result, True)
         self.assertEqual(gamma.ha, ha)
 
-        txMsg = "Alpha sends to Beta"
+        txMsg = b"Alpha sends to Beta"
         alpha.send(txMsg, beta.ha)
         rxMsg, sa = beta.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, alpha.ha)
 
-        txMsg = "Alpha sends to Gamma"
+        txMsg = b"Alpha sends to Gamma"
         alpha.send(txMsg, gamma.ha)
         rxMsg, sa = gamma.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, alpha.ha)
 
-        txMsg = "Alpha sends to Alpha"
+        txMsg = b"Alpha sends to Alpha"
         alpha.send(txMsg, alpha.ha)
         rxMsg, sa = alpha.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, alpha.ha)
 
-        txMsg = "Beta sends to Alpha"
+        txMsg = b"Beta sends to Alpha"
         beta.send(txMsg, alpha.ha)
         rxMsg, sa = alpha.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, beta.ha)
 
-        txMsg = "Beta sends to Gamma"
+        txMsg = b"Beta sends to Gamma"
         beta.send(txMsg, gamma.ha)
         rxMsg, sa = gamma.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, beta.ha)
 
-        txMsg = "Beta sends to Beta"
+        txMsg = b"Beta sends to Beta"
         beta.send(txMsg, beta.ha)
         rxMsg, sa = beta.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, beta.ha)
 
-        txMsg = "Gamma sends to Alpha"
+        txMsg = b"Gamma sends to Alpha"
         gamma.send(txMsg, alpha.ha)
         rxMsg, sa = alpha.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, gamma.ha)
 
-        txMsg = "Gamma sends to Beta"
+        txMsg = b"Gamma sends to Beta"
         gamma.send(txMsg, beta.ha)
         rxMsg, sa = beta.receive()
         self.assertEqual(txMsg, rxMsg)
         self.assertEqual(sa, gamma.ha)
 
-        txMsg = "Gamma sends to Gamma"
+        txMsg = b"Gamma sends to Gamma"
         gamma.send(txMsg, gamma.ha)
         rxMsg, sa = gamma.receive()
         self.assertEqual(txMsg, rxMsg)
@@ -218,7 +219,7 @@ class BasicTestCase(unittest.TestCase):
         for i, pair in enumerate(pairs):
             txer, rxer = pair
             txName, rxName =  names[i]
-            txMsg = "{0} sends to {1} again".format(txName.capitalize(), rxName.capitalize())
+            txMsg = ns2b("{0} sends to {1} again".format(txName.capitalize(), rxName.capitalize()))
             txer.send(txMsg, rxer.ha)
             rxMsg, sa = rxer.receive()
             self.assertEqual(txMsg, rxMsg)
@@ -226,15 +227,15 @@ class BasicTestCase(unittest.TestCase):
 
 
         rxMsg, sa = alpha.receive()
-        self.assertIs('', rxMsg)
+        self.assertIs(b'', rxMsg)
         self.assertIs(None, sa)
 
         rxMsg, sa = beta.receive()
-        self.assertIs('', rxMsg)
+        self.assertIs(b'', rxMsg)
         self.assertIs(None, sa)
 
         rxMsg, sa = gamma.receive()
-        self.assertIs('', rxMsg)
+        self.assertIs(b'', rxMsg)
         self.assertIs(None, sa)
 
         alpha.close()
@@ -284,7 +285,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertEqual(caBeta, beta.ca)
 
-        msgOut = "Beta sends to Alpha"
+        msgOut = b"Beta sends to Alpha"
         count = beta.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -296,10 +297,10 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, None)
 
         # send multiple
-        msgOut1 = "First Message"
+        msgOut1 = b"First Message"
         count = beta.send(msgOut1)
         self.assertEqual(count, len(msgOut1))
-        msgOut2 = "Second Message"
+        msgOut2 = b"Second Message"
         count = beta.send(msgOut2)
         self.assertEqual(count, len(msgOut2))
         time.sleep(0.05)
@@ -307,7 +308,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut1 + msgOut2)
 
         # send from alpha to beta
-        msgOut = "Alpha sends to Beta"
+        msgOut = b"Alpha sends to Beta"
         count = alpha.send(msgOut, csBeta)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -321,14 +322,14 @@ class BasicTestCase(unittest.TestCase):
         # build message too big to fit in buffer
         sizes = beta.actualBufSizes()
         size = sizes[0]
-        msgOut = ""
+        msgOut = b""
         count = 0
         while (len(msgOut) <= size * 4):
-            msgOut += "{0:0>7d} ".format(count)
+            msgOut += ns2b("{0:0>7d} ".format(count))
             count += 1
         self.assertTrue(len(msgOut) >= size * 4)
 
-        msgIn = ''
+        msgIn = b''
         count = 0
         while len(msgIn) < len(msgOut):
             if count < len(msgOut):
@@ -362,7 +363,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
         self.assertEqual(caGamma, gamma.ca)
 
-        msgOut = "Gamma sends to Alpha"
+        msgOut = b"Gamma sends to Alpha"
         count = gamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -374,7 +375,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, None)
 
         # send from alpha to gamma
-        msgOut = "Alpha sends to Gamma"
+        msgOut = b"Alpha sends to Gamma"
         count = alpha.send(msgOut, csGamma)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -387,7 +388,7 @@ class BasicTestCase(unittest.TestCase):
 
         # close beta and then attempt to send
         beta.close()
-        msgOut = "Send on closed socket"
+        msgOut = b"Send on closed socket"
         with self.assertRaises(AttributeError) as cm:
             count = beta.send(msgOut)
 
@@ -397,17 +398,17 @@ class BasicTestCase(unittest.TestCase):
 
         # read on alpha after closed beta
         msgIn = alpha.receive(csBeta)
-        self.assertEqual(msgIn, '')
+        self.assertEqual(msgIn, b'')
 
         # send on alpha after close beta
-        msgOut = "Alpha sends to Beta after close"
+        msgOut = b"Alpha sends to Beta after close"
         count = alpha.send(msgOut, csBeta)
         self.assertEqual(count, len(msgOut)) #apparently works
 
         csBeta.close()
 
         # send on gamma then shutdown sends
-        msgOut = "Gamma sends to Alpha"
+        msgOut = b"Gamma sends to Alpha"
         count = gamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
         gamma.shutdownSend()
@@ -415,9 +416,9 @@ class BasicTestCase(unittest.TestCase):
         msgIn = alpha.receive(csGamma)
         self.assertEqual(msgOut, msgIn)
         msgIn = alpha.receive(csGamma)
-        self.assertEqual(msgIn, '')  # gamma shutdown detected
+        self.assertEqual(msgIn, b'')  # gamma shutdown detected
         # send from alpha to gamma and shutdown
-        msgOut = "Alpha sends to Gamma"
+        msgOut = b"Alpha sends to Gamma"
         count = alpha.send(msgOut, csGamma)
         self.assertEqual(count, len(msgOut))
 
@@ -434,7 +435,7 @@ class BasicTestCase(unittest.TestCase):
         alpha.shutclose(csGamma)  # close alpha
         time.sleep(0.05)
         msgIn = gamma.receive()
-        self.assertEqual(msgIn, '')  # alpha close is detected
+        self.assertEqual(msgIn, b'')  # alpha close is detected
 
         # reopen beta
         self.assertIs(beta.reopen(), True)
@@ -463,7 +464,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertEqual(caBeta, beta.ca)
 
-        msgOut = "Beta sends to Alpha"
+        msgOut = b"Beta sends to Alpha"
         count = beta.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -471,7 +472,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, msgIn)
 
         # send from alpha to beta
-        msgOut = "Alpha sends to Beta"
+        msgOut = b"Alpha sends to Beta"
         count = alpha.send(msgOut, csBeta)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -479,11 +480,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, msgIn)
 
         # send then shutdown alpha and then attempt to send
-        msgOut1 = "Alpha sends to Beta"
+        msgOut1 = b"Alpha sends to Beta"
         count = alpha.send(msgOut, csBeta)
         self.assertEqual(count, len(msgOut1))
         alpha.shutdownSend(csBeta)
-        msgOut2 = "Send on shutdown socket"
+        msgOut2 = b"Send on shutdown socket"
         with self.assertRaises(socket.error) as cm:
             count = alpha.send(msgOut, csBeta)
         self.assertTrue(cm.exception.errno == errno.EPIPE)
@@ -491,9 +492,9 @@ class BasicTestCase(unittest.TestCase):
         msgIn = beta.receive()
         self.assertEqual(msgOut1, msgIn)
         msgIn = beta.receive()
-        self.assertEqual(msgIn, '')  # beta detects shutdown socket
+        self.assertEqual(msgIn, b'')  # beta detects shutdown socket
 
-        msgOut = "Beta sends to Alpha"
+        msgOut = b"Beta sends to Alpha"
         count = beta.send(msgOut)
         self.assertEqual(count, len(msgOut))
         beta.shutdown()
@@ -506,7 +507,7 @@ class BasicTestCase(unittest.TestCase):
         beta.close()
         time.sleep(0.05)
         msgIn = alpha.receive(csBeta)
-        self.assertEqual(msgIn, '')  # alpha detects closed socket
+        self.assertEqual(msgIn, b'')  # alpha detects closed socket
 
         csBeta.close()
 
@@ -537,7 +538,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
         self.assertEqual(caGamma, gamma.ca)
 
-        msgOut = "Gamma sends to Alpha"
+        msgOut = b"Gamma sends to Alpha"
         count = gamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -547,7 +548,7 @@ class BasicTestCase(unittest.TestCase):
         gamma.close()
         time.sleep(0.05)
         msgIn = alpha.receive(csGamma)
-        self.assertEqual(msgIn, '')  # alpha detects close
+        self.assertEqual(msgIn, b'')  # alpha detects close
 
         csGamma.close()
 
@@ -578,7 +579,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(caGamma, gamma.ca)
 
         # send from alpha to gamma
-        msgOut = "Alpha sends to Gamma"
+        msgOut = b"Alpha sends to Gamma"
         count = alpha.send(msgOut, csGamma)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -588,7 +589,7 @@ class BasicTestCase(unittest.TestCase):
         alpha.shutclose(csGamma)
         time.sleep(0.05)
         msgIn = gamma.receive()
-        self.assertEqual(msgIn, '')  # gamma detects close
+        self.assertEqual(msgIn, b'')  # gamma detects close
 
         alpha.close()
         beta.close()
@@ -626,7 +627,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alphaPeerCs.getpeername(), alphaPeerCa)
         self.assertEqual(alphaPeerCs.getsockname(), betaPeerCa)
 
-        msgOut = "beta sends to alpha"
+        msgOut = b"beta sends to alpha"
         count = beta.send(msgOut, alphaHa)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
@@ -641,10 +642,10 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(src, None)
 
         # send multiple
-        msgOut1 = "First Message"
+        msgOut1 = b"First Message"
         count = beta.send(msgOut1, alphaHa)
         self.assertEqual(count, len(msgOut1))
-        msgOut2 = "Second Message"
+        msgOut2 = b"Second Message"
         count = beta.send(msgOut2, alphaHa)
         self.assertEqual(count, len(msgOut2))
         time.sleep(0.05)
@@ -657,10 +658,10 @@ class BasicTestCase(unittest.TestCase):
         # build message too big to fit in buffer
         sizes = beta.actualBufSizes()
         size = sizes[0]
-        msgOut = ""
+        msgOut = b""
         count = 0
         while (len(msgOut) <= size * 4):
-            msgOut += "{0:0>7d} ".format(count)
+            msgOut += ns2b("{0:0>7d} ".format(count))
             count += 1
         self.assertTrue(len(msgOut) >= size * 4)
 
@@ -669,7 +670,7 @@ class BasicTestCase(unittest.TestCase):
             count += beta.send(msgOut[count:], alphaHa)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
-        msgIn = ''
+        msgIn = b''
         ca, cs = alpha.peers.items()[0]
         count = 0
         while len(msgIn) < len(msgOut):
@@ -687,7 +688,7 @@ class BasicTestCase(unittest.TestCase):
         beta.unconnectPeer(ca)
         self.assertEqual(len(beta.peers), 0)
         time.sleep(0.05)
-        msgOut = "Send on unconnected socket"
+        msgOut = b"Send on unconnected socket"
         with self.assertRaises(ValueError):
             count = beta.send(msgOut, ca)
 
@@ -698,7 +699,7 @@ class BasicTestCase(unittest.TestCase):
 
         ca, cs = alpha.peers.items()[0]
         msgIn, src = alpha.receive(ca)
-        self.assertEqual(msgIn, '')
+        self.assertEqual(msgIn, b'')
         self.assertEqual(src, ca)  # means closed if empty but ca not None
 
 
@@ -741,5 +742,5 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testServerClientSocketTcpNB')
+    #runOne('testSocketTcpNB')
 

@@ -351,7 +351,7 @@ class SocketUdpNb(object):
         Perform non blocking read on  socket.
 
         returns tuple of form (data, sa)
-        if no data then returns ('',None)
+        if no data then returns (b'',None)
         but always returns a tuple with two elements
         """
         try:
@@ -359,7 +359,7 @@ class SocketUdpNb(object):
             data, sa = self.ss.recvfrom(self.bs)
         except socket.error as ex:
             if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                return ('', None) #receive has nothing empty string for data
+                return (b'', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
                 console.profuse(emsg)
@@ -551,7 +551,7 @@ class SocketUxdNb(object):
             data, sa = self.ss.recvfrom(self.bs)
         except socket.error as ex:
             if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                return ('', None) #receive has nothing empty string for data
+                return (b'', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
                 console.profuse(emsg)
@@ -681,7 +681,7 @@ class WinMailslotNb(object):
             return (data[1], sa)
 
         except win32file.error:
-            return ('', None)
+            return (b'', None)
 
     def send(self, data, destmailslot):
         """
