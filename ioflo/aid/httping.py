@@ -20,10 +20,11 @@ except ImportError:
     pass
 
 # Import ioflo libs
-from .globaling import *
-from .odicting import odict
-from . import excepting
+from ..base.globaling import *
+from ..base.odicting import odict
+from ..base import excepting
 
-from .consoling import getConsole
+from ..base.consoling import getConsole
 console = getConsole()
+
 

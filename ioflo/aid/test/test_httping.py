@@ -18,9 +18,21 @@ import shutil
 import socket
 import errno
 
+import httplib
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
+# Import ioflo libs
+from ioflo.base.globaling import *
+from ioflo.base.odicting import odict
 #from ioflo.test import testing
+
 from ioflo.base.consoling import getConsole
 console = getConsole()
+
 
 from ioflo.aid import httping
 
@@ -53,9 +65,42 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testBasic.__doc__))
 
+        console.terse("{0}\n".format("Connecting ...\n"))
+        hc = httplib.HTTPConnection('127.0.0.1',
+                                    port=8080,
+                                    strict=None,
+                                    timeout=1.0,
+                                    source_address=None)
 
+        hc.connect()
 
+        console.terse("{0}\n".format("Get ...\n"))
+        headers = odict([('Accept', 'application/json')])
+        hc.request(method='GET', url='/echo', body=None, headers=headers )
+        response = hc.getresponse()
+        console.terse(str(response.fileno()) + "\n")  # must call this before read
+        console.terse(str(response.getheaders()) + "\n")
+        console.terse(str(response.msg)  + "\n")
+        console.terse(str(response.version) + "\n")
+        console.terse(str(response.status) + "\n")
+        console.terse(response.reason+ "\n")
+        console.terse(response.read() + "\n")
 
+        console.terse("{0}\n".format("Post ...\n"))
+        headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
+        body = odict([('name', 'Peter'), ('occupation', 'Engineer')])
+        body = ns2b(json.dumps(body, separators=(',', ':'),encoding='utf-8'))
+        hc.request(method='POST', url='/demo', body=body, headers=headers )
+        response = hc.getresponse()
+        console.terse(str(response.fileno()) + "\n") # must call this before read
+        console.terse(str(response.getheaders()) + "\n")
+        console.terse(str(response.msg)  + "\n")
+        console.terse(str(response.version) + "\n")
+        console.terse(str(response.status) + "\n")
+        console.terse(response.reason+ "\n")
+        console.terse(response.read() + "\n")
+
+        hc.close()
 
 
 def runOne(test):
@@ -86,7 +131,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
-    #runOne('testBasic')
+    runOne('testBasic')
 
