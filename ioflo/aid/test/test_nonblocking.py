@@ -23,7 +23,7 @@ from ioflo.base.globaling import *
 from ioflo.base.consoling import getConsole
 console = getConsole()
 
-from ioflo.base import nonblocking
+from ioflo.aid import nonblocking
 
 def setUpModule():
     console.reinit(verbosity=console.Wordage.concise)
@@ -48,11 +48,11 @@ class BasicTestCase(unittest.TestCase):
         """
         pass
 
-    def testConsoleNB(self):
+    def testConsoleNb(self):
         """
         Test Class ConsoleNB
         """
-        console.terse("{0}\n".format(self.testConsoleNB.__doc__))
+        console.terse("{0}\n".format(self.testConsoleNb.__doc__))
 
         myconsole = nonblocking.ConsoleNb()
         result = myconsole.open()
@@ -69,11 +69,11 @@ class BasicTestCase(unittest.TestCase):
 
         myconsole.close()
 
-    def testSocketUdpNB(self):
+    def testSocketUdpNb(self):
         """
         Test Class SocketUdpNb
         """
-        console.terse("{0}\n".format(self.testSocketUdpNB.__doc__))
+        console.terse("{0}\n".format(self.testSocketUdpNb.__doc__))
         console.reinit(verbosity=console.Wordage.verbose)
         alpha = nonblocking.SocketUdpNb(port = 6101)
         self.assertIs(alpha.reopen(), True)
@@ -119,11 +119,11 @@ class BasicTestCase(unittest.TestCase):
         beta.close()
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testSocketUxdNB(self):
+    def testSocketUxdNb(self):
         """
         Test Class SocketUxdNb
         """
-        console.terse("{0}\n".format(self.testSocketUxdNB.__doc__))
+        console.terse("{0}\n".format(self.testSocketUxdNb.__doc__))
         console.reinit(verbosity=console.Wordage.verbose)
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
@@ -245,11 +245,11 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testServerClientSocketTcpNB(self):
+    def testServerClientSocketTcpNb(self):
         """
         Test Classes ServerSocketTcpNb and ClientSocketTcpNb
         """
-        console.terse("{0}\n".format(self.testServerClientSocketTcpNB.__doc__))
+        console.terse("{0}\n".format(self.testServerClientSocketTcpNb.__doc__))
 
         alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072)
         self.assertIs(alpha.reopen(), True)
@@ -595,11 +595,11 @@ class BasicTestCase(unittest.TestCase):
         beta.close()
         gamma.close()
 
-    def testSocketTcpNB(self):
+    def testSocketTcpNb(self):
         """
         Test Class SocketTcpNb
         """
-        console.terse("{0}\n".format(self.testSocketTcpNB.__doc__))
+        console.terse("{0}\n".format(self.testSocketTcpNb.__doc__))
 
         alpha = nonblocking.SocketTcpNb(port = 6101)
         self.assertIs(alpha.reopen(), True)
@@ -719,11 +719,11 @@ def runOne(test):
 def runSome():
     """ Unittest runner """
     tests =  []
-    names = ['testConsoleNB',
-             'testSocketUdpNB',
-             'testSocketUxdNB',
-             'testServerClientSocketTcpNB',
-             'testSocketTcpNB', ]
+    names = ['testConsoleNb',
+             'testSocketUdpNb',
+             'testSocketUxdNb',
+             'testServerClientSocketTcpNb',
+             'testSocketTcpNb', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -742,5 +742,5 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testSocketTcpNB')
+    #runOne('testSocketTcpNb')
 

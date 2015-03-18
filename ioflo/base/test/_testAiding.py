@@ -10,11 +10,11 @@ console = getConsole()
 
 # These test should be redone with assert statements so that can get a boolean
 # result that the test passed
-def TestConsoleNB():
+def TestConsoleNb():
     """Class ConsoleNB self test"""
     try:
-        print("Testing ConsoleNB")
-        console = ConsoleNB()
+        print("Testing ConsoleNb")
+        console = ConsoleNb()
         console.open()
 
         console.put("Testing nonblocking console\n")
@@ -26,7 +26,7 @@ def TestConsoleNB():
     finally:
         console.close()
 
-def TestSocketUdpNB():
+def TestSocketUdpNb():
     """Class SocketUdpNb self test """
     try:
         print("Testing SocketUdpNb")
@@ -48,7 +48,7 @@ def TestSocketUdpNB():
         serverA.close()
         serverB.close()
 
-def TestSocketUxdNB():
+def TestSocketUxdNb():
     """Class SocketUxdNb self test """
     console.reinit(verbosity=console.Wordage.verbose)
     try:
