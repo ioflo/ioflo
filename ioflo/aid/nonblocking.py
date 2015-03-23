@@ -250,7 +250,7 @@ class WireLog(object):
         midfix = another more prefix for log name if provided
         rx = Boolean create rx log file if True
         tx = Boolean create tx log file if True
-        stringify = Boolean use StringIO instead of File object
+        stringify = Boolean use BytesIO in memory buffer instead of File object
         """
         self.path = path  # path to directory where log files go must end in /
         self.prefix = prefix
@@ -1050,6 +1050,8 @@ class ClientSocketTcpNb(object):
         self.cs = None  # connection socket
         self.ca = (None, None)  # host address of local connection
         self.connected = False  # connected successfully
+        self.txes = deque()  # deque of data to send
+        self.rxes = deque()  # deque of data received
 
     def actualBufSizes(self):
         """
@@ -1227,6 +1229,38 @@ class ClientSocketTcpNb(object):
                 self.wlog.writeTx(self.ha, data[:result])
 
         return result
+
+    def serviceCx(self):
+        """
+        Service connection attempt
+        If not already connected make a nonblocking attempt
+        Returns .connected
+        """
+        if not self.connected:
+            self.connect()
+
+        return self.connected
+
+    def serviceRx(self):
+        """
+        Service receives
+        """
+        pass
+
+    def catRx(self):
+        """
+        Pop off all rxes and concatenate into single bytearray and return
+        """
+        pass
+
+    def serviceTx(self):
+        """
+        Service transmits
+        Send end of txes. If all sent then keep sending until partial send
+        or no more to send
+        """
+        pass
+
 
 class Incomer(object):
     """
