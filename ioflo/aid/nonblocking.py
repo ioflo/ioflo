@@ -489,7 +489,7 @@ class SocketUdpNb(object):
 
         if console._verbosity >=  console.Wordage.profuse:
             cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
-                    "{3}\n".format(self.ha, da, result, data[:result].encode('UTF-8')))
+                    "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
             console.profuse(cmsg)
 
         if self.wlog:
@@ -641,7 +641,7 @@ class SocketUxdNb(object):
 
         if console._verbosity >=  console.Wordage.profuse:
             cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
-                    "{3}\n".format(self.ha, da, result, data[:result].encode('UTF-8')))
+                    "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
             console.profuse(cmsg)
 
         if self.wlog:

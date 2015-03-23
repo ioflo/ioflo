@@ -105,14 +105,14 @@ class BasicTestCase(unittest.TestCase):
         wire.txLog.seek(0)
         result = wire.txLog.readline()
         result += wire.txLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         data = b"Test data Rx"
         wire.writeRx(ha, data)
         wire.rxLog.seek(0)
         result = wire.rxLog.readline()
         result += wire.rxLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         wire.close()
         shutil.rmtree(tempDirpath)
@@ -149,14 +149,14 @@ class BasicTestCase(unittest.TestCase):
         wire.txLog.seek(0)
         result = wire.txLog.readline()
         result += wire.txLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         data = b"Test data Rx"
         wire.writeRx(ha, data)
         wire.rxLog.seek(0)
         result = wire.rxLog.readline()
         result += wire.rxLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         wire.close()
         shutil.rmtree(tempDirpath)
