@@ -74,9 +74,9 @@ class BasicTestCase(unittest.TestCase):
 
         hc.connect()
 
-        console.terse("{0}\n".format("Get ...\n"))
+        console.terse("{0}\n".format("Get '/echo?name=fame' ...\n"))
         headers = odict([('Accept', 'application/json')])
-        hc.request(method='GET', url='/echo', body=None, headers=headers )
+        hc.request(method='GET', url='/echo?name=fame', body=None, headers=headers )
         response = hc.getresponse()
         console.terse(str(response.fileno()) + "\n")  # must call this before read
         console.terse(str(response.getheaders()) + "\n")
@@ -101,6 +101,21 @@ class BasicTestCase(unittest.TestCase):
         console.terse(response.read() + "\n")
 
         hc.close()
+
+    def testNonBlocking(self):
+        """
+        Test NonBlocking Http client
+        """
+        console.terse("{0}\n".format(self.testBasic.__doc__))
+
+        console.terse("{0}\n".format("Connecting ...\n"))
+        hc = httplib.HTTPConnection('127.0.0.1',
+                                    port=8080,
+                                    strict=None,
+                                    timeout=1.0,
+                                    source_address=None)
+
+        hc.connect()
 
 
 def runOne(test):

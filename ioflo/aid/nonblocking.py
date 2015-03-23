@@ -10,7 +10,9 @@ from __future__ import division
 import sys
 import os
 import socket
+import time
 import errno
+import io
 from collections import deque
 
 try:
@@ -228,53 +230,93 @@ class ConsoleNb(object):
         """
         return(os.write(self.fd, data))
 
-class SocketUdpNb(object):
+class WireLog(object):
     """
-    Class to manage non blocking I/O on UDP socket.
+    Provides log files for logging 'over the wire' network tx and rx
+    for non blocking transports for debugging purposes
+    in addition to the standard console logging capability
     """
-
-    def __init__(self, ha=None, host = '', port = 55000, bufsize = 1024,
-                 path = '', log = False):
+    def __init__(self,
+                 path='',
+                 prefix='',
+                 midfix='',
+                 rx=True,
+                 tx=True,
+                 stringify=False):
         """
         Initialization method for instance.
-
-           ha = host address duple (host, port)
-           host = '' equivalant to any interface on host
-           port = socket port
-           bs = buffer size
+        path = directory for log files
+        prefix = prefix to include in log name if provided
+        midfix = another more prefix for log name if provided
+        rx = Boolean create rx log file if True
+        tx = Boolean create tx log file if True
+        stringify = Boolean use StringIO instead of File object
         """
-        self.ha = ha or (host,port) #ha = host address
-        self.bs = bufsize
-        self.ss = None #server's socket needs to be opened
+        self.path = path  # path to directory where log files go must end in /
+        self.prefix = prefix
+        self.midfix = midfix
+        self.rx = True if rx else False
+        self.tx = True if tx else False
+        self.rxLog = None  # receive log file
+        self.txLog = None  # transmit log file
+        self.stringify = True if stringify else False
 
-        self.path = path #path to directory where log files go must end in /
-        self.txLog = None #transmit log
-        self.rxLog = None #receive log
-        self.log = log
+    def reopen(self, path='', prefix='', midfix=''):
+        """
+        Close and then open log files on path if given otherwise self.path
+        Use ha in log file name if given
+        """
+        self.close()
 
-    def openLogs(self, path = ''):
-        """
-        Open log files
-        """
+        if path:
+            self.path = path
+
+        if prefix:
+            self.prefix = prefix
+
+        if midfix:
+            self.midfix = midfix
+
+        prefix = "{0}_".format(self.prefix) if self.prefix else ""
+        midfix = "{0}_".format(self.midfix) if self.midfix else ""
+
         date = time.strftime('%Y%m%d_%H%M%S', time.gmtime(time.time()))
-        name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
-        try:
-            self.txLog = open(name, 'w+')
-        except IOError:
-            self.txLog = None
-            self.log = False
-            return False
-        name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
-        try:
-            self.rxLog = open(name, 'w+')
-        except IOError:
-            self.rxLog = None
-            self.log = False
-            return False
+
+        if self.rx:
+            if not self.stringify:
+                name = "{0}{1}{2}_rx.txt".format(prefix, midfix, date)
+                path = os.path.join(self.path, name)
+                try:
+                    self.rxLog = io.open(path, mode='wb+')
+                except IOError:
+                    self.rxLog = None
+                    return False
+            else:
+                try:
+                    self.rxLog = io.BytesIO()
+                except IOError:
+                    self.rxLog = None
+                    return False
+
+        if self.tx:
+            if not self.stringify:
+                name = "{0}{1}{2}_tx.txt".format(prefix, midfix, date)
+                path = os.path.join(self.path, name)
+                try:
+                    self.txLog = io.open(path, mode='wb+')
+                except IOError:
+                    self.txLog = None
+                    return False
+            else:
+                try:
+                    self.txLog = io.BytesIO()
+                except IOError:
+                    self.txLog = None
+                    return False
 
         return True
 
-    def closeLogs(self):
+    def close(self):
         """
         Close log files
         """
@@ -282,6 +324,67 @@ class SocketUdpNb(object):
             self.txLog.close()
         if self.rxLog and not self.rxLog.closed:
             self.rxLog.close()
+
+    def getRx(self):
+        """
+        Returns rx string buffer value if .stringify else None
+        """
+        if self.stringify and self.rxLog and not self.rxLog.closed:
+            return (self.rxLog.getvalue())
+        return None
+
+    def getTx(self):
+        """
+        Returns tx string buffer value if .stringify else None
+        """
+        if self.stringify and self.txLog and not self.txLog.closed:
+            return (self.txLog.getvalue())
+        return None
+
+    def writeRx(self, sa, data):
+        """
+        Write bytes data received from source address sa,
+        """
+        if self.rx and self.rxLog:
+            self.rxLog.write(ns2b("{0}\n".format(sa)))
+            self.rxLog.write(data)
+            self.rxLog.write(b'\n')
+
+    def writeTx(self, da, data):
+        """
+        Write bytes data transmitted to destination address da,
+        """
+        if self.tx and self.txLog:
+            self.txLog.write(ns2b("{0}\n".format(da)))
+            self.txLog.write(data)
+            self.txLog.write(b'\n')
+
+
+class SocketUdpNb(object):
+    """
+    Class to manage non blocking I/O on UDP socket.
+    """
+
+    def __init__(self,
+                 ha=None,
+                 host = '',
+                 port = 55000,
+                 bufsize = 1024,
+                 wlog=None):
+        """
+        Initialization method for instance.
+
+        ha = host address duple (host, port)
+        host = '' equivalant to any interface on host
+        port = socket port
+        bs = buffer size
+        path = path to log file directory
+        wlog = WireLog reference for debug logging or over the wire tx and rx
+        """
+        self.ha = ha or (host,port) #ha = host address
+        self.bs = bufsize
+        self.ss = None #server's socket needs to be opened
+        self.wlog = wlog
 
     def actualBufSizes(self):
         """
@@ -323,10 +426,6 @@ class SocketUdpNb(object):
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
 
-        if self.log:
-            if not self.openLogs():
-                return False
-
         return True
 
     def reopen(self):
@@ -343,8 +442,6 @@ class SocketUdpNb(object):
         if self.ss:
             self.ss.close() #close socket
             self.ss = None
-
-        self.closeLogs()
 
     def receive(self):
         """
@@ -364,11 +461,14 @@ class SocketUdpNb(object):
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
                 console.profuse(emsg)
                 raise #re raise exception ex1
-        message = "Server at {0} received from {1}, {2}\n".format(self.ha, sa, data)
-        console.profuse(message)
 
-        if self.log and self.rxLog:
-            self.rxLog.write("{0}\n{1}\n".format(sa, data))
+        if console._verbosity >= console.Wordage.profuse:  # faster to check
+            cmsg = ("Server at {0} received from {1}\n"
+                       "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
+            console.profuse(cmsg)
+
+        if self.wlog:  # log over the wire rx
+            self.wlog.writeRx(sa, data)
 
         return (data, sa)
 
@@ -387,73 +487,35 @@ class SocketUdpNb(object):
             result = 0
             raise
 
-        console.profuse("Server at {0} sent to {1}, {2} bytes\n".format(
-                                                self.ha, da, result))
+        if console._verbosity >=  console.Wordage.profuse:
+            cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
+                    "{3}\n".format(self.ha, da, result, data[:result].encode('UTF-8')))
+            console.profuse(cmsg)
 
-        if self.log and self.txLog:
-            self.txLog.write("{0}\n{1}\n".format(da, data))
+        if self.wlog:
+            self.wlog.writeTx(da, data[:result])
 
         return result
 
 class SocketUxdNb(object):
     """
     Class to manage non blocking io on UXD (unix domain) socket.
-
-    Opens non blocking socket
-    Use instance method close to close socket
-
-    Needs socket module
+    Use instance method .close() to close socket
     """
 
-    def __init__(self, ha=None, bufsize = 1024, path = '', log = False, umask=None):
+    def __init__(self, ha=None, umask=None, bufsize = 1024, wlog=None):
         """
         Initialization method for instance.
 
-        ha = host address duple (host, port)
-        host = '' equivalant to any interface on host
-        port = socket port
-        bs = buffer size
+        ha = uxd file name
+        umask = umask for uxd file
+        bufsize = buffer size
         """
-        self.ha = ha # uxd host address string name
-        self.bs = bufsize
-        self.ss = None #server's socket needs to be opened
-
-        self.path = path #path to directory where log files go must end in /
-        self.txLog = None #transmit log
-        self.rxLog = None #receive log
-        self.log = log
+        self.ha = ha  # uxd host address string name
         self.umask = umask
-
-    def openLogs(self, path = ''):
-        """
-        Open log files
-        """
-        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-        name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
-        try:
-            self.txLog = open(name, 'w+')
-        except IOError:
-            self.txLog = None
-            self.log = False
-            return False
-        name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
-        try:
-            self.rxLog = open(name, 'w+')
-        except IOError:
-            self.rxLog = None
-            self.log = False
-            return False
-
-        return True
-
-    def closeLogs(self):
-        """Close log files
-
-        """
-        if self.txLog and not self.txLog.closed:
-            self.txLog.close()
-        if self.rxLog and not self.rxLog.closed:
-            self.rxLog.close()
+        self.bs = bufsize
+        self.ss = None  # server's socket needs to be opened
+        self.wlog = wlog
 
     def actualBufSizes(self):
         """
@@ -467,10 +529,11 @@ class SocketUxdNb(object):
                 self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
 
     def open(self):
-        """Opens socket in non blocking mode.
+        """
+        Opens socket in non blocking mode.
 
-           if socket not closed properly, binding socket gets error
-              socket.error: (48, 'Address already in use')
+        if socket not closed properly, binding socket gets error
+            socket.error: (48, 'Address already in use')
         """
         #create socket ss = server socket
         self.ss = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -512,20 +575,18 @@ class SocketUxdNb(object):
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
 
-        if self.log:
-            if not self.openLogs():
-                return False
-
         return True
 
     def reopen(self):
-        """     """
+        """
+        Idempotently open socket by closing first if need be
+        """
         self.close()
         return self.open()
 
     def close(self):
-        """Closes  socket.
-
+        """
+        Closes  socket.
         """
         if self.ss:
             self.ss.close() #close socket
@@ -537,14 +598,11 @@ class SocketUxdNb(object):
             if os.path.exists(self.ha):
                 raise
 
-        self.closeLogs()
-
     def receive(self):
-        """Perform non blocking read on  socket.
-
-           returns tuple of form (data, sa)
-           if no data then returns ('',None)
-           but always returns a tuple with two elements
+        """
+        Perform non blocking receive on  socket.
+        Returns tuple of form (data, sa)
+        If no data then returns ('',None)
         """
         try:
             #sa = source address tuple (sourcehost, sourceport)
@@ -557,11 +615,13 @@ class SocketUxdNb(object):
                 console.profuse(emsg)
                 raise #re raise exception ex1
 
-        message = "Server at {0} received from {1}, {2} \n".format(self.ha,sa, data)
-        console.profuse(message)
+        if console._verbosity >= console.Wordage.profuse:  # faster to check
+            cmsg = ("Server at {0} received from {1}\n"
+                       "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
+            console.profuse(cmsg)
 
-        if self.log and self.rxLog:
-            self.rxLog.write("{0}\n{1}\n".format(sa, data))
+        if self.wlog:
+            self.wlog.writeRx(sa, data)
 
         return (data, sa)
 
@@ -579,11 +639,13 @@ class SocketUxdNb(object):
             result = 0
             raise
 
-        console.profuse("Server at {0} sent to {1}, {2} bytes\n".format(
-                                                   self.ha, da, result))
+        if console._verbosity >=  console.Wordage.profuse:
+            cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
+                    "{3}\n".format(self.ha, da, result, data[:result].encode('UTF-8')))
+            console.profuse(cmsg)
 
-        if self.log and self.txLog:
-            self.txLog.write("{0}\n{1}\n".format(da, data))
+        if self.wlog:
+            self.wlog.writeTx(da, data)
 
         return result
 

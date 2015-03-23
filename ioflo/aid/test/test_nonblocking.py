@@ -69,13 +69,119 @@ class BasicTestCase(unittest.TestCase):
 
         myconsole.close()
 
+    def testWireLog(self):
+        """
+        Test Class WireLog
+        """
+        console.terse("{0}\n".format(self.testWireLog.__doc__))
+
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
+
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="log", dir=userDirpath)
+        logDirpath = os.path.join(tempDirpath, 'log')
+        if not os.path.exists(logDirpath):
+            os.makedirs(logDirpath)
+
+        wire = nonblocking.WireLog(path=logDirpath)
+        prefix = 'localhost'
+        midfix = '5000'
+        result = wire.reopen(prefix=prefix, midfix=midfix)
+
+        self.assertIsNotNone(wire.rxLog)
+        self.assertIsNotNone(wire.txLog)
+        self.assertFalse(wire.rxLog.closed)
+        self.assertFalse(wire.txLog.closed)
+        self.assertTrue(wire.rxLog.name.endswith('_rx.txt'))
+        self.assertTrue(wire.txLog.name.endswith('_tx.txt'))
+        self.assertTrue("{0}_{1}_".format(prefix, midfix) in wire.rxLog.name)
+        self.assertTrue("{0}_{1}_".format(prefix, midfix) in wire.txLog.name)
+
+        ha = ('127.0.0.1', 5000)
+        data = b"Test data Tx"
+        wire.writeTx(ha, data)
+        wire.txLog.seek(0)
+        result = wire.txLog.readline()
+        result += wire.txLog.readline()
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+
+        data = b"Test data Rx"
+        wire.writeRx(ha, data)
+        wire.rxLog.seek(0)
+        result = wire.rxLog.readline()
+        result += wire.rxLog.readline()
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+
+        wire.close()
+        shutil.rmtree(tempDirpath)
+
+    def testWireLogStringify(self):
+        """
+        Test Class WireLog
+        """
+        console.terse("{0}\n".format(self.testWireLogStringify.__doc__))
+
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
+
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="log", dir=userDirpath)
+        logDirpath = os.path.join(tempDirpath, 'log')
+        if not os.path.exists(logDirpath):
+            os.makedirs(logDirpath)
+
+        wire = nonblocking.WireLog(path=logDirpath, stringify=True)
+        prefix = 'localhost'
+        midfix = '5000'
+        result = wire.reopen(prefix=prefix, midfix=midfix)
+
+        self.assertIsNotNone(wire.rxLog)
+        self.assertIsNotNone(wire.txLog)
+        self.assertFalse(wire.rxLog.closed)
+        self.assertFalse(wire.txLog.closed)
+
+        ha = ('127.0.0.1', 5000)
+        data = b"Test data Tx"
+        wire.writeTx(ha, data)
+        wire.txLog.seek(0)
+        result = wire.txLog.readline()
+        result += wire.txLog.readline()
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+
+        data = b"Test data Rx"
+        wire.writeRx(ha, data)
+        wire.rxLog.seek(0)
+        result = wire.rxLog.readline()
+        result += wire.rxLog.readline()
+        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.encode('ISO-8859-1'))))
+
+        wire.close()
+        shutil.rmtree(tempDirpath)
+
     def testSocketUdpNb(self):
         """
         Test Class SocketUdpNb
         """
         console.terse("{0}\n".format(self.testSocketUdpNb.__doc__))
-        console.reinit(verbosity=console.Wordage.verbose)
-        alpha = nonblocking.SocketUdpNb(port = 6101)
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
+
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="log", dir=userDirpath)
+        logDirpath = os.path.join(tempDirpath, 'log')
+        if not os.path.exists(logDirpath):
+            os.makedirs(logDirpath)
+
+        wireLog = nonblocking.WireLog(path=logDirpath)
+        result = wireLog.reopen(prefix='alpha', midfix='6101')
+
+        alpha = nonblocking.SocketUdpNb(port = 6101, wlog=wireLog)
         self.assertIs(alpha.reopen(), True)
 
         beta = nonblocking.SocketUdpNb(port = 6102)
@@ -97,7 +203,6 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, msgIn)
         self.assertEqual(src[1], alpha.ha[1])
 
-
         console.terse("Sending beta to alpha\n")
         msgOut = b"beta sends to alpha"
         beta.send(msgOut, alpha.ha)
@@ -105,7 +210,6 @@ class BasicTestCase(unittest.TestCase):
         msgIn, src = alpha.receive()
         self.assertEqual(msgOut, msgIn)
         self.assertEqual(src[1], beta.ha[1])
-
 
         console.terse("Sending beta to beta\n")
         msgOut = b"beta sends to beta"
@@ -117,6 +221,9 @@ class BasicTestCase(unittest.TestCase):
 
         alpha.close()
         beta.close()
+
+        wireLog.close()
+        shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
     def testSocketUxdNb(self):
@@ -124,7 +231,20 @@ class BasicTestCase(unittest.TestCase):
         Test Class SocketUxdNb
         """
         console.terse("{0}\n".format(self.testSocketUxdNb.__doc__))
-        console.reinit(verbosity=console.Wordage.verbose)
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
+
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="log", dir=userDirpath)
+        logDirpath = os.path.join(tempDirpath, 'log')
+        if not os.path.exists(logDirpath):
+            os.makedirs(logDirpath)
+
+        wireLog = nonblocking.WireLog(path=logDirpath)
+        result = wireLog.reopen(prefix='alpha', midfix='uxd')
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
         userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
@@ -720,6 +840,8 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = ['testConsoleNb',
+             'testWireLog',
+             'testWireLogStringify',
              'testSocketUdpNb',
              'testSocketUxdNb',
              'testServerClientSocketTcpNb',
@@ -742,5 +864,5 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testSocketTcpNb')
+    #runOne('testWireLog')
 
