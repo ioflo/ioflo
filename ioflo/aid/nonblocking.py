@@ -383,8 +383,9 @@ class SocketUdpNb(object):
         """
         self.ha = ha or (host,port) #ha = host address
         self.bs = bufsize
-        self.ss = None #server's socket needs to be opened
         self.wlog = wlog
+
+        self.ss = None #server's socket needs to be opened
 
     def actualBufSizes(self):
         """
@@ -514,8 +515,9 @@ class SocketUxdNb(object):
         self.ha = ha  # uxd host address string name
         self.umask = umask
         self.bs = bufsize
-        self.ss = None  # server's socket needs to be opened
         self.wlog = wlog
+
+        self.ss = None  # server's socket needs to be opened
 
     def actualBufSizes(self):
         """
@@ -659,22 +661,19 @@ class WinMailslotNb(object):
     Needs Windows Python Extensions
     """
 
-    def __init__(self, ha=None, bufsize=1024, path='', log=False):
+    def __init__(self, ha=None, bufsize=1024, wlog=None):
         """
         Init method for instance
-
-        bufsize = default mailslot buffer size
-        path = path to directory where logfiles go.  Must end in /.
         ha = basename for mailslot path.
+        bufsize = default mailslot buffer size
+        wlog = over the wire log
+
         """
         self.ha = ha
         self.bs = bufsize
-        self.ms = None   # Mailslot needs to be opened
+        self.wlog = wlog
 
-        self.path = path
-        self.txLog = None     # Transmit log
-        self.rxLog = None     # receive log
-        self.log = log
+        self.ms = None   # Mailslot needs to be opened
 
     def open(self):
         """
@@ -689,10 +688,6 @@ class WinMailslotNb(object):
         except win32file.error as ex:
             console.terse('mailslot.error = {0}'.format(ex))
             return False
-
-        if self.log:
-            if not self.openLogs():
-                return False
 
         return True
 
@@ -711,8 +706,6 @@ class WinMailslotNb(object):
             win32file.CloseHandle(self.ms)
             self.ms = None
 
-        self.closeLogs()
-
     def receive(self):
         """
         Perform a non-blocking read on the mailslot
@@ -725,22 +718,21 @@ class WinMailslotNb(object):
 
         """
         try:
-            data = win32file.ReadFile(self.ms, self.bs)
+            errcode, data = win32file.ReadFile(self.ms, self.bs)
 
             # Mailslots don't send their source address
-            # We can pick this up in a higher level of the stack if we
-            # need
+            # We can assign this in a higher level of the stack if needed
             sa = None
 
-            message = "Server at {0} received {1}\n".format(
-                self.ha, data[1])
+            if console._verbosity >= console.Wordage.profuse:  # faster to check
+                cmsg = ("Server at {0} received from {1}\n"
+                           "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
+                console.profuse(cmsg)
 
-            console.profuse(message)
+            if self.wlog:
+                self.wlog.writeRx(sa, data)
 
-            if self.log and self.rxLog:
-                self.rxLog.write("%s\n%s\n" % (sa, repr(data[1])))
-
-            return (data[1], sa)
+            return (data, sa)
 
         except win32file.error:
             return (b'', None)
@@ -764,10 +756,8 @@ class WinMailslotNb(object):
             result = 0
             raise
 
-        try:
-            result = win32file.WriteFile(f, data)
-            console.profuse("Server at {0} sent {1} bytes\n".format(self.ha,
-                                                                    result))
+        try:  # WriteFile returns a tuple, we only care about the number of bytes
+            errcode, result = win32file.WriteFile(f, data)
         except win32file.error as ex:
             emsg = 'mailslot.error = {0}: sending from {1} to {2}\n'.format(ex, self.ha, destmailslot)
             console.terse(emsg)
@@ -777,51 +767,27 @@ class WinMailslotNb(object):
         finally:
             win32file.CloseHandle(f)
 
-        if self.log and self.txLog:
-            self.txLog.write("%s %s bytes\n%s\n" %
-                             (str(destmailslot), str(result), repr(data)))
+        if console._verbosity >=  console.Wordage.profuse:
+            cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
+                    "{3}\n".format(self.ha, destmailslot, result, data[:result].decode('UTF-8')))
+            console.profuse(cmsg)
 
-        # WriteFile returns a tuple, we only care about the number of bytes
-        return result[1]
+        if self.wlog:
+            self.wlog.writeTx(da, data)
 
-    def openLogs(self, path = ''):
-        """Open log files
-
-        """
-        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
-        try:
-            self.txLog = open(name, 'w+')
-        except IOError:
-            self.txLog = None
-            self.log = False
-            return False
-        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
-        try:
-            self.rxLog = open(name, 'w+')
-        except IOError:
-            self.rxLog = None
-            self.log = False
-            return False
-
-        return True
-
-    def closeLogs(self):
-        """Close log files
-
-        """
-        if self.txLog and not self.txLog.closed:
-            self.txLog.close()
-        if self.rxLog and not self.rxLog.closed:
-            self.rxLog.close()
-
+        return result
 
 class ServerSocketTcpNb(object):
     """
     Nonblocking TCP Socket Server Class.
     """
-    def __init__(self, ha=None, host='', port=56000, eha=None, bufsize=8096,
-                 path='', log=False, txLog=None, rxLog=None):
+    def __init__(self,
+                 ha=None,
+                 host='',
+                 port=56000,
+                 eha=None,
+                 bufsize=8096,
+                 wlog=None):
         """
         Initialization method for instance.
 
@@ -830,10 +796,7 @@ class ServerSocketTcpNb(object):
         port = socket port for listen socket
         eha = external destination address for incoming connections
         bufsize = buffer size
-        path = path to log directory
-        log = boolean flag, creates logs if True
-        txLog = log file object or None
-        rxLog = log file object or None
+        wlog = WireLog object if any
         """
         self.ha = ha or (host, port)  # ha = host address
         eha = eha or self.ha
@@ -845,51 +808,9 @@ class ServerSocketTcpNb(object):
             eha = (host, port)
         self.eha = eha
         self.bs = bufsize
+        self.wlog = wlog
+
         self.ss = None  # listen socket for accepts
-
-        self.path = path #path to directory where log files go must end in /
-        self.txLog = txLog  # transmit log file object
-        self.rxLog = rxLog  # receive log file object
-        self.log = log
-        self.ownTxLog = False  # txLog created not passed in
-        self.ownRxLog = False  # rxLog created not passed in
-
-    def openLogs(self, path = ''):
-        """
-        Open log files
-        """
-        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-
-        if not self.txLog:
-            name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
-            try:
-                self.txLog = open(name, 'w+')
-            except IOError:
-                self.txLog = None
-                self.log = False
-                return False
-            self.ownTxLog = True
-
-        if not self.rxLog:
-            name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
-            try:
-                self.rxLog = open(name, 'w+')
-            except IOError:
-                self.rxLog = None
-                self.log = False
-                return False
-            self.ownRxLog = True
-
-        return True
-
-    def closeLogs(self):
-        """
-        Close log files
-        """
-        if self.txLog and not self.txLog.closed and self.ownTxLog:
-            self.txLog.close()
-        if self.rxLog and not self.rxLog.closed and self.ownTxLog:
-            self.rxLog.close()
 
     def actualBufSizes(self):
         """
@@ -939,10 +860,6 @@ class ServerSocketTcpNb(object):
 
         self.ha = self.ss.getsockname()  # get resolved ha after bind
 
-        if self.log:
-            if not self.openLogs():
-                return False
-
         return True
 
     def reopen(self):
@@ -964,8 +881,6 @@ class ServerSocketTcpNb(object):
                 pass
             self.ss.close()  #close socket
             self.ss = None
-
-        self.closeLogs()
 
     def accept(self):
         """
@@ -1053,21 +968,17 @@ class ServerSocketTcpNb(object):
                 console.profuse(emsg)
                 raise  # re-raise
 
-        message = ("Server at {0} received {1}\n".format(self.ha, data))
-        console.profuse(message)
-        if self.log and self.rxLog:
-            self.rxLog.write("{0}\n{1}\n".format(self.ha, data))
+        if data:  # connection open
+            sa = cs.getpeername()
+            if console._verbosity >= console.Wordage.profuse:  # faster to check
+                cmsg = ("Server at {0} received from {1}\n"
+                           "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
+                console.profuse(cmsg)
+
+            if self.wlog:  # log over the wire rx
+                self.wlog.writeRx(sa, data)
+
         return data
-
-    def receiveFrom(self, cs):
-        """
-        If no data then returns (None, sa)
-        If connection closed on far side then returns ('', sa)
-        Otherwise returns (data, ca)
-
-        Where sa is source socket's ha given by .getpeername()
-        """
-        return (self.receive(cs), cs.getpeername())
 
     def send(self, data, cs):
         """
@@ -1086,11 +997,15 @@ class ServerSocketTcpNb(object):
                 console.profuse(emsg)
                 raise
 
-        console.profuse("Server at {0} sent {1} "
-                        "bytes\n".format(self.ha, result))
+        if result:  # connection not closed
+            da = cs.getpeername()
+            if console._verbosity >=  console.Wordage.profuse:
+                cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
+                        "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
+                console.profuse(cmsg)
 
-        if self.log and self.txLog:
-            self.txLog.write("{0}\n{1}\n".format(self.ha, data))
+            if self.wlog:
+                self.wlog.writeTx(da, data[:result])
 
         return result
 
@@ -1113,8 +1028,12 @@ class ClientSocketTcpNb(object):
     """
     Nonblocking TCP Socket Client Class.
     """
-    def __init__(self, ha=None, host='', port=56000, bufsize=8096,
-                 path='', log=False, txLog=None, rxLog=None):
+    def __init__(self,
+                 ha=None,
+                 host='',
+                 port=56000,
+                 bufsize=8096,
+                 wlog=None):
         """
         Initialization method for instance.
 
@@ -1122,59 +1041,15 @@ class ClientSocketTcpNb(object):
         host = host address or tcp server to connect to
         port = socket port
         bufsize = buffer size
-        path = path to log directory must end in /
-        log = boolean flag, creates logs if True
-        txLog = transmit log file object or None
-        rxLog = receive log file object or None
+        wlog = WireLog object if any
         """
-        self.ha = ha or (host,port)
-        self.ca = (None, None)  # host address of local connection
+        self.ha = ha or (host, port)
         self.bs = bufsize
+        self.wlog = wlog
+
         self.cs = None  # connection socket
+        self.ca = (None, None)  # host address of local connection
         self.connected = False  # connected successfully
-        self.path = path
-        self.txLog = txLog  # transmit log
-        self.rxLog = rxLog  # receive log
-        self.log = log
-        self.ownTxLog = False  # txLog created not passed in
-        self.ownRxLog = False  # rxLog created not passed in
-
-    def openLogs(self, path = ''):
-        """
-        Open log files
-        """
-        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-
-        if not self.txLog:
-            name = "{0}{1}_{2}_{3}_tx.txt".format(self.path, self.ha[0], self.ha[1], date)
-            try:
-                self.txLog = open(name, 'w+')
-            except IOError:
-                self.txLog = None
-                self.log = False
-                return False
-            self.ownTxLog = True
-
-        if not self.rxLog:
-            name = "{0}{1}_{2}_{3}_rx.txt".format(self.path, self.ha[0], self.ha[1], date)
-            try:
-                self.rxLog = open(name, 'w+')
-            except IOError:
-                self.rxLog = None
-                self.log = False
-                return False
-            self.ownRxLog = True
-
-        return True
-
-    def closeLogs(self):
-        """
-        Close log files
-        """
-        if self.txLog and not self.txLog.closed and self.ownTxLog:
-            self.txLog.close()
-        if self.rxLog and not self.rxLog.closed and self.ownTxLog:
-            self.rxLog.close()
 
     def actualBufSizes(self):
         """
@@ -1216,10 +1091,6 @@ class ClientSocketTcpNb(object):
             self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
 
         self.cs.setblocking(0) #non blocking socket
-
-        if self.log:
-            if not self.openLogs():
-                return False
 
         return True
 
@@ -1275,7 +1146,6 @@ class ClientSocketTcpNb(object):
         Closes local connection socket
         """
         self.shutclose()
-        self.closeLogs()
 
     def connect(self):
         """
@@ -1318,22 +1188,17 @@ class ClientSocketTcpNb(object):
                         "from {2}\n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)
                 raise  # re-raise
-        message = ("Client at {0} received from {1}, "
-                   "{2}\n".format(self.ca, self.ha, data))
-        console.profuse(message)
-        if self.log and self.rxLog:
-            self.rxLog.write("{0}\n{1}\n".format(self.ha, data))
+
+        if data:  # connection open
+            if console._verbosity >= console.Wordage.profuse:  # faster to check
+                cmsg = ("Client at {0} received from {1}\n"
+                           "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
+                console.profuse(cmsg)
+
+            if self.wlog:  # log over the wire rx
+                self.wlog.writeRx(self.ha, data)
+
         return data
-
-    def receiveFrom(self):
-        """
-        If no data then returns (None, sa)
-        If connection closed on far side then returns ('', sa)
-        Otherwise returns (data, ca)
-
-        Where sa is source socket's ha given by .getpeername()
-        """
-        return (self.receive(), self.ha)
 
     def send(self, data):
         """
@@ -1352,11 +1217,14 @@ class ClientSocketTcpNb(object):
                 console.profuse(emsg)
                 raise
 
-        console.profuse("Client at {0} sent to {1}, {2} "
-                        "bytes\n".format(self.ca, self.ha, result))
+        if result:  # connection not closed
+            if console._verbosity >=  console.Wordage.profuse:
+                cmsg = ("Client at {0} sent to {1}, {2} bytes\n"
+                        "{3}\n".format(self.ca, self.ha, result, data[:result].decode('UTF-8')))
+                console.profuse(cmsg)
 
-        if self.log and self.txLog:
-            self.txLog.write("{0}\n{1}\n".format(self.ha, data))
+            if self.wlog:
+                self.wlog.writeTx(self.ha, data[:result])
 
         return result
 

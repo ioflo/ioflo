@@ -174,6 +174,7 @@ class BasicTestCase(unittest.TestCase):
             os.makedirs(userDirpath)
 
         tempDirpath = tempfile.mkdtemp(prefix="test", suffix="log", dir=userDirpath)
+
         logDirpath = os.path.join(tempDirpath, 'log')
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
@@ -238,7 +239,12 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(userDirpath):
             os.makedirs(userDirpath)
 
-        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="log", dir=userDirpath)
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="uxd", dir=userDirpath)
+
+        sockDirpath = os.path.join(tempDirpath, 'uxd')
+        if not os.path.exists(sockDirpath):
+            os.makedirs(sockDirpath)
+
         logDirpath = os.path.join(tempDirpath, 'log')
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
@@ -246,18 +252,9 @@ class BasicTestCase(unittest.TestCase):
         wireLog = nonblocking.WireLog(path=logDirpath)
         result = wireLog.reopen(prefix='alpha', midfix='uxd')
 
-        userDirpath = os.path.join('~', '.ioflo', 'test')
-        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
-        if not os.path.exists(userDirpath):
-            os.makedirs(userDirpath)
-
-        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="uxd", dir=userDirpath)
-        sockDirpath = os.path.join(tempDirpath, 'uxd')
-        if not os.path.exists(sockDirpath):
-            os.makedirs(sockDirpath)
 
         ha = os.path.join(sockDirpath, 'alpha.uxd')
-        alpha = nonblocking.SocketUxdNb(ha=ha, umask=0x077)
+        alpha = nonblocking.SocketUxdNb(ha=ha, umask=0x077, wlog=wireLog)
         result = alpha.reopen()
         self.assertIs(result, True)
         self.assertEqual(alpha.ha, ha)
@@ -362,6 +359,7 @@ class BasicTestCase(unittest.TestCase):
         beta.close()
         gamma.close()
 
+        wireLog.close()
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
@@ -370,8 +368,23 @@ class BasicTestCase(unittest.TestCase):
         Test Classes ServerSocketTcpNb and ClientSocketTcpNb
         """
         console.terse("{0}\n".format(self.testServerClientSocketTcpNb.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
 
-        alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072)
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
+
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="tcp", dir=userDirpath)
+
+        logDirpath = os.path.join(tempDirpath, 'log')
+        if not os.path.exists(logDirpath):
+            os.makedirs(logDirpath)
+
+        wireLog = nonblocking.WireLog(path=logDirpath)
+        result = wireLog.reopen(prefix='alpha', midfix='6101')
+
+        alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072, wlog=wireLog)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
@@ -714,6 +727,10 @@ class BasicTestCase(unittest.TestCase):
         alpha.close()
         beta.close()
         gamma.close()
+
+        wireLog.close()
+        shutil.rmtree(tempDirpath)
+        console.reinit(verbosity=console.Wordage.concise)
 
     def testSocketTcpNb(self):
         """
