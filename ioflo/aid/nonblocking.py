@@ -242,7 +242,7 @@ class WireLog(object):
                  midfix='',
                  rx=True,
                  tx=True,
-                 stringify=False):
+                 buffify=False):
         """
         Initialization method for instance.
         path = directory for log files
@@ -250,7 +250,7 @@ class WireLog(object):
         midfix = another more prefix for log name if provided
         rx = Boolean create rx log file if True
         tx = Boolean create tx log file if True
-        stringify = Boolean use BytesIO in memory buffer instead of File object
+        buffify = Boolean use BytesIO in memory buffer instead of File object
         """
         self.path = path  # path to directory where log files go must end in /
         self.prefix = prefix
@@ -259,7 +259,7 @@ class WireLog(object):
         self.tx = True if tx else False
         self.rxLog = None  # receive log file
         self.txLog = None  # transmit log file
-        self.stringify = True if stringify else False
+        self.buffify = True if buffify else False
 
     def reopen(self, path='', prefix='', midfix=''):
         """
@@ -283,7 +283,7 @@ class WireLog(object):
         date = time.strftime('%Y%m%d_%H%M%S', time.gmtime(time.time()))
 
         if self.rx:
-            if not self.stringify:
+            if not self.buffify:
                 name = "{0}{1}{2}_rx.txt".format(prefix, midfix, date)
                 path = os.path.join(self.path, name)
                 try:
@@ -299,7 +299,7 @@ class WireLog(object):
                     return False
 
         if self.tx:
-            if not self.stringify:
+            if not self.buffify:
                 name = "{0}{1}{2}_tx.txt".format(prefix, midfix, date)
                 path = os.path.join(self.path, name)
                 try:
@@ -327,17 +327,17 @@ class WireLog(object):
 
     def getRx(self):
         """
-        Returns rx string buffer value if .stringify else None
+        Returns rx string buffer value if .buffify else None
         """
-        if self.stringify and self.rxLog and not self.rxLog.closed:
+        if self.buffify and self.rxLog and not self.rxLog.closed:
             return (self.rxLog.getvalue())
         return None
 
     def getTx(self):
         """
-        Returns tx string buffer value if .stringify else None
+        Returns tx string buffer value if .buffify else None
         """
-        if self.stringify and self.txLog and not self.txLog.closed:
+        if self.buffify and self.txLog and not self.txLog.closed:
             return (self.txLog.getvalue())
         return None
 

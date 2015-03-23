@@ -133,7 +133,7 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
 
-        wire = nonblocking.WireLog(path=logDirpath, stringify=True)
+        wire = nonblocking.WireLog(path=logDirpath, buffify=True)
         prefix = 'localhost'
         midfix = '5000'
         result = wire.reopen(prefix=prefix, midfix=midfix)
