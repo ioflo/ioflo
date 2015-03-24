@@ -924,7 +924,7 @@ class Outgoer(object):
 
         return True
 
-    def serviceCx(self):
+    def serviceConnect(self):
         """
         Service connection attempt
         If not already connected make a nonblocking attempt
@@ -1042,7 +1042,7 @@ class Outgoer(object):
                 self.txes.appendleft(data[count:])
                 break  # try again later
 
-ClientSocketTcpNb = Outgoer  # alias
+ClientSocketTcpNb = Client = Outgoer  # aliases
 
 class ServerSocketTcpNb(object):
     """
@@ -1168,7 +1168,7 @@ class ServerSocketTcpNb(object):
 
         return (cs, ca)
 
-    def serviceAccept(self):
+    def serviceAccepts(self):
         """
         Service any accept requests
         Returns list of accepted connection socket duples
@@ -1545,6 +1545,33 @@ class Incomer(object):
 
         return data
 
+    def serviceReceives(self):
+        """
+        Service receives until no more
+        """
+        while not self.cutoff:
+            data = self.receive()
+            if not data:
+                break
+            self.rxes.append(data)
+
+    def serviceReceiveOnce(self):
+        '''
+        Retrieve from server only one reception
+        '''
+        if not self.cutoff:
+            data = self.receive()
+            if data:
+                self.rxes.append(data)
+
+    def catRxes(self):
+        """
+        Pop off all rxes and concatenate into single byte string and return
+        """
+        rx = b''.join(list(self.rxes))
+        self.rxes.clear()
+        return rx
+
     def send(self, data):
         """
         Perform non blocking send on connected socket .cs.
@@ -1574,6 +1601,25 @@ class Incomer(object):
 
         return result
 
+    def transmit(self, data):
+        '''
+        Queue data onto .txes
+        '''
+        self.txes.append(data)
+
+    def serviceTxes(self):
+        """
+        Service transmits
+        For each tx if all bytes sent then keep sending until partial send
+        or no more to send
+        If partial send reattach and return
+        """
+        while self.txes and not self.cutoff:
+            data = self.txes.popleft()
+            count = self.send(data)
+            if count < len(data):  # put back unsent portion
+                self.txes.appendleft(data[count:])
+                break  # try again later
 
 class Server(Acceptor):
     """
@@ -1589,7 +1635,7 @@ class Server(Acceptor):
 
         self.ixes = odict()  # accepted incoming connections, Incomer instances
 
-    def serviceAx(self):
+    def serviceAccepts(self):
         """
         Service accepts
         For each new connection create Incomer and add to .ixes
@@ -1607,76 +1653,73 @@ class Server(Acceptor):
             self.ixers[ca] = incomer
         return accepteds
 
-    def serviceReceives(self, ca):
+    def shutdown(self, ca, how=socket.SHUT_RDWR):
         """
-        Service receives for incomer with connection address ca
+        Shutdown incomer given by connection address ca
         """
-        pass
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        self.ixes[ca].shutdown(how=how)
 
-    def serviceReceiveOnce(self):
+    def shutdownSend(self, ca):
+        """
+        Shutdown send on incomer given by connection address ca
+        """
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        self.ixes[ca].shutdownSend()
+
+    def shutdownReceive(self, ca):
+        """
+        Shutdown send on incomer given by connection address ca
+        """
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        self.ixes[ca].shutdownReceive()
+
+    def shutclose(self, ca):
+        """
+        Shutdown and close incomer given by connection address ca
+        """
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        self.ixes[ca].shutclose()
+
+    def serviceAllReceives(self):
+        """
+        Service receives for all incomers in .ixes
+        """
+        for ix in self.ixes.values():
+            ix.serviceReceives()
+
+    def catRxes(self, ca):
+        """
+        Return concatenated rxes for incomer given by connection address ca
+        """
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        return (self.ixes[ca].catRxes())
+
+    def transmit(self, data, ca):
         '''
-        Retrieve from server only one reception
+        Queue data onto .txes for incomer given by connection address ca
         '''
-        if self.connected and not self.cutoff:
-            data = self.receive()
-            if data:
-                self.rxes.append(data)
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        self.ixes[ca].transmit(data)
 
-    def catRx(self):
+    def serviceAllTxes(self):
         """
-        Pop off all rxes and concatenate into single byte string and return
+        Service transmits for all incomers in .ixes
         """
-        rx = b''.join(list(self.rxes))
-        self.rxes.clear()
-        return rx
-
-    def send(self, data):
-        """
-        Perform non blocking send on connected socket .cs.
-        Return number of bytes sent
-
-        data is string in python2 and bytes in python3
-        """
-        try:
-            result = self.cs.send(data) #result is number of bytes sent
-        except socket.error as ex:
-            result = 0
-            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                emsg = ("socket.error = {0}: Outgoer at {1} while sending "
-                        "to {2} \n".format(ex, self.ca, self.ha))
-                console.profuse(emsg)
-                raise
-
-        if result:
-            if console._verbosity >=  console.Wordage.profuse:
-                cmsg = ("Client at {0} sent to {1}, {2} bytes\n"
-                        "{3}\n".format(self.ca, self.ha, result, data[:result].decode('UTF-8')))
-                console.profuse(cmsg)
-
-            if self.wlog:
-                self.wlog.writeTx(self.ha, data[:result])
-
-        return result
-
-    def transmit(self, data):
-        '''
-        Queue data onto .txes
-        '''
-        self.txes.append(data)
-
-    def serviceTxes(self):
-        """
-        Service transmits
-        For each tx if all bytes sent then keep sending until partial send
-        or no more to send
-        If partial send reattach and return
-        """
-        while self.txes and self.connected and not self.cutoff:
-            data = self.txes.popleft()
-            count = self.send(data)
-            if count < len(data):  # put back unsent portion
-                self.txes.appendleft(data[count:])
-                break  # try again later
+        for ix in self.ixes.values():
+            ix.serviceTxes()
 
 class PeerSocketTcpNb(object):
     """

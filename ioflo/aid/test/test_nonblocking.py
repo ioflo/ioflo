@@ -787,8 +787,8 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to alpha\n")
         accepteds = []
         while True:
-            beta.serviceCx()
-            accepteds.extend(alpha.serviceAccept())
+            beta.serviceConnect()
+            accepteds.extend(alpha.serviceAccepts())
             if beta.connected and accepteds:
                 break
             time.sleep(0.05)
