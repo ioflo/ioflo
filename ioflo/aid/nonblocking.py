@@ -967,7 +967,7 @@ class Outgoer(object):
 
         return data
 
-    def serviceReceive(self):
+    def serviceReceives(self):
         """
         Service receives until no more
         """
@@ -986,7 +986,7 @@ class Outgoer(object):
             if data:
                 self.rxes.append(data)
 
-    def catRx(self):
+    def catRxes(self):
         """
         Pop off all rxes and concatenate into single byte string and return
         """
@@ -1028,7 +1028,7 @@ class Outgoer(object):
         '''
         self.txes.append(data)
 
-    def serviceTx(self):
+    def serviceTxes(self):
         """
         Service transmits
         For each tx if all bytes sent then keep sending until partial send
@@ -1423,7 +1423,7 @@ class Acceptor(object):
 
         return (cs, ca)
 
-    def serviceAccept(self):
+    def serviceAccepts(self):
         """
         Service any accept requests
         Returns list of accepted connection socket duples
@@ -1584,19 +1584,17 @@ class Server(Acceptor):
     def __init__(self, **kwa):
         """
         Initialization method for instance.
-
         """
         super(Server, self).__init__(**kwa)
 
         self.ixes = odict()  # accepted incoming connections, Incomer instances
-
 
     def serviceAx(self):
         """
         Service accepts
         For each new connection create Incomer and add to .ixes
         """
-        accepteds = self.serviceAccept()
+        accepteds = super(Server, self).serviceAccepts()
         for cs, ca in accepteds:
             if ca != cs.getpeername() or self.ha != cs.getsockename():
                 raise ValueError("Accepted socket host addresses malformed for "
@@ -1607,81 +1605,78 @@ class Server(Acceptor):
                               cs=cs,
                               wlog=self.wlog)
             self.ixers[ca] = incomer
+        return accepteds
 
-        def serviceReceive(self):
-            """
-            Service receives until no more
-            """
-            while self.connected and not self.cutoff:
-                data = self.receive()
-                if not data:
-                    break
+    def serviceReceives(self, ca):
+        """
+        Service receives for incomer with connection address ca
+        """
+        pass
+
+    def serviceReceiveOnce(self):
+        '''
+        Retrieve from server only one reception
+        '''
+        if self.connected and not self.cutoff:
+            data = self.receive()
+            if data:
                 self.rxes.append(data)
 
-        def serviceReceiveOnce(self):
-            '''
-            Retrieve from server only one reception
-            '''
-            if self.connected and not self.cutoff:
-                data = self.receive()
-                if data:
-                    self.rxes.append(data)
+    def catRx(self):
+        """
+        Pop off all rxes and concatenate into single byte string and return
+        """
+        rx = b''.join(list(self.rxes))
+        self.rxes.clear()
+        return rx
 
-        def catRx(self):
-            """
-            Pop off all rxes and concatenate into single byte string and return
-            """
-            rx = b''.join(list(self.rxes))
-            self.rxes.clear()
-            return rx
+    def send(self, data):
+        """
+        Perform non blocking send on connected socket .cs.
+        Return number of bytes sent
 
-        def send(self, data):
-            """
-            Perform non blocking send on connected socket .cs.
-            Return number of bytes sent
+        data is string in python2 and bytes in python3
+        """
+        try:
+            result = self.cs.send(data) #result is number of bytes sent
+        except socket.error as ex:
+            result = 0
+            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                emsg = ("socket.error = {0}: Outgoer at {1} while sending "
+                        "to {2} \n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                raise
 
-            data is string in python2 and bytes in python3
-            """
-            try:
-                result = self.cs.send(data) #result is number of bytes sent
-            except socket.error as ex:
-                result = 0
-                if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                    emsg = ("socket.error = {0}: Outgoer at {1} while sending "
-                            "to {2} \n".format(ex, self.ca, self.ha))
-                    console.profuse(emsg)
-                    raise
+        if result:
+            if console._verbosity >=  console.Wordage.profuse:
+                cmsg = ("Client at {0} sent to {1}, {2} bytes\n"
+                        "{3}\n".format(self.ca, self.ha, result, data[:result].decode('UTF-8')))
+                console.profuse(cmsg)
 
-            if result:
-                if console._verbosity >=  console.Wordage.profuse:
-                    cmsg = ("Client at {0} sent to {1}, {2} bytes\n"
-                            "{3}\n".format(self.ca, self.ha, result, data[:result].decode('UTF-8')))
-                    console.profuse(cmsg)
+            if self.wlog:
+                self.wlog.writeTx(self.ha, data[:result])
 
-                if self.wlog:
-                    self.wlog.writeTx(self.ha, data[:result])
+        return result
 
-            return result
+    def transmit(self, data):
+        '''
+        Queue data onto .txes
+        '''
+        self.txes.append(data)
 
-        def transmit(self, data):
-            '''
-            Queue data onto .txes
-            '''
-            self.txes.append(data)
-
-        def serviceTx(self):
-            """
-            Service transmits
-            For each tx if all bytes sent then keep sending until partial send
-            or no more to send
-            If partial send reattach and return
-            """
-            while self.txes and self.connected and not self.cutoff:
-                data = self.txes.popleft()
-                count = self.send(data)
-                if count < len(data):  # put back unsent portion
-                    self.txes.appendleft(data[count:])
-                    break  # try again later
+    def serviceTxes(self):
+        """
+        Service transmits
+        For each tx if all bytes sent then keep sending until partial send
+        or no more to send
+        If partial send reattach and return
+        """
+        while self.txes and self.connected and not self.cutoff:
+            data = self.txes.popleft()
+            count = self.send(data)
+            if count < len(data):  # put back unsent portion
+                self.txes.appendleft(data[count:])
+                break  # try again later
 
 class PeerSocketTcpNb(object):
     """

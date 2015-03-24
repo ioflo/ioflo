@@ -810,7 +810,7 @@ class BasicTestCase(unittest.TestCase):
         beta.transmit(msgOut)
         msgIn = b''
         while not msgIn and beta.txes:
-            beta.serviceTx()
+            beta.serviceTxes()
             msgIn = alpha.receive(csBeta)
             time.sleep(0.05)
         self.assertEqual(msgOut, msgIn)
@@ -822,7 +822,7 @@ class BasicTestCase(unittest.TestCase):
         beta.transmit(msgOut2)
         msgIn = b''
         while not msgIn and beta.txes:
-            beta.serviceTx()
+            beta.serviceTxes()
             msgIn += alpha.receive(csBeta)
             time.sleep(0.05)
 
@@ -842,7 +842,7 @@ class BasicTestCase(unittest.TestCase):
         msgIn = b''
         count = 0
         while len(msgIn) < len(msgOutBig):
-            beta.serviceTx()
+            beta.serviceTxes()
             msgIn += alpha.receive(csBeta)
             time.sleep(0.05)
 
@@ -855,8 +855,8 @@ class BasicTestCase(unittest.TestCase):
 
         msgIn = b''
         while len(msgIn) < len(msgOut):
-            beta.serviceReceive()
-            msgIn += beta.catRx()
+            beta.serviceReceives()
+            msgIn += beta.catRxes()
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOut)
@@ -865,8 +865,8 @@ class BasicTestCase(unittest.TestCase):
         count = alpha.send(msgOutBig, csBeta)
         msgIn = b''
         while len(msgIn) < len(msgOutBig):
-            beta.serviceReceive()
-            msgIn += beta.catRx()
+            beta.serviceReceives()
+            msgIn += beta.catRxes()
             if count < len(msgOut):
                 count += alpha.send(msgOutBig[count:])
             time.sleep(0.05)
