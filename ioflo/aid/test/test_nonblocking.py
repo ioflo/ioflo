@@ -754,6 +754,135 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testClientSocketTcpNbService(self):
+        """
+        Test Classes ServerSocketTcpNb service methods
+        """
+        console.terse("{0}\n".format(self.testClientSocketTcpNbService.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
+
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="tcp", dir=userDirpath)
+
+        logDirpath = os.path.join(tempDirpath, 'log')
+        if not os.path.exists(logDirpath):
+            os.makedirs(logDirpath)
+
+        wireLog = nonblocking.WireLog(path=logDirpath)
+        result = wireLog.reopen(prefix='alpha', midfix='6101')
+
+        alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072, wlog=wireLog)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+
+        beta = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to alpha\n")
+        accepteds = []
+        while True:
+            beta.serviceCx()
+            cs, ca = alpha.accept()
+            if cs:
+                accepteds.append((cs, ca))
+            if beta.connected and accepteds:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(len(accepteds), 1)
+        csBeta, caBeta = accepteds[0]
+        self.assertIsNotNone(csBeta)
+        self.assertIsNotNone(caBeta)
+
+        self.assertEqual(csBeta.getsockname(), beta.cs.getpeername())
+        self.assertEqual(csBeta.getpeername(), beta.cs.getsockname())
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(caBeta, beta.ca)
+
+        msgOut = b"Beta sends to Alpha"
+        beta.transmit(msgOut)
+        msgIn = b''
+        while not msgIn and beta.txes:
+            beta.serviceTx()
+            msgIn = alpha.receive(csBeta)
+            time.sleep(0.05)
+        self.assertEqual(msgOut, msgIn)
+
+        # send multiple
+        msgOut1 = b"First Message"
+        beta.transmit(msgOut1)
+        msgOut2 = b"Second Message"
+        beta.transmit(msgOut2)
+        msgIn = b''
+        while not msgIn and beta.txes:
+            beta.serviceTx()
+            msgIn += alpha.receive(csBeta)
+            time.sleep(0.05)
+
+        self.assertEqual(msgIn, msgOut1 + msgOut2)
+
+        # build message too big to fit in buffer
+        sizes = beta.actualBufSizes()
+        size = sizes[0]
+        msgOutBig = b""
+        count = 0
+        while (len(msgOutBig) <= size * 4):
+            msgOutBig += ns2b("{0:0>7d} ".format(count))
+            count += 1
+        self.assertTrue(len(msgOutBig) >= size * 4)
+
+        beta.transmit(msgOutBig)
+        msgIn = b''
+        count = 0
+        while len(msgIn) < len(msgOutBig):
+            beta.serviceTx()
+            msgIn += alpha.receive(csBeta)
+            time.sleep(0.05)
+
+        self.assertEqual(msgIn, msgOutBig)
+
+        # send from alpha to beta
+        msgOut = b"Alpha sends to Beta"
+        count = alpha.send(msgOut, csBeta)
+        self.assertEqual(count, len(msgOut))
+
+        msgIn = b''
+        while len(msgIn) < len(msgOut):
+            beta.serviceReceive()
+            msgIn += beta.catRx()
+            time.sleep(0.05)
+
+        self.assertEqual(msgIn, msgOut)
+
+        # send big from alpha to beta
+        count = alpha.send(msgOutBig, csBeta)
+        msgIn = b''
+        while len(msgIn) < len(msgOutBig):
+            beta.serviceReceive()
+            msgIn += beta.catRx()
+            if count < len(msgOut):
+                count += alpha.send(msgOutBig[count:])
+            time.sleep(0.05)
+
+        self.assertEqual(msgIn, msgOutBig)
+
+        alpha.close()
+        beta.close()
+
+        wireLog.close()
+        shutil.rmtree(tempDirpath)
+        console.reinit(verbosity=console.Wordage.concise)
+
+
     def testSocketTcpNb(self):
         """
         Test Class SocketTcpNb
@@ -884,6 +1013,7 @@ def runSome():
              'testSocketUdpNb',
              'testSocketUxdNb',
              'testServerClientSocketTcpNb',
+             'testClientSocketTcpNbService',
              'testSocketTcpNb', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -901,7 +1031,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
-    #runOne('testWireLog')
+    runOne('testClientSocketTcpNbService')
 

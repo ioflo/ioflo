@@ -1276,6 +1276,12 @@ class ClientSocketTcpNb(object):
 
         return result
 
+    def transmit(self, data):
+        '''
+        Queue data onto .txes
+        '''
+        self.txes.append(data)
+
     def serviceTx(self):
         """
         Service transmits
@@ -1283,7 +1289,7 @@ class ClientSocketTcpNb(object):
         or no more to send
         If partial send reattach and return
         """
-        while self.txes and self.connected and not self.closed:
+        while self.txes and self.connected and not self.cutoff:
             data = self.txes.popleft()
             count = self.send(data)
             if count < len(data):  # put back unsent portion
