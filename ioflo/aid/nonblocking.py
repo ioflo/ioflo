@@ -777,261 +777,7 @@ class WinMailslotNb(object):
 
         return result
 
-class ServerSocketTcpNb(object):
-    """
-    Nonblocking TCP Socket Server Class.
-    """
-    def __init__(self,
-                 ha=None,
-                 host='',
-                 port=56000,
-                 eha=None,
-                 bufsize=8096,
-                 wlog=None):
-        """
-        Initialization method for instance.
-
-        ha = host address duple (host, port) for listen socket
-        host = host address for listen socket, '' means any interface on host
-        port = socket port for listen socket
-        eha = external destination address for incoming connections
-        bufsize = buffer size
-        wlog = WireLog object if any
-        """
-        self.ha = ha or (host, port)  # ha = host address
-        eha = eha or self.ha
-        if eha:
-            host, port = eha
-            host = socket.gethostbyname(host)
-            if host in ['0.0.0.0', '']:
-                host = '127.0.0.1'
-            eha = (host, port)
-        self.eha = eha
-        self.bs = bufsize
-        self.wlog = wlog
-
-        self.ss = None  # listen socket for accepts
-
-    def actualBufSizes(self):
-        """
-        Returns duple of the the actual socket send and receive buffer size
-        (send, receive)
-        """
-        if not self.ss:
-            return (0, 0)
-
-        return (self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF),
-                self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
-
-    def open(self):
-        """
-        Opens binds listen socket in non blocking mode.
-
-        if socket not closed properly, binding socket gets error
-           socket.error: (48, 'Address already in use')
-        """
-        #create server socket ss to listen on
-        self.ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # make socket address reusable.
-        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
-        # TIME_WAIT state, without waiting for its natural timeout to expire.
-        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        # Linux TCP allocates twice the requested size
-        if sys.platform.startswith('linux'):
-            bs = 2 * self.bs  # get size is twice the set size
-        else:
-            bs = self.bs
-
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) < bs:
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
-
-        self.ss.setblocking(0) #non blocking socket
-
-        try:  # bind to listen socket (host, port) to receive connections
-            self.ss.bind(self.ha)
-            self.ss.listen(5)
-        except socket.error as ex:
-            console.terse("socket.error = {0}\n".format(ex))
-            return False
-
-        self.ha = self.ss.getsockname()  # get resolved ha after bind
-
-        return True
-
-    def reopen(self):
-        """
-        Idempotently opens listen socket
-        """
-        self.close()
-        return self.open()
-
-    def close(self):
-        """
-        Closes listen socket.
-        """
-        if self.ss:
-            try:
-                self.ss.shutdown(socket.SHUT_RDWR)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-            self.ss.close()  #close socket
-            self.ss = None
-
-    def accept(self):
-        """
-        Accept new connection nonblocking
-        Returns duple (cs, ca) of connected socket and connected host address
-        Otherwise if no new connection returns (None, None)
-        """
-        # accept new virtual connected socket created from server socket
-        try:
-            cs, ca = self.ss.accept()  # virtual connection (socket, host address)
-        except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                return (None, None)  # nothing yet
-            emsg = ("socket.error = {0}: server at {1} while "
-                    "accepting \n".format(ex, self.ha))
-            console.profuse(emsg)
-            raise  # re-raise
-
-        return (cs, ca)
-
-    @staticmethod
-    def shutdown(cs, how=socket.SHUT_RDWR):
-        """
-        Shutdown connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(how)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-
-    @staticmethod
-    def shutdownSend(cs):
-        """
-        Shutdown send on connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(socket.SHUT_WR)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-
-    @staticmethod
-    def shutdownReceive(cs):
-        """
-        Shutdown receive on connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(socket.SHUT_RD)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-
-    @staticmethod
-    def shutclose(cs):
-        """
-        Shutdown and close connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(socket.SHUT_RDWR)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-            cs.close()  #close socket
-
-    def receive(self, cs):
-        """
-        Perform non blocking receive from connected socket cs
-
-        If no data then returns None
-        If connection closed then returns ''
-        Otherwise returns data
-        """
-        try:
-            data = cs.recv(self.bs)
-        except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                return None
-            else:
-                emsg = ("socket.error = {0}: server at {1} while receiving"
-                        "\n".format(ex, self.ha))
-                console.profuse(emsg)
-                raise  # re-raise
-
-        if data:  # connection open
-            sa = cs.getpeername()
-            if console._verbosity >= console.Wordage.profuse:  # faster to check
-                cmsg = ("Server at {0} received from {1}\n"
-                           "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
-                console.profuse(cmsg)
-
-            if self.wlog:  # log over the wire rx
-                self.wlog.writeRx(sa, data)
-
-        return data
-
-    def send(self, data, cs):
-        """
-        Perform non blocking send on connected socket cs.
-        Return number of bytes sent
-
-        data is string in python2 and bytes in python3
-        """
-        try:
-            result = cs.send(data) #result is number of bytes sent
-        except socket.error as ex:
-            result = 0
-            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                emsg = ("socket.error = {0}: server at {1} while"
-                        "sending\n".format(ex, self.ha,))
-                console.profuse(emsg)
-                raise
-
-        if result:  # connection not closed
-            try:
-                da = cs.getpeername()
-            except OSError as ex:
-                if ex.errno not in [errno.EINVAL]:
-                    raise
-                da = None
-
-            if console._verbosity >=  console.Wordage.profuse:
-                cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
-                        "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
-                console.profuse(cmsg)
-
-            if self.wlog:
-                self.wlog.writeTx(da, data[:result])
-
-        return result
-
-    def serviceAx(self):
-        """
-        Service any accept requests
-        Returns list of accepted connection socket duples
-        [(cs,ca)]
-        """
-        accepteds = []
-        while True:
-            cs, ca = self.accept()
-            if not cs:
-                break
-            accepteds.append((cs, ca))
-        return accepteds
-
-
-class ClientSocketTcpNb(object):
+class Outgoer(object):
     """
     Nonblocking TCP Socket Client Class.
     """
@@ -1260,7 +1006,7 @@ class ClientSocketTcpNb(object):
         except socket.error as ex:
             result = 0
             if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                emsg = ("socket.error = {0}: server at {1} sending "
+                emsg = ("socket.error = {0}: Outgoer at {1} while sending "
                         "to {2} \n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)
                 raise
@@ -1296,6 +1042,401 @@ class ClientSocketTcpNb(object):
                 self.txes.appendleft(data[count:])
                 break  # try again later
 
+ClientSocketTcpNb = Outgoer  # alias
+
+class ServerSocketTcpNb(object):
+    """
+    Nonblocking TCP Socket Server Class.
+    """
+    def __init__(self,
+                 ha=None,
+                 host='',
+                 port=56000,
+                 eha=None,
+                 bufsize=8096,
+                 wlog=None):
+        """
+        Initialization method for instance.
+
+        ha = host address duple (host, port) for listen socket
+        host = host address for listen socket, '' means any interface on host
+        port = socket port for listen socket
+        eha = external destination address for incoming connections
+        bufsize = buffer size
+        wlog = WireLog object if any
+        """
+        self.ha = ha or (host, port)  # ha = host address
+        eha = eha or self.ha
+        if eha:
+            host, port = eha
+            host = socket.gethostbyname(host)
+            if host in ['0.0.0.0', '']:
+                host = '127.0.0.1'
+            eha = (host, port)
+        self.eha = eha
+        self.bs = bufsize
+        self.wlog = wlog
+
+        self.ss = None  # listen socket for accepts
+
+    def actualBufSizes(self):
+        """
+        Returns duple of the the actual socket send and receive buffer size
+        (send, receive)
+        """
+        if not self.ss:
+            return (0, 0)
+
+        return (self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF),
+                self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
+
+    def open(self):
+        """
+        Opens binds listen socket in non blocking mode.
+
+        if socket not closed properly, binding socket gets error
+           socket.error: (48, 'Address already in use')
+        """
+        #create server socket ss to listen on
+        self.ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # make socket address reusable.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
+        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        # Linux TCP allocates twice the requested size
+        if sys.platform.startswith('linux'):
+            bs = 2 * self.bs  # get size is twice the set size
+        else:
+            bs = self.bs
+
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) < bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+
+        self.ss.setblocking(0) #non blocking socket
+
+        try:  # bind to listen socket (host, port) to receive connections
+            self.ss.bind(self.ha)
+            self.ss.listen(5)
+        except socket.error as ex:
+            console.terse("socket.error = {0}\n".format(ex))
+            return False
+
+        self.ha = self.ss.getsockname()  # get resolved ha after bind
+
+        return True
+
+    def reopen(self):
+        """
+        Idempotently opens listen socket
+        """
+        self.close()
+        return self.open()
+
+    def close(self):
+        """
+        Closes listen socket.
+        """
+        if self.ss:
+            try:
+                self.ss.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
+            self.ss.close()  #close socket
+            self.ss = None
+
+    def accept(self):
+        """
+        Accept new connection nonblocking
+        Returns duple (cs, ca) of connected socket and connected host address
+        Otherwise if no new connection returns (None, None)
+        """
+        # accept new virtual connected socket created from server socket
+        try:
+            cs, ca = self.ss.accept()  # virtual connection (socket, host address)
+        except socket.error as ex:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                return (None, None)  # nothing yet
+            emsg = ("socket.error = {0}: server at {1} while "
+                    "accepting \n".format(ex, self.ha))
+            console.profuse(emsg)
+            raise  # re-raise
+
+        return (cs, ca)
+
+    def serviceAccept(self):
+        """
+        Service any accept requests
+        Returns list of accepted connection socket duples
+        [(cs,ca)]
+        """
+        accepteds = []
+        while True:
+            cs, ca = self.accept()
+            if not cs:
+                break
+            accepteds.append((cs, ca))
+        return accepteds
+
+    @staticmethod
+    def shutdown(cs, how=socket.SHUT_RDWR):
+        """
+        Shutdown connected socket cs
+        """
+        if cs:
+            try:
+                cs.shutdown(how)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
+
+    @staticmethod
+    def shutdownSend(cs):
+        """
+        Shutdown send on connected socket cs
+        """
+        if cs:
+            try:
+                cs.shutdown(socket.SHUT_WR)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
+
+    @staticmethod
+    def shutdownReceive(cs):
+        """
+        Shutdown receive on connected socket cs
+        """
+        if cs:
+            try:
+                cs.shutdown(socket.SHUT_RD)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
+
+    @staticmethod
+    def shutclose(cs):
+        """
+        Shutdown and close connected socket cs
+        """
+        if cs:
+            try:
+                cs.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
+            cs.close()  #close socket
+
+    def receive(self, cs):
+        """
+        Perform non blocking receive from connected socket cs
+
+        If no data then returns None
+        If connection closed then returns ''
+        Otherwise returns data
+        """
+        try:
+            data = cs.recv(self.bs)
+        except socket.error as ex:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                return None
+            else:
+                emsg = ("socket.error = {0}: server at {1} while receiving"
+                        "\n".format(ex, self.ha))
+                console.profuse(emsg)
+                raise  # re-raise
+
+        if data:  # connection open
+            sa = cs.getpeername()
+            if console._verbosity >= console.Wordage.profuse:  # faster to check
+                cmsg = ("Server at {0} received from {1}\n"
+                           "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
+                console.profuse(cmsg)
+
+            if self.wlog:  # log over the wire rx
+                self.wlog.writeRx(sa, data)
+
+        return data
+
+    def send(self, data, cs):
+        """
+        Perform non blocking send on connected socket cs.
+        Return number of bytes sent
+
+        data is string in python2 and bytes in python3
+        """
+        try:
+            result = cs.send(data) #result is number of bytes sent
+        except socket.error as ex:
+            result = 0
+            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                emsg = ("socket.error = {0}: server at {1} while"
+                        "sending\n".format(ex, self.ha,))
+                console.profuse(emsg)
+                raise
+
+        if result:
+            try:
+                da = cs.getpeername()
+            except OSError as ex:
+                if ex.errno not in [errno.EINVAL]:
+                    raise
+                da = None
+
+            if console._verbosity >=  console.Wordage.profuse:
+                cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
+                        "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
+                console.profuse(cmsg)
+
+            if self.wlog:
+                self.wlog.writeTx(da, data[:result])
+
+        return result
+
+
+class Acceptor(object):
+    """
+    Nonblocking TCP Socket Acceptor Class.
+    Listen socket for incoming TCP connections
+    """
+    def __init__(self,
+                 ha=None,
+                 host='',
+                 port=56000,
+                 eha=None,
+                 bufsize=8096,
+                 wlog=None):
+        """
+        Initialization method for instance.
+
+        ha = host address duple (host, port) for listen socket
+        host = host address for listen socket, '' means any interface on host
+        port = socket port for listen socket
+        eha = external destination address for incoming connections
+        bufsize = buffer size
+        wlog = WireLog object if any
+        """
+        self.ha = ha or (host, port)  # ha = host address
+        eha = eha or self.ha
+        if eha:
+            host, port = eha
+            host = socket.gethostbyname(host)
+            if host in ['0.0.0.0', '']:
+                host = '127.0.0.1'
+            eha = (host, port)
+        self.eha = eha
+        self.bs = bufsize
+        self.wlog = wlog
+
+        self.ss = None  # listen socket for accepts
+
+    def actualBufSizes(self):
+        """
+        Returns duple of the the actual socket send and receive buffer size
+        (send, receive)
+        """
+        if not self.ss:
+            return (0, 0)
+
+        return (self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF),
+                self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
+
+    def open(self):
+        """
+        Opens binds listen socket in non blocking mode.
+
+        if socket not closed properly, binding socket gets error
+           socket.error: (48, 'Address already in use')
+        """
+        #create server socket ss to listen on
+        self.ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # make socket address reusable.
+        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
+        # TIME_WAIT state, without waiting for its natural timeout to expire.
+        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        # Linux TCP allocates twice the requested size
+        if sys.platform.startswith('linux'):
+            bs = 2 * self.bs  # get size is twice the set size
+        else:
+            bs = self.bs
+
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) < bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
+        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+
+        self.ss.setblocking(0) #non blocking socket
+
+        try:  # bind to listen socket (host, port) to receive connections
+            self.ss.bind(self.ha)
+            self.ss.listen(5)
+        except socket.error as ex:
+            console.terse("socket.error = {0}\n".format(ex))
+            return False
+
+        self.ha = self.ss.getsockname()  # get resolved ha after bind
+
+        return True
+
+    def reopen(self):
+        """
+        Idempotently opens listen socket
+        """
+        self.close()
+        return self.open()
+
+    def close(self):
+        """
+        Closes listen socket.
+        """
+        if self.ss:
+            try:
+                self.ss.shutdown(socket.SHUT_RDWR)  # shutdown socket
+            except socket.error as ex:
+                #console.terse("socket.error = {0}\n".format(ex))
+                pass
+            self.ss.close()  #close socket
+            self.ss = None
+
+    def accept(self):
+        """
+        Accept new connection nonblocking
+        Returns duple (cs, ca) of connected socket and connected host address
+        Otherwise if no new connection returns (None, None)
+        """
+        # accept new virtual connected socket created from server socket
+        try:
+            cs, ca = self.ss.accept()  # virtual connection (socket, host address)
+        except socket.error as ex:
+            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                return (None, None)  # nothing yet
+            emsg = ("socket.error = {0}: server at {1} while "
+                    "accepting \n".format(ex, self.ha))
+            console.profuse(emsg)
+            raise  # re-raise
+
+        return (cs, ca)
+
+    def serviceAccept(self):
+        """
+        Service any accept requests
+        Returns list of accepted connection socket duples
+        [(cs,ca)]
+        """
+        accepteds = []
+        while True:
+            cs, ca = self.accept()
+            if not cs:
+                break
+            accepteds.append((cs, ca))
+        return accepteds
+
 
 class Incomer(object):
     """
@@ -1307,9 +1448,7 @@ class Incomer(object):
                  ha=None,
                  ca=None,
                  cs=None,
-                 log=False,
-                 txLog=None,
-                 rxLog=None):
+                 wlog=None):
 
         """
         Initialization method for instance.
@@ -1318,21 +1457,17 @@ class Incomer(object):
         ha = host address duple (host, port) near side of connection
         ca = virtual host address duple (host, port) far side of connection
         cs = connection socket object
-        log = Boolean If True then log rx tx to log files
-        txLog = transmit log file
-        rxLog = receive log file
+        wlog = WireLog object if any
         """
         self.name = name
         self.uid = uid
         self.ha = ha
         self.ca = ca
         self.cs = cs
-        self.closed = False # True when detect connection closed on far side
+        self.wlog = wlog
+        self.cutoff = False # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
         self.rxes = deque() # deque of data received
-        self.log = log
-        self.txLog = txLog
-        self.rxLog = rxLog
 
     def shutdown(self, how=socket.SHUT_RDWR):
         """
@@ -1391,19 +1526,23 @@ class Incomer(object):
             if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 return None
             else:
-                emsg = ("socket.error = {0}: Incomer at {1} while receiving from {2}\n"
-                        "f\n".format(ex, self.ha, self.ca))
+                emsg = ("socket.error = {0}: Incomer at {1} while receiving"
+                        " from {2}\n".format(ex, self.ha, self.ca))
                 console.profuse(emsg)
                 raise  # re-raise
 
-        if data == '':  # far side shutdown or closed
-            self.closed = True
+        if data:  # connection open
+            if console._verbosity >= console.Wordage.profuse:  # faster to check
+                cmsg = ("Incomer at {0} received from {1}\n"
+                       "{2}\n".format(self.ha, self.ca, data.decode("UTF-8")))
+                console.profuse(cmsg)
 
-        message = ("Incomer at {0} received from {1}, "
-                   "{2}\n".format(self.ha, self.ca, data))
-        console.profuse(message)
-        if self.log and self.rxLog:
-            self.rxLog.write("{0}\n{1}\n".format(self.ca, data))
+            if self.wlog:  # log over the wire rx
+                self.wlog.writeRx(self.ca, data)
+
+        else:  # data empty so connection closed on other end
+            self.cutoff = True
+
         return data
 
     def send(self, data):
@@ -1418,223 +1557,131 @@ class Incomer(object):
         except socket.error as ex:
             result = 0
             if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                emsg = ("socket.error = {0}: server at {1} "
-                        "sending\n".format(ex, self.ha,))
+                emsg = ("socket.error = {0}: Incomer at {1} while "
+                        "sending to {2}\n".format(ex, self.ha, self.ca))
                 console.profuse(emsg)
                 raise
 
-        console.profuse("Incomer at {0} sent to {1}, {2} "
-                        "bytes\n".format(self.ha, self.ca, result))
+        if result:
+            if console._verbosity >=  console.Wordage.profuse:
+                cmsg = ("Incomer at {0} sent to {1}, {2} bytes\n"
+                        "{3}\n".format(self.ha, self.ha , result,
+                                       data[:result].decode('UTF-8')))
+                console.profuse(cmsg)
 
-        if self.log and self.txLog:
-            self.txLog.write("{0}\n{2}\n".format(self.ca, data))
+            if self.wlog:
+                self.wlog.writeTx(self.ca, data[:result])
 
         return result
 
 
-class Outgoer(object):
+class Server(Acceptor):
     """
-    Manager class for outgoing nonblocking TCP connections.
+    Nonblocking TCP Socket Server Class.
+    Listen socket for incoming TCP connections
+    Incomer sockets for accepted connections
     """
-    def __init__(self,
-                 name='',
-                 uid=0,
-                 ha=None,
-                 ca=None,
-                 cs=None,
-                 bufsize=8096,
-                 log=False,
-                 txLog=None,
-                 rxLog=None):
+    def __init__(self, **kwa):
         """
         Initialization method for instance.
-        name = user friendly name for connection
-        uid = unique identifier for connection
-        ha = host address duple (host, port) far side of connection
-        ca = virtual host address duple (host, port) near side of connection
-        cs = connection socket object
-        bufsize = size of send and receive socket buffers
-        log = Boolean If True then log rx tx to log files
-        txLog = transmit log file
-        rxLog = receive log file
+
         """
-        self.name = name
-        self.uid = uid
-        self.ha = ha
-        self.ca = ca
-        self.cs = cs
-        self.bs = bufsize
-        self.closed  # True when detect connection closed on far side
-        self.connected  # True once connection completed
-        self.txes = deque()  # deque of data to send
-        self.rxes = deque() # deque of data received
-        self.log = log
-        self.txLog = txLog
-        self.rxLog = rxLog
+        super(Server, self).__init__(**kwa)
 
-    def open(self):
+        self.ixes = odict()  # accepted incoming connections, Incomer instances
+
+
+    def serviceAx(self):
         """
-        Opens connection socket in non blocking mode.
-
-        if socket not closed properly, binding socket gets error
-          socket.error: (48, 'Address already in use')
+        Service accepts
+        For each new connection create Incomer and add to .ixes
         """
-        self.connected = False
+        accepteds = self.serviceAccept()
+        for cs, ca in accepteds:
+            if ca != cs.getpeername() or self.ha != cs.getsockename():
+                raise ValueError("Accepted socket host addresses malformed for "
+                                 "peer ha {0} != {1}, ca {2} != {3}\n".format(
+                                     self.ha, cs.getsockname(), ca, cs.getpeername()))
+            incomer = Incomer(ha=cs.getsockname(),
+                              ca=cs.getpeername(),
+                              cs=cs,
+                              wlog=self.wlog)
+            self.ixers[ca] = incomer
 
-        #create connection socket
-        self.cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        def serviceReceive(self):
+            """
+            Service receives until no more
+            """
+            while self.connected and not self.cutoff:
+                data = self.receive()
+                if not data:
+                    break
+                self.rxes.append(data)
 
-        # make socket address reusable.
-        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
-        # TIME_WAIT state, without waiting for its natural timeout to expire.
-        self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        def serviceReceiveOnce(self):
+            '''
+            Retrieve from server only one reception
+            '''
+            if self.connected and not self.cutoff:
+                data = self.receive()
+                if data:
+                    self.rxes.append(data)
 
-        # Linux TCP allocates twice the requested size
-        if sys.platform.startswith('linux'):
-            bs = 2 * self.bs  # get size is twice the set size
-        else:
-            bs = self.bs
+        def catRx(self):
+            """
+            Pop off all rxes and concatenate into single byte string and return
+            """
+            rx = b''.join(list(self.rxes))
+            self.rxes.clear()
+            return rx
 
-        if self.cs.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  bs:
-            self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-        if self.cs.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
-            self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
+        def send(self, data):
+            """
+            Perform non blocking send on connected socket .cs.
+            Return number of bytes sent
 
-        self.cs.setblocking(0) #non blocking socket
-
-        return True
-
-    def reopen(self):
-        """
-        Idempotently opens socket
-        """
-        self.close()
-        return self.open()
-
-    def shutdown(self, how=socket.SHUT_RDWR):
-        """
-        Shutdown connected socket .cs
-        """
-        if self.cs:
+            data is string in python2 and bytes in python3
+            """
             try:
-                self.cs.shutdown(how)  # shutdown socket
+                result = self.cs.send(data) #result is number of bytes sent
             except socket.error as ex:
-                pass
+                result = 0
+                if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                    emsg = ("socket.error = {0}: Outgoer at {1} while sending "
+                            "to {2} \n".format(ex, self.ca, self.ha))
+                    console.profuse(emsg)
+                    raise
 
-    def shutdownSend(self):
-        """
-        Shutdown send on connected socket .cs
-        """
-        if self.cs:
-            try:
-                self.shutdown(how=socket.SHUT_WR)  # shutdown socket
-            except socket.error as ex:
-                pass
+            if result:
+                if console._verbosity >=  console.Wordage.profuse:
+                    cmsg = ("Client at {0} sent to {1}, {2} bytes\n"
+                            "{3}\n".format(self.ca, self.ha, result, data[:result].decode('UTF-8')))
+                    console.profuse(cmsg)
 
-    def shutdownReceive(self):
-        """
-        Shutdown receive on connected socket .cs
-        """
-        if self.cs:
-            try:
-                self.shutdown(how=socket.SHUT_RD)  # shutdown socket
-            except socket.error as ex:
-                pass
+                if self.wlog:
+                    self.wlog.writeTx(self.ha, data[:result])
 
-    def shutclose(self):
-        """
-        Shutdown and close connected socket .cs
-        """
-        if self.cs:
-            self.shutdown()
-            self.cs.close()  #close socket
-            self.cs = None
-            self.connected = False
+            return result
 
-    close = shutclose  # alias
+        def transmit(self, data):
+            '''
+            Queue data onto .txes
+            '''
+            self.txes.append(data)
 
-    def connect(self):
-        """
-        Attempt nonblocking connect to .ha
-        Returns True if successful
-        Returns False if not so try again later
-        """
-        try:
-            result = self.cs.connect_ex(self.ha)  # async connect
-        except socket.error as ex:
-            console.terse("socket.error = {0}\n".format(ex))
-            raise
-
-        if result not in [0, errno.EISCONN]:  # not yet connected
-            return False  # try again later
-
-        self.connected = True
-        # now self.cs has new virtual port see self.cs.getsockname()
-        self.ca = self.cs.getsockname()  # resolved local connection address
-        # self.cs.getpeername() is self.ha
-        self.ha = self.cs.getpeername()  # resolved remote connection address
-
-        return True
-
-    def receive(self):
-        """
-        Perform non blocking receive from connected socket .cs
-
-        If no data then returns None
-        If connection closed then returns ''
-        Otherwise returns data
-        """
-        try:
-            data = self.cs.recv(self.bs)
-        except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                return None
-            else:
-                emsg = ("socket.error = {0}: server at {1} receiving "
-                        "from {2}\n".format(ex, self.ca, self.ha))
-                console.profuse(emsg)
-                raise  # re-raise
-        message = ("Client at {0} received from {1}, "
-                   "{2}\n".format(self.ca, self.ha, data))
-        console.profuse(message)
-        if self.log and self.rxLog:
-            self.rxLog.write("{0}\n{1}\n".format(self.ha, data))
-        return data
-
-    def receiveFrom(self):
-        """
-        If no data then returns (None, sa)
-        If connection closed on far side then returns ('', sa)
-        Otherwise returns (data, ca)
-
-        Where sa is source socket's ha given by .getpeername()
-        """
-        return (self.receive(), self.ha)
-
-    def send(self, data):
-        """
-        Perform non blocking send on connected socket .cs.
-        Return number of bytes sent
-
-        data is string in python2 and bytes in python3
-        """
-        try:
-            result = self.cs.send(data) #result is number of bytes sent
-        except socket.error as ex:
-            result = 0
-            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                emsg = ("socket.error = {0}: server at {1} sending "
-                        "to {2} \n".format(ex, self.ca, self.ha))
-                console.profuse(emsg)
-                raise
-
-        console.profuse("Client at {0} sent to {1}, {2} "
-                        "bytes\n".format(self.ca, self.ha, result))
-
-        if self.log and self.txLog:
-            self.txLog.write("{0}\n{1}\n".format(self.ha, data))
-
-        return result
+        def serviceTx(self):
+            """
+            Service transmits
+            For each tx if all bytes sent then keep sending until partial send
+            or no more to send
+            If partial send reattach and return
+            """
+            while self.txes and self.connected and not self.cutoff:
+                data = self.txes.popleft()
+                count = self.send(data)
+                if count < len(data):  # put back unsent portion
+                    self.txes.appendleft(data[count:])
+                    break  # try again later
 
 class PeerSocketTcpNb(object):
     """

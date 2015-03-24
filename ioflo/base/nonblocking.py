@@ -9,5 +9,5 @@ from __future__ import division
 # Backwards compatibility for now
 # In future users should import from ioflo.aid.nonblocking not here
 from ..aid.nonblocking import SerialNb, ConsoleNb, SocketUdpNb, SocketUxdNb, \
-        WinMailslotNb, ServerSocketTcpNb, ClientSocketTcpNb, SocketTcpNb
+        WinMailslotNb
 

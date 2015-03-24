@@ -388,12 +388,12 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
+        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
-        gamma = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
+        gamma = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072)
         self.assertIs(gamma.reopen(), True)
         self.assertIs(gamma.connected, False)
         self.assertIs(gamma.cutoff, False)
@@ -779,7 +779,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
+        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
@@ -788,9 +788,7 @@ class BasicTestCase(unittest.TestCase):
         accepteds = []
         while True:
             beta.serviceCx()
-            cs, ca = alpha.accept()
-            if cs:
-                accepteds.append((cs, ca))
+            accepteds.extend(alpha.serviceAccept())
             if beta.connected and accepteds:
                 break
             time.sleep(0.05)
@@ -1031,7 +1029,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
-    runOne('testClientSocketTcpNbService')
+    #runOne('testClientSocketTcpNbService')
 
