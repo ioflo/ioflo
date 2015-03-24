@@ -117,11 +117,11 @@ class BasicTestCase(unittest.TestCase):
         wire.close()
         shutil.rmtree(tempDirpath)
 
-    def testWireLogStringify(self):
+    def testWireLogBuffify(self):
         """
         Test Class WireLog
         """
-        console.terse("{0}\n".format(self.testWireLogStringify.__doc__))
+        console.terse("{0}\n".format(self.testWireLogBuffify.__doc__))
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
         userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
@@ -390,9 +390,13 @@ class BasicTestCase(unittest.TestCase):
 
         beta = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
         self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
 
         gamma = nonblocking.ClientSocketTcpNb(ha=alpha.eha, bufsize=131072)
         self.assertIs(gamma.reopen(), True)
+        self.assertIs(gamma.connected, False)
+        self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
         accepteds = []
@@ -407,6 +411,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
 
         self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
         self.assertEqual(len(accepteds), 1)
         csBeta, caBeta = accepteds[0]
         self.assertIsNotNone(csBeta)
@@ -485,6 +490,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
 
         self.assertIs(gamma.connected, True)
+        self.assertIs(gamma.cutoff, False)
         self.assertEqual(len(accepteds), 1)
         csGamma, caGamma = accepteds[0]
         self.assertIsNotNone(csGamma)
@@ -561,17 +567,22 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, msgIn)
         msgIn = gamma.receive()
         self.assertEqual(msgIn, None)  # alpha shutdown not detected
+        self.assertIs(gamma.cutoff, False)
         time.sleep(0.05)
         msgIn = gamma.receive()
         self.assertEqual(msgIn, None)  # alpha shutdown not detected
+        self.assertIs(gamma.cutoff, False)
 
         alpha.shutclose(csGamma)  # close alpha
         time.sleep(0.05)
         msgIn = gamma.receive()
         self.assertEqual(msgIn, b'')  # alpha close is detected
+        self.assertIs(gamma.cutoff, True)
 
         # reopen beta
         self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
         accepteds = []
@@ -586,6 +597,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
 
         self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
         self.assertEqual(len(accepteds), 1)
         csBeta, caBeta = accepteds[0]
         self.assertIsNotNone(csBeta)
@@ -626,6 +638,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut1, msgIn)
         msgIn = beta.receive()
         self.assertEqual(msgIn, b'')  # beta detects shutdown socket
+        self.assertIs(beta.cutoff, True)
 
         msgOut = b"Beta sends to Alpha"
         count = beta.send(msgOut)
@@ -646,6 +659,8 @@ class BasicTestCase(unittest.TestCase):
 
         # reopen gamma
         self.assertIs(gamma.reopen(), True)
+        self.assertIs(gamma.connected, False)
+        self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting gamma to alpha\n")
         accepteds = []
@@ -660,6 +675,8 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
 
         self.assertIs(gamma.connected, True)
+        self.assertIs(gamma.cutoff, False)
+
         self.assertEqual(len(accepteds), 1)
         csGamma, caGamma = accepteds[0]
         self.assertIsNotNone(csGamma)
@@ -687,6 +704,9 @@ class BasicTestCase(unittest.TestCase):
 
         # reopen gamma
         self.assertIs(gamma.reopen(), True)
+        self.assertIs(gamma.connected, False)
+        self.assertIs(gamma.cutoff, False)
+
         console.terse("Connecting gamma to alpha\n")
         accepteds = []
         while True:
@@ -700,6 +720,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
 
         self.assertIs(gamma.connected, True)
+        self.assertIs(gamma.cutoff, False)
         self.assertEqual(len(accepteds), 1)
         csGamma, caGamma = accepteds[0]
         self.assertIsNotNone(csGamma)
@@ -723,6 +744,7 @@ class BasicTestCase(unittest.TestCase):
         time.sleep(0.05)
         msgIn = gamma.receive()
         self.assertEqual(msgIn, b'')  # gamma detects close
+        self.assertIs(gamma.cutoff, True)
 
         alpha.close()
         beta.close()
@@ -858,7 +880,7 @@ def runSome():
     tests =  []
     names = ['testConsoleNb',
              'testWireLog',
-             'testWireLogStringify',
+             'testWireLogBuffify',
              'testSocketUdpNb',
              'testSocketUxdNb',
              'testServerClientSocketTcpNb',

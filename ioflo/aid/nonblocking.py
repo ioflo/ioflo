@@ -898,6 +898,7 @@ class ServerSocketTcpNb(object):
                     "accepting \n".format(ex, self.ha))
             console.profuse(emsg)
             raise  # re-raise
+
         return (cs, ca)
 
     @staticmethod
@@ -998,7 +999,13 @@ class ServerSocketTcpNb(object):
                 raise
 
         if result:  # connection not closed
-            da = cs.getpeername()
+            try:
+                da = cs.getpeername()
+            except OSError as ex:
+                if ex.errno not in [errno.EINVAL]:
+                    raise
+                da = None
+
             if console._verbosity >=  console.Wordage.profuse:
                 cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
                         "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
@@ -1050,6 +1057,7 @@ class ClientSocketTcpNb(object):
         self.cs = None  # connection socket
         self.ca = (None, None)  # host address of local connection
         self.connected = False  # connected successfully
+        self.cutoff = False  # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
         self.rxes = deque()  # deque of data received
 
@@ -1072,6 +1080,7 @@ class ClientSocketTcpNb(object):
           socket.error: (48, 'Address already in use')
         """
         self.connected = False
+        self.cutoff = False
 
         #create connection socket
         self.cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1143,11 +1152,7 @@ class ClientSocketTcpNb(object):
             self.cs = None
             self.connected = False
 
-    def close(self):
-        """
-        Closes local connection socket
-        """
-        self.shutclose()
+    close = shutclose  # alias
 
     def connect(self):
         """
@@ -1165,12 +1170,24 @@ class ClientSocketTcpNb(object):
             return False  # try again later
 
         self.connected = True
+        self.cutoff = False
         # now self.cs has new virtual port see self.cs.getsockname()
         self.ca = self.cs.getsockname()  # resolved local connection address
         # self.cs.getpeername() is self.ha
         self.ha = self.cs.getpeername()  # resolved remote connection address
 
         return True
+
+    def serviceCx(self):
+        """
+        Service connection attempt
+        If not already connected make a nonblocking attempt
+        Returns .connected
+        """
+        if not self.connected:
+            self.connect()
+
+        return self.connected
 
     def receive(self):
         """
@@ -1199,8 +1216,37 @@ class ClientSocketTcpNb(object):
 
             if self.wlog:  # log over the wire rx
                 self.wlog.writeRx(self.ha, data)
+        else:  # data empty so connection closed on other end
+            self.cutoff = True
 
         return data
+
+    def serviceReceive(self):
+        """
+        Service receives until no more
+        """
+        while self.connected and not self.cutoff:
+            data = self.receive()
+            if not data:
+                break
+            self.rxes.append(data)
+
+    def serviceReceiveOnce(self):
+        '''
+        Retrieve from server only one reception
+        '''
+        if self.connected and not self.cutoff:
+            data = self.receive()
+            if data:
+                self.rxes.append(data)
+
+    def catRx(self):
+        """
+        Pop off all rxes and concatenate into single byte string and return
+        """
+        rx = b''.join(list(self.rxes))
+        self.rxes.clear()
+        return rx
 
     def send(self, data):
         """
@@ -1219,7 +1265,7 @@ class ClientSocketTcpNb(object):
                 console.profuse(emsg)
                 raise
 
-        if result:  # connection not closed
+        if result:
             if console._verbosity >=  console.Wordage.profuse:
                 cmsg = ("Client at {0} sent to {1}, {2} bytes\n"
                         "{3}\n".format(self.ca, self.ha, result, data[:result].decode('UTF-8')))
@@ -1230,36 +1276,19 @@ class ClientSocketTcpNb(object):
 
         return result
 
-    def serviceCx(self):
-        """
-        Service connection attempt
-        If not already connected make a nonblocking attempt
-        Returns .connected
-        """
-        if not self.connected:
-            self.connect()
-
-        return self.connected
-
-    def serviceRx(self):
-        """
-        Service receives
-        """
-        pass
-
-    def catRx(self):
-        """
-        Pop off all rxes and concatenate into single bytearray and return
-        """
-        pass
-
     def serviceTx(self):
         """
         Service transmits
-        Send end of txes. If all sent then keep sending until partial send
+        For each tx if all bytes sent then keep sending until partial send
         or no more to send
+        If partial send reattach and return
         """
-        pass
+        while self.txes and self.connected and not self.closed:
+            data = self.txes.popleft()
+            count = self.send(data)
+            if count < len(data):  # put back unsent portion
+                self.txes.appendleft(data[count:])
+                break  # try again later
 
 
 class Incomer(object):
@@ -1292,7 +1321,7 @@ class Incomer(object):
         self.ha = ha
         self.ca = ca
         self.cs = cs
-        self.closed  # True when detect connection closed on far side
+        self.closed = False # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
         self.rxes = deque() # deque of data received
         self.log = log
@@ -1370,16 +1399,6 @@ class Incomer(object):
         if self.log and self.rxLog:
             self.rxLog.write("{0}\n{1}\n".format(self.ca, data))
         return data
-
-    def receiveFrom(self):
-        """
-        If no data then returns (None, sa)
-        If connection closed on far side then returns ('', sa)
-        Otherwise returns (data, ca)
-
-        Where sa is source socket's ha given by self.ca = self.cs.getpeername()
-        """
-        return (self.receive(), self.ca)
 
     def send(self, data):
         """
