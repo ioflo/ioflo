@@ -1458,14 +1458,14 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].transmit(data)
 
-    def serviceAllReceives(self):
+    def serviceRxAllIx(self):
         """
         Service receives for all incomers in .ixes
         """
         for ix in self.ixes.values():
             ix.serviceReceives()
 
-    def serviceAllTxes(self):
+    def serviceTxAllIx(self):
         """
         Service transmits for all incomers in .ixes
         """
