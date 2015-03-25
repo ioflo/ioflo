@@ -1404,7 +1404,7 @@ class Server(Acceptor):
             self.ixes[ca] = incomer
         return accepteds
 
-    def shutdown(self, ca, how=socket.SHUT_RDWR):
+    def shutdownIx(self, ca, how=socket.SHUT_RDWR):
         """
         Shutdown incomer given by connection address ca
         """
@@ -1413,7 +1413,7 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].shutdown(how=how)
 
-    def shutdownSend(self, ca):
+    def shutdownSendIx(self, ca):
         """
         Shutdown send on incomer given by connection address ca
         """
@@ -1422,7 +1422,7 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].shutdownSend()
 
-    def shutdownReceive(self, ca):
+    def shutdownReceiveIx(self, ca):
         """
         Shutdown send on incomer given by connection address ca
         """
@@ -1431,7 +1431,7 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].shutdownReceive()
 
-    def shutclose(self, ca):
+    def shutcloseIx(self, ca):
         """
         Shutdown and close incomer given by connection address ca
         """
@@ -1440,14 +1440,7 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].shutclose()
 
-    def serviceAllReceives(self):
-        """
-        Service receives for all incomers in .ixes
-        """
-        for ix in self.ixes.values():
-            ix.serviceReceives()
-
-    def catRxes(self, ca):
+    def catRxesIx(self, ca):
         """
         Return concatenated rxes for incomer given by connection address ca
         """
@@ -1456,7 +1449,7 @@ class Server(Acceptor):
             raise ValueError(emsg)
         return (self.ixes[ca].catRxes())
 
-    def transmit(self, data, ca):
+    def transmitIx(self, data, ca):
         '''
         Queue data onto .txes for incomer given by connection address ca
         '''
@@ -1464,6 +1457,13 @@ class Server(Acceptor):
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
         self.ixes[ca].transmit(data)
+
+    def serviceAllReceives(self):
+        """
+        Service receives for all incomers in .ixes
+        """
+        for ix in self.ixes.values():
+            ix.serviceReceives()
 
     def serviceAllTxes(self):
         """
