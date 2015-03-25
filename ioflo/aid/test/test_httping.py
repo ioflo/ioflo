@@ -18,7 +18,10 @@ import shutil
 import socket
 import errno
 
-import httplib
+if sys.version > '3':
+    from http.client import HTTPConnection
+else:
+    from httplib import HTTPConnection
 
 try:
     import simplejson as json
@@ -66,11 +69,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testBasic.__doc__))
 
         console.terse("{0}\n".format("Connecting ...\n"))
-        hc = httplib.HTTPConnection('127.0.0.1',
-                                    port=8080,
-                                    strict=None,
-                                    timeout=1.0,
-                                    source_address=None)
+        hc = HTTPConnection('127.0.0.1', port=8080, timeout=1.0,)
 
         hc.connect()
 
@@ -83,8 +82,8 @@ class BasicTestCase(unittest.TestCase):
         console.terse(str(response.msg)  + "\n")
         console.terse(str(response.version) + "\n")
         console.terse(str(response.status) + "\n")
-        console.terse(response.reason+ "\n")
-        console.terse(response.read() + "\n")
+        console.terse(response.reason + "\n")
+        console.terse(str(response.read()) + "\n")
 
         console.terse("{0}\n".format("Post ...\n"))
         headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
@@ -98,7 +97,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse(str(response.version) + "\n")
         console.terse(str(response.status) + "\n")
         console.terse(response.reason+ "\n")
-        console.terse(response.read() + "\n")
+        console.terse(str(response.read()) + "\n")
 
         hc.close()
 
@@ -109,11 +108,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testBasic.__doc__))
 
         console.terse("{0}\n".format("Connecting ...\n"))
-        hc = httplib.HTTPConnection('127.0.0.1',
-                                    port=8080,
-                                    strict=None,
-                                    timeout=1.0,
-                                    source_address=None)
+        hc = HTTPConnection('127.0.0.1', port=8080, timeout=1.0)
 
         hc.connect()
 
