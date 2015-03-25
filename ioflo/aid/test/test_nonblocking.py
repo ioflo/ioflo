@@ -363,11 +363,11 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testServerClientSocketTcpNb(self):
+    def testClientServer(self):
         """
-        Test Classes ServerSocketTcpNb and ClientSocketTcpNb
+        Test Classes Client (Outgoer) and Server with Incomers
         """
-        console.terse("{0}\n".format(self.testServerClientSocketTcpNb.__doc__))
+        console.terse("{0}\n".format(self.testClientServer.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
@@ -384,54 +384,51 @@ class BasicTestCase(unittest.TestCase):
         wireLog = nonblocking.WireLog(path=logDirpath)
         result = wireLog.reopen(prefix='alpha', midfix='6101')
 
-        alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072, wlog=wireLog)
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072)
+        beta = nonblocking.Client(ha=alpha.eha, bufsize=131072)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
-        gamma = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072)
+        gamma = nonblocking.Client(ha=alpha.eha, bufsize=131072)
         self.assertIs(gamma.reopen(), True)
         self.assertIs(gamma.connected, False)
         self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
-        accepteds = []
         while True:
-            if not beta.connected:
-                beta.connect()
-            cs, ca = alpha.accept()
-            if cs:
-                accepteds.append((cs, ca))
-            if beta.connected and accepteds:
+            beta.serviceConnect()
+            alpha.serviceAccepts()
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
-        self.assertEqual(len(accepteds), 1)
-        csBeta, caBeta = accepteds[0]
-        self.assertIsNotNone(csBeta)
-        self.assertIsNotNone(caBeta)
-
-        self.assertEqual(csBeta.getsockname(), beta.cs.getpeername())
-        self.assertEqual(csBeta.getpeername(), beta.cs.getsockname())
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
-        self.assertEqual(caBeta, beta.ca)
+        self.assertEqual(alpha.eha, beta.ha)
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha"
         count = beta.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
-        msgIn = alpha.receive(csBeta)
+        msgIn = ixBeta.receive()
         self.assertEqual(msgOut, msgIn)
 
         # receive without sending
-        msgIn = alpha.receive(csBeta)
+        msgIn = ixBeta.receive()
         self.assertEqual(msgIn, None)
 
         # send multiple
@@ -442,12 +439,12 @@ class BasicTestCase(unittest.TestCase):
         count = beta.send(msgOut2)
         self.assertEqual(count, len(msgOut2))
         time.sleep(0.05)
-        msgIn  = alpha.receive(csBeta)
+        msgIn  = ixBeta.receive()
         self.assertEqual(msgIn, msgOut1 + msgOut2)
 
         # send from alpha to beta
         msgOut = b"Alpha sends to Beta"
-        count = alpha.send(msgOut, csBeta)
+        count = ixBeta.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
         msgIn = beta.receive()
@@ -473,49 +470,46 @@ class BasicTestCase(unittest.TestCase):
             if count < len(msgOut):
                 count += beta.send(msgOut[count:])
             time.sleep(0.05)
-            msgIn += alpha.receive(csBeta)
+            msgIn += ixBeta.receive()
         self.assertEqual(count, len(msgOut))
         self.assertEqual(msgOut, msgIn)
 
         console.terse("Connecting gamma to alpha\n")
-        accepteds = []
         while True:
-            if not gamma.connected:
-                gamma.connect()
-            cs, ca = alpha.accept()
-            if cs:
-                accepteds.append((cs, ca))
-            if gamma.connected and accepteds:
+            gamma.serviceConnect()
+            alpha.serviceAccepts()
+            if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(gamma.connected, True)
         self.assertIs(gamma.cutoff, False)
-        self.assertEqual(len(accepteds), 1)
-        csGamma, caGamma = accepteds[0]
-        self.assertIsNotNone(csGamma)
-        self.assertIsNotNone(caGamma)
-
-        self.assertEqual(csGamma.getsockname(), gamma.cs.getpeername())
-        self.assertEqual(csGamma.getpeername(), gamma.cs.getsockname())
         self.assertEqual(gamma.ca, gamma.cs.getsockname())
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
-        self.assertEqual(caGamma, gamma.ca)
+        self.assertEqual(alpha.eha, gamma.ha)
+        ixGamma = alpha.ixes[gamma.ca]
+        self.assertIsNotNone(ixGamma.ca)
+        self.assertIsNotNone(ixGamma.cs)
+
+        self.assertEqual(ixGamma.cs.getsockname(), gamma.cs.getpeername())
+        self.assertEqual(ixGamma.cs.getpeername(), gamma.cs.getsockname())
+        self.assertEqual(ixGamma.ca, gamma.ca)
+        self.assertEqual(ixGamma.ha, gamma.ha)
 
         msgOut = b"Gamma sends to Alpha"
         count = gamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
-        msgIn = alpha.receive(csGamma)
+        msgIn = ixGamma.receive()
         self.assertEqual(msgOut, msgIn)
 
         # receive without sending
-        msgIn = alpha.receive(csGamma)
+        msgIn = ixGamma.receive()
         self.assertEqual(msgIn, None)
 
         # send from alpha to gamma
         msgOut = b"Alpha sends to Gamma"
-        count = alpha.send(msgOut, csGamma)
+        count = ixGamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
         msgIn = gamma.receive()
@@ -536,15 +530,16 @@ class BasicTestCase(unittest.TestCase):
             msgIn = beta.receive()
 
         # read on alpha after closed beta
-        msgIn = alpha.receive(csBeta)
+        msgIn = ixBeta.receive()
         self.assertEqual(msgIn, b'')
 
         # send on alpha after close beta
         msgOut = b"Alpha sends to Beta after close"
-        count = alpha.send(msgOut, csBeta)
+        count = ixBeta.send(msgOut)
         self.assertEqual(count, len(msgOut)) #apparently works
 
-        csBeta.close()
+        ixBeta.close()
+        del alpha.ixes[ixBeta.ca]
 
         # send on gamma then shutdown sends
         msgOut = b"Gamma sends to Alpha"
@@ -552,16 +547,16 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(count, len(msgOut))
         gamma.shutdownSend()
         time.sleep(0.05)
-        msgIn = alpha.receive(csGamma)
+        msgIn = ixGamma.receive()
         self.assertEqual(msgOut, msgIn)
-        msgIn = alpha.receive(csGamma)
+        msgIn = ixGamma.receive()
         self.assertEqual(msgIn, b'')  # gamma shutdown detected
         # send from alpha to gamma and shutdown
         msgOut = b"Alpha sends to Gamma"
-        count = alpha.send(msgOut, csGamma)
+        count = ixGamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
 
-        alpha.shutdown(csGamma)  # shutdown alpha
+        ixGamma.shutdown()  # shutdown alpha
         time.sleep(0.05)
         msgIn = gamma.receive()
         self.assertEqual(msgOut, msgIn)
@@ -573,7 +568,8 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, None)  # alpha shutdown not detected
         self.assertIs(gamma.cutoff, False)
 
-        alpha.shutclose(csGamma)  # close alpha
+        ixGamma.shutclose()  # close alpha
+        del alpha.ixes[ixGamma.ca]
         time.sleep(0.05)
         msgIn = gamma.receive()
         self.assertEqual(msgIn, b'')  # alpha close is detected
@@ -585,40 +581,37 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
-        accepteds = []
         while True:
-            if not beta.connected:
-                beta.connect()
-            cs, ca = alpha.accept()
-            if cs:
-                accepteds.append((cs, ca))
-            if beta.connected and accepteds:
+            beta.serviceConnect()
+            alpha.serviceAccepts()
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
-        self.assertEqual(len(accepteds), 1)
-        csBeta, caBeta = accepteds[0]
-        self.assertIsNotNone(csBeta)
-        self.assertIsNotNone(caBeta)
-
-        self.assertEqual(csBeta.getsockname(), beta.cs.getpeername())
-        self.assertEqual(csBeta.getpeername(), beta.cs.getsockname())
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
-        self.assertEqual(caBeta, beta.ca)
+        self.assertEqual(alpha.eha, beta.ha)
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha"
         count = beta.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
-        msgIn = alpha.receive(csBeta)
+        msgIn = ixBeta.receive()
         self.assertEqual(msgOut, msgIn)
 
         # send from alpha to beta
         msgOut = b"Alpha sends to Beta"
-        count = alpha.send(msgOut, csBeta)
+        count = ixBeta.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
         msgIn = beta.receive()
@@ -626,12 +619,12 @@ class BasicTestCase(unittest.TestCase):
 
         # send then shutdown alpha and then attempt to send
         msgOut1 = b"Alpha sends to Beta"
-        count = alpha.send(msgOut, csBeta)
+        count = ixBeta.send(msgOut)
         self.assertEqual(count, len(msgOut1))
-        alpha.shutdownSend(csBeta)
+        ixBeta.shutdownSend()
         msgOut2 = b"Send on shutdown socket"
         with self.assertRaises(socket.error) as cm:
-            count = alpha.send(msgOut, csBeta)
+            count = ixBeta.send(msgOut)
         self.assertTrue(cm.exception.errno == errno.EPIPE)
         time.sleep(0.05)
         msgIn = beta.receive()
@@ -645,17 +638,18 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(count, len(msgOut))
         beta.shutdown()
         time.sleep(0.05)
-        msgIn = alpha.receive(csBeta)
+        msgIn = ixBeta.receive()
         self.assertEqual(msgOut, msgIn)
         time.sleep(0.05)
-        msgIn = alpha.receive(csBeta)
+        msgIn = ixBeta.receive()
         self.assertEqual(msgIn, None)  # alpha does not detect shutdown
         beta.close()
         time.sleep(0.05)
-        msgIn = alpha.receive(csBeta)
+        msgIn = ixBeta.receive()
         self.assertEqual(msgIn, b'')  # alpha detects closed socket
 
-        csBeta.close()
+        ixBeta.close()
+        del alpha.ixes[ixBeta.ca]
 
         # reopen gamma
         self.assertIs(gamma.reopen(), True)
@@ -663,44 +657,41 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting gamma to alpha\n")
-        accepteds = []
         while True:
-            if not gamma.connected:
-                gamma.connect()
-            cs, ca = alpha.accept()
-            if cs:
-                accepteds.append((cs, ca))
-            if gamma.connected and accepteds:
+            gamma.serviceConnect()
+            alpha.serviceAccepts()
+            if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(gamma.connected, True)
         self.assertIs(gamma.cutoff, False)
-
-        self.assertEqual(len(accepteds), 1)
-        csGamma, caGamma = accepteds[0]
-        self.assertIsNotNone(csGamma)
-        self.assertIsNotNone(caGamma)
-
-        self.assertEqual(csGamma.getsockname(), gamma.cs.getpeername())
-        self.assertEqual(csGamma.getpeername(), gamma.cs.getsockname())
         self.assertEqual(gamma.ca, gamma.cs.getsockname())
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
-        self.assertEqual(caGamma, gamma.ca)
+        self.assertEqual(alpha.eha, gamma.ha)
+        ixGamma = alpha.ixes[gamma.ca]
+        self.assertIsNotNone(ixGamma.ca)
+        self.assertIsNotNone(ixGamma.cs)
+
+        self.assertEqual(ixGamma.cs.getsockname(), gamma.cs.getpeername())
+        self.assertEqual(ixGamma.cs.getpeername(), gamma.cs.getsockname())
+        self.assertEqual(ixGamma.ca, gamma.ca)
+        self.assertEqual(ixGamma.ha, gamma.ha)
 
         msgOut = b"Gamma sends to Alpha"
         count = gamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
-        msgIn = alpha.receive(csGamma)
+        msgIn = ixGamma.receive()
         self.assertEqual(msgOut, msgIn)
 
         gamma.close()
         time.sleep(0.05)
-        msgIn = alpha.receive(csGamma)
+        msgIn = ixGamma.receive()
         self.assertEqual(msgIn, b'')  # alpha detects close
 
-        csGamma.close()
+        ixGamma.close()
+        del alpha.ixes[ixGamma.ca]
 
         # reopen gamma
         self.assertIs(gamma.reopen(), True)
@@ -708,39 +699,37 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting gamma to alpha\n")
-        accepteds = []
         while True:
-            if not gamma.connected:
-                gamma.connect()
-            cs, ca = alpha.accept()
-            if cs:
-                accepteds.append((cs, ca))
-            if gamma.connected and accepteds:
+            gamma.serviceConnect()
+            alpha.serviceAccepts()
+            if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(gamma.connected, True)
         self.assertIs(gamma.cutoff, False)
-        self.assertEqual(len(accepteds), 1)
-        csGamma, caGamma = accepteds[0]
-        self.assertIsNotNone(csGamma)
-        self.assertIsNotNone(caGamma)
-
-        self.assertEqual(csGamma.getsockname(), gamma.cs.getpeername())
-        self.assertEqual(csGamma.getpeername(), gamma.cs.getsockname())
         self.assertEqual(gamma.ca, gamma.cs.getsockname())
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
-        self.assertEqual(caGamma, gamma.ca)
+        self.assertEqual(alpha.eha, gamma.ha)
+        ixGamma = alpha.ixes[gamma.ca]
+        self.assertIsNotNone(ixGamma.ca)
+        self.assertIsNotNone(ixGamma.cs)
+
+        self.assertEqual(ixGamma.cs.getsockname(), gamma.cs.getpeername())
+        self.assertEqual(ixGamma.cs.getpeername(), gamma.cs.getsockname())
+        self.assertEqual(ixGamma.ca, gamma.ca)
+        self.assertEqual(ixGamma.ha, gamma.ha)
 
         # send from alpha to gamma
         msgOut = b"Alpha sends to Gamma"
-        count = alpha.send(msgOut, csGamma)
+        count = ixGamma.send(msgOut)
         self.assertEqual(count, len(msgOut))
         time.sleep(0.05)
         msgIn = gamma.receive()
         self.assertEqual(msgOut, msgIn)
 
-        alpha.shutclose(csGamma)
+        ixGamma.shutclose()
+        del alpha.ixes[ixGamma.ca]
         time.sleep(0.05)
         msgIn = gamma.receive()
         self.assertEqual(msgIn, b'')  # gamma detects close
@@ -754,11 +743,11 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testClientSocketTcpNbService(self):
+    def testClientServerService(self):
         """
         Test Classes ServerSocketTcpNb service methods
         """
-        console.terse("{0}\n".format(self.testClientSocketTcpNbService.__doc__))
+        console.terse("{0}\n".format(self.testClientServerService.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
@@ -775,7 +764,7 @@ class BasicTestCase(unittest.TestCase):
         wireLog = nonblocking.WireLog(path=logDirpath)
         result = wireLog.reopen(prefix='alpha', midfix='6101')
 
-        alpha = nonblocking.ServerSocketTcpNb(port = 6101, bufsize=131072, wlog=wireLog)
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
@@ -785,33 +774,34 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
-        accepteds = []
         while True:
             beta.serviceConnect()
-            accepteds.extend(alpha.serviceAccepts())
-            if beta.connected and accepteds:
+            alpha.serviceAccepts()
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
-        self.assertEqual(len(accepteds), 1)
-        csBeta, caBeta = accepteds[0]
-        self.assertIsNotNone(csBeta)
-        self.assertIsNotNone(caBeta)
-
-        self.assertEqual(csBeta.getsockname(), beta.cs.getpeername())
-        self.assertEqual(csBeta.getpeername(), beta.cs.getsockname())
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
-        self.assertEqual(caBeta, beta.ca)
+        self.assertEqual(alpha.eha, beta.ha)
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha"
         beta.transmit(msgOut)
         msgIn = b''
         while not msgIn and beta.txes:
             beta.serviceTxes()
-            msgIn = alpha.receive(csBeta)
+            alpha.serviceAllReceives()
+            msgIn += ixBeta.catRxes()
             time.sleep(0.05)
         self.assertEqual(msgOut, msgIn)
 
@@ -821,9 +811,10 @@ class BasicTestCase(unittest.TestCase):
         msgOut2 = b"Second Message"
         beta.transmit(msgOut2)
         msgIn = b''
-        while not msgIn and beta.txes:
+        while len(msgIn) < len(msgOut1 + msgOut2):
             beta.serviceTxes()
-            msgIn += alpha.receive(csBeta)
+            alpha.serviceAllReceives()
+            msgIn += ixBeta.catRxes()
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOut1 + msgOut2)
@@ -843,18 +834,19 @@ class BasicTestCase(unittest.TestCase):
         count = 0
         while len(msgIn) < len(msgOutBig):
             beta.serviceTxes()
-            msgIn += alpha.receive(csBeta)
+            time.sleep(0.05)
+            alpha.serviceAllReceives()
+            msgIn += ixBeta.catRxes()
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOutBig)
 
         # send from alpha to beta
         msgOut = b"Alpha sends to Beta"
-        count = alpha.send(msgOut, csBeta)
-        self.assertEqual(count, len(msgOut))
-
+        ixBeta.transmit(msgOut)
         msgIn = b''
         while len(msgIn) < len(msgOut):
+            alpha.serviceAllTxes()
             beta.serviceReceives()
             msgIn += beta.catRxes()
             time.sleep(0.05)
@@ -862,13 +854,13 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         # send big from alpha to beta
-        count = alpha.send(msgOutBig, csBeta)
+        ixBeta.transmit(msgOutBig)
         msgIn = b''
         while len(msgIn) < len(msgOutBig):
+            alpha.serviceAllTxes()
+            time.sleep(0.05)
             beta.serviceReceives()
             msgIn += beta.catRxes()
-            if count < len(msgOut):
-                count += alpha.send(msgOutBig[count:])
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOutBig)
@@ -1010,8 +1002,8 @@ def runSome():
              'testWireLogBuffify',
              'testSocketUdpNb',
              'testSocketUxdNb',
-             'testServerClientSocketTcpNb',
-             'testClientSocketTcpNbService',
+             'testClientServer',
+             'testClientServerService',
              'testSocketTcpNb', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1031,5 +1023,5 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testClientSocketTcpNbService')
+    #runOne('testClientServerService')
 
