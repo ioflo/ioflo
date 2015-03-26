@@ -79,7 +79,7 @@ from urllib.parse import urlsplit
 
 
 # Import ioflo libs
-from ..base.globaling import *
+from .p23ing import *
 from ..base.odicting import odict
 from ..base import excepting
 
@@ -89,6 +89,7 @@ console = getConsole()
 
 HTTP_PORT = 80
 HTTPS_PORT = 443
+HTTP_11_VERSION_STRING = u'HTTP/1.1'  # http v1.1 version string
 
 _UNKNOWN = 'UNKNOWN'
 
@@ -287,166 +288,142 @@ class HttpRequestNb(object):
     """
     Nonblocking HTTP Request class
     """
-    _http_vsn = 11
-    _http_vsn_str = 'HTTP/1.1'
-    default_port = HTTP_PORT
+    HttpVersionString = HTTP_11_VERSION_STRING  # http version string
+    Port = HTTP_PORT  # default port
 
     def __init__(self,
-                 host,
-                 method='GET',
-                 url='/',
-                 body='',
+                 host='127.0.0.1',
+                 port=None,
+                 method=u'GET',  # unicode
+                 url=u'/',  # unicode
                  headers=None,
-                 port=None):
+                 body=b'',):
         """
         Initialize Instance
         """
-        self._buffer = b""
-        self._lines = []
-        self._method = method.toupper() if method else 'GET'
-        self._url = url or '/'
-        self._body = body
-        self._headers = headers or odict()
-        self._host, self._port = self._get_hostport(host, port)
+        self.host, self.port = self.getHostPort(host, port)
+        self.method = method.upper() if method else 'GET'
+        self.url = url or u'/'
+        self.headers = headers or odict()
 
-
-        header_names = dict.fromkeys([k.lower() for k in self._headers])
-        skip_host = True if 'host' in header_names else False
-        skip_accept_encoding = True if 'accept-encoding' in header_names else False
-
-        request = "{0} {0} {0}".format(self._method, self._url, self._http_vsn_str)
-        self._lines.append(request.encode('ascii'))
-
-        if self._http_vsn == 11:   # headers for better HTTP/1.1 compliance
-            if not skip_host:
-                # this header is issued *only* for HTTP/1.1
-                # connections. more specifically, this means it is
-                # only issued when the client uses the new
-                # HTTPConnection() class. backwards-compat clients
-                # will be using HTTP/1.0 and those clients may be
-                # issuing this header themselves. we should NOT issue
-                # it twice; some web servers (such as Apache) barf
-                # when they see two Host: headers
-
-                # If we need a non-standard port,include it in the
-                # header.  If the request is going through a proxy,
-                # but the host of the actual URL, not the host of the
-                # proxy.
-
-                netloc = ''
-                if self._url.startswith('http'):
-                    nil, netloc, nil, nil, nil = urlsplit(url)
-
-                if netloc:
-                    try:
-                        netloc_enc = netloc.encode("ascii")
-                    except UnicodeEncodeError:
-                        netloc_enc = netloc.encode("idna")
-                    self.lines.append(self.packHeader('Host', netloc_enc))
-                else:
-                    host = self.host
-                    port = self.port
-
-                    try:
-                        host_enc = host.encode("ascii")
-                    except UnicodeEncodeError:
-                        host_enc = host.encode("idna")
-
-                    # As per RFC 273, IPv6 address should be wrapped with []
-                    # when used as Host header
-
-                    if host.find(':') >= 0:
-                        host_enc = b'[' + host_enc + b']'
-
-                    if port == self.default_port:
-                        self.lines.append(self.packHeader('Host', host_enc))
-                    else:
-                        host_enc = host_enc.decode("ascii")
-                        self.lines.append(self.packHeader('Host', "{0}:{1}".format(host_enc, port)))
-
-            # we only want a Content-Encoding of "identity" since we don't
-            # support encodings such as x-gzip or x-deflate.
-            if not skip_accept_encoding:
-                self.lines.append(self.packHeader('Accept-Encoding', 'identity'))
-
-        if body is not None and ('content-length' not in header_names):
-            self.lines.append(self.packHeader('Content-Length', str(len(body))))
-
-
-        for hdr, value in headers.items():
-            self.lines.append(self.packHeader(hdr, value))
-
-        if isinstance(body, str):
-            # RFC 2616 Section 3.7.1 says that text default has a
-            # default charset of iso-8859-1.
+        if body and isinstance(body, unicode):  # use default
+            # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
             body = body.encode('iso-8859-1')
+        self.body = body or b''
 
-        self.endheaders(body)
+        self.lines = []
+        self.head = b""
+        self.msg = b""
 
-    def packHeader(self, header, *values):
+    def build(self):
         """
-        Format and return a request header line.
-
-        For example: h.packHeader('Accept', 'text/html')
+        Build and return request message
         """
-        if self.__state != _CS_REQ_STARTED:
-            raise CannotSendHeader()
+        self.lines = []
 
-        if hasattr(header, 'encode'):  # string not byte
-            header = header.encode('ascii')
-        values = list(values)
-        for i, one_value in enumerate(values):
-            if hasattr(one_value, 'encode'):
-                values[i] = one_value.encode('latin-1')
-            elif isinstance(one_value, int):
-                values[i] = str(one_value).encode('ascii')
-        value = b'\r\n\t'.join(values)
-        header = header + b': ' + value
-        return header
+        headerKeys = dict.fromkeys([unicode(k.lower()) for k in self.headers])
 
-    def _get_hostport(self, host, port):
+        skip_accept_encoding = True if 'accept-encoding' in headerKeys else False
+
+        startLine = "{0} {1} {2}".format(self.method, self.url, self.HttpVersionString)
+        self.lines.append(startLine.encode('ascii'))
+
+        if u'host' not in headerKeys:
+            # If we need a non-standard port, include it in the header
+            netloc = ''
+            if self.url.startswith('http'):
+                nil, netloc, nil, nil, nil = urlsplit(url)
+
+            if netloc:
+                try:
+                    netloc_enc = netloc.encode("ascii")
+                except UnicodeEncodeError:
+                    netloc_enc = netloc.encode("idna")
+                self.lines.append(self.packHeader(u'Host', netloc_enc))
+            else:
+                host = self.host
+                port = self.port
+
+                try:
+                    host_enc = host.encode("ascii")
+                except UnicodeEncodeError:
+                    host_enc = host.encode("idna")
+
+                # As per RFC 273, IPv6 address should be wrapped with []
+                # when used as Host header
+
+                if host.find(':') >= 0:
+                    host_enc = b'[' + host_enc + b']'
+
+                if port == self.Port:
+                    self.lines.append(self.packHeader('Host', host_enc))
+                else:
+                    host_enc = host_enc.decode("ascii")
+                    self.lines.append(self.packHeader('Host', "{0}:{1}".format(host_enc, port)))
+
+        # we only want a Content-Encoding of "identity" since we don't
+        # support encodings such as x-gzip or x-deflate.
+        if u'accept-encoding' not in headerKeys:
+            self.lines.append(self.packHeader('Accept-Encoding', 'identity'))
+
+        if self.body is not None and (u'content-length' not in headerKeys):
+            self.lines.append(self.packHeader('Content-Length', str(len(self.body))))
+
+        for name, value in self.headers.items():
+            self.lines.append(self.packHeader(name, value))
+
+        self.lines.extend((b"", b""))
+        self.head = b"\r\n".join(self.lines)
+
+        self.msg = self.head + self.body
+        return self.msg
+
+
+    def getHostPort(self, host, port):
         if port is None:
-            i = host.rfind(':')
-            j = host.rfind(']')         # ipv6 addresses have [...]
+            i = host.rfind(u':')
+            j = host.rfind(u']')         # ipv6 addresses have [...]
             if i > j:
                 try:
                     port = int(host[i+1:])
                 except ValueError:
-                    if host[i+1:] == "": # http://foo.com:/ == http://foo.com/
+                    if host[i+1:] == u"": # http://foo.com:/ == http://foo.com/
                         port = self.default_port
                     else:
                         raise InvalidURL("nonnumeric port: '%s'" % host[i+1:])
                 host = host[:i]
             else:
                 port = self.default_port
-            if host and host[0] == '[' and host[-1] == ']':
+            if host and host[0] == u'[' and host[-1] == u']':
                 host = host[1:-1]
-
         return (host, port)
 
-    def _set_content_length(self, body):
-        # Set the content-length based on the body.
-        thelen = None
-        try:
-            thelen = str(len(body))
-        except TypeError as te:
-            # If this is a file-like object, try to
-            # fstat its file descriptor
-            try:
-                thelen = str(os.fstat(body.fileno()).st_size)
-            except (AttributeError, OSError):
-                # Don't send a length if this failed
-                if self.debuglevel > 0: print("Cannot stat!!")
+    def packHeader(self, name, *values):
+        """
+        Format and return a request header line.
 
-        if thelen is not None:
-            self.putheader('Content-Length', thelen)
+        For example: h.packHeader('Accept', 'text/html')
+        """
+        if isinstance(name, unicode):  # not bytes
+            name = name.encode('ascii')
+        name = name.title()
+        values = list(values)  # make copy
+        for i, value in enumerate(values):
+            if isinstance(value, unicode):
+                values[i] = value.encode('iso-8859-1')
+            elif isinstance(value, int):
+                values[i] = str(value).encode('ascii')
+        value = b'; '.join(values)
+        value = value.lower()
+        return (name + b': ' + value)
+
 
 class HTTPConnection:
 
     _http_vsn = 11
     _http_vsn_str = 'HTTP/1.1'
 
-    response_class = HTTPResponse
+    #response_class = HTTPResponse
     default_port = HTTP_PORT
     auto_open = 1
     debuglevel = 0

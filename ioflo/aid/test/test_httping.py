@@ -33,6 +33,9 @@ from ioflo.base.globaling import *
 from ioflo.base.odicting import odict
 #from ioflo.test import testing
 
+from ioflo.aid import nonblocking
+from ioflo.aid import httping
+
 from ioflo.base.consoling import getConsole
 console = getConsole()
 
@@ -101,16 +104,92 @@ class BasicTestCase(unittest.TestCase):
 
         hc.close()
 
-    def testNonBlocking(self):
+    def testNonBlockingRequest(self):
         """
         Test NonBlocking Http client
         """
         console.terse("{0}\n".format(self.testBasic.__doc__))
 
-        console.terse("{0}\n".format("Connecting ...\n"))
-        hc = HTTPConnection('127.0.0.1', port=8080, timeout=1.0)
+        console.reinit(verbosity=console.Wordage.profuse)
 
-        hc.connect()
+        wireLogBeta = nonblocking.WireLog(buffify=True)
+        result = wireLogBeta.reopen()
+
+        #alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
+        #self.assertIs(alpha.reopen(), True)
+        #self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+
+        eha = ('127.0.0.1', 8080)
+        beta = nonblocking.Outgoer(ha=eha, bufsize=131072)
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to server ...\n")
+        while True:
+            beta.serviceConnect()
+            #alpha.serviceAccepts()
+            if beta.connected:  # and beta.ca in alpha.ixes
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(eha, beta.ha)
+
+        #ixBeta = alpha.ixes[beta.ca]
+        #self.assertIsNotNone(ixBeta.ca)
+        #self.assertIsNotNone(ixBeta.cs)
+        #self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        #self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        #self.assertEqual(ixBeta.ca, beta.ca)
+        #self.assertEqual(ixBeta.ha, beta.ha)
+
+        console.terse("{0}\n".format("Building Request ...\n"))
+        host = u'127.0.0.1'
+        port = 8080
+        method = u'GET'
+        url = u'/echo?name=fame'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        headers = odict([('Accept', 'application/json')])
+        req =  httping.HttpRequestNb(host=host,
+                                     port=port,
+                                     method=method,
+                                     url=url,
+                                     headers=headers)
+        msgOut = req.build()
+        lines = [
+                   b'GET /echo?name=fame HTTP/1.1',
+                   b'Host: 127.0.0.1:8080',
+                   b'Accept-Encoding: identity',
+                   b'Content-Length: 0',
+                   b'Accept: application/json',
+                   b'',
+                   b'',
+                ]
+        for i, line in enumerate(lines):
+            self.assertEqual(line, req.lines[i])
+
+        self.assertEqual(req.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+
+        beta.transmit(msgOut)
+        msgIn = b''
+        while beta.txes or not msgIn:
+            beta.serviceTxes()
+            beta.serviceReceives()
+            msgIn += beta.catRxes()
+            time.sleep(0.05)
+
+        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
+
+        #alpha.close()
+        beta.close()
+
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
 
 
 def runOne(test):
@@ -124,7 +203,8 @@ def runOne(test):
 def runSome():
     """ Unittest runner """
     tests =  []
-    names = ['testBasic', ]
+    names = ['testBasic',
+             'testNonBlockingRequest', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -143,5 +223,5 @@ if __name__ == '__main__' and __package__ is None:
 
     #runSome()#only run some
 
-    runOne('testBasic')
+    runOne('testNonBlockingRequest')
 

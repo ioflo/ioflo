@@ -761,14 +761,17 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
 
-        wireLog = nonblocking.WireLog(path=logDirpath)
-        result = wireLog.reopen(prefix='alpha', midfix='6101')
+        wireLogAlpha = nonblocking.WireLog(path=logDirpath)
+        result = wireLogAlpha.reopen(prefix='alpha', midfix='6101')
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
+        wireLogBeta = nonblocking.WireLog(buffify=True)
+        result = wireLogBeta.reopen()
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072)
+        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
@@ -868,7 +871,13 @@ class BasicTestCase(unittest.TestCase):
         alpha.close()
         beta.close()
 
-        wireLog.close()
+        wlBetaRx = wireLogBeta.getRx()
+        self.assertTrue(wlBetaRx.startswith(b"('127.0.0.1', 6101)\nAlpha sends to Beta\n"))
+        wlBetaTx = wireLogBeta.getTx()
+        self.assertTrue(wlBetaTx.startswith(b"('127.0.0.1', 6101)\nBeta sends to Alpha\n"))
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 

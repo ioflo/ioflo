@@ -464,7 +464,7 @@ class SocketUdpNb(object):
                 raise #re raise exception ex1
 
         if console._verbosity >= console.Wordage.profuse:  # faster to check
-            cmsg = ("Server at {0} received from {1}\n"
+            cmsg = ("\nServer at {0}, received from {1}:\n------------\n"
                        "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
             console.profuse(cmsg)
 
@@ -489,8 +489,8 @@ class SocketUdpNb(object):
             raise
 
         if console._verbosity >=  console.Wordage.profuse:
-            cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
-                    "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
+            cmsg = ("\nServer at {0}, sent {1} bytes to {2}:\n------------\n"
+                    "{3}\n".format(self.ha, result, da, data[:result].decode('UTF-8')))
             console.profuse(cmsg)
 
         if self.wlog:
@@ -618,7 +618,7 @@ class SocketUxdNb(object):
                 raise #re raise exception ex1
 
         if console._verbosity >= console.Wordage.profuse:  # faster to check
-            cmsg = ("Server at {0} received from {1}\n"
+            cmsg = ("\nServer at {0}, received from {1}:\n------------\n"
                        "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
             console.profuse(cmsg)
 
@@ -956,7 +956,7 @@ class Outgoer(object):
 
         if data:  # connection open
             if console._verbosity >= console.Wordage.profuse:  # faster to check
-                cmsg = ("Client at {0} received from {1}\n"
+                cmsg = ("\nClient at {0}, received from {1}:\n------------\n"
                            "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
                 console.profuse(cmsg)
 
@@ -1013,8 +1013,8 @@ class Outgoer(object):
 
         if result:
             if console._verbosity >=  console.Wordage.profuse:
-                cmsg = ("Client at {0} sent to {1}, {2} bytes\n"
-                        "{3}\n".format(self.ca, self.ha, result, data[:result].decode('UTF-8')))
+                cmsg = ("\nClient at {0}, sent {1} bytes to {2}:\n------------\n"
+                        "{3}\n".format(self.ca, result, self.ha, data[:result].decode('UTF-8')))
                 console.profuse(cmsg)
 
             if self.wlog:
@@ -1800,7 +1800,7 @@ class SocketTcpNb(object):
         try:
             data = cs.recv(bs)
 
-            message = "Server at {0} received {1} from {2}\n".format(
+            message = "Server at {0}, received {1} from {2}\n".format(
                 str(self.ha), data, str(ca))
             console.profuse(message)
 
