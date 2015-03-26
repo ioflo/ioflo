@@ -59,7 +59,7 @@ class Server(tasking.Tasker):
 
         #create socket server
         self.sha = sha
-        self.server = aiding.SocketUdpNb(ha=sha, path='') #reopened by runner
+        self.server = aiding.SocketUdpNb(ha=sha) #reopened by runner
         self.dha = dha #set up destination address
 
         self.prefix = prefix #prefix to log directory for server
