@@ -795,11 +795,12 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testClientServerService(self):
+    def testClientServerServiceCat(self):
         """
-        Test Classes ServerSocketTcpNb service methods
+        Test Classes ServerSocketTcpNb service methods that use catRxes
+
         """
-        console.terse("{0}\n".format(self.testClientServerService.__doc__))
+        console.terse("{0}\n".format(self.testClientServerServiceCat.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
@@ -855,7 +856,7 @@ class BasicTestCase(unittest.TestCase):
         msgIn = b''
         while not msgIn and beta.txes:
             beta.serviceTxes()
-            alpha.serviceRxAllIx()
+            alpha.serviceReceivesAllIx()
             msgIn += ixBeta.catRxes()
             time.sleep(0.05)
         self.assertEqual(msgOut, msgIn)
@@ -868,7 +869,7 @@ class BasicTestCase(unittest.TestCase):
         msgIn = b''
         while len(msgIn) < len(msgOut1 + msgOut2):
             beta.serviceTxes()
-            alpha.serviceRxAllIx()
+            alpha.serviceReceivesAllIx()
             msgIn += ixBeta.catRxes()
             time.sleep(0.05)
 
@@ -890,7 +891,7 @@ class BasicTestCase(unittest.TestCase):
         while len(msgIn) < len(msgOutBig):
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceRxAllIx()
+            alpha.serviceReceivesAllIx()
             msgIn += ixBeta.catRxes()
             time.sleep(0.05)
 
@@ -901,7 +902,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.transmit(msgOut)
         msgIn = b''
         while len(msgIn) < len(msgOut):
-            alpha.serviceTxAllIx()
+            alpha.serviceTxesAllIx()
             beta.serviceReceives()
             msgIn += beta.catRxes()
             time.sleep(0.05)
@@ -912,7 +913,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.transmit(msgOutBig)
         msgIn = b''
         while len(msgIn) < len(msgOutBig):
-            alpha.serviceTxAllIx()
+            alpha.serviceTxesAllIx()
             time.sleep(0.05)
             beta.serviceReceives()
             msgIn += beta.catRxes()
@@ -933,6 +934,138 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testClientServerService(self):
+        """
+        Test Classes ServerSocketTcpNb service methods
+        """
+        console.terse("{0}\n".format(self.testClientServerService.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        userDirpath = os.path.join('~', '.ioflo', 'test')
+        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
+        if not os.path.exists(userDirpath):
+            os.makedirs(userDirpath)
+
+        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="tcp", dir=userDirpath)
+
+        logDirpath = os.path.join(tempDirpath, 'log')
+        if not os.path.exists(logDirpath):
+            os.makedirs(logDirpath)
+
+        wireLogAlpha = nonblocking.WireLog(path=logDirpath, same=True)
+        result = wireLogAlpha.reopen(prefix='alpha', midfix='6101')
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+
+        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to alpha\n")
+        while True:
+            beta.serviceConnect()
+            alpha.serviceAccepts()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(alpha.eha, beta.ha)
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        msgOut = b"Beta sends to Alpha"
+        beta.transmit(msgOut)
+        while not ixBeta.rxbs and beta.txes:
+            beta.serviceTxes()
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        index = len(ixBeta.rxbs)
+
+        # send multiple
+        msgOut1 = b"First Message"
+        beta.transmit(msgOut1)
+        msgOut2 = b"Second Message"
+        beta.transmit(msgOut2)
+        while len(ixBeta.rxbs) < len(msgOut1 + msgOut2):
+            beta.serviceTxes()
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn, index = ixBeta.tailRxbs(index)
+        self.assertEqual(msgIn, msgOut1 + msgOut2)
+        ixBeta.clearRxbs()
+
+        # build message too big to fit in buffer
+        sizes = beta.actualBufSizes()
+        size = sizes[0]
+        msgOutBig = b""
+        count = 0
+        while (len(msgOutBig) <= size * 4):
+            msgOutBig += ns2b("{0:0>7d} ".format(count))
+            count += 1
+        self.assertTrue(len(msgOutBig) >= size * 4)
+
+        beta.transmit(msgOutBig)
+        count = 0
+        while len(ixBeta.rxbs) < len(msgOutBig):
+            beta.serviceTxes()
+            time.sleep(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        ixBeta.clearRxbs()
+        self.assertEqual(msgIn, msgOutBig)
+
+        # send from alpha to beta
+        msgOut = b"Alpha sends to Beta"
+        ixBeta.transmit(msgOut)
+        while len(beta.rxbs) < len(msgOut):
+            alpha.serviceTxesAllIx()
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        msgIn = bytes(beta.rxbs)
+        beta.clearRxbs()
+        self.assertEqual(msgIn, msgOut)
+
+        # send big from alpha to beta
+        ixBeta.transmit(msgOutBig)
+        while len(beta.rxbs) < len(msgOutBig):
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        msgIn = bytes(beta.rxbs)
+        beta.clearRxbs()
+        self.assertEqual(msgIn, msgOutBig)
+
+        alpha.close()
+        beta.close()
+
+        wlBetaRx = wireLogBeta.getRx()
+        wlBetaTx = wireLogBeta.getTx()
+        self.assertEqual(wlBetaRx, wlBetaTx)  # since wlog is same
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        shutil.rmtree(tempDirpath)
+        console.reinit(verbosity=console.Wordage.concise)
 
     def testSocketTcpNb(self):
         """
@@ -1064,6 +1197,7 @@ def runSome():
              'testSocketUdpNb',
              'testSocketUxdNb',
              'testClientServer',
+             'testClientServerServiceCat',
              'testClientServerService',
              'testSocketTcpNb', ]
     tests.extend(map(BasicTestCase, names))
@@ -1084,5 +1218,5 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testWireLogBuffify')
+    #runOne('testClientServerService')
 

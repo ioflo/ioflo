@@ -810,6 +810,8 @@ class Outgoer(object):
     Nonblocking TCP Socket Client Class.
     """
     def __init__(self,
+                 name='',
+                 uid=0,
                  ha=None,
                  host='',
                  port=56000,
@@ -817,13 +819,16 @@ class Outgoer(object):
                  wlog=None):
         """
         Initialization method for instance.
-
+        name = user friendly name for connection
+        uid = unique identifier for connection
         ha = host address duple (host, port) of remote server
         host = host address or tcp server to connect to
         port = socket port
         bufsize = buffer size
         wlog = WireLog object if any
         """
+        self.name = name
+        self.uid = uid
         self.ha = ha or (host, port)
         self.bs = bufsize
         self.wlog = wlog
@@ -834,6 +839,7 @@ class Outgoer(object):
         self.cutoff = False  # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
         self.rxes = deque()  # deque of data received
+        self.rxbs = bytearray()  # byte array of data recieved
 
     def actualBufSizes(self):
         """
@@ -1014,9 +1020,38 @@ class Outgoer(object):
             if data:
                 self.rxes.append(data)
 
+    def clearRxbs(self):
+        """
+        Clear .rxbs
+        """
+        self.rxbs = bytearray()
+
+    def tailRxbs(self, index):
+        """
+        Returns duple of (bytes(self.rxbs[index:]), len(self.rxbs))
+        slices the tail from index to end and converts to bytes
+        also the length of .rxbs to be used to update index
+        """
+        return (bytes(self.rxbs[index:]), len(self.rxbs))
+
+    def serviceRxes(self):
+        """
+        Pop off all rxes and append to .rxbs
+        """
+        while self.rxes:
+            self.rxbs.extend(self.rxes.popleft())
+
+    def serviceAllRx(self):
+        """
+        Service all rx services, service recieves and service rxes
+        """
+        self.serviceReceives()
+        self.serviceRxes()
+
     def catRxes(self):
         """
         Pop off all rxes and concatenate into single byte string and return
+        This is instead of servicesRxes which appends the .rxes to .rxbs
         """
         rx = b''.join(list(self.rxes))
         self.rxes.clear()
@@ -1105,6 +1140,7 @@ class Incomer(object):
         self.cutoff = False # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
         self.rxes = deque() # deque of data received
+        self.rxbs = bytearray()  # bytearray of data received
 
     def shutdown(self, how=socket.SHUT_RDWR):
         """
@@ -1201,9 +1237,38 @@ class Incomer(object):
             if data:
                 self.rxes.append(data)
 
+    def clearRxbs(self):
+        """
+        Clear .rxbs
+        """
+        self.rxbs = bytearray()
+
+    def tailRxbs(self, index):
+        """
+        Returns duple of (bytes(self.rxbs[index:]), len(self.rxbs))
+        slices the tail from index to end and converts to bytes
+        also the length of .rxbs to be used to update index
+        """
+        return (bytes(self.rxbs[index:]), len(self.rxbs))
+
+    def serviceRxes(self):
+        """
+        Pop off all rxes and append to .rxbs
+        """
+        while self.rxes:
+            self.rxbs.extend(self.rxes.popleft())
+
+    def serviceAllRx(self):
+        """
+        Service all rx services, service recieves and service rxes
+        """
+        self.serviceReceives()
+        self.serviceRxes()
+
     def catRxes(self):
         """
         Pop off all rxes and concatenate into single byte string and return
+        This is instead of servicesRxes which appends the .rxes to .rxbs
         """
         rx = b''.join(list(self.rxes))
         self.rxes.clear()
@@ -1468,6 +1533,24 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].shutclose()
 
+    def serviceRxesIx(self, ca):
+        """
+        Service rxes for incomer by connection address ca
+        """
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        self.ixes[ca].serviceRxes()
+
+    def serviceRxIx(self, ca):
+        """
+        Service rx for incomer by connection address ca
+        """
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        self.ixes[ca].serviceRx()
+
     def catRxesIx(self, ca):
         """
         Return concatenated rxes for incomer given by connection address ca
@@ -1486,14 +1569,28 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].transmit(data)
 
-    def serviceRxAllIx(self):
+    def serviceReceivesAllIx(self):
         """
         Service receives for all incomers in .ixes
         """
         for ix in self.ixes.values():
             ix.serviceReceives()
 
-    def serviceTxAllIx(self):
+    def serviceRxesAllIx(self):
+        """
+        Service rxes for all incomers in .ixes
+        """
+        for ix in self.ixes.values():
+            ix.serviceRxes()
+
+    def serviceAllRxAllIx(self):
+        """
+        Service rxes for all incomers in .ixes
+        """
+        for ix in self.ixes.values():
+            ix.serviceAllRx()
+
+    def serviceTxesAllIx(self):
         """
         Service transmits for all incomers in .ixes
         """
