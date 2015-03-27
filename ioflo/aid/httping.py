@@ -74,6 +74,7 @@ import sys
 import os
 import socket
 import errno
+import io
 from collections import deque
 
 if sys.version > '3':
@@ -91,7 +92,7 @@ from ..base import excepting
 from ..base.consoling import getConsole
 console = getConsole()
 
-LINE_END = b"/r/n"
+LINE_END = b"\r\n"
 MAX_LINE_SIZE = 65536
 MAX_HEADERS = 100
 
