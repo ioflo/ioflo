@@ -105,14 +105,48 @@ class BasicTestCase(unittest.TestCase):
         wire.txLog.seek(0)
         result = wire.txLog.readline()
         result += wire.txLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("TX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         data = b"Test data Rx"
         wire.writeRx(ha, data)
         wire.rxLog.seek(0)
         result = wire.rxLog.readline()
         result += wire.rxLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("RX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+
+        wire.close()
+
+        wire = nonblocking.WireLog(path=logDirpath, same=True)
+        prefix = 'localhost'
+        midfix = '5000'
+        result = wire.reopen(prefix=prefix, midfix=midfix)
+
+        self.assertIsNotNone(wire.rxLog)
+        self.assertIsNotNone(wire.txLog)
+        self.assertFalse(wire.rxLog.closed)
+        self.assertFalse(wire.txLog.closed)
+        self.assertIs(wire.rxLog, wire.txLog)
+        self.assertEqual(wire.rxLog.name, wire.txLog.name)
+        self.assertTrue(wire.rxLog.name.endswith('.txt'))
+        self.assertTrue(wire.txLog.name.endswith('.txt'))
+        self.assertTrue("{0}_{1}_".format(prefix, midfix) in wire.rxLog.name)
+        self.assertTrue("{0}_{1}_".format(prefix, midfix) in wire.txLog.name)
+
+        ha = ('127.0.0.1', 5000)
+        data = b"Test data Tx"
+        wire.writeTx(ha, data)
+        wire.txLog.seek(0)
+        result = wire.txLog.readline()
+        result += wire.txLog.readline()
+        self.assertEqual(result, ns2b("TX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+        spot = wire.txLog.tell()
+
+        data = b"Test data Rx"
+        wire.writeRx(ha, data)
+        wire.rxLog.seek(spot)
+        result = wire.rxLog.readline()
+        result += wire.rxLog.readline()
+        self.assertEqual(result, ns2b("RX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         wire.close()
         shutil.rmtree(tempDirpath)
@@ -123,17 +157,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testWireLogBuffify.__doc__))
 
-        userDirpath = os.path.join('~', '.ioflo', 'test')
-        userDirpath = os.path.abspath(os.path.expanduser(userDirpath))
-        if not os.path.exists(userDirpath):
-            os.makedirs(userDirpath)
-
-        tempDirpath = tempfile.mkdtemp(prefix="test", suffix="log", dir=userDirpath)
-        logDirpath = os.path.join(tempDirpath, 'log')
-        if not os.path.exists(logDirpath):
-            os.makedirs(logDirpath)
-
-        wire = nonblocking.WireLog(path=logDirpath, buffify=True)
+        wire = nonblocking.WireLog(buffify=True)
         prefix = 'localhost'
         midfix = '5000'
         result = wire.reopen(prefix=prefix, midfix=midfix)
@@ -149,17 +173,45 @@ class BasicTestCase(unittest.TestCase):
         wire.txLog.seek(0)
         result = wire.txLog.readline()
         result += wire.txLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("TX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         data = b"Test data Rx"
         wire.writeRx(ha, data)
         wire.rxLog.seek(0)
         result = wire.rxLog.readline()
         result += wire.rxLog.readline()
-        self.assertEqual(result, ns2b("{0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+        self.assertEqual(result, ns2b("RX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
 
         wire.close()
-        shutil.rmtree(tempDirpath)
+
+        wire = nonblocking.WireLog(buffify=True, same=True)
+        prefix = 'localhost'
+        midfix = '5000'
+        result = wire.reopen(prefix=prefix, midfix=midfix)
+
+        self.assertIsNotNone(wire.rxLog)
+        self.assertIsNotNone(wire.txLog)
+        self.assertFalse(wire.rxLog.closed)
+        self.assertFalse(wire.txLog.closed)
+        self.assertIs(wire.rxLog, wire.txLog)
+
+        ha = ('127.0.0.1', 5000)
+        data = b"Test data Tx"
+        wire.writeTx(ha, data)
+        wire.txLog.seek(0)
+        result = wire.txLog.readline()
+        result += wire.txLog.readline()
+        self.assertEqual(result, ns2b("TX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+        spot = wire.txLog.tell()
+
+        data = b"Test data Rx"
+        wire.writeRx(ha, data)
+        wire.rxLog.seek(spot)
+        result = wire.rxLog.readline()
+        result += wire.rxLog.readline()
+        self.assertEqual(result, ns2b("RX {0}\n{1}\n".format(ha, data.decode('ISO-8859-1'))))
+
+        wire.close()
 
     def testSocketUdpNb(self):
         """
@@ -761,7 +813,7 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
 
-        wireLogAlpha = nonblocking.WireLog(path=logDirpath)
+        wireLogAlpha = nonblocking.WireLog(path=logDirpath, same=True)
         result = wireLogAlpha.reopen(prefix='alpha', midfix='6101')
 
         wireLogBeta = nonblocking.WireLog(buffify=True)
@@ -872,9 +924,9 @@ class BasicTestCase(unittest.TestCase):
         beta.close()
 
         wlBetaRx = wireLogBeta.getRx()
-        self.assertTrue(wlBetaRx.startswith(b"('127.0.0.1', 6101)\nAlpha sends to Beta\n"))
+        self.assertTrue(wlBetaRx.startswith(b"RX ('127.0.0.1', 6101)\nAlpha sends to Beta\n"))
         wlBetaTx = wireLogBeta.getTx()
-        self.assertTrue(wlBetaTx.startswith(b"('127.0.0.1', 6101)\nBeta sends to Alpha\n"))
+        self.assertTrue(wlBetaTx.startswith(b"TX ('127.0.0.1', 6101)\nBeta sends to Alpha\n"))
 
         wireLogAlpha.close()
         wireLogBeta.close()
@@ -1032,5 +1084,5 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testClientServerService')
+    #runOne('testWireLogBuffify')
 

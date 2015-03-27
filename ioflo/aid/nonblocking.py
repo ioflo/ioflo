@@ -242,6 +242,7 @@ class WireLog(object):
                  midfix='',
                  rx=True,
                  tx=True,
+                 same=False,
                  buffify=False):
         """
         Initialization method for instance.
@@ -250,6 +251,7 @@ class WireLog(object):
         midfix = another more prefix for log name if provided
         rx = Boolean create rx log file if True
         tx = Boolean create tx log file if True
+        same = Boolean use same log file for both rx and tx
         buffify = Boolean use BytesIO in memory buffer instead of File object
         """
         self.path = path  # path to directory where log files go must end in /
@@ -257,6 +259,7 @@ class WireLog(object):
         self.midfix = midfix
         self.rx = True if rx else False
         self.tx = True if tx else False
+        self.same = True if same else False
         self.rxLog = None  # receive log file
         self.txLog = None  # transmit log file
         self.buffify = True if buffify else False
@@ -282,37 +285,62 @@ class WireLog(object):
 
         date = time.strftime('%Y%m%d_%H%M%S', time.gmtime(time.time()))
 
-        if self.rx:
+        if self.same and (self.rx or self.tx):
             if not self.buffify:
-                name = "{0}{1}{2}_rx.txt".format(prefix, midfix, date)
+                name = "{0}{1}{2}.txt".format(prefix, midfix, date)
                 path = os.path.join(self.path, name)
                 try:
-                    self.rxLog = io.open(path, mode='wb+')
+                    log = io.open(path, mode='wb+')
+                    if self.rx:
+                        self.rxLog = log
+                    if self.tx:
+                        self.txLog = log
                 except IOError:
-                    self.rxLog = None
+                    self.rxLog = self.txLog = None
                     return False
             else:
                 try:
-                    self.rxLog = io.BytesIO()
+                    log = io.BytesIO()
+                    if self.rx:
+                        self.rxLog = log
+                    if self.tx:
+                        self.txLog = log
                 except IOError:
-                    self.rxLog = None
+                    self.rxLog = self.txLog = None
                     return False
 
-        if self.tx:
-            if not self.buffify:
-                name = "{0}{1}{2}_tx.txt".format(prefix, midfix, date)
-                path = os.path.join(self.path, name)
-                try:
-                    self.txLog = io.open(path, mode='wb+')
-                except IOError:
-                    self.txLog = None
-                    return False
-            else:
-                try:
-                    self.txLog = io.BytesIO()
-                except IOError:
-                    self.txLog = None
-                    return False
+        else:
+            if self.rx:
+                if not self.buffify:
+                    name = "{0}{1}{2}_rx.txt".format(prefix, midfix, date)
+                    path = os.path.join(self.path, name)
+                    try:
+                        self.rxLog = io.open(path, mode='wb+')
+                    except IOError:
+                        self.rxLog = None
+                        return False
+                else:
+                    try:
+                        self.rxLog = io.BytesIO()
+                    except IOError:
+                        self.rxLog = None
+                        return False
+
+            if self.tx:
+                if not self.buffify:
+                    name = "{0}{1}{2}_tx.txt".format(prefix, midfix, date)
+                    path = os.path.join(self.path, name)
+                    try:
+                        self.txLog = io.open(path, mode='wb+')
+                    except IOError:
+                        self.txLog = None
+                        return False
+                else:
+                    try:
+                        self.txLog = io.BytesIO()
+                    except IOError:
+                        self.txLog = None
+                        return False
 
         return True
 
@@ -346,7 +374,7 @@ class WireLog(object):
         Write bytes data received from source address sa,
         """
         if self.rx and self.rxLog:
-            self.rxLog.write(ns2b("{0}\n".format(sa)))
+            self.rxLog.write(ns2b("RX {0}\n".format(sa)))
             self.rxLog.write(data)
             self.rxLog.write(b'\n')
 
@@ -355,7 +383,7 @@ class WireLog(object):
         Write bytes data transmitted to destination address da,
         """
         if self.tx and self.txLog:
-            self.txLog.write(ns2b("{0}\n".format(da)))
+            self.txLog.write(ns2b("TX {0}\n".format(da)))
             self.txLog.write(data)
             self.txLog.write(b'\n')
 
