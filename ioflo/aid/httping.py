@@ -75,8 +75,13 @@ import os
 import socket
 import errno
 from collections import deque
-from urllib.parse import urlsplit
 
+if sys.version > '3':
+    from urllib.parse import urlsplit
+else:
+    from urlparse import urlsplit
+
+from email.parser import HeaderParser
 
 # Import ioflo libs
 from .p23ing import *
@@ -86,6 +91,9 @@ from ..base import excepting
 from ..base.consoling import getConsole
 console = getConsole()
 
+LINE_END = b"/r/n"
+MAX_LINE_SIZE = 65536
+MAX_HEADERS = 100
 
 HTTP_PORT = 80
 HTTPS_PORT = 443
@@ -278,10 +286,14 @@ class BadStatusLine(HTTPException):
         self.line = line
 
 class LineTooLong(HTTPException):
-    def __init__(self, line_type):
-        HTTPException.__init__(self, "got more than %d bytes when reading %s"
-                                     % (_MAXLINE, line_type))
+    def __init__(self, kind):
+        HTTPException.__init__(self, "got more than %d bytes while parsing %s"
+                                     % (MAX_LINE_SIZE, kind))
 
+class LineEndMissing(HTTPException):
+    def __init__(self, count, kind):
+        HTTPException.__init__(self, "line end missing after $s bytes while parsing %s "
+                                     % (count, kind))
 
 
 class HttpRequestNb(object):
@@ -302,7 +314,7 @@ class HttpRequestNb(object):
         Initialize Instance
         """
         self.host, self.port = self.getHostPort(host, port)
-        self.method = method.upper() if method else 'GET'
+        self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
         self.headers = headers or odict()
 
@@ -373,7 +385,7 @@ class HttpRequestNb(object):
             self.lines.append(self.packHeader(name, value))
 
         self.lines.extend((b"", b""))
-        self.head = b"\r\n".join(self.lines)
+        self.head = LINE_END.join(self.lines)  # b'/r/n'
 
         self.msg = self.head + self.body
         return self.msg
@@ -413,10 +425,695 @@ class HttpRequestNb(object):
                 values[i] = value.encode('iso-8859-1')
             elif isinstance(value, int):
                 values[i] = str(value).encode('ascii')
-        value = b'; '.join(values)
+        value = b', '.join(values)
         value = value.lower()
         return (name + b': ' + value)
 
+
+class HttpResponseNb(object):
+    """
+    Nonblocking HTTP Response class
+    """
+
+    def __init__(self, msg=b'', method=u'GET', url=u'/'):
+        """
+        Initialize Instance
+        """
+        self.buf = msg or b''  # since bytes are immutable can't copy
+        self.method = method.upper() if method else u'GET'
+        self.url = url or u'/'
+
+        self.idx = 0  # index of next byte to parse from msg
+        self.lines = []  # parsed lines
+        self.closed =  False  # Boolean True if closed
+        self.head = b''
+        self.body = b''
+        self.data = odict()
+
+        self.headers = None
+        self.msg = None
+
+        # from the Status-Line of the response
+        self.version = _UNKNOWN # HTTP-Version
+        self.status = _UNKNOWN  # Status-Code
+        self.reason = _UNKNOWN  # Reason-Phrase
+
+        self.chunked = _UNKNOWN         # is "chunked" being used?
+        self.chunk_left = _UNKNOWN      # bytes left to read in current chunk
+        self.length = _UNKNOWN          # number of bytes left in response
+        self.will_close = _UNKNOWN      # conn will close at end of response
+
+
+    def close(self):
+        self.closed = True
+
+
+    def parse(self, msg=None):
+        """
+        Parse response message msg if not none otherwise parse .msg
+        Returns self
+        """
+        if msg is None:
+            self.msg = msg
+        self.idx = 0
+
+        self.lines = []
+        self.head = b''
+        self.body = b''
+        self.data = odict()
+
+        try:
+            self.begin()
+            assert self.will_close != _UNKNOWN
+
+            if self.will_close:
+                self.close()
+
+        except:
+            self.close()
+            raise
+
+        return self
+
+    def begin(self):
+        if self.headers is not None:
+            return  # already parsed the headers
+
+        while True:  # parse until we get a non-100 response
+            line = self.parseNextLine()
+            version, status, reason = self.parseStatus(line)
+            if status != CONTINUE:
+                break
+
+            while True:  # skip remaining headersfollowing 100 status header
+                line = self.parseNextLine()
+                if not line:  # blank line means end of headers
+                    break
+
+        self.code = self.status = status
+        self.reason = reason.strip()
+        if version in ("HTTP/1.0", "HTTP/0.9"):
+            # Some servers might still return "0.9", treat it as 1.0 anyway
+            self.version = 10
+        elif version.startswith("HTTP/1."):
+            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
+        else:
+            raise UnknownProtocol(version)
+
+        self.headers = self.msg = parse_headers(self.fp)
+
+        # are we using the chunked-style of transfer encoding?
+        tr_enc = self.headers.get("transfer-encoding")
+        if tr_enc and tr_enc.lower() == "chunked":
+            self.chunked = True
+            self.chunk_left = None
+        else:
+            self.chunked = False
+
+        # will the connection close at the end of the response?
+        self.will_close = self.checkClose()
+
+        # do we have a Content-Length?
+        # NOTE: RFC 2616, S4.4, #3 says we ignore this if tr_enc is "chunked"
+        self.length = None
+        length = self.headers.get("content-length")
+
+         # are we using the chunked-style of transfer encoding?
+        tr_enc = self.headers.get("transfer-encoding")
+        if length and not self.chunked:
+            try:
+                self.length = int(length)
+            except ValueError:
+                self.length = None
+            else:
+                if self.length < 0:  # ignore nonsensical negative lengths
+                    self.length = None
+        else:
+            self.length = None
+
+        # does the body have a fixed length? (of zero)
+        if (status == NO_CONTENT or status == NOT_MODIFIED or
+            100 <= status < 200 or      # 1xx codes
+            self._method == "HEAD"):
+            self.length = 0
+
+        # if the connection remains open, and we aren't using chunked, and
+        # a content-length was not provided, then assume that the connection
+        # WILL close.
+        if (not self.will_close and
+            not self.chunked and
+            self.length is None):
+            self.will_close = True
+
+    def parseNextLine(self):
+        """
+        Parse next line from self.buf
+        Raise errors if line too long or LINE_END not found
+        """
+        index = self.buf.find(LINE_END, self.idx)
+        if index < 0:
+            count = len(self.buf[self.idx:])
+            if count > MAX_LINE_SIZE:
+                raise LineTooLong("status line")
+            else:
+                raise LineEndMissing(count, "status line")
+
+        if index > MAX_LINE_SIZE:
+            raise LineTooLong("status line")
+
+        index += len(LINE_END)
+        line = self.buf[self.idx:index].rstrip(LINE_END).decode("iso-8859-1")
+        self.idx = index
+        return line
+
+    def parseStatus(self, line):
+        """
+        Parse the status line from the response
+        """
+        if not line:
+            # Presumably, the server closed the connection before
+            # sending a valid response.
+            raise BadStatusLine(line)
+        try:
+            version, status, reason = line.split(maxsplit=2)
+        except ValueError:
+            try:
+                version, status = line.split(maxsplit1=1)
+                reason = ""
+            except ValueError:
+                # empty version will cause next test to fail.
+                version = ""
+        if not version.startswith("HTTP/"):
+            raise BadStatusLine(line)
+
+        # The status code is a three-digit number
+        try:
+            status = int(status)
+            if status < 100 or status > 999:
+                raise BadStatusLine(line)
+        except ValueError:
+            raise BadStatusLine(line)
+        return (version, status, reason)
+
+    def parseHeaders(self):
+        """
+        Parses only RFC2822 headers until blank line
+
+        email Parser wants to see strings rather than bytes.
+        But a TextIOWrapper around self.rfile would buffer too many bytes
+        from the stream, bytes which we later need to read as bytes.
+        So we read the correct bytes here, as bytes, for email Parser
+        to parse.
+
+        """
+        headers = []
+        while True:
+            line = parseNextLine()
+            headers.append(line)
+            if len(headers) > MAX_HEADERS:
+                raise HTTPException("got more than %d headers" % MAX_HEADERS)
+            if not line or line in (b'\n'):  # blank line
+                break
+        hstring = b''.join(headers).decode('iso-8859-1')
+        return HeaderParser().parsestr(hstring)
+
+    def checkClose(self):
+        conn = self.headers.get("connection")
+        if self.version == 11:
+            # An HTTP/1.1 proxy is assumed to stay open unless
+            # explicitly closed.
+            conn = self.headers.get("connection")
+            if conn and "close" in conn.lower():
+                return True
+            return False
+
+        # Some HTTP/1.0 implementations have support for persistent
+        # connections, using rules different than HTTP/1.1.
+
+        # For older HTTP, Keep-Alive indicates persistent connection.
+        if self.headers.get("keep-alive"):
+            return False
+
+        # At least Akamai returns a "Connection: Keep-Alive" header,
+        # which was supposed to be sent by the client.
+        if conn and "keep-alive" in conn.lower():
+            return False
+
+        # Proxy-Connection is a netscape hack.
+        pconn = self.headers.get("proxy-connection")
+        if pconn and "keep-alive" in pconn.lower():
+            return False
+
+        # otherwise, assume it will close
+        return True
+
+
+
+class HTTPResponse(io.RawIOBase):
+
+    # See RFC 2616 sec 19.6 and RFC 1945 sec 6 for details.
+
+    # The bytes from the socket object are iso-8859-1 strings.
+    # See RFC 2616 sec 2.2 which notes an exception for MIME-encoded
+    # text following RFC 2047.  The basic status line parsing only
+    # accepts iso-8859-1.
+
+    def __init__(self, sock, debuglevel=0, method=None, url=None):
+        # If the response includes a content-length header, we need to
+        # make sure that the client doesn't read more than the
+        # specified number of bytes.  If it does, it will block until
+        # the server times out and closes the connection.  This will
+        # happen if a self.fp.read() is done (without a size) whether
+        # self.fp is buffered or not.  So, no self.fp.read() by
+        # clients unless they know what they are doing.
+        self.fp = sock.makefile("rb")
+        self.debuglevel = debuglevel
+        self._method = method
+
+        # The HTTPResponse object is returned via urllib.  The clients
+        # of http and urllib expect different attributes for the
+        # headers.  headers is used here and supports urllib.  msg is
+        # provided as a backwards compatibility layer for http
+        # clients.
+
+        self.headers = self.msg = None
+
+        # from the Status-Line of the response
+        self.version = _UNKNOWN # HTTP-Version
+        self.status = _UNKNOWN  # Status-Code
+        self.reason = _UNKNOWN  # Reason-Phrase
+
+        self.chunked = _UNKNOWN         # is "chunked" being used?
+        self.chunk_left = _UNKNOWN      # bytes left to read in current chunk
+        self.length = _UNKNOWN          # number of bytes left in response
+        self.will_close = _UNKNOWN      # conn will close at end of response
+
+    def _read_status(self):
+        line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+        if len(line) > _MAXLINE:
+            raise LineTooLong("status line")
+        if self.debuglevel > 0:
+            print("reply:", repr(line))
+        if not line:
+            # Presumably, the server closed the connection before
+            # sending a valid response.
+            raise BadStatusLine(line)
+        try:
+            version, status, reason = line.split(None, 2)
+        except ValueError:
+            try:
+                version, status = line.split(None, 1)
+                reason = ""
+            except ValueError:
+                # empty version will cause next test to fail.
+                version = ""
+        if not version.startswith("HTTP/"):
+            self._close_conn()
+            raise BadStatusLine(line)
+
+        # The status code is a three-digit number
+        try:
+            status = int(status)
+            if status < 100 or status > 999:
+                raise BadStatusLine(line)
+        except ValueError:
+            raise BadStatusLine(line)
+        return version, status, reason
+
+    def begin(self):
+        if self.headers is not None:
+            # we've already started reading the response
+            return
+
+        # read until we get a non-100 response
+        while True:
+            version, status, reason = self._read_status()
+            if status != CONTINUE:
+                break
+            # skip the header from the 100 response
+            while True:
+                skip = self.fp.readline(_MAXLINE + 1)
+                if len(skip) > _MAXLINE:
+                    raise LineTooLong("header line")
+                skip = skip.strip()
+                if not skip:
+                    break
+                if self.debuglevel > 0:
+                    print("header:", skip)
+
+        self.code = self.status = status
+        self.reason = reason.strip()
+        if version in ("HTTP/1.0", "HTTP/0.9"):
+            # Some servers might still return "0.9", treat it as 1.0 anyway
+            self.version = 10
+        elif version.startswith("HTTP/1."):
+            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
+        else:
+            raise UnknownProtocol(version)
+
+        self.headers = self.msg = parse_headers(self.fp)
+
+        if self.debuglevel > 0:
+            for hdr in self.headers:
+                print("header:", hdr, end=" ")
+
+        # are we using the chunked-style of transfer encoding?
+        tr_enc = self.headers.get("transfer-encoding")
+        if tr_enc and tr_enc.lower() == "chunked":
+            self.chunked = True
+            self.chunk_left = None
+        else:
+            self.chunked = False
+
+        # will the connection close at the end of the response?
+        self.will_close = self._check_close()
+
+        # do we have a Content-Length?
+        # NOTE: RFC 2616, S4.4, #3 says we ignore this if tr_enc is "chunked"
+        self.length = None
+        length = self.headers.get("content-length")
+
+         # are we using the chunked-style of transfer encoding?
+        tr_enc = self.headers.get("transfer-encoding")
+        if length and not self.chunked:
+            try:
+                self.length = int(length)
+            except ValueError:
+                self.length = None
+            else:
+                if self.length < 0:  # ignore nonsensical negative lengths
+                    self.length = None
+        else:
+            self.length = None
+
+        # does the body have a fixed length? (of zero)
+        if (status == NO_CONTENT or status == NOT_MODIFIED or
+            100 <= status < 200 or      # 1xx codes
+            self._method == "HEAD"):
+            self.length = 0
+
+        # if the connection remains open, and we aren't using chunked, and
+        # a content-length was not provided, then assume that the connection
+        # WILL close.
+        if (not self.will_close and
+            not self.chunked and
+            self.length is None):
+            self.will_close = True
+
+    def _check_close(self):
+        conn = self.headers.get("connection")
+        if self.version == 11:
+            # An HTTP/1.1 proxy is assumed to stay open unless
+            # explicitly closed.
+            conn = self.headers.get("connection")
+            if conn and "close" in conn.lower():
+                return True
+            return False
+
+        # Some HTTP/1.0 implementations have support for persistent
+        # connections, using rules different than HTTP/1.1.
+
+        # For older HTTP, Keep-Alive indicates persistent connection.
+        if self.headers.get("keep-alive"):
+            return False
+
+        # At least Akamai returns a "Connection: Keep-Alive" header,
+        # which was supposed to be sent by the client.
+        if conn and "keep-alive" in conn.lower():
+            return False
+
+        # Proxy-Connection is a netscape hack.
+        pconn = self.headers.get("proxy-connection")
+        if pconn and "keep-alive" in pconn.lower():
+            return False
+
+        # otherwise, assume it will close
+        return True
+
+    def _close_conn(self):
+        fp = self.fp
+        self.fp = None
+        fp.close()
+
+    def close(self):
+        super().close() # set "closed" flag
+        if self.fp:
+            self._close_conn()
+
+    # These implementations are for the benefit of io.BufferedReader.
+
+    # XXX This class should probably be revised to act more like
+    # the "raw stream" that BufferedReader expects.
+
+    def flush(self):
+        super().flush()
+        if self.fp:
+            self.fp.flush()
+
+    def readable(self):
+        return True
+
+    # End of "raw stream" methods
+
+    def isclosed(self):
+        """True if the connection is closed."""
+        # NOTE: it is possible that we will not ever call self.close(). This
+        #       case occurs when will_close is TRUE, length is None, and we
+        #       read up to the last byte, but NOT past it.
+        #
+        # IMPLIES: if will_close is FALSE, then self.close() will ALWAYS be
+        #          called, meaning self.isclosed() is meaningful.
+        return self.fp is None
+
+    def read(self, amt=None):
+        if self.fp is None:
+            return b""
+
+        if self._method == "HEAD":
+            self._close_conn()
+            return b""
+
+        if amt is not None:
+            # Amount is given, so call base class version
+            # (which is implemented in terms of self.readinto)
+            return super(HTTPResponse, self).read(amt)
+        else:
+            # Amount is not given (unbounded read) so we must check self.length
+            # and self.chunked
+
+            if self.chunked:
+                return self._readall_chunked()
+
+            if self.length is None:
+                s = self.fp.read()
+            else:
+                try:
+                    s = self._safe_read(self.length)
+                except IncompleteRead:
+                    self._close_conn()
+                    raise
+                self.length = 0
+            self._close_conn()        # we read everything
+            return s
+
+    def readinto(self, b):
+        if self.fp is None:
+            return 0
+
+        if self._method == "HEAD":
+            self._close_conn()
+            return 0
+
+        if self.chunked:
+            return self._readinto_chunked(b)
+
+        if self.length is not None:
+            if len(b) > self.length:
+                # clip the read to the "end of response"
+                b = memoryview(b)[0:self.length]
+
+        # we do not use _safe_read() here because this may be a .will_close
+        # connection, and the user is reading more bytes than will be provided
+        # (for example, reading in 1k chunks)
+        n = self.fp.readinto(b)
+        if not n and b:
+            # Ideally, we would raise IncompleteRead if the content-length
+            # wasn't satisfied, but it might break compatibility.
+            self._close_conn()
+        elif self.length is not None:
+            self.length -= n
+            if not self.length:
+                self._close_conn()
+        return n
+
+    def _read_next_chunk_size(self):
+        # Read the next chunk size from the file
+        line = self.fp.readline(_MAXLINE + 1)
+        if len(line) > _MAXLINE:
+            raise LineTooLong("chunk size")
+        i = line.find(b";")
+        if i >= 0:
+            line = line[:i] # strip chunk-extensions
+        try:
+            return int(line, 16)
+        except ValueError:
+            # close the connection as protocol synchronisation is
+            # probably lost
+            self._close_conn()
+            raise
+
+    def _read_and_discard_trailer(self):
+        # read and discard trailer up to the CRLF terminator
+        ### note: we shouldn't have any trailers!
+        while True:
+            line = self.fp.readline(_MAXLINE + 1)
+            if len(line) > _MAXLINE:
+                raise LineTooLong("trailer line")
+            if not line:
+                # a vanishingly small number of sites EOF without
+                # sending the trailer
+                break
+            if line in (b'\r\n', b'\n', b''):
+                break
+
+    def _readall_chunked(self):
+        assert self.chunked != _UNKNOWN
+        chunk_left = self.chunk_left
+        value = []
+        while True:
+            if chunk_left is None:
+                try:
+                    chunk_left = self._read_next_chunk_size()
+                    if chunk_left == 0:
+                        break
+                except ValueError:
+                    raise IncompleteRead(b''.join(value))
+            value.append(self._safe_read(chunk_left))
+
+            # we read the whole chunk, get another
+            self._safe_read(2)      # toss the CRLF at the end of the chunk
+            chunk_left = None
+
+        self._read_and_discard_trailer()
+
+        # we read everything; close the "file"
+        self._close_conn()
+
+        return b''.join(value)
+
+    def _readinto_chunked(self, b):
+        assert self.chunked != _UNKNOWN
+        chunk_left = self.chunk_left
+
+        total_bytes = 0
+        mvb = memoryview(b)
+        while True:
+            if chunk_left is None:
+                try:
+                    chunk_left = self._read_next_chunk_size()
+                    if chunk_left == 0:
+                        break
+                except ValueError:
+                    raise IncompleteRead(bytes(b[0:total_bytes]))
+
+            if len(mvb) < chunk_left:
+                n = self._safe_readinto(mvb)
+                self.chunk_left = chunk_left - n
+                return total_bytes + n
+            elif len(mvb) == chunk_left:
+                n = self._safe_readinto(mvb)
+                self._safe_read(2)  # toss the CRLF at the end of the chunk
+                self.chunk_left = None
+                return total_bytes + n
+            else:
+                temp_mvb = mvb[0:chunk_left]
+                n = self._safe_readinto(temp_mvb)
+                mvb = mvb[n:]
+                total_bytes += n
+
+            # we read the whole chunk, get another
+            self._safe_read(2)      # toss the CRLF at the end of the chunk
+            chunk_left = None
+
+        self._read_and_discard_trailer()
+
+        # we read everything; close the "file"
+        self._close_conn()
+
+        return total_bytes
+
+    def _safe_read(self, amt):
+        """Read the number of bytes requested, compensating for partial reads.
+
+        Normally, we have a blocking socket, but a read() can be interrupted
+        by a signal (resulting in a partial read).
+
+        Note that we cannot distinguish between EOF and an interrupt when zero
+        bytes have been read. IncompleteRead() will be raised in this
+        situation.
+
+        This function should be used when <amt> bytes "should" be present for
+        reading. If the bytes are truly not available (due to EOF), then the
+        IncompleteRead exception can be used to detect the problem.
+        """
+        s = []
+        while amt > 0:
+            chunk = self.fp.read(min(amt, MAXAMOUNT))
+            if not chunk:
+                raise IncompleteRead(b''.join(s), amt)
+            s.append(chunk)
+            amt -= len(chunk)
+        return b"".join(s)
+
+    def _safe_readinto(self, b):
+        """Same as _safe_read, but for reading into a buffer."""
+        total_bytes = 0
+        mvb = memoryview(b)
+        while total_bytes < len(b):
+            if MAXAMOUNT < len(mvb):
+                temp_mvb = mvb[0:MAXAMOUNT]
+                n = self.fp.readinto(temp_mvb)
+            else:
+                n = self.fp.readinto(mvb)
+            if not n:
+                raise IncompleteRead(bytes(mvb[0:total_bytes]), len(b))
+            mvb = mvb[n:]
+            total_bytes += n
+        return total_bytes
+
+    def fileno(self):
+        return self.fp.fileno()
+
+    def getheader(self, name, default=None):
+        if self.headers is None:
+            raise ResponseNotReady()
+        headers = self.headers.get_all(name) or default
+        if isinstance(headers, str) or not hasattr(headers, '__iter__'):
+            return headers
+        else:
+            return ', '.join(headers)
+
+    def getheaders(self):
+        """Return list of (header, value) tuples."""
+        if self.headers is None:
+            raise ResponseNotReady()
+        return list(self.headers.items())
+
+    # We override IOBase.__iter__ so that it doesn't check for closed-ness
+
+    def __iter__(self):
+        return self
+
+    # For compatibility with old-style urllib responses.
+
+    def info(self):
+        return self.headers
+
+    def geturl(self):
+        return self.url
+
+    def getcode(self):
+        return self.status
 
 class HTTPConnection:
 

@@ -31,7 +31,8 @@ def run(start=None):
     sys.modules.get(__name__).__file__)))
 
     if not start:
-        start = os.path.join(top, "base")
+        #start = os.path.join(top, "base")
+        start = top
 
     console.terse("\nRunning ioflo tests starting at '{0}' from '{1}', \n".format(start, top))
     loader = unittest.TestLoader()
