@@ -98,7 +98,7 @@ class Tasker(registering.StoriedRegistrar):
         """Resolves any by name links to other objects   """
         self.resolved = True
 
-    def start(self):
+    def ready(self):
         """ready runner
 
         """
