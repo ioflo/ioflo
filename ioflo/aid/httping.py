@@ -488,7 +488,6 @@ class HttpResponseNb(object):
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
 
-        self.idx = 0  # index of next byte to parse from msg
         self.headers = None
         self.body = b''
         self.data = odict()
@@ -518,30 +517,30 @@ class HttpResponseNb(object):
         Raise errors if line too long or eol  not found
         """
         eol = LF  # tolerant implementation
-        index = self.msg.find(eol, self.idx)
+        index = self.msg.find(eol)
         if index < 0:
-            count = len(self.msg[self.idx:])
+            count = len(self.msg)
             if count > MAX_LINE_SIZE:
                 raise LineTooLong(kind)
             else:
                 raise WaitLine(kind=kind,
                                actual=count,
-                               index=self.idx,)
+                               index=0,)
 
         if index > MAX_LINE_SIZE:
             raise LineTooLong(kind)
 
-        if ((index - self.idx) > 0) and (self.msg[index-1:index+1] == CRLF):
+        if (index > 0) and (self.msg[index-1:index+1] == CRLF):
             eol = CRLF # CRLF actually used
             index -= 1
         if strip:
-            line = self.msg[self.idx:index]
+            line = self.msg[:index]
             index += len(eol)
         else:
             index += len(eol)
-            line = self.msg[self.idx:index]
+            line = self.msg[:index]
 
-        self.idx = index
+        del self.msg[:index]  # remove used bytes
         return line
 
     def parseNextChunkLine(self, strip=True, kind="chunk line"):
@@ -553,27 +552,27 @@ class HttpResponseNb(object):
         Raise errors if line too long or eol  not found
         """
         eol = CRLF
-        index = self.msg.find(eol, self.idx)
+        index = self.msg.find(eol)
         if index < 0:
-            count = len(self.msg[self.idx:])
+            count = len(self.msg)
             if count > MAX_LINE_SIZE:
                 raise LineTooLong(kind)
             else:
                 raise WaitLine(kind=kind,
                                actual=count,
-                               index=self.idx,)
+                               index=0,)
 
         if index > MAX_LINE_SIZE:
             raise LineTooLong(kind)
 
         if strip:
-            line = self.msg[self.idx:index]
+            line = self.msg[:index]
             index += len(eol)
         else:
             index += len(eol)
-            line = self.msg[self.idx:index]
+            line = self.msg[:index]
 
-        self.idx = index
+        del self.msg[:index] # remove used bytes
         return line
 
     def parseNextTextLine(self, strip=True, kind="text line"):
@@ -588,35 +587,34 @@ class HttpResponseNb(object):
         Raise errors if line too long or end of line not found
         """
         eol = LF
-        index = self.msg.find(eol, self.idx) # try to find end of line
+        index = self.msg.find(eol) # try to find end of line
         if index < 0:  # not found LF, try CR
             eol = CR
-            index = self.msg.find(eol, self.idx) # try to find end of line
-        elif index > 0:  # found LF, see if CRLF
-            if ((index - self.idx) > 0) and (self.msg[index-1:index+1] == CRLF):
-                eol = CRLF
-                index -= 1
+            index = self.msg.find(eol) # try to find end of line
+        elif index and (self.msg[index-1:index+1] == CRLF):  # found LF, see if CRLF
+            eol = CRLF
+            index -= 1
 
         if index < 0:
-            count = len(self.msg[self.idx:])
+            count = len(self.msg)
             if count > MAX_LINE_SIZE:
                 raise LineTooLong(kind)
             else:
                 raise WaitLine(kind=kind,
                                actual=count,
-                               index=self.idx,)
+                               index=0,)
 
         if index > MAX_LINE_SIZE:
             raise LineTooLong(kind)
 
         if strip:
-            line = self.msg[self.idx:index]
+            line = self.msg[:index]
             index += len(eol)
         else:
             index += len(eol)
-            line = self.msg[self.idx:index]
+            line = self.msg[:index]
 
-        self.idx = index
+        del self.msg[:index] # remove used bytes
         return line
 
     def parseStatus(self, line):
@@ -825,11 +823,11 @@ class HttpResponseNb(object):
         if size == 0:  # last chunk so parse trailing headers
             trails = self.parseHeaders(kind="trailer header line")
         else:
-            chunk = self.msg[self.idx:self.idx+size]
+            chunk = self.msg[:size]
             actual = len(chunk)
             if actual != size:
-                raise WaitContent(actual=actual, expected=self.idx, index=self.idx)
-            self.idx += actual
+                raise WaitContent(actual=actual, expected=size, index=0)
+            del self.msg[:size]  # remove used bytes
             line = self.parseNextChunkLine(kind="chunk end line")
             if line:  # not empty so raise error
                 raise ValueError("Chunk end error. Expected empty got "
@@ -859,18 +857,21 @@ class HttpResponseNb(object):
                 self.bodied = True
 
         elif self.length != None:  # known content length
-            self.body = self.msg[self.idx:self.idx + self.length]
+            self.body = self.msg[:self.length]
             actual = len(self.body)
             if actual != self.length:
-                raise WaitContent(actual=actual, expected=self.length, index=self.idx)
-            self.idx += actual
+                raise WaitContent(actual=actual, expected=self.length, index=0)
+            del self.msg[:self.length]
             self.bodied = True
 
         elif self.evented:  # unknown length but evented typical for http v1.0
+            self.body = self.msg[:]
+            del self.msg[:len(self.msg)]
             self.bodied = True
 
         else:  # unknown content length so parse until closed
-            self.body = self.msg[self.idx:]
+            self.body = self.msg[:]
+            del self.msg[:len(self.msg)]
             self.bodied = True
 
 
@@ -881,7 +882,6 @@ class HttpResponseNb(object):
         """
         if msg:
             self.msg = msg
-        self.idx = 0
         self.data = odict()
         self.waited = False
 

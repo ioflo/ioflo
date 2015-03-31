@@ -204,6 +204,8 @@ class BasicTestCase(unittest.TestCase):
         response.parse()
         self.assertEqual(response.body, b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
 
+        self.assertEqual(len(beta.rxbs), 0)
+
         #alpha.close()
         beta.close()
 
@@ -296,6 +298,8 @@ class BasicTestCase(unittest.TestCase):
         response.parse()
         self.assertTrue(response.body.startswith(b'retry: 1000\n\n'))
 
+        self.assertEqual(len(beta.rxbs), 0)
+
         #alpha.close()
         beta.close()
 
@@ -337,5 +341,5 @@ if __name__ == '__main__' and __package__ is None:
     #runSome()#only run some
 
     #runOne('testBasic')
-    #runOne('testNonBlockingRequestEcho')
+    runOne('testNonBlockingRequestEcho')
     runOne('testNonBlockingRequestStream')
