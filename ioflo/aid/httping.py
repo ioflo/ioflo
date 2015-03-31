@@ -92,7 +92,9 @@ from ..base import excepting
 from ..base.consoling import getConsole
 console = getConsole()
 
-LINE_END = b"\r\n"
+CRLF = b"\r\n"
+LF = b"\n"
+CR = b"\r"
 MAX_LINE_SIZE = 65536
 MAX_HEADERS = 100
 
@@ -291,10 +293,50 @@ class LineTooLong(HTTPException):
         HTTPException.__init__(self, "got more than %d bytes while parsing %s"
                                      % (MAX_LINE_SIZE, kind))
 
-class LineEndMissing(HTTPException):
-    def __init__(self, count, kind):
-        HTTPException.__init__(self, "line end missing after $s bytes while parsing %s "
-                                     % (count, kind))
+class WaitLine(HTTPException):
+    def __init__(self, kind, actual, index):
+        self.args = (kind, actual, index)
+        self.kind = kind
+        self.actual = actual
+        self.index = index
+
+    def __repr__(self):
+        emsg = ("Waited parsing {0}. Line end still missing after {1} bytes "
+            "past {2}".formate(self.kind, self.actual, self.index))
+        return emsg
+
+    def __str__(self):
+        return repr(self)
+
+class WaitContent(HTTPException):
+    def __init__(self, actual, expected, index):
+        self.args = (actual, expected, index)
+        self.actual = actual
+        self.expected = expected
+        self.index = index
+
+    def __repr__(self):
+        emsg = ("Waited need more bytes. Line end missing after {0} bytes "
+            "past {1} while parsing {2}".formate(self.count, self.index, self.kind))
+        return emsg
+
+    def __str__(self):
+        return repr(self)
+
+class IncompleteRead(HTTPException):
+    def __init__(self, partial, expected=None):
+        self.args = partial,
+        self.partial = partial
+        self.expected = expected
+    def __repr__(self):
+        if self.expected is not None:
+            e = ', %i more expected' % self.expected
+        else:
+            e = ''
+        return 'IncompleteRead(%i bytes read%s)' % (len(self.partial), e)
+    def __str__(self):
+        return repr(self)
+
 
 
 class HttpRequestNb(object):
@@ -386,7 +428,7 @@ class HttpRequestNb(object):
             self.lines.append(self.packHeader(name, value))
 
         self.lines.extend((b"", b""))
-        self.head = LINE_END.join(self.lines)  # b'/r/n'
+        self.head = CRLF.join(self.lines)  # b'/r/n'
 
         self.msg = self.head + self.body
         return self.msg
@@ -436,154 +478,144 @@ class HttpResponseNb(object):
     Nonblocking HTTP Response class
     """
 
-    def __init__(self, msg=b'', method=u'GET', url=u'/'):
+    def __init__(self, msg=None, method=u'GET', url=u'/'):
         """
         Initialize Instance
+        msg must be bytearray
+
         """
-        self.buf = msg or b''  # since bytes are immutable can't copy
+        self.msg = msg or bytearray()
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
 
         self.idx = 0  # index of next byte to parse from msg
-        self.lines = []  # parsed lines
-        self.closed =  False  # Boolean True if closed
-        self.head = b''
-        self.body = b''
-        self.data = odict()
-
         self.headers = None
-        self.msg = None
-
-        # from the Status-Line of the response
-        self.version = _UNKNOWN # HTTP-Version
-        self.status = _UNKNOWN  # Status-Code
-        self.reason = _UNKNOWN  # Reason-Phrase
-
-        self.chunked = _UNKNOWN         # is "chunked" being used?
-        self.chunk_left = _UNKNOWN      # bytes left to read in current chunk
-        self.length = _UNKNOWN          # number of bytes left in response
-        self.will_close = _UNKNOWN      # conn will close at end of response
-
-
-    def close(self):
-        self.closed = True
-
-
-    def parse(self, msg=None):
-        """
-        Parse response message msg if not none otherwise parse .msg
-        Returns self
-        """
-        if msg is None:
-            self.msg = msg
-        self.idx = 0
-
-        self.lines = []
-        self.head = b''
         self.body = b''
         self.data = odict()
+        self.parms = odict()  # chunked encoding extension parameters
+        self.trails = odict()  # chunked encoding trailing headers
 
-        try:
-            self.begin()
-            assert self.will_close != _UNKNOWN
+        self.version = None # HTTP-Version from status line
+        self.status = None  # Status-Code from status line
+        self.reason = None  # Reason-Phrase from status line
 
-            if self.will_close:
-                self.close()
+        self.length = None     # content length of body in response
 
-        except:
-            self.close()
-            raise
+        self.chunked = None    # is transfer encoding "chunked" being used?
+        self.evented = None   # are server sent events being used
+        self.persisted = None   # persist connection until server closes
+        self.headed = None    # head completely parsed
+        self.bodied =  None   # body completely parsed
+        self.ended = None     # response from server has ended no more remaining
 
-        return self
-
-    def begin(self):
-        if self.headers is not None:
-            return  # already parsed the headers
-
-        while True:  # parse until we get a non-100 response
-            line = self.parseNextLine()
-            version, status, reason = self.parseStatus(line)
-            if status != CONTINUE:
-                break
-
-            while True:  # skip remaining headersfollowing 100 status header
-                line = self.parseNextLine()
-                if not line:  # blank line means end of headers
-                    break
-
-        self.code = self.status = status
-        self.reason = reason.strip()
-        if version in ("HTTP/1.0", "HTTP/0.9"):
-            # Some servers might still return "0.9", treat it as 1.0 anyway
-            self.version = 10
-        elif version.startswith("HTTP/1."):
-            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
-        else:
-            raise UnknownProtocol(version)
-
-        self.headers = self.msg = parse_headers(self.fp)
-
-        # are we using the chunked-style of transfer encoding?
-        tr_enc = self.headers.get("transfer-encoding")
-        if tr_enc and tr_enc.lower() == "chunked":
-            self.chunked = True
-            self.chunk_left = None
-        else:
-            self.chunked = False
-
-        # will the connection close at the end of the response?
-        self.will_close = self.checkClose()
-
-        # do we have a Content-Length?
-        # NOTE: RFC 2616, S4.4, #3 says we ignore this if tr_enc is "chunked"
-        self.length = None
-        length = self.headers.get("content-length")
-
-         # are we using the chunked-style of transfer encoding?
-        tr_enc = self.headers.get("transfer-encoding")
-        if length and not self.chunked:
-            try:
-                self.length = int(length)
-            except ValueError:
-                self.length = None
-            else:
-                if self.length < 0:  # ignore nonsensical negative lengths
-                    self.length = None
-        else:
-            self.length = None
-
-        # does the body have a fixed length? (of zero)
-        if (status == NO_CONTENT or status == NOT_MODIFIED or
-            100 <= status < 200 or      # 1xx codes
-            self._method == "HEAD"):
-            self.length = 0
-
-        # if the connection remains open, and we aren't using chunked, and
-        # a content-length was not provided, then assume that the connection
-        # WILL close.
-        if (not self.will_close and
-            not self.chunked and
-            self.length is None):
-            self.will_close = True
-
-    def parseNextLine(self):
+    def parseNextHeaderLine(self, strip=True, kind="header line"):
         """
-        Parse next line from self.buf
-        Raise errors if line too long or LINE_END not found
+        Parse next http line from self.msg up to eol
+        RFC2616 specifies end of line as CRLF but section 19.2 allows for
+        tolerent to support for header also a solitary LF.
+
+        If strip Then strip trailing end of line
+        Raise errors if line too long or eol  not found
         """
-        index = self.buf.find(LINE_END, self.idx)
+        eol = LF  # tolerant implementation
+        index = self.msg.find(eol, self.idx)
         if index < 0:
-            count = len(self.buf[self.idx:])
+            count = len(self.msg[self.idx:])
             if count > MAX_LINE_SIZE:
-                raise LineTooLong("status line")
+                raise LineTooLong(kind)
             else:
-                raise LineEndMissing(count, "status line")
+                raise WaitLine(kind=kind,
+                               actual=count,
+                               index=self.idx,)
 
         if index > MAX_LINE_SIZE:
-            raise LineTooLong("status line")
+            raise LineTooLong(kind)
 
-        index += len(LINE_END)
-        line = self.buf[self.idx:index].rstrip(LINE_END).decode("iso-8859-1")
+        if ((index - self.idx) > 0) and (self.msg[index-1:index+1] == CRLF):
+            eol = CRLF # CRLF actually used
+            index -= 1
+        if strip:
+            line = self.msg[self.idx:index]
+            index += len(eol)
+        else:
+            index += len(eol)
+            line = self.msg[self.idx:index]
+
+        self.idx = index
+        return line
+
+    def parseNextChunkLine(self, strip=True, kind="chunk line"):
+        """
+        Parse next http line from self.msg up to eol
+        end of line is CRLF
+
+        If strip Then strip trailing end of line
+        Raise errors if line too long or eol  not found
+        """
+        eol = CRLF
+        index = self.msg.find(eol, self.idx)
+        if index < 0:
+            count = len(self.msg[self.idx:])
+            if count > MAX_LINE_SIZE:
+                raise LineTooLong(kind)
+            else:
+                raise WaitLine(kind=kind,
+                               actual=count,
+                               index=self.idx,)
+
+        if index > MAX_LINE_SIZE:
+            raise LineTooLong(kind)
+
+        if strip:
+            line = self.msg[self.idx:index]
+            index += len(eol)
+        else:
+            index += len(eol)
+            line = self.msg[self.idx:index]
+
+        self.idx = index
+        return line
+
+    def parseNextTextLine(self, strip=True, kind="text line"):
+        """
+        Parse next media text line from self.msg
+        This also applies to event lines for server sent events
+        RFC 2616 3.7.1 specifies text media end of line as one of (CRLF, CR, LF)
+        Also SSE spec http://www.w3.org/TR/eventsource/ section 6 specifies
+        end-of-line as one of (CRLF, CR, LF)
+
+        If strip Then strip trailing end of line
+        Raise errors if line too long or end of line not found
+        """
+        eol = LF
+        index = self.msg.find(eol, self.idx) # try to find end of line
+        if index < 0:  # not found LF, try CR
+            eol = CR
+            index = self.msg.find(eol, self.idx) # try to find end of line
+        elif index > 0:  # found LF, see if CRLF
+            if ((index - self.idx) > 0) and (self.msg[index-1:index+1] == CRLF):
+                eol = CRLF
+                index -= 1
+
+        if index < 0:
+            count = len(self.msg[self.idx:])
+            if count > MAX_LINE_SIZE:
+                raise LineTooLong(kind)
+            else:
+                raise WaitLine(kind=kind,
+                               actual=count,
+                               index=self.idx,)
+
+        if index > MAX_LINE_SIZE:
+            raise LineTooLong(kind)
+
+        if strip:
+            line = self.msg[self.idx:index]
+            index += len(eol)
+        else:
+            index += len(eol)
+            line = self.msg[self.idx:index]
+
         self.idx = index
         return line
 
@@ -591,6 +623,7 @@ class HttpResponseNb(object):
         """
         Parse the status line from the response
         """
+        line = line.decode("iso-8859-1")
         if not line:
             # Presumably, the server closed the connection before
             # sending a valid response.
@@ -616,9 +649,9 @@ class HttpResponseNb(object):
             raise BadStatusLine(line)
         return (version, status, reason)
 
-    def parseHeaders(self):
+    def parseHeaders(self, kind="leader header line"):
         """
-        Parses only RFC2822 headers until blank line
+        Parses only RFC2822 headers until blank line and sets .headers
 
         email Parser wants to see strings rather than bytes.
         But a TextIOWrapper around self.rfile would buffer too many bytes
@@ -629,45 +662,245 @@ class HttpResponseNb(object):
         """
         headers = []
         while True:
-            line = parseNextLine()
+            line = self.parseNextHeaderLine(strip=False, kind=kind)  # line is str not bytes
             headers.append(line)
             if len(headers) > MAX_HEADERS:
                 raise HTTPException("got more than %d headers" % MAX_HEADERS)
-            if not line or line in (b'\n'):  # blank line
+            if not line or line in (b'\r\n', b'\n'):  # blank line
                 break
         hstring = b''.join(headers).decode('iso-8859-1')
-        return HeaderParser().parsestr(hstring)
+        headers = HeaderParser().parsestr(hstring)
+        return headers
 
-    def checkClose(self):
-        conn = self.headers.get("connection")
-        if self.version == 11:
+    def checkPersisted(self):
+        """
+        Checks headers to determine if connection should be kept open until
+        server closes it
+        Sets the .persisted flag
+        """
+        connection = self.headers.get("connection")  # check connection header
+        if self.version == 11:  # rules for http v1.1
+            self.persisted = True  # connections default to persisted
             # An HTTP/1.1 proxy is assumed to stay open unless
             # explicitly closed.
-            conn = self.headers.get("connection")
-            if conn and "close" in conn.lower():
-                return True
-            return False
+            connection = self.headers.get("connection")
+            if connection and "close" in connection.lower():
+                self.persisted = False
 
-        # Some HTTP/1.0 implementations have support for persistent
-        # connections, using rules different than HTTP/1.1.
+            # non-chunked but persistent connections should have non None for
+            # content-length Otherwise assume not persisted
+            elif (not self.chunked and self.length is None):
+                self.persisted = False
 
-        # For older HTTP, Keep-Alive indicates persistent connection.
-        if self.headers.get("keep-alive"):
-            return False
+        elif self.version == 10:
+            self.persisted = False  # connections default to non-persisted
+            # Some HTTP/1.0 implementations have support for persistent
+            # connections, using rules different than HTTP/1.1.
 
-        # At least Akamai returns a "Connection: Keep-Alive" header,
-        # which was supposed to be sent by the client.
-        if conn and "keep-alive" in conn.lower():
-            return False
+            if self.evented:  # server sent events
+                self.persisted = True
 
-        # Proxy-Connection is a netscape hack.
-        pconn = self.headers.get("proxy-connection")
-        if pconn and "keep-alive" in pconn.lower():
-            return False
+            # For older HTTP, Keep-Alive indicates persistent connection.
+            elif self.headers.get("keep-alive"):
+                self.persisted = True
 
-        # otherwise, assume it will close
-        return True
+            # At least Akamai returns a "Connection: Keep-Alive" header,
+            # which was supposed to be sent by the client.
+            elif connection and "keep-alive" in connection.lower():
+                self.persisted = True
 
+            else:  # Proxy-Connection is a netscape hack.
+                proxy = self.headers.get("proxy-connection")
+                if proxy and "keep-alive" in proxy.lower():
+                    self.persisted = True
+
+    def parseHead(self):
+        if self.headed:
+            return  # already parsed the head
+
+        while True:  # parse until we get a non-100 response
+            line = self.parseNextHeaderLine(kind="status line")
+            version, status, reason = self.parseStatus(line)
+            if status != CONTINUE:  # 100 continue (with request or ignore)
+                break
+
+            while True:  # skip remaining headersfollowing 100 status header
+                line = self.parseNextHeaderLine(kind="header line")
+                if not line:  # blank line means end of headers
+                    break
+
+        self.code = self.status = status
+        self.reason = reason.strip()
+        if version in ("HTTP/1.0", "HTTP/0.9"):
+            # Some servers might still return "0.9", treat it as 1.0 anyway
+            self.version = 10
+        elif version.startswith("HTTP/1."):
+            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
+        else:
+            raise UnknownProtocol(version)
+
+        self.headers = self.parseHeaders()  # sets .headers
+
+        # are we using the chunked-style of transfer encoding?
+        transferEncoding = self.headers.get("transfer-encoding")
+        if transferEncoding and transferEncoding.lower() == "chunked":
+            self.chunked = True
+        else:
+            self.chunked = False
+
+        # NOTE: RFC 2616, S4.4, #3 says ignore if transfer-encoding is "chunked"
+        contentLength = self.headers.get("content-length")
+        if contentLength and not self.chunked:
+            try:
+                self.length = int(contentLength)
+            except ValueError:
+                self.length = None
+            else:
+                if self.length < 0:  # ignore nonsensical negative lengths
+                    self.length = None
+        else:
+            self.length = None
+
+        # does the body have a fixed length? (of zero)
+        if ((self.status == NO_CONTENT or self.status == NOT_MODIFIED) or
+                (100 <= self.status < 200) or      # 1xx codes
+                (self.method == "HEAD")):
+            self.length = 0
+
+        contentType = self.headers.get("content-type")
+        if contentType and contentType.lower() == 'text/event-stream':
+            self.evented = True
+        else:
+            self.evented = False
+
+        # Should connection be kept open until server closes
+        self.checkPersisted()  # sets .persisted
+
+        self.headed = True
+
+    def parseNextChunk(self):  # reading transfer encoded
+        """
+        Parses next chunk
+
+        Chunked-Body   = *chunk
+                    last-chunk
+                    trailer
+                    CRLF
+        chunk          = chunk-size [ chunk-extension ] CRLF
+                         chunk-data CRLF
+        chunk-size     = 1*HEX
+        last-chunk     = 1*("0") [ chunk-extension ] CRLF
+        chunk-extension= *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
+        chunk-ext-name = token
+        chunk-ext-val  = token | quoted-string
+        chunk-data     = chunk-size(OCTET)
+        trailer        = *(entity-header CRLF)
+
+
+        Returns tuple (size, parms, trails, chunk) Where:
+            size is int size of following chunk
+            parms is dict of chunk extension parameters
+            trails is dict of chunk trailer headers (only on last chunk if any)
+            chunk is following chunk if any or empty if not
+        """
+        size = 0
+        parms = odict()
+        trails = odict()
+        chunk = b''
+
+        line = self.parseNextChunkLine(kind="chunk size line")
+        size, sep, exts = line.partition(b';')
+        try:
+            size = int(size.strip(), 16)
+        except ValueError:  # bad size
+            raise
+
+        if exts:  # parse extensions parameters
+            exts = exts.split(b';')
+            for ext in exts:
+                ext = ext.strip()
+                name, sep, value = ext.partition(b'=')
+                parms[name.strip()] = value.strip() or None
+
+        if size == 0:  # last chunk so parse trailing headers
+            trails = self.parseHeaders(kind="trailer header line")
+        else:
+            chunk = self.msg[self.idx:self.idx+size]
+            actual = len(chunk)
+            if actual != size:
+                raise WaitContent(actual=actual, expected=self.idx, index=self.idx)
+            self.idx += actual
+            line = self.parseNextChunkLine(kind="chunk end line")
+            if line:  # not empty so raise error
+                raise ValueError("Chunk end error. Expected empty got "
+                         "'{0}' instead".format(line.decode('iso-8859-1')))
+
+        return (size, parms, trails, chunk)
+
+    def parseBody(self):
+        """
+        Parse body with fixed content length
+        """
+        if self.bodied:
+            return  # already parsed the body
+
+        if self.length and self.length < 0:
+            raise ValueError("Invalid content length of {0}".format(self.length))
+
+        if self.chunked:  # chunked takes precedence over length
+            size, parms, trails, chunk = self.parseNextChunk()
+            if parms:  # chunk extension parms
+                self.parms.update(parms)
+            if size:  # append chunk but keep iterating
+                self.body += chunk
+            else:  # last chunk so done
+                if trails:
+                    self.trails = trails
+                self.bodied = True
+
+        elif self.length != None:  # known content length
+            self.body = self.msg[self.idx:self.idx + self.length]
+            actual = len(self.body)
+            if actual != self.length:
+                raise WaitContent(actual=actual, expected=self.length, index=self.idx)
+            self.idx += actual
+            self.bodied = True
+
+        elif self.evented:  # unknown length but evented typical for http v1.0
+            self.bodied = True
+
+        else:  # unknown content length so parse until closed
+            self.body = self.msg[self.idx:]
+            self.bodied = True
+
+
+    def parse(self, msg=None):
+        """
+        Parse response message msg if not none otherwise parse .msg
+        Returns self
+        """
+        if msg:
+            self.msg = msg
+        self.idx = 0
+        self.data = odict()
+        self.waited = False
+
+        try:
+            self.parseHead()
+        except WaitLine as ex:
+            self.waited = True
+            return self
+
+        self.body = b''
+        while not self.bodied:
+            try:
+                self.parseBody()
+            except (WaitLine, WaitContent) as ex:
+                self.waited = True
+                return self
+
+        self.ended = True
+        return self
 
 
 class HTTPResponse(io.RawIOBase):

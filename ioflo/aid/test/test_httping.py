@@ -102,13 +102,26 @@ class BasicTestCase(unittest.TestCase):
         console.terse(response.reason+ "\n")
         console.terse(str(response.read()) + "\n")
 
+        #console.terse("{0}\n".format("SSE stream ...\n"))
+        #body = b''
+        #headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
+        #hc.request(method='GET', url='/stream', body=body, headers=headers )
+        #response = hc.getresponse()
+        #console.terse(str(response.fileno()) + "\n") # must call this before read
+        #console.terse(str(response.getheaders()) + "\n")
+        #console.terse(str(response.msg)  + "\n")
+        #console.terse(str(response.version) + "\n")
+        #console.terse(str(response.status) + "\n")
+        #console.terse(response.reason+ "\n")
+        #console.terse(str(response.read()) + "\n")
+
         hc.close()
 
-    def testNonBlockingRequest(self):
+    def testNonBlockingRequestEcho(self):
         """
         Test NonBlocking Http client
         """
-        console.terse("{0}\n".format(self.testBasic.__doc__))
+        console.terse("{0}\n".format(self.testNonBlockingRequestEcho.__doc__))
 
         console.reinit(verbosity=console.Wordage.profuse)
 
@@ -154,12 +167,12 @@ class BasicTestCase(unittest.TestCase):
         url = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        req =  httping.HttpRequestNb(host=host,
+        request =  httping.HttpRequestNb(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
                                      headers=headers)
-        msgOut = req.build()
+        msgOut = request.build()
         lines = [
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:8080',
@@ -170,26 +183,125 @@ class BasicTestCase(unittest.TestCase):
                    b'',
                 ]
         for i, line in enumerate(lines):
-            self.assertEqual(line, req.lines[i])
+            self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(req.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
         beta.transmit(msgOut)
-        msgIn = b''
-        while beta.txes or not msgIn:
+        while beta.txes or not beta.rxbs:
             beta.serviceTxes()
-            beta.serviceReceives()
-            msgIn += beta.catRxes()
+            beta.serviceAllRx()
             time.sleep(0.05)
+        beta.serviceAllRx()
 
+        msgIn, index = beta.tailRxbs(0)
         self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
+
+        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
+        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
+
+        response.parse()
+        self.assertEqual(response.body, b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
 
         #alpha.close()
         beta.close()
 
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
+
+    def testNonBlockingRequestStream(self):
+        """
+        Test NonBlocking Http client
+        """
+        console.terse("{0}\n".format(self.testNonBlockingRequestStream.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogBeta = nonblocking.WireLog(buffify=True)
+        result = wireLogBeta.reopen()
+
+        #alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
+        #self.assertIs(alpha.reopen(), True)
+        #self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+
+        eha = ('127.0.0.1', 8080)
+        beta = nonblocking.Outgoer(ha=eha, bufsize=131072)
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to server ...\n")
+        while True:
+            beta.serviceConnect()
+            #alpha.serviceAccepts()
+            if beta.connected:  # and beta.ca in alpha.ixes
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(eha, beta.ha)
+
+        #ixBeta = alpha.ixes[beta.ca]
+        #self.assertIsNotNone(ixBeta.ca)
+        #self.assertIsNotNone(ixBeta.cs)
+        #self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        #self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        #self.assertEqual(ixBeta.ca, beta.ca)
+        #self.assertEqual(ixBeta.ha, beta.ha)
+
+        console.terse("{0}\n".format("Building Request ...\n"))
+        host = u'127.0.0.1'
+        port = 8080
+        method = u'GET'
+        url = u'/stream'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        headers = odict([('Accept', 'application/json')])
+        request =  httping.HttpRequestNb(host=host,
+                                     port=port,
+                                     method=method,
+                                     url=url,
+                                     headers=headers)
+        msgOut = request.build()
+        lines = [
+                   b'GET /stream HTTP/1.1',
+                   b'Host: 127.0.0.1:8080',
+                   b'Accept-Encoding: identity',
+                   b'Content-Length: 0',
+                   b'Accept: application/json',
+                   b'',
+                   b'',
+                ]
+        for i, line in enumerate(lines):
+            self.assertEqual(line, request.lines[i])
+
+        self.assertEqual(request.head, b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, request.head)
+
+        beta.transmit(msgOut)
+        while beta.txes or not beta.rxbs:
+            beta.serviceTxes()
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        beta.serviceAllRx()
+
+        msgIn, index = beta.tailRxbs(0)
+        #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
+
+        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
+        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
+        response.parse()
+        self.assertTrue(response.body.startswith(b'retry: 1000\n\n'))
+
+        #alpha.close()
+        beta.close()
+
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
 
 
 def runOne(test):
@@ -204,7 +316,8 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = ['testBasic',
-             'testNonBlockingRequest', ]
+             'testNonBlockingRequestEcho',
+             'testNonBlockingRequestStream', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -221,7 +334,8 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
     #runOne('testBasic')
-
+    #runOne('testNonBlockingRequestEcho')
+    runOne('testNonBlockingRequestStream')
