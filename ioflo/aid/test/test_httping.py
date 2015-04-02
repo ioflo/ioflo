@@ -201,7 +201,14 @@ class BasicTestCase(unittest.TestCase):
         #response = httping.HttpResponseNb(msgIn, method=method, url=url)
         response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
 
-        response.parse()
+        responseParser = response.parse()  # make generator
+        while True:
+            result = next(responseParser)
+            if result is None:
+                continue
+            responseParser.close()
+            break
+
         self.assertEqual(response.body, b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
 
         self.assertEqual(len(beta.rxbs), 0)
@@ -342,4 +349,4 @@ if __name__ == '__main__' and __package__ is None:
 
     #runOne('testBasic')
     runOne('testNonBlockingRequestEcho')
-    runOne('testNonBlockingRequestStream')
+    #runOne('testNonBlockingRequestStream')

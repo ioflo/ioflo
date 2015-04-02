@@ -488,11 +488,12 @@ class HttpResponseNb(object):
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
 
+        self.lines = deque()  # deque of lines header or chunk as applicable
         self.headers = None
-        self.body = b''
-        self.data = odict()
+        self.body = None
+        self.data = None
         self.parms = odict()  # chunked encoding extension parameters
-        self.trails = odict()  # chunked encoding trailing headers
+        self.trails = None  # chunked encoding trailing headers
 
         self.version = None # HTTP-Version from status line
         self.status = None  # Status-Code from status line
@@ -507,6 +508,7 @@ class HttpResponseNb(object):
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
 
+
     def parseNextHeaderLine(self, strip=True, kind="header line"):
         """
         Parse next http line from self.msg up to eol
@@ -518,6 +520,11 @@ class HttpResponseNb(object):
         """
         eol = LF  # tolerant implementation
         index = self.msg.find(eol)
+
+        if (index > 0) and (self.msg[index-1:index+1] == CRLF):
+            eol = CRLF # CRLF actually used
+            index -= 1
+
         if index < 0:
             count = len(self.msg)
             if count > MAX_LINE_SIZE:
@@ -530,9 +537,6 @@ class HttpResponseNb(object):
         if index > MAX_LINE_SIZE:
             raise LineTooLong(kind)
 
-        if (index > 0) and (self.msg[index-1:index+1] == CRLF):
-            eol = CRLF # CRLF actually used
-            index -= 1
         if strip:
             line = self.msg[:index]
             index += len(eol)
@@ -553,6 +557,7 @@ class HttpResponseNb(object):
         """
         eol = CRLF
         index = self.msg.find(eol)
+
         if index < 0:
             count = len(self.msg)
             if count > MAX_LINE_SIZE:
@@ -647,28 +652,6 @@ class HttpResponseNb(object):
             raise BadStatusLine(line)
         return (version, status, reason)
 
-    def parseHeaders(self, kind="leader header line"):
-        """
-        Parses only RFC2822 headers until blank line and sets .headers
-
-        email Parser wants to see strings rather than bytes.
-        But a TextIOWrapper around self.rfile would buffer too many bytes
-        from the stream, bytes which we later need to read as bytes.
-        So we read the correct bytes here, as bytes, for email Parser
-        to parse.
-
-        """
-        headers = []
-        while True:
-            line = self.parseNextHeaderLine(strip=False, kind=kind)  # line is str not bytes
-            headers.append(line)
-            if len(headers) > MAX_HEADERS:
-                raise HTTPException("got more than %d headers" % MAX_HEADERS)
-            if not line or line in (b'\r\n', b'\n'):  # blank line
-                break
-        hstring = b''.join(headers).decode('iso-8859-1')
-        headers = HeaderParser().parsestr(hstring)
-        return headers
 
     def checkPersisted(self):
         """
@@ -711,70 +694,6 @@ class HttpResponseNb(object):
                 proxy = self.headers.get("proxy-connection")
                 if proxy and "keep-alive" in proxy.lower():
                     self.persisted = True
-
-    def parseHead(self):
-        if self.headed:
-            return  # already parsed the head
-
-        while True:  # parse until we get a non-100 response
-            line = self.parseNextHeaderLine(kind="status line")
-            version, status, reason = self.parseStatus(line)
-            if status != CONTINUE:  # 100 continue (with request or ignore)
-                break
-
-            while True:  # skip remaining headersfollowing 100 status header
-                line = self.parseNextHeaderLine(kind="header line")
-                if not line:  # blank line means end of headers
-                    break
-
-        self.code = self.status = status
-        self.reason = reason.strip()
-        if version in ("HTTP/1.0", "HTTP/0.9"):
-            # Some servers might still return "0.9", treat it as 1.0 anyway
-            self.version = 10
-        elif version.startswith("HTTP/1."):
-            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
-        else:
-            raise UnknownProtocol(version)
-
-        self.headers = self.parseHeaders()  # sets .headers
-
-        # are we using the chunked-style of transfer encoding?
-        transferEncoding = self.headers.get("transfer-encoding")
-        if transferEncoding and transferEncoding.lower() == "chunked":
-            self.chunked = True
-        else:
-            self.chunked = False
-
-        # NOTE: RFC 2616, S4.4, #3 says ignore if transfer-encoding is "chunked"
-        contentLength = self.headers.get("content-length")
-        if contentLength and not self.chunked:
-            try:
-                self.length = int(contentLength)
-            except ValueError:
-                self.length = None
-            else:
-                if self.length < 0:  # ignore nonsensical negative lengths
-                    self.length = None
-        else:
-            self.length = None
-
-        # does the body have a fixed length? (of zero)
-        if ((self.status == NO_CONTENT or self.status == NOT_MODIFIED) or
-                (100 <= self.status < 200) or      # 1xx codes
-                (self.method == "HEAD")):
-            self.length = 0
-
-        contentType = self.headers.get("content-type")
-        if contentType and contentType.lower() == 'text/event-stream':
-            self.evented = True
-        else:
-            self.evented = False
-
-        # Should connection be kept open until server closes
-        self.checkPersisted()  # sets .persisted
-
-        self.headed = True
 
     def parseNextChunk(self):  # reading transfer encoded
         """
@@ -835,9 +754,177 @@ class HttpResponseNb(object):
 
         return (size, parms, trails, chunk)
 
+
+    def parseLine(self, eols=(CRLF, ), kind="header line"):
+        """
+        Generator to parse  http line from self.msg
+        Each line demarcated by one of eols
+        Yields None If waiting for more to parse
+        Yields line Otherwise
+
+        Raise error if eol not found before  MAX_LINE_SIZE
+        """
+        while True:  # loop until entire heading indicated by empty line
+            for eol in eols:  # loop over eols unless found
+                index = self.msg.find(eol)  # not found index == -1
+                if index >= 0:
+                    break
+
+            if index < 0:  # not found
+                if len(self.msg) > MAX_LINE_SIZE:
+                    raise LineTooLong(kind)
+                else:
+                    (yield None)  # more data needed not done parsing header
+
+            if index > MAX_LINE_SIZE:  # found but line too long
+                raise LineTooLong(kind)
+
+            line = self.msg[:index]
+            index += len(eol)  # strip eol
+            del self.msg[:index] # remove used bytes
+            self.lines.append(line)
+            (yield line)
+        return
+
+    def parseLeader(self, eols=(CRLF, LF), kind="leader header line"):
+        """
+        Generator to parse entire leader of header lines from self.msg
+        Each line demarcated by one of eols
+        Yields None If more to parse
+        Yields lines Otherwise as indicated by empty line
+
+        Raise error if eol not found before  MAX_LINE_SIZE
+        """
+        lines = []
+        while True:  # loop until entire heading indicated by empty line
+            for eol in eols:  # loop over eols unless found
+                index = self.msg.find(eol)  # not found index == -1
+                if index >= 0:
+                    break
+
+            if index < 0:  # not found
+                if len(self.msg) > MAX_LINE_SIZE:
+                    raise LineTooLong(kind)
+                else:
+                    yield None  # more data needed not done parsing header
+
+            if index > MAX_LINE_SIZE:  # found but line too long
+                raise LineTooLong(kind)
+
+            line = self.msg[:index]
+            index += len(eol)  # strip eol
+            del self.msg[:index] # remove used bytes
+            lines.append(line)
+
+            if len(lines) > MAX_HEADERS:
+                raise HTTPException("got more than {0} headers".format(MAX_HEADERS))
+
+            if not line:  # empty line so entire heading done
+                yield lines # heading done
+
+        return
+
+    def parseHead(self):
+        """
+        Generator to parse headers in heading of .msg
+        Yields None if more to parse
+        Yields True if done parsing
+        """
+        if self.headed:
+            return  # already parsed the head
+
+        # create generator
+        lineParser = self.parseLine(eols=(CRLF, LF), kind="status line")
+        while True:  # parse until we get a non-100 status
+            line = next(lineParser)
+            if line is None:
+                (yield None)
+                continue
+            lineParser.close()  # close generator
+
+            version, status, reason = self.parseStatus(line)
+            if status != CONTINUE:  # 100 continue (with request or ignore)
+                break
+
+            lineParser = self.parseLine(eols=(CRLF, LF), kind="continue header line")
+            while True:  # skip remaining headersfollowing 100 status header
+                line = next(lineParser)
+                if line is None:
+                    (yield None)
+                    continue
+                if not line:  # blank line means end of headers
+                    lineParser.close()
+                    break
+
+        self.code = self.status = status
+        self.reason = reason.strip()
+        if version in ("HTTP/1.0", "HTTP/0.9"):
+            # Some servers might still return "0.9", treat it as 1.0 anyway
+            self.version = 10
+        elif version.startswith("HTTP/1."):
+            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
+        else:
+            raise UnknownProtocol(version)
+
+        leaderParser = self.parseLeader(eols=(CRLF, LF), kind="leader header line")
+        while True:
+            lines = next(leaderParser)
+            if lines is None:
+                (yield None)
+                continue
+            leaderParser.close()
+            break
+
+        self.headers = odict()
+        if lines:
+            #email Parser wants to see strings rather than bytes.
+            #So convert bytes to string
+            lines.extend((b'', b''))  # add blank line for HeaderParser
+            hstring = CRLF.join(lines).decode('iso-8859-1')
+            self.headers = HeaderParser().parsestr(hstring)
+
+        # are we using the chunked-style of transfer encoding?
+        transferEncoding = self.headers.get("transfer-encoding")
+        if transferEncoding and transferEncoding.lower() == "chunked":
+            self.chunked = True
+        else:
+            self.chunked = False
+
+        # NOTE: RFC 2616, S4.4, #3 says ignore if transfer-encoding is "chunked"
+        contentLength = self.headers.get("content-length")
+        if contentLength and not self.chunked:
+            try:
+                self.length = int(contentLength)
+            except ValueError:
+                self.length = None
+            else:
+                if self.length < 0:  # ignore nonsensical negative lengths
+                    self.length = None
+        else:
+            self.length = None
+
+        # does the body have a fixed length? (of zero)
+        if ((self.status == NO_CONTENT or self.status == NOT_MODIFIED) or
+                (100 <= self.status < 200) or      # 1xx codes
+                (self.method == "HEAD")):
+            self.length = 0
+
+        contentType = self.headers.get("content-type")
+        if contentType and contentType.lower() == 'text/event-stream':
+            self.evented = True
+        else:
+            self.evented = False
+
+        # Should connection be kept open until server closes
+        self.checkPersisted()  # sets .persisted
+
+        self.headed = True
+        yield True
+        return
+
     def parseBody(self):
         """
-        Parse body with fixed content length
+        Parse body
         """
         if self.bodied:
             return  # already parsed the body
@@ -874,24 +961,30 @@ class HttpResponseNb(object):
             del self.msg[:len(self.msg)]
             self.bodied = True
 
-
     def parse(self, msg=None):
         """
-        Parse response message msg if not none otherwise parse .msg
-        Returns self
+        Generator to parse response bytearray.
+        Parses msg if not None
+        Otherwise parse .msg
+
         """
         if msg:
             self.msg = msg
-        self.data = odict()
-        self.waited = False
 
-        try:
-            self.parseHead()
-        except WaitLine as ex:
-            self.waited = True
-            return self
+        self.headed = False
+        self.bodied = False
+        self.ended = False
 
-        self.body = b''
+        headParser = self.parseHead()
+        while True:
+            result = next(headParser)
+            if not result:
+                (yield None)
+                continue
+            headParser.close()
+            break
+
+        self.body = bytearray()
         while not self.bodied:
             try:
                 self.parseBody()
@@ -902,32 +995,3 @@ class HttpResponseNb(object):
         self.ended = True
         return self
 
-
-def counter(end=4):
-    count = 0
-    while count <= end:
-        print("counter")
-        (yield count)
-        count += 1
-
-
-def able(gen):
-    data = None
-    while True:
-        print("able")
-        try:
-            data = gen.send(None)
-        except StopIteration:
-            return
-        (yield data)
-
-def baker(gen):
-    while True:
-        print("baker")
-        (yield gen.send(None))
-
-def gamma(count):
-    gen = counter(count)
-    while True:
-        print("gamma")
-        (yield gen.send(None))
