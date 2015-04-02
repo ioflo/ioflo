@@ -492,8 +492,10 @@ class HttpResponseNb(object):
 
         self.headers = None
         self.body = None
+        self.chunks = None
+        self.events = None
         self.data = None
-        self.parms = odict()  # chunked encoding extension parameters
+        self.parms = None  # chunked encoding extension parameters
         self.trails = None  # chunked encoding trailing headers
 
         self.version = None # HTTP-Version from status line
@@ -698,66 +700,6 @@ class HttpResponseNb(object):
                 if proxy and "keep-alive" in proxy.lower():
                     self.persisted = True
 
-    def parseNextChunk(self):  # reading transfer encoded
-        """
-        Parses next chunk
-
-        Chunked-Body   = *chunk
-                    last-chunk
-                    trailer
-                    CRLF
-        chunk          = chunk-size [ chunk-extension ] CRLF
-                         chunk-data CRLF
-        chunk-size     = 1*HEX
-        last-chunk     = 1*("0") [ chunk-extension ] CRLF
-        chunk-extension= *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
-        chunk-ext-name = token
-        chunk-ext-val  = token | quoted-string
-        chunk-data     = chunk-size(OCTET)
-        trailer        = *(entity-header CRLF)
-
-
-        Returns tuple (size, parms, trails, chunk) Where:
-            size is int size of following chunk
-            parms is dict of chunk extension parameters
-            trails is dict of chunk trailer headers (only on last chunk if any)
-            chunk is following chunk if any or empty if not
-        """
-        size = 0
-        parms = odict()
-        trails = odict()
-        chunk = b''
-
-        line = self.parseNextChunkLine(kind="chunk size line")
-        size, sep, exts = line.partition(b';')
-        try:
-            size = int(size.strip(), 16)
-        except ValueError:  # bad size
-            raise
-
-        if exts:  # parse extensions parameters
-            exts = exts.split(b';')
-            for ext in exts:
-                ext = ext.strip()
-                name, sep, value = ext.partition(b'=')
-                parms[name.strip()] = value.strip() or None
-
-        if size == 0:  # last chunk so parse trailing headers
-            trails = self.parseHeaders(kind="trailer header line")
-        else:
-            chunk = self.msg[:size]
-            actual = len(chunk)
-            if actual != size:
-                raise WaitContent(actual=actual, expected=size, index=0)
-            del self.msg[:size]  # remove used bytes
-            line = self.parseNextChunkLine(kind="chunk end line")
-            if line:  # not empty so raise error
-                raise ValueError("Chunk end error. Expected empty got "
-                         "'{0}' instead".format(line.decode('iso-8859-1')))
-
-        return (size, parms, trails, chunk)
-
-
     def parseLine(self, eols=(CRLF, ), kind="header line"):
         """
         Generator to parse  http line from self.msg
@@ -924,6 +866,83 @@ class HttpResponseNb(object):
         yield True
         return
 
+    def parseChunk(self):  # reading transfer encoded
+        """
+        Generator to parse next chunk
+        Yields None If waiting for more bytes
+        Yields tuple (size, parms, trails, chunk) Otherwise
+        Where:
+            size is int size of the chunk
+            parms is dict of chunk extension parameters
+            trails is dict of chunk trailer headers (only on last chunk if any)
+            chunk is chunk if any or empty if not
+
+        Chunked-Body   = *chunk
+                    last-chunk
+                    trailer
+                    CRLF
+        chunk          = chunk-size [ chunk-extension ] CRLF
+                         chunk-data CRLF
+        chunk-size     = 1*HEX
+        last-chunk     = 1*("0") [ chunk-extension ] CRLF
+        chunk-extension= *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
+        chunk-ext-name = token
+        chunk-ext-val  = token | quoted-string
+        chunk-data     = chunk-size(OCTET)
+        trailer        = *(entity-header CRLF)
+
+
+
+        """
+        size = 0
+        parms = odict()
+        trails = odict()
+        chunk = bytearray()
+
+        lineParser = self.parseLine(eols=(CRLF), kind="chunk size line")
+        while True:
+            line = next(lineParser)
+            if line is None:
+                (yield None)
+                continue
+            lineParser.close()  # close generator
+
+        size, sep, exts = line.partition(b';')
+        try:
+            size = int(size.strip(), 16)
+        except ValueError:  # bad size
+            raise
+
+        if exts:  # parse extensions parameters
+            exts = exts.split(b';')
+            for ext in exts:
+                ext = ext.strip()
+                name, sep, value = ext.partition(b'=')
+                parms[name.strip()] = value.strip() or None
+
+        if size == 0:  # last chunk so parse trailing headers
+            trails = self.parseHeaders(kind="trailer header line")
+        else:
+            while len(self.msg) < size:  # need more for chunk
+                (yield None)
+            chunk = self.msg[:size]
+            del self.msg[:size]  # remove used bytes
+
+            lineParser = self.parseLine(eols=(CRLF), kind="chunk end line")
+            while True:
+                line = next(lineParser)
+                if line is None:
+                    (yield None)
+                    continue
+                lineParser.close()  # close generator
+
+            if line:  # not empty so raise error
+                raise ValueError("Chunk end error. Expected empty got "
+                         "'{0}' instead".format(line.decode('iso-8859-1')))
+
+        (yield (size, parms, trails, chunk))
+        return
+
     def parseBody(self):
         """
         Parse body
@@ -934,34 +953,61 @@ class HttpResponseNb(object):
         if self.length and self.length < 0:
             raise ValueError("Invalid content length of {0}".format(self.length))
 
+        self.body = bytearray()
+        self.chunks = None
+        self.events = None
+
         if self.chunked:  # chunked takes precedence over length
-            size, parms, trails, chunk = self.parseNextChunk()
-            if parms:  # chunk extension parms
-                self.parms.update(parms)
-            if size:  # append chunk but keep iterating
-                self.body += chunk
-            else:  # last chunk so done
-                if trails:
-                    self.trails = trails
-                self.bodied = True
+            self.chunks = deque()
+            self.parms = odict()
+            chunkParser = self.parseChunk()
+            while True:  # parse all chunks here
+                while True:  # parse another chunk
+                    result = next(chunkParser)
+                    if result is None:
+                        (yield None)
+                        continue
+
+                size, parms, trails, chunk = result
+
+                if parms:  # chunk extension parms
+                    self.parms.update(parms)
+
+                if size:  # size non zero so append chunk but keep iterating
+                    self.chunks.append(chunk)
+                    if self.evented:
+                        pass  # parse event here
+
+                else:  # last chunk so done
+                    if trails:
+                        self.trails = trails
+
+                    if not self.evented:
+                        while self.chunks:
+                            self.body.extend(self.chunks.popleft())
+                    break
 
         elif self.length != None:  # known content length
+            while len(self.msg) < self.length:
+                (yield None)
+                continue
             self.body = self.msg[:self.length]
-            actual = len(self.body)
-            if actual != self.length:
-                raise WaitContent(actual=actual, expected=self.length, index=0)
             del self.msg[:self.length]
-            self.bodied = True
+
 
         elif self.evented:  # unknown length but evented typical for http v1.0
             self.body = self.msg[:]
             del self.msg[:len(self.msg)]
-            self.bodied = True
+
 
         else:  # unknown content length so parse until closed
             self.body = self.msg[:]
             del self.msg[:len(self.msg)]
-            self.bodied = True
+
+
+        self.bodied = True
+        (yield True)
+        return
 
     def parseResponse(self):
         """
@@ -983,13 +1029,14 @@ class HttpResponseNb(object):
             headParser.close()
             break
 
-        self.body = bytearray()
+        bodyParser = self.parseBody()
         while True:
-            try:
-                self.parseBody()
-            except (WaitLine, WaitContent) as ex:
-                self.waited = True
-                return self
+            result = next(bodyParser)
+            if not result:
+                (yield None)
+                continue
+            bodyParser.close()
+            break
 
         self.ended = True
         yield True
