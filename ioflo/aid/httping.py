@@ -488,7 +488,8 @@ class HttpResponseNb(object):
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
 
-        self.lines = deque()  # deque of lines header or chunk as applicable
+        self.parser = None  # response parser generator
+
         self.headers = None
         self.body = None
         self.data = None
@@ -507,6 +508,8 @@ class HttpResponseNb(object):
         self.headed = None    # head completely parsed
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
+
+        self.makeParser(msg=msg)
 
 
     def parseNextHeaderLine(self, strip=True, kind="header line"):
@@ -782,7 +785,6 @@ class HttpResponseNb(object):
             line = self.msg[:index]
             index += len(eol)  # strip eol
             del self.msg[:index] # remove used bytes
-            self.lines.append(line)
             (yield line)
         return
 
@@ -961,16 +963,13 @@ class HttpResponseNb(object):
             del self.msg[:len(self.msg)]
             self.bodied = True
 
-    def parse(self, msg=None):
+    def parseResponse(self):
         """
         Generator to parse response bytearray.
         Parses msg if not None
         Otherwise parse .msg
 
         """
-        if msg:
-            self.msg = msg
-
         self.headed = False
         self.bodied = False
         self.ended = False
@@ -985,7 +984,7 @@ class HttpResponseNb(object):
             break
 
         self.body = bytearray()
-        while not self.bodied:
+        while True:
             try:
                 self.parseBody()
             except (WaitLine, WaitContent) as ex:
@@ -993,5 +992,32 @@ class HttpResponseNb(object):
                 return self
 
         self.ended = True
-        return self
+        yield True
+        return
+
+    def makeParser(self, msg=None):
+        """
+        Make response parser generator and assign to .parser
+        Assign msg to .msg If provided
+        """
+        if msg:
+            self.msg = msg
+
+        self.parser = self.parseResponse()  # make generator
+
+    def parse(self):
+        """
+        Service the response parsing
+        must call .makeParser to setup parser
+        When done parsing,
+           .parser is None
+           .ended is True
+
+        """
+        if self.parser:
+            result = next(self.parser)
+            if result is not None:
+                self.parser.close()
+                self.parser = None
+
 
