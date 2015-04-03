@@ -231,7 +231,7 @@ class BasicTestCase(unittest.TestCase):
         #self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
         eha = ('127.0.0.1', 8080)
-        beta = nonblocking.Outgoer(ha=eha, bufsize=131072)
+        beta = nonblocking.Outgoer(ha=eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
@@ -297,15 +297,19 @@ class BasicTestCase(unittest.TestCase):
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
         #response = httping.HttpResponseNb(msgIn, method=method, url=url)
-        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
+        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
 
-        timer = Timer(duration=2.0)
+        timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
             response.parse()
             beta.serviceAllRx()
             time.sleep(0.01)
 
-        self.assertTrue(response.body.startswith(b'retry: 1000\n\n'))
+        if response.parser:
+            response.parser.close()
+            response.parser = None
+
+        self.assertTrue(response.body.startswith(b'retry: 1000\n\ndata: START\n\ndata: 1\n\ndata: 2\n\ndata: 3\n\n'))
 
         #self.assertEqual(len(beta.rxbs), 0)
 

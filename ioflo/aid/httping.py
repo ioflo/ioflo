@@ -478,7 +478,7 @@ class HttpResponseNb(object):
     Nonblocking HTTP Response class
     """
 
-    def __init__(self, msg=None, method=u'GET', url=u'/'):
+    def __init__(self, msg=None, method=u'GET', url=u'/', wlog=None):
         """
         Initialize Instance
         msg must be bytearray
@@ -487,12 +487,12 @@ class HttpResponseNb(object):
         self.msg = msg or bytearray()
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
+        self.wlog = wlog
 
         self.parser = None  # response parser generator
 
         self.headers = None
         self.body = None
-        self.chunks = None
         self.events = None
         self.data = None
         self.parms = None  # chunked encoding extension parameters
@@ -512,120 +512,6 @@ class HttpResponseNb(object):
         self.ended = None     # response from server has ended no more remaining
 
         self.makeParser(msg=msg)
-
-
-    def parseNextHeaderLine(self, strip=True, kind="header line"):
-        """
-        Parse next http line from self.msg up to eol
-        RFC2616 specifies end of line as CRLF but section 19.2 allows for
-        tolerent to support for header also a solitary LF.
-
-        If strip Then strip trailing end of line
-        Raise errors if line too long or eol  not found
-        """
-        eol = LF  # tolerant implementation
-        index = self.msg.find(eol)
-
-        if (index > 0) and (self.msg[index-1:index+1] == CRLF):
-            eol = CRLF # CRLF actually used
-            index -= 1
-
-        if index < 0:
-            count = len(self.msg)
-            if count > MAX_LINE_SIZE:
-                raise LineTooLong(kind)
-            else:
-                raise WaitLine(kind=kind,
-                               actual=count,
-                               index=0,)
-
-        if index > MAX_LINE_SIZE:
-            raise LineTooLong(kind)
-
-        if strip:
-            line = self.msg[:index]
-            index += len(eol)
-        else:
-            index += len(eol)
-            line = self.msg[:index]
-
-        del self.msg[:index]  # remove used bytes
-        return line
-
-    def parseNextChunkLine(self, strip=True, kind="chunk line"):
-        """
-        Parse next http line from self.msg up to eol
-        end of line is CRLF
-
-        If strip Then strip trailing end of line
-        Raise errors if line too long or eol  not found
-        """
-        eol = CRLF
-        index = self.msg.find(eol)
-
-        if index < 0:
-            count = len(self.msg)
-            if count > MAX_LINE_SIZE:
-                raise LineTooLong(kind)
-            else:
-                raise WaitLine(kind=kind,
-                               actual=count,
-                               index=0,)
-
-        if index > MAX_LINE_SIZE:
-            raise LineTooLong(kind)
-
-        if strip:
-            line = self.msg[:index]
-            index += len(eol)
-        else:
-            index += len(eol)
-            line = self.msg[:index]
-
-        del self.msg[:index] # remove used bytes
-        return line
-
-    def parseNextTextLine(self, strip=True, kind="text line"):
-        """
-        Parse next media text line from self.msg
-        This also applies to event lines for server sent events
-        RFC 2616 3.7.1 specifies text media end of line as one of (CRLF, CR, LF)
-        Also SSE spec http://www.w3.org/TR/eventsource/ section 6 specifies
-        end-of-line as one of (CRLF, CR, LF)
-
-        If strip Then strip trailing end of line
-        Raise errors if line too long or end of line not found
-        """
-        eol = LF
-        index = self.msg.find(eol) # try to find end of line
-        if index < 0:  # not found LF, try CR
-            eol = CR
-            index = self.msg.find(eol) # try to find end of line
-        elif index and (self.msg[index-1:index+1] == CRLF):  # found LF, see if CRLF
-            eol = CRLF
-            index -= 1
-
-        if index < 0:
-            count = len(self.msg)
-            if count > MAX_LINE_SIZE:
-                raise LineTooLong(kind)
-            else:
-                raise WaitLine(kind=kind,
-                               actual=count,
-                               index=0,)
-
-        if index > MAX_LINE_SIZE:
-            raise LineTooLong(kind)
-
-        if strip:
-            line = self.msg[:index]
-            index += len(eol)
-        else:
-            index += len(eol)
-            line = self.msg[:index]
-
-        del self.msg[:index] # remove used bytes
-        return line
 
     def parseStatus(self, line):
         """
@@ -656,7 +542,6 @@ class HttpResponseNb(object):
         except ValueError:
             raise BadStatusLine(line)
         return (version, status, reason)
-
 
     def checkPersisted(self):
         """
@@ -709,7 +594,7 @@ class HttpResponseNb(object):
 
         Raise error if eol not found before  MAX_LINE_SIZE
         """
-        while True:  # loop until entire heading indicated by empty line
+        while True:
             for eol in eols:  # loop over eols unless found
                 index = self.msg.find(eol)  # not found index == -1
                 if index >= 0:
@@ -720,6 +605,7 @@ class HttpResponseNb(object):
                     raise LineTooLong(kind)
                 else:
                     (yield None)  # more data needed not done parsing header
+                    continue
 
             if index > MAX_LINE_SIZE:  # found but line too long
                 raise LineTooLong(kind)
@@ -750,7 +636,8 @@ class HttpResponseNb(object):
                 if len(self.msg) > MAX_LINE_SIZE:
                     raise LineTooLong(kind)
                 else:
-                    yield None  # more data needed not done parsing header
+                    (yield None)  # more data needed not done parsing header
+                    continue
 
             if index > MAX_LINE_SIZE:  # found but line too long
                 raise LineTooLong(kind)
@@ -764,7 +651,7 @@ class HttpResponseNb(object):
                 raise HTTPException("got more than {0} headers".format(MAX_HEADERS))
 
             if not line:  # empty line so entire heading done
-                yield lines # heading done
+                (yield lines) # heading done
 
         return
 
@@ -790,15 +677,14 @@ class HttpResponseNb(object):
             if status != CONTINUE:  # 100 continue (with request or ignore)
                 break
 
-            lineParser = self.parseLine(eols=(CRLF, LF), kind="continue header line")
-            while True:  # skip remaining headersfollowing 100 status header
-                line = next(lineParser)
-                if line is None:
-                    (yield None)
-                    continue
-                if not line:  # blank line means end of headers
-                    lineParser.close()
+            leaderParser = self.parseLeader(eols=(CRLF, LF), kind="continue header line")
+            while True:
+                lines = next(leaderParser)
+                if lines is not None:
+                    leaderParser.close()
                     break
+                (yield None)
+
 
         self.code = self.status = status
         self.reason = reason.strip()
@@ -813,11 +699,10 @@ class HttpResponseNb(object):
         leaderParser = self.parseLeader(eols=(CRLF, LF), kind="leader header line")
         while True:
             lines = next(leaderParser)
-            if lines is None:
-                (yield None)
-                continue
-            leaderParser.close()
-            break
+            if lines is not None:
+                leaderParser.close()
+                break
+            (yield None)
 
         self.headers = odict()
         if lines:
@@ -890,22 +775,19 @@ class HttpResponseNb(object):
         chunk-ext-val  = token | quoted-string
         chunk-data     = chunk-size(OCTET)
         trailer        = *(entity-header CRLF)
-
-
-
         """
         size = 0
         parms = odict()
         trails = odict()
         chunk = bytearray()
 
-        lineParser = self.parseLine(eols=(CRLF), kind="chunk size line")
+        lineParser = self.parseLine(eols=(CRLF, ), kind="chunk size line")
         while True:
             line = next(lineParser)
-            if line is None:
-                (yield None)
-                continue
-            lineParser.close()  # close generator
+            if line is not None:
+                lineParser.close()  # close generator
+                break
+            (yield None)
 
         size, sep, exts = line.partition(b';')
         try:
@@ -925,16 +807,17 @@ class HttpResponseNb(object):
         else:
             while len(self.msg) < size:  # need more for chunk
                 (yield None)
+
             chunk = self.msg[:size]
             del self.msg[:size]  # remove used bytes
 
-            lineParser = self.parseLine(eols=(CRLF), kind="chunk end line")
+            lineParser = self.parseLine(eols=(CRLF, ), kind="chunk end line")
             while True:
                 line = next(lineParser)
-                if line is None:
-                    (yield None)
-                    continue
-                lineParser.close()  # close generator
+                if line is not None:
+                    lineParser.close()  # close generator
+                    break
+                (yield None)
 
             if line:  # not empty so raise error
                 raise ValueError("Chunk end error. Expected empty got "
@@ -942,6 +825,84 @@ class HttpResponseNb(object):
 
         (yield (size, parms, trails, chunk))
         return
+
+    def parseEvent(self):  # reading transfer encoded
+        """
+        Generator to parse event
+        Yields None If waiting for more bytes
+        Yields tuple (size, parms, trails, chunk) Otherwise
+        Where:
+            size is int size of the chunk
+            parms is dict of chunk extension parameters
+            trails is dict of chunk trailer headers (only on last chunk if any)
+            chunk is chunk if any or empty if not
+
+        stream        = [ bom ] *event
+        event         = *( comment / field ) end-of-line
+        comment       = colon *any-char end-of-line
+        field         = 1*name-char [ colon [ space ] *any-char ] end-of-line
+        end-of-line   = ( cr lf / cr / lf / eof )
+        eof           = < matches repeatedly at the end of the stream >
+
+        lf            = \n 0xA
+        cr            = \r 0xD
+        space         = 0x20
+        colon         = 0x3A
+        bom           = \uFEFF when encoded as utf-8 b'\xef\xbb\xbf'
+        name-char     = a Unicode character other than LF, CR, or :
+        any-char      = a Unicode character other than LF or CR
+        Event streams in this format must always be encoded as UTF-8. [RFC3629]
+        """
+        size = 0
+        parms = odict()
+        trails = odict()
+        chunk = bytearray()
+
+        lineParser = self.parseLine(eols=(CRLF, ), kind="chunk size line")
+        while True:
+            line = next(lineParser)
+            if line is not None:
+                lineParser.close()  # close generator
+                break
+            (yield None)
+
+        size, sep, exts = line.partition(b';')
+        try:
+            size = int(size.strip(), 16)
+        except ValueError:  # bad size
+            raise
+
+        if exts:  # parse extensions parameters
+            exts = exts.split(b';')
+            for ext in exts:
+                ext = ext.strip()
+                name, sep, value = ext.partition(b'=')
+                parms[name.strip()] = value.strip() or None
+
+        if size == 0:  # last chunk so parse trailing headers
+            trails = self.parseHeaders(kind="trailer header line")
+        else:
+            while len(self.msg) < size:  # need more for chunk
+                (yield None)
+
+            chunk = self.msg[:size]
+            del self.msg[:size]  # remove used bytes
+
+            lineParser = self.parseLine(eols=(CRLF, ), kind="chunk end line")
+            while True:
+                line = next(lineParser)
+                if line is not None:
+                    lineParser.close()  # close generator
+                    break
+                (yield None)
+
+            if line:  # not empty so raise error
+                raise ValueError("Chunk end error. Expected empty got "
+                         "'{0}' instead".format(line.decode('iso-8859-1')))
+
+        (yield (size, parms, trails, chunk))
+        return
+
 
     def parseBody(self):
         """
@@ -954,19 +915,18 @@ class HttpResponseNb(object):
             raise ValueError("Invalid content length of {0}".format(self.length))
 
         self.body = bytearray()
-        self.chunks = None
         self.events = None
 
         if self.chunked:  # chunked takes precedence over length
-            self.chunks = deque()
             self.parms = odict()
-            chunkParser = self.parseChunk()
             while True:  # parse all chunks here
+                chunkParser = self.parseChunk()
                 while True:  # parse another chunk
                     result = next(chunkParser)
-                    if result is None:
-                        (yield None)
-                        continue
+                    if result is not None:
+                        chunkParser.close()
+                        break
+                    (yield None)
 
                 size, parms, trails, chunk = result
 
@@ -974,36 +934,33 @@ class HttpResponseNb(object):
                     self.parms.update(parms)
 
                 if size:  # size non zero so append chunk but keep iterating
-                    self.chunks.append(chunk)
+                    self.body.extend(chunk)
                     if self.evented:
                         pass  # parse event here
 
                 else:  # last chunk so done
                     if trails:
                         self.trails = trails
-
-                    if not self.evented:
-                        while self.chunks:
-                            self.body.extend(self.chunks.popleft())
+                    chunkParser.close()
                     break
 
         elif self.length != None:  # known content length
             while len(self.msg) < self.length:
                 (yield None)
-                continue
+
             self.body = self.msg[:self.length]
             del self.msg[:self.length]
 
+        else:  # unknown content length so parse forever until closed
+            while True:
+                if self.msg:
+                    self.body.extend(self.msg[:])
+                    del self.msg[:len(self.msg)]
 
-        elif self.evented:  # unknown length but evented typical for http v1.0
-            self.body = self.msg[:]
-            del self.msg[:len(self.msg)]
+                if self.evented:
+                    pass
 
-
-        else:  # unknown content length so parse until closed
-            self.body = self.msg[:]
-            del self.msg[:len(self.msg)]
-
+                (yield None)
 
         self.bodied = True
         (yield True)
@@ -1023,23 +980,21 @@ class HttpResponseNb(object):
         headParser = self.parseHead()
         while True:
             result = next(headParser)
-            if not result:
-                (yield None)
-                continue
-            headParser.close()
-            break
+            if result is not None:
+                headParser.close()
+                break
+            (yield None)
 
         bodyParser = self.parseBody()
         while True:
             result = next(bodyParser)
-            if not result:
-                (yield None)
-                continue
-            bodyParser.close()
-            break
+            if result is not None:
+                bodyParser.close()
+                break
+            (yield None)
 
         self.ended = True
-        yield True
+        (yield True)
         return
 
     def makeParser(self, msg=None):
