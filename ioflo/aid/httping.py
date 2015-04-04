@@ -826,84 +826,6 @@ class HttpResponseNb(object):
         (yield (size, parms, trails, chunk))
         return
 
-    def parseEvent(self):  # reading transfer encoded
-        """
-        Generator to parse event
-        Yields None If waiting for more bytes
-        Yields tuple (size, parms, trails, chunk) Otherwise
-        Where:
-            size is int size of the chunk
-            parms is dict of chunk extension parameters
-            trails is dict of chunk trailer headers (only on last chunk if any)
-            chunk is chunk if any or empty if not
-
-        stream        = [ bom ] *event
-        event         = *( comment / field ) end-of-line
-        comment       = colon *any-char end-of-line
-        field         = 1*name-char [ colon [ space ] *any-char ] end-of-line
-        end-of-line   = ( cr lf / cr / lf / eof )
-        eof           = < matches repeatedly at the end of the stream >
-
-        lf            = \n 0xA
-        cr            = \r 0xD
-        space         = 0x20
-        colon         = 0x3A
-        bom           = \uFEFF when encoded as utf-8 b'\xef\xbb\xbf'
-        name-char     = a Unicode character other than LF, CR, or :
-        any-char      = a Unicode character other than LF or CR
-        Event streams in this format must always be encoded as UTF-8. [RFC3629]
-        """
-        size = 0
-        parms = odict()
-        trails = odict()
-        chunk = bytearray()
-
-        lineParser = self.parseLine(eols=(CRLF, ), kind="chunk size line")
-        while True:
-            line = next(lineParser)
-            if line is not None:
-                lineParser.close()  # close generator
-                break
-            (yield None)
-
-        size, sep, exts = line.partition(b';')
-        try:
-            size = int(size.strip(), 16)
-        except ValueError:  # bad size
-            raise
-
-        if exts:  # parse extensions parameters
-            exts = exts.split(b';')
-            for ext in exts:
-                ext = ext.strip()
-                name, sep, value = ext.partition(b'=')
-                parms[name.strip()] = value.strip() or None
-
-        if size == 0:  # last chunk so parse trailing headers
-            trails = self.parseHeaders(kind="trailer header line")
-        else:
-            while len(self.msg) < size:  # need more for chunk
-                (yield None)
-
-            chunk = self.msg[:size]
-            del self.msg[:size]  # remove used bytes
-
-            lineParser = self.parseLine(eols=(CRLF, ), kind="chunk end line")
-            while True:
-                line = next(lineParser)
-                if line is not None:
-                    lineParser.close()  # close generator
-                    break
-                (yield None)
-
-            if line:  # not empty so raise error
-                raise ValueError("Chunk end error. Expected empty got "
-                         "'{0}' instead".format(line.decode('iso-8859-1')))
-
-        (yield (size, parms, trails, chunk))
-        return
-
-
     def parseBody(self):
         """
         Parse body
@@ -1022,4 +944,131 @@ class HttpResponseNb(object):
                 self.parser.close()
                 self.parser = None
 
+
+class EventSource(object):
+    """
+    Server Sent Event parsing
+    """
+
+    def __init__(self, raw=None, json=True):
+        """
+        Initialize Instance
+        raw must be bytearray
+        if json then deserialize event data as json
+
+        """
+        self.raw = raw if raw is not None else bytearray()
+        self.json = True if json else False
+
+        self.name = None  # last event name
+        self.eid = None  # last event id
+        self.data = None # last event data
+
+        # each event is tuple (eid, name, data)
+        self.events = deque()  # deque of events
+
+    def parseLine(self, eols=(CRLF, LF, CR ), kind="event line"):
+        """
+        Generator to parse  event line from buf
+        Each line demarcated by one of eols
+        Yields None If waiting for more to parse
+        Yields line Otherwise
+
+        Raise error if eol not found before  MAX_LINE_SIZE
+        """
+        while True:
+            for eol in eols:  # loop over eols unless found
+                index = self.msg.find(eol)  # not found index == -1
+                if index >= 0:
+                    break
+
+            if index < 0:  # not found
+                if len(self.msg) > MAX_LINE_SIZE:
+                    raise LineTooLong(kind)
+                else:
+                    (yield None)  # more data needed not done parsing header
+                    continue
+
+            if index > MAX_LINE_SIZE:  # found but line too long
+                raise LineTooLong(kind)
+
+            line = self.msg[:index]
+            index += len(eol)  # strip eol
+            del self.msg[:index] # remove used bytes
+            (yield line)
+        return
+
+    def parseEvent(self):
+        """
+        Generator to parse event
+        Yields None If waiting for more bytes
+        Yields tuple (size, parms, trails, chunk) Otherwise
+        Where:
+            size is int size of the chunk
+            parms is dict of chunk extension parameters
+            trails is dict of chunk trailer headers (only on last chunk if any)
+            chunk is chunk if any or empty if not
+
+        stream        = [ bom ] *event
+        event         = *( comment / field ) end-of-line
+        comment       = colon *any-char end-of-line
+        field         = 1*name-char [ colon [ space ] *any-char ] end-of-line
+        end-of-line   = ( cr lf / cr / lf / eof )
+        eof           = < matches repeatedly at the end of the stream >
+
+        lf            = \n 0xA
+        cr            = \r 0xD
+        space         = 0x20
+        colon         = 0x3A
+        bom           = \uFEFF when encoded as utf-8 b'\xef\xbb\xbf'
+        name-char     = a Unicode character other than LF, CR, or :
+        any-char      = a Unicode character other than LF or CR
+        Event streams in this format must always be encoded as UTF-8. [RFC3629]
+        """
+
+
+        lineParser = self.parseLine(eols=(CRLF, ), kind="chunk size line")
+        while True:
+            line = next(lineParser)
+            if line is not None:
+                lineParser.close()  # close generator
+                break
+            (yield None)
+
+        size, sep, exts = line.partition(b';')
+        try:
+            size = int(size.strip(), 16)
+        except ValueError:  # bad size
+            raise
+
+        if exts:  # parse extensions parameters
+            exts = exts.split(b';')
+            for ext in exts:
+                ext = ext.strip()
+                name, sep, value = ext.partition(b'=')
+                parms[name.strip()] = value.strip() or None
+
+        if size == 0:  # last chunk so parse trailing headers
+            trails = self.parseHeaders(kind="trailer header line")
+        else:
+            while len(self.msg) < size:  # need more for chunk
+                (yield None)
+
+            chunk = self.msg[:size]
+            del self.msg[:size]  # remove used bytes
+
+            lineParser = self.parseLine(eols=(CRLF, ), kind="chunk end line")
+            while True:
+                line = next(lineParser)
+                if line is not None:
+                    lineParser.close()  # close generator
+                    break
+                (yield None)
+
+            if line:  # not empty so raise error
+                raise ValueError("Chunk end error. Expected empty got "
+                         "'{0}' instead".format(line.decode('iso-8859-1')))
+
+        (yield (size, parms, trails, chunk))
+        return
 
