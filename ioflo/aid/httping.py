@@ -1046,10 +1046,9 @@ class EventSource(object):
             (yield line)
         return
 
-    def parseEvent(self, raw, leid=None):
+    def parseEvent(self, raw):
         """
-        Generator to parse event from raw bytearray given
-        leid the last event id
+        Generator to parse event from raw bytearray
 
         Yields None If waiting for more bytes
         Yields tuple (eid, ename, edata) Otherwise
@@ -1072,15 +1071,52 @@ class EventSource(object):
         any-char      = a Unicode character other than LF or CR
         Event streams in this format must always be encoded as UTF-8. [RFC3629]
         """
+        eid = leid
+        ename = u''
+        edata = u''
+        datas = []
         lineParser = self.parseLine(raw=raw, eols=(CRLF, LF, CR ), kind="event line")
         while True:
             line = next(lineParser)
-            if line is not None:
-                lineParser.close()  # close generator
-                break
-            (yield None)
+            if line is None:
+                (yield None)
+                continue
 
-        field, sep, remainder = line.partition(b':')
+            if not line:  # empty line so event done, attempt dispatch
+                if datas:
+                    edata = u'\n'.join(datas)
+                if edata:  # data so dispatch event
+                    lineParser.close()  # close generator
+                    break
+                ename = u''
+                edata = u''
+                datas = []
+                continue  # abort dispatch
+
+            field, sep, value = line.partition(b':')
+            if sep:  # has colon
+                if not field:  # comment so ignore
+                    # may need to update retry timer here
+                    continue
+
+            field = field.decode('UTF-8')
+            if value and value[0] == b' ':
+                del value[0]
+            value = value.decode('UTF-8')
+
+            if field == 'event':
+                ename = value
+            elif field == 'data':
+                datas.append(value)
+            elif field == 'id':
+                self.leid = eid = value
+            elif field == u'retry':  #
+                try:
+                    value = int(value)
+                except ValueError as ex:
+                    pass  # ignore
+                else:
+                    self.retry = value
 
         (yield (eid, ename, edata))
         return
@@ -1118,6 +1154,8 @@ class EventSource(object):
         any-char      = a Unicode character other than LF or CR
         Event streams in this format must always be encoded as UTF-8. [RFC3629]
         """
+        self.retry = None
+        self.leid = None
         self.ended = None
         self.closed = None
 
@@ -1138,8 +1176,6 @@ class EventSource(object):
         while True:  # parse event(s) so far if any
             event = next(eventParser)
             if event:
-                eid, ename, edata = event
-                self.leid = eid
                 self.events.append(event)
                 continue  # parse another until no more
             if self.closed:  # no more data so finish
