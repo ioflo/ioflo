@@ -77,6 +77,7 @@ import errno
 import io
 from collections import deque
 import codecs
+import json
 
 if sys.version > '3':
     from urllib.parse import urlsplit
@@ -478,7 +479,7 @@ class HttpResponseNb(object):
     Nonblocking HTTP Response class
     """
 
-    def __init__(self, msg=None, method=u'GET', url=u'/', wlog=None):
+    def __init__(self, msg=None, method=u'GET', url=u'/', wlog=None, jsoned=None):
         """
         Initialize Instance
         msg must be bytearray
@@ -507,6 +508,7 @@ class HttpResponseNb(object):
 
         self.chunked = None    # is transfer encoding "chunked" being used?
         self.evented = None   # are server sent events being used
+        self.jsoned = jsoned  # is body json
         self.persisted = None   # persist connection until server closes
         self.headed = None    # head completely parsed
         self.bodied =  None   # body completely parsed
@@ -749,7 +751,9 @@ class HttpResponseNb(object):
         contentType = self.headers.get("content-type")
         if contentType and contentType.lower() == 'text/event-stream':
             self.evented = True
-            self.eventSource = EventSource(raw=self.body, events=self.events)
+            self.eventSource = EventSource(raw=self.body,
+                                           events=self.events,
+                                           jsoned=self.jsoned)
         else:
             self.evented = False
 
@@ -1023,18 +1027,18 @@ class EventSource(object):
     """
     Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
 
-    def __init__(self, raw=None, events=None, json=False):
+    def __init__(self, raw=None, events=None, jsoned=False):
         """
         Initialize Instance
         raw must be bytearray
         IF events is not None then used passed in deque
             .events will be deque of event odicts
-        IF json then deserialize event data as json
+        IF jsoned then deserialize event data as json
 
         """
         self.raw = raw if raw is not None else bytearray()
         self.events = events if events is not None else deque()
-        self.json = True if json else False
+        self.jsoned = True if jsoned else False
 
         self.parser = None
         self.leid = None  # last event id
@@ -1096,11 +1100,13 @@ class EventSource(object):
                 if parts:
                     edata = u'\n'.join(parts)
                 if edata:  # data so dispatch event by appending to .events
-                    if self.json:
+                    if self.jsoned:
                         try:
                             ejson = json.loads(edata, encoding='utf-8', object_pairs_hook=odict)
-                        except exception as ex:
+                        except ValueError as ex:
                             ejson = None
+                        else:  # valid json so null out edata
+                            edata = None
 
                     self.events.append(odict([('id', eid),
                                               ('name', ename),
