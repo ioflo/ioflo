@@ -318,7 +318,8 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(event, {'id': None, 'name': '', 'data': '1', 'json': None})
         event = response.events.popleft()
         self.assertEqual(event, {'id': None, 'name': '', 'data': '2', 'json': None})
-
+        self.assertTrue(len(response.body) == 0)
+        self.assertTrue(len(response.eventSource.raw) == 0)
 
         #self.assertEqual(len(beta.rxbs), 0)
 
