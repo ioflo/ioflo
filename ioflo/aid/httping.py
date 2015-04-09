@@ -1019,7 +1019,7 @@ def parseBom(raw, bom=codecs.BOM_UTF8):
 
 class EventSource(object):
     """
-    Server Sent Event parsing
+    Server Sent Event Stream parser
     """
     Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
 
@@ -1028,9 +1028,9 @@ class EventSource(object):
         Initialize Instance
         raw must be bytearray
         IF events is not None then used passed in deque
+            .events will be deque of event odicts
         IF json then deserialize event data as json
 
-        .events will be deque of event tuples (eid, ename, edata)
         """
         self.raw = raw if raw is not None else bytearray()
         self.events = event if events is not None else deque()
@@ -1039,7 +1039,7 @@ class EventSource(object):
         self.parser = None
         self.leid = None  # last event id
         self.bom = None  # bom if any
-        self.retry = None  # retry timeout
+        self.retry = None  # reconnection time in milliseconds
         self.ended = False
 
         self.makeParser()
