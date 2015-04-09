@@ -1023,7 +1023,7 @@ class EventSource(object):
     """
     Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
 
-    def __init__(self, raw=None, events=None, json=True):
+    def __init__(self, raw=None, events=None, json=False):
         """
         Initialize Instance
         raw must be bytearray
@@ -1033,14 +1033,15 @@ class EventSource(object):
 
         """
         self.raw = raw if raw is not None else bytearray()
-        self.events = event if events is not None else deque()
+        self.events = events if events is not None else deque()
         self.json = True if json else False
 
         self.parser = None
         self.leid = None  # last event id
         self.bom = None  # bom if any
         self.retry = None  # reconnection time in milliseconds
-        self.ended = False
+        self.ended = None
+        self.closed = None
 
         self.makeParser()
 
@@ -1121,7 +1122,7 @@ class EventSource(object):
                     continue
 
             field = field.decode('UTF-8')
-            if value and value[0] == b' ':
+            if value and value[0:1] == b' ':
                 del value[0]
             value = value.decode('UTF-8')
 

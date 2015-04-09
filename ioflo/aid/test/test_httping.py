@@ -309,7 +309,16 @@ class BasicTestCase(unittest.TestCase):
             response.parser.close()
             response.parser = None
 
-        self.assertTrue(response.body.startswith(b'retry: 1000\n\ndata: START\n\ndata: 1\n\ndata: 2\n\ndata: 3\n\n'))
+        #self.assertTrue(response.body.startswith(b'retry: 1000\n\ndata: START\n\ndata: 1\n\ndata: 2\n\ndata: 3\n\n'))
+        self.assertEqual(response.eventSource.retry, 1000)
+        self.assertTrue(len(response.events) > 2)
+        event = response.events.popleft()
+        self.assertEqual(event, {'id': None, 'name': '', 'data': 'START', 'json': None})
+        event = response.events.popleft()
+        self.assertEqual(event, {'id': None, 'name': '', 'data': '1', 'json': None})
+        event = response.events.popleft()
+        self.assertEqual(event, {'id': None, 'name': '', 'data': '2', 'json': None})
+
 
         #self.assertEqual(len(beta.rxbs), 0)
 
