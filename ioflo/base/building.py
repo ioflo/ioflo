@@ -225,7 +225,7 @@ class Builder(object):
 
         try: #IOError
             self.fileName = os.path.abspath(self.fileName)
-            self.currentFile = open(self.fileName,"r+")
+            self.currentFile = open(self.fileName,"r")
             self.currentCount = 0
 
             try: #ResolveError
@@ -361,7 +361,7 @@ class Builder(object):
             os.chdir(os.path.split(self.currentFile.name)[0]) # set cwd to current file
             name = os.path.abspath(name) # resolve name if relpath to cwd
             os.chdir(cwd) #restore old cwd
-            self.currentFile = open(name,"r+")
+            self.currentFile = open(name,"r")
             self.currentCount = 0
             console.terse("Loading from file {0}.\n".format(self.currentFile.name))
 
