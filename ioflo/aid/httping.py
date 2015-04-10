@@ -78,6 +78,7 @@ import io
 from collections import deque
 import codecs
 import json
+import ssl
 
 if sys.version > '3':
     from urllib.parse import urlsplit

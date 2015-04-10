@@ -6,7 +6,6 @@ nonblocking.py
 
 from __future__ import division
 
-
 import sys
 import os
 import socket
@@ -1616,6 +1615,63 @@ class Peer(Server):
 
 
 PeerSocketTcpNb = Peer  # alias
+
+
+
+try:
+    import ssl
+except ImportError:
+    pass
+else:
+    class OutgoerSSL(Outgoer):
+        """
+        Outgoer with SSL support
+        """
+
+        default_port = 443
+
+        # XXX Should key_file and cert_file be deprecated in favour of context?
+
+        def __init__(self, host, port=None, key_file=None, cert_file=None,
+                     timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                     source_address=None, *, context=None,
+                     check_hostname=None):
+            super(HTTPSConnection, self).__init__(host, port, timeout,
+                                                  source_address)
+            self.key_file = key_file
+            self.cert_file = cert_file
+            if context is None:
+                context = ssl._create_default_https_context()
+            will_verify = context.verify_mode != ssl.CERT_NONE
+            if check_hostname is None:
+                check_hostname = context.check_hostname
+            if check_hostname and not will_verify:
+                raise ValueError("check_hostname needs a SSL context with "
+                                 "either CERT_OPTIONAL or CERT_REQUIRED")
+            if key_file or cert_file:
+                context.load_cert_chain(cert_file, key_file)
+            self._context = context
+            self._check_hostname = check_hostname
+
+        def connect(self):
+            "Connect to a host on a given (SSL) port."
+
+            super().connect()
+
+            if self._tunnel_host:
+                server_hostname = self._tunnel_host
+            else:
+                server_hostname = self.host
+
+            self.sock = self._context.wrap_socket(self.sock,
+                                                  server_hostname=server_hostname)
+            if not self._context.check_hostname and self._check_hostname:
+                try:
+                    ssl.match_hostname(self.sock.getpeercert(), server_hostname)
+                except Exception:
+                    self.sock.shutdown(socket.SHUT_RDWR)
+                    self.sock.close()
+                    raise
 
 
 
