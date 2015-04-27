@@ -1623,405 +1623,112 @@ try:
 except ImportError:
     pass
 else:
-    class OutgoerSSL(Outgoer):
+    class OutgoerTLS(Outgoer):
         """
-        Outgoer with SSL support
+        Outgoer with Nonblocking TLS/SSL support
+        Nonblocking TCP Socket Client Class.
         """
+        def __init__(self,
+                     context=None,
+                     keypath=None,
+                     certpath=None,
+                     checkHostName=None,
+                     **kwa):
+            """
+            Initialization method for instance.
 
-        default_port = 443
+            context = context object for tls/ssl
+            keypath = pathname of private client side PKI key file
+            certpath = pathname of puble server side PKI cert file
+            checkHostname = Flag is should verify server hostName
 
-        # XXX Should key_file and cert_file be deprecated in favour of context?
+            If context is None then create default context
+            If certpath Then apply to context
+            If keypath Then apply to context
 
-        def __init__(self, host, port=None, key_file=None, cert_file=None,
-                     timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-                     source_address=None, *, context=None,
-                     check_hostname=None):
-            super(HTTPSConnection, self).__init__(host, port, timeout,
-                                                  source_address)
-            self.key_file = key_file
-            self.cert_file = cert_file
+            """
+            super(OutgoerTLS, self).init(f**kwa)
+
             if context is None:
                 context = ssl._create_default_https_context()
-            will_verify = context.verify_mode != ssl.CERT_NONE
-            if check_hostname is None:
-                check_hostname = context.check_hostname
-            if check_hostname and not will_verify:
-                raise ValueError("check_hostname needs a SSL context with "
+            verify = context.verify_mode != ssl.CERT_NONE
+            if checkHostname is None:
+                checkHostname = context.check_hostname
+            if checkHostname and not verify:
+                raise ValueError("Check Hostname needs a SSL context with "
                                  "either CERT_OPTIONAL or CERT_REQUIRED")
             if key_file or cert_file:
-                context.load_cert_chain(cert_file, key_file)
-            self._context = context
-            self._check_hostname = check_hostname
+                context.load_cert_chain(certpath, keypath)
+            self.context = context
+            self.checkHostname = checkHostname
 
         def connect(self):
-            "Connect to a host on a given (SSL) port."
+            """
+            Attempt nonblocking connect to .ha
+            Returns True if successful
+            Returns False if not so try again later
+            """
+            try:
+                result = self.cs.connect_ex(self.ha)  # async connect
+            except socket.error as ex:
+                console.terse("socket.error = {0}\n".format(ex))
+                raise
 
-            super().connect()
+            if result not in [0, errno.EISCONN]:  # not yet connected
+                return False  # try again later
 
-            if self._tunnel_host:
-                server_hostname = self._tunnel_host
-            else:
-                server_hostname = self.host
+            self.cs = self.context.wrap_socket(self.cs,
+                                               do_handshake_on_connect=False,
+                                               server_hostname=self.ha)
 
-            self.sock = self._context.wrap_socket(self.sock,
-                                                  server_hostname=server_hostname)
-            if not self._context.check_hostname and self._check_hostname:
+            try:
+                s.do_handshake()
+            except ssl.SSLWantReadError as ex:
+                #select.select([s], [], [])
+                return False
+            except ssl.SSLWantWriteError as ex:
+                #select.select([], [s], [])
+                return False
+            except Exception as ex:
+                self.shutclose()
+                raise
+
+            if not self.context.check_hostname and self.checkHostname:
                 try:
-                    ssl.match_hostname(self.sock.getpeercert(), server_hostname)
-                except Exception:
-                    self.sock.shutdown(socket.SHUT_RDWR)
-                    self.sock.close()
+                    ssl.match_hostname(self.cs.getpeercert(), self.ha)
+                except Exception as ex:
+                    self.shutclose()
                     raise
 
+            self.connected = True
+            self.cutoff = False
+            # now self.cs has new virtual port see self.cs.getsockname()
+            self.ca = self.cs.getsockname()  # resolved local connection address
+            # self.cs.getpeername() is self.ha
+            self.ha = self.cs.getpeername()  # resolved remote connection address
+
+            return True
+
+        #def connect(self):
+            #"Connect to a host on a given (SSL) port."
+
+            #s.connect(("svn.python.org", 443))
+            #s.setblocking(False)
+            #s = ssl.wrap_socket(s,
+                                #cert_reqs=ssl.CERT_NONE,
+                                #do_handshake_on_connect=False)
+            #count = 0
+            #while True:
+                #try:
+                    #count += 1
+                    #s.do_handshake()
+                    #break
+                #except ssl.SSLWantReadError:
+                    #select.select([s], [], [])
+                #except ssl.SSLWantWriteError:
+                    #select.select([], [s], [])
+            #s.close()
+            #if support.verbose:
+                #sys.stdout.write("\nNeeded %d calls to do_handshake() to establish session.\n" % count)
 
 
-class SocketTcpNb(object):
-    """Class to manage non blocking io on TCP socket.
-
-       Opens non blocking socket
-       Use instance method close to close socket
-
-       Needs socket module
-    """
-
-    def __init__(self, ha=None, host='', port=56000, bufsize=1024,
-                 path='', log=False):
-        """Initialization method for instance.
-
-           ha = host address duple (host, port)
-           host = '' equivalant to any interface on host
-           port = socket port
-           bufsize = buffer size
-           path = path to log directory
-           log = boolean flag, creates logs if True
-        """
-        self.ha = ha or (host,port) #ha = host address
-        self.bs = bufsize
-        self.ss = None  # own socket needs to be opened
-        self.yets = odict()  # keys are ha (duples), values sockets in connection process
-        self.peers = odict()  # keys are ha (duples), values are connected sockets
-
-        self.path = path #path to directory where log files go must end in /
-        self.txLog = None #transmit log
-        self.rxLog = None #receive log
-        self.log = log
-
-    def openLogs(self, path = ''):
-        """Open log files
-
-        """
-        date = time.strftime('%Y%m%d_%H%M%S',time.gmtime(time.time()))
-        name = "%s%s_%s_%s_tx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
-        try:
-            self.txLog = open(name, 'w+')
-        except IOError:
-            self.txLog = None
-            self.log = False
-            return False
-        name = "%s%s_%s_%s_rx.txt" % (self.path, self.ha[0], str(self.ha[1]), date)
-        try:
-            self.rxLog = open(name, 'w+')
-        except IOError:
-            self.rxLog = None
-            self.log = False
-            return False
-
-        return True
-
-    def closeLogs(self):
-        """Close log files
-
-        """
-        if self.txLog and not self.txLog.closed:
-            self.txLog.close()
-        if self.rxLog and not self.rxLog.closed:
-            self.rxLog.close()
-
-    def actualBufSizes(self):
-        """
-        Returns duple of the the actual socket send and receive buffer size
-        (send, receive)
-        """
-        if not self.ss:
-            return (0, 0)
-
-        return (self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF),
-                self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
-
-    def open(self):
-        """Opens listen socket in non blocking mode.
-
-           if socket not closed properly, binding socket gets error
-              socket.error: (48, 'Address already in use')
-        """
-        #create socket ss = server socket
-        self.ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # make socket address reusable. doesn't seem to have an effect.
-        # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
-        # TIME_WAIT state, without waiting for its natural timeout to expire.
-        self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # Linux TCP allocates twice the requested size so get size is twice the set size
-        if sys.platform.startswith('linux'):
-            bs = 2 * self.bs
-        else:
-            bs = self.bs
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) < bs:
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-        if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
-            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
-        self.ss.setblocking(0) #non blocking socket
-
-        # TCP connection Server
-        try:  # bind to listen socket host address port to receive connections
-            self.ss.bind(self.ha)
-            self.ss.listen(5)
-        except socket.error as ex:
-            console.terse("socket.error = {0}\n".format(ex))
-            return False
-
-        self.ha = self.ss.getsockname() #get resolved ha after bind
-
-        if self.log:
-            if not self.openLogs():
-                return False
-
-        return True
-
-    def reopen(self):
-        """
-        Idempotently opens listen socket
-        """
-        self.close()
-        return self.open()
-
-    def close(self):
-        """
-        Closes listen socket.
-        """
-        if self.ss:
-            try:
-                self.ss.shutdown(socket.SHUT_RDWR)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-            self.ss.close()  #close socket
-            self.ss = None
-
-        self.closeLogs()
-
-    def closeAll(self):
-        """
-        Closes listen socket and all connections
-        """
-        self.close()
-        for ca in self.peers:
-            self.unconnectPeer(ca)
-        for ca in self.yets:
-            self.unconnectYet(ca)
-
-    def accept(self):
-        """
-        Accept any pending connections
-        """
-        # accept new virtual connected socket created from server socket
-        try:
-            cs, ca = self.ss.accept()  # virtual connection (socket, host address)
-        except socket.error as ex:
-            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                emsg = ("socket.error = {0}: server at {1} while "
-                        "accepting \n".format(ex, self.ha))
-                console.profuse(emsg)
-                raise #re raise exception
-            return False
-        if ca not in self.peers:  # may have simultaneous connection
-            self.peers[ca] = cs
-        else:
-            self.closeshut(cs)
-
-        return True
-
-    def connect(self, ca):
-        """
-        Create a connection to ca
-        """
-        if ca in self.peers:  # use
-            raise ValueError("Attempt to connect to peer socket {0}. "
-                             "Use reconnect instead.".format(ca))
-
-        if ca in self.yets:
-            cs = self.yets[ca]
-        else:  # ca not in self.yets or ca not in self.peers:
-            cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            # make socket address reusable. doesn't seem to have an effect.
-            # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
-            # TIME_WAIT state, without waiting for its natural timeout to expire.
-            cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            # Linux TCP allocates twice the requested size so get size is twice the set size
-            if sys.platform.startswith('linux'):
-                bs = 2 * self.bs
-            else:
-                bs = self.bs
-            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) < bs:
-                cs.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
-            if cs.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) < bs:
-                cs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
-            cs.setblocking(0) #non blocking socket
-            self.yets[ca] = cs
-
-        try:
-            result = cs.connect_ex(ca)  # async connect
-        except socket.error as ex:
-            console.terse("socket.error = {0}\n".format(ex))
-            raise
-
-        # now has new virtual port and ca != cs.getsockname()
-
-        if result not in [0, errno.EISCONN]:  # not yet connected
-            return False
-
-        if ca in self.yets:
-            del self.yets[ca]
-        if ca not in self.peers:  # may have a simultaneous connection
-            self.peers[ca] = cs  # successfully connected
-        else:
-            self.closeshut(cs)
-        return True
-
-    def reconnectPeer(self, ca):
-        """
-        Idempotently reconnects peer socket or makes new connection
-        """
-        self.unconnectPeer(ca)
-        return self.connect(ca)
-
-    @staticmethod
-    def closeshut(cs):
-        """
-        Shutdown and close connected socket cs
-        """
-        if cs:
-            try:
-                cs.shutdown(socket.SHUT_RDWR)  # shutdown socket
-            except socket.error as ex:
-                #console.terse("socket.error = {0}\n".format(ex))
-                pass
-            cs.close()  #close socket
-
-    def unconnectPeer(self, ca):
-        """
-        Shutdown and close connected socket peer given by ca
-        """
-        if ca in self.peers:
-            cs = self.peers[ca]
-            self.closeshut(cs)
-            del self.peers[ca]
-
-    def unconnectYet(self, ca):
-        """
-        Shutdown and close connected socket yet given by ca
-        """
-        if ca in self.yets:
-            cs = self.yets[ca]
-            self.closeshut(cs)
-            del self.yets[ca]
-
-
-    def service(self):
-        """
-        Service any accept requests and any connection attempts
-        """
-        while self.accept():
-            pass
-
-        for ca in self.yets:
-            self.connect(ca)
-
-    def serviceAny(self):
-        """
-        Service any accept requests, connection attempts, or receives using select
-        """
-        pass
-
-    def receiveAny(self):
-        """
-        Receive from any connected sockets that have data using select
-        """
-        receptions = []
-        return receptions
-
-    def receiveAll(self):
-        """
-        Attempt nonblocking receive all all peers.
-        Returns list of duples of receptions
-        """
-        receptions = []
-        for ca in self.peers:
-            data, ca = self.receive(ca)
-            if data:
-                receptions.append((data, ca))
-        return receptions
-
-    def receive(self, ca, bs=None):
-        """
-        Perform non blocking read on connected socket with by ca (connected address).
-
-        returns tuple of form (data, sa)
-        if no data then returns ('',None)
-        but always returns a tuple with two elements
-        """
-        cs = self.peers.get(ca)
-        if not cs:
-            raise ValueError("Host '{0}' not connected.\n".format(str(ca)))
-
-        if not bs:
-            bs = self.bs
-
-        try:
-            data = cs.recv(bs)
-
-            message = "Server at {0}, received {1} from {2}\n".format(
-                str(self.ha), data, str(ca))
-            console.profuse(message)
-
-            if self.log and self.rxLog:
-                self.rxLog.write("%s\n%s\n" % (str(ca), repr(data)))
-            return (data, ca)
-
-        except socket.error as ex: # 2.6 socket.error is subclass of IOError
-            # Some OSes define errno differently so check for both
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
-                return ('', None) #receive has nothing empty string for data
-            else:
-                emsg = ("socket.error = {0}: server at {1} receiving "
-                                    "on {2}\n".format(ex, self.ha, ca))
-                console.profuse(emsg)
-                raise #re raise exception ex1
-
-    def send(self, data, ca):
-        """
-        Perform non blocking send on virtual connected socket indexed by ca.
-
-        data is string in python2 and bytes in python3
-        da is destination address tuple (destHost, destPort)
-        """
-        cs = self.peers.get(ca)
-        if not cs:
-            raise ValueError("Host '{0}' not connected.\n".format(str(ca)))
-
-        try:
-            result = cs.send(data) #result is number of bytes sent
-        except socket.error as ex:
-            emsg = "socket.error = {0}: sending from {1} to {2}\n".format(ex, self.ha, ca)
-            console.profuse(emsg)
-            result = 0
-            raise
-
-        console.profuse("Server at {0} sent {1} bytes\n".format(str(self.ha), result))
-
-        if self.log and self.txLog:
-            self.txLog.write("%s %s bytes\n%s\n" %
-                             (str(ca), str(result), repr(data)))
-
-        return result

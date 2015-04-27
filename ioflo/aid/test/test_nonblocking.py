@@ -1067,117 +1067,6 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testSocketTcpNb(self):
-        """
-        Test Class SocketTcpNb
-        """
-        console.terse("{0}\n".format(self.testSocketTcpNb.__doc__))
-
-        alpha = nonblocking.SocketTcpNb(port = 6101)
-        self.assertIs(alpha.reopen(), True)
-        alphaHa = ("127.0.0.1", alpha.ha[1])
-
-        beta = nonblocking.SocketTcpNb(port = 6102)
-        self.assertIs(beta.reopen(), True)
-        betaHa = ("127.0.0.1", beta.ha[1])
-
-        gamma = nonblocking.SocketTcpNb(port = 6103)
-        self.assertIs(gamma.reopen(), True)
-        gammaHa = ("127.0.0.1", gamma.ha[1])
-
-        console.terse("Connecting beta to alpha\n")
-        result = beta.connect(alphaHa)
-        while alphaHa not in beta.peers:
-            beta.service()
-            alpha.service()
-
-        betaPeerCa, betaPeerCs = beta.peers.items()[0]
-        alphaPeerCa, alphaPeerCs = alpha.peers.items()[0]
-
-        self.assertEqual(betaPeerCs.getpeername(), betaPeerCa)
-        self.assertEqual(betaPeerCs.getsockname(), alphaPeerCa)
-        self.assertEqual(alphaPeerCs.getpeername(), alphaPeerCa)
-        self.assertEqual(alphaPeerCs.getsockname(), betaPeerCa)
-
-        msgOut = b"beta sends to alpha"
-        count = beta.send(msgOut, alphaHa)
-        self.assertEqual(count, len(msgOut))
-        time.sleep(0.05)
-        receptions = alpha.receiveAll()
-        msgIn, src = receptions[0]
-        self.assertEqual(msgOut, msgIn)
-
-        # read without sending
-        ca, cs = alpha.peers.items()[0]
-        msgIn, src = alpha.receive(ca)
-        self.assertEqual(msgIn, '')
-        self.assertEqual(src, None)
-
-        # send multiple
-        msgOut1 = b"First Message"
-        count = beta.send(msgOut1, alphaHa)
-        self.assertEqual(count, len(msgOut1))
-        msgOut2 = b"Second Message"
-        count = beta.send(msgOut2, alphaHa)
-        self.assertEqual(count, len(msgOut2))
-        time.sleep(0.05)
-        ca, cs = alpha.peers.items()[0]
-        msgIn, src = alpha.receive(ca)
-        self.assertEqual(msgIn, msgOut1 + msgOut2)
-        self.assertEqual(src, ca)
-
-
-        # build message too big to fit in buffer
-        sizes = beta.actualBufSizes()
-        size = sizes[0]
-        msgOut = b""
-        count = 0
-        while (len(msgOut) <= size * 4):
-            msgOut += ns2b("{0:0>7d} ".format(count))
-            count += 1
-        self.assertTrue(len(msgOut) >= size * 4)
-
-        count = 0
-        while count < len(msgOut):
-            count += beta.send(msgOut[count:], alphaHa)
-        self.assertEqual(count, len(msgOut))
-        time.sleep(0.05)
-        msgIn = b''
-        ca, cs = alpha.peers.items()[0]
-        count = 0
-        while len(msgIn) < len(msgOut):
-            rx, src = alpha.receive(ca, bs=len(msgOut))
-            count += 1
-            msgIn += rx
-            time.sleep(0.05)
-
-        self.assertTrue(count > 1)
-        self.assertEqual(msgOut, msgIn)
-        self.assertEqual(src, ca)
-
-        # Close connection on far side and then read from it near side
-        ca, cs = beta.peers.items()[0]
-        beta.unconnectPeer(ca)
-        self.assertEqual(len(beta.peers), 0)
-        time.sleep(0.05)
-        msgOut = b"Send on unconnected socket"
-        with self.assertRaises(ValueError):
-            count = beta.send(msgOut, ca)
-
-        #beta.closeshut(cs)
-        with self.assertRaises(socket.error) as cm:
-            count = cs.send(msgOut)
-        self.assertTrue(cm.exception.errno == errno.EBADF)
-
-        ca, cs = alpha.peers.items()[0]
-        msgIn, src = alpha.receive(ca)
-        self.assertEqual(msgIn, b'')
-        self.assertEqual(src, ca)  # means closed if empty but ca not None
-
-
-        alpha.closeAll()
-        beta.closeAll()
-        gamma.closeAll()
 
 
 def runOne(test):
@@ -1198,8 +1087,7 @@ def runSome():
              'testSocketUxdNb',
              'testClientServer',
              'testClientServerServiceCat',
-             'testClientServerService',
-             'testSocketTcpNb', ]
+             'testClientServerService',]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
