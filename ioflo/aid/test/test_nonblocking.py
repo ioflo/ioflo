@@ -1145,8 +1145,8 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         beta.clearRxbs()
-        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: 103\r\nContent-Type: application/json\r\n'))
-        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {}, "verb": "GET", "url": "http://sibook.private:8080/echo", "action": null}'))
+        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: 104\r\nContent-Type: application/json\r\n'))
+        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {}, "verb": "GET", "url": "https://sibook.private:8080/echo", "action": null}'))
 
         beta.close()
 

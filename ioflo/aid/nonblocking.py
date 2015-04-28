@@ -1657,6 +1657,7 @@ else:
             """
             super(OutgoerTLS, self).__init__(**kwa)
 
+            self.wrapped = False  # True once socket is wrapped
             self.handshaked = False  # True is ssl handshake completed
             self.version = ssl.PROTOCOL_SSLv23 if version is None else version
             self.certify = ssl.CERT_OPTIONAL if certify is None else certify
@@ -1702,19 +1703,18 @@ else:
 
             ciphers 'AES256-SHA:RC4-SHA'
             """
-            if not self.connected or self.cutoff:
-                raise ValueError("Must connect before handshake")
-
-            self.cs = ssl.wrap_socket(self.cs,
-                                      keyfile=self.keypath,
-                                      certfile=self.certpath,
-                                      server_side=False,
-                                      cert_reqs=self.certify,
-                                      ssl_version=self.version,
-                                      ca_certs=self.cafilepath,
-                                      do_handshake_on_connect=False,
-                                      suppress_ragged_eofs=True,
-                                      ciphers=None)
+            if not self.wrapped:
+                self.cs = ssl.wrap_socket(self.cs,
+                                          keyfile=self.keypath,
+                                          certfile=self.certpath,
+                                          server_side=False,
+                                          cert_reqs=self.certify,
+                                          ssl_version=self.version,
+                                          ca_certs=self.cafilepath,
+                                          do_handshake_on_connect=False,
+                                          suppress_ragged_eofs=True,
+                                          ciphers=None)
+                self.wrapped = True
 
             try:
                 self.cs.do_handshake()
