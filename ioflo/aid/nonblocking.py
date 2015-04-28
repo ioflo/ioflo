@@ -1717,8 +1717,10 @@ else:
             try:
                 self.cs.do_handshake()
             except ssl.SSLWantReadError as ex:
+                #select.select([self.cs], [], [],  timeout=0)
                 return False
             except ssl.SSLWantWriteError as ex:
+                #select.select([], [self.cs], [],  timeout=0)
                 return False
             except Exception as ex:
                 self.shutclose()

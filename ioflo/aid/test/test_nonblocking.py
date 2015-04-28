@@ -1093,11 +1093,11 @@ class BasicTestCase(unittest.TestCase):
         beta = nonblocking.OutgoerTLS(ha=serverHa,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
-                                      version=ssl.PROTOCOL_TLSv1,
-                                      certify=ssl.CERT_NONE,
+                                      version=None,
+                                      certify=ssl.CERT_REQUIRED,
                                       keypath=None,
                                       certpath=None,
-                                      cafilepath=None,
+                                      cafilepath=cafilepath,
                                       serverHostname="localhost")
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
@@ -1121,7 +1121,7 @@ class BasicTestCase(unittest.TestCase):
             beta.serviceHandshake()
             if beta.handshaked:
                 break
-            time.sleep(0.05)
+            time.sleep(0.01)
 
         self.assertIs(beta.handshaked, True)
 
