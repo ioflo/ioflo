@@ -1185,5 +1185,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runSome()#only run some
 
-    runOne('testClientTLS')
+    #runOne('testClientTLS')
+
+    runOne('testClientServerService')
 
