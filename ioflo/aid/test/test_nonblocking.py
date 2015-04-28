@@ -613,12 +613,20 @@ class BasicTestCase(unittest.TestCase):
         msgIn = gamma.receive()
         self.assertEqual(msgOut, msgIn)
         msgIn = gamma.receive()
-        self.assertEqual(msgIn, None)  # alpha shutdown not detected
-        self.assertIs(gamma.cutoff, False)
+        if 'linux' in sys.platform:
+            self.assertEqual(msgIn, b'')  # alpha shutdown detected
+            self.assertIs(gamma.cutoff, True)
+        else:
+            self.assertEqual(msgIn, None)  # alpha shutdown not detected
+            self.assertIs(gamma.cutoff, False)
         time.sleep(0.05)
         msgIn = gamma.receive()
-        self.assertEqual(msgIn, None)  # alpha shutdown not detected
-        self.assertIs(gamma.cutoff, False)
+        if 'linux' in sys.platform:
+            self.assertEqual(msgIn, b'')  # alpha shutdown detected
+            self.assertIs(gamma.cutoff, True)
+        else:
+            self.assertEqual(msgIn, None)  # alpha shutdown not detected
+            self.assertIs(gamma.cutoff, False)
 
         ixGamma.shutclose()  # close alpha
         del alpha.ixes[ixGamma.ca]
@@ -694,7 +702,10 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, msgIn)
         time.sleep(0.05)
         msgIn = ixBeta.receive()
-        self.assertEqual(msgIn, None)  # alpha does not detect shutdown
+        if 'linux' in sys.platform:
+            self.assertEqual(msgIn, b'')  # alpha does detect shutdown
+        else:
+            self.assertEqual(msgIn, None)  # alpha does not detect shutdown
         beta.close()
         time.sleep(0.05)
         msgIn = ixBeta.receive()
