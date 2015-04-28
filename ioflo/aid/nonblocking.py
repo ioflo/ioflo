@@ -1629,38 +1629,44 @@ else:
         Nonblocking TCP Socket Client Class.
         """
         def __init__(self,
-                     context=None,
+                     version=None,
+                     certify=None,
                      keypath=None,
                      certpath=None,
-                     checkHostName=None,
+                     cafilepath=None,
+                     checkHostname=False,
+                     serverHostname="",
                      **kwa):
             """
             Initialization method for instance.
 
-            context = context object for tls/ssl
-            keypath = pathname of private client side PKI key file
-            certpath = pathname of puble server side PKI cert file
+            version = ssl version
+            certify = certificate requirement
+                      if None then default of CERT_OPTIONAL
+                      ssl.CERT_NONE = 0
+                      ssl.CERT_OPTIONAL = 1
+                      ssl.CERT_REQUIRED = 2
+
+            keypath = pathname of local client side PKI private key file path
+            certpath = pathname of local client side PKI public cert file path
             checkHostname = Flag is should verify server hostName
 
-            If context is None then create default context
-            If certpath Then apply to context
-            If keypath Then apply to context
 
             """
-            super(OutgoerTLS, self).init(f**kwa)
+            super(OutgoerTLS, self).__init__(**kwa)
 
-            if context is None:
-                context = ssl._create_default_https_context()
-            verify = context.verify_mode != ssl.CERT_NONE
-            if checkHostname is None:
-                checkHostname = context.check_hostname
-            if checkHostname and not verify:
+            self.handshaked = False  # True is ssl handshake completed
+            self.version = ssl.PROTOCOL_SSLv23 if version is None else version
+            self.certify = ssl.CERT_OPTIONAL if certify is None else certify
+            self.keypath = keypath
+            self.certpath = certpath
+            self.cafilepath = cafilepath
+            self.checkHostname = True if checkHostname else False
+            self.serverHostname = serverHostname
+
+            if checkHostname and not self.certify:
                 raise ValueError("Check Hostname needs a SSL context with "
                                  "either CERT_OPTIONAL or CERT_REQUIRED")
-            if key_file or cert_file:
-                context.load_cert_chain(certpath, keypath)
-            self.context = context
-            self.checkHostname = checkHostname
 
         def connect(self):
             """
@@ -1677,17 +1683,160 @@ else:
             if result not in [0, errno.EISCONN]:  # not yet connected
                 return False  # try again later
 
-            self.cs = self.context.wrap_socket(self.cs,
-                                               do_handshake_on_connect=False,
-                                               server_hostname=self.ha)
+            self.connected = True
+            self.cutoff = False
+            # now self.cs has new virtual port see self.cs.getsockname()
+            self.ca = self.cs.getsockname()  # resolved local connection address
+            # self.cs.getpeername() is self.ha
+            self.ha = self.cs.getpeername()  # resolved remote connection address
+
+            return True
+
+        def handshake(self):
+            """
+            Attempt nonblocking ssl handshake to .ha
+            Returns True if successful
+            Returns False if not so try again later
+
+            ciphers 'AES256-SHA:RC4-SHA'
+            """
+            if not self.connected or self.cutoff:
+                raise ValueError("Must connect before handshake")
+
+            self.cs = ssl.wrap_socket(self.cs,
+                                      keyfile=self.keypath,
+                                      certfile=self.certpath,
+                                      server_side=False,
+                                      cert_reqs=self.certify,
+                                      ssl_version=self.version,
+                                      ca_certs=self.cafilepath,
+                                      do_handshake_on_connect=False,
+                                      suppress_ragged_eofs=True,
+                                      ciphers=None)
 
             try:
-                s.do_handshake()
+                self.cs.do_handshake()
             except ssl.SSLWantReadError as ex:
-                #select.select([s], [], [])
                 return False
             except ssl.SSLWantWriteError as ex:
-                #select.select([], [s], [])
+                return False
+            except Exception as ex:
+                self.shutclose()
+                raise
+
+            if self.checkHostname:
+                try:
+                    ssl.match_hostname(self.cs.getpeercert(), self.serverHostname)
+                except Exception as ex:
+                    self.shutclose()
+                    raise
+
+            self.handshaked = True
+            return True
+
+        def serviceHandshake(self):
+            """
+            Service handshake attempt
+            If not already handshaked make a nonblocking attempt
+            Returns .handshaked
+            """
+            if not self.handshaked:
+                self.handshake()
+
+            return self.handshaked
+
+    class OutgoerTLSContext(Outgoer):
+        """
+        Outgoer with Nonblocking TLS/SSL support
+        Nonblocking TCP Socket Client Class.
+        """
+        def __init__(self,
+                     context=None,
+                     keypath=None,
+                     certpath=None,
+                     cafilepath=None,
+                     checkHostname=None,
+                     serverHostname="",
+                     **kwa):
+            """
+            Initialization method for instance.
+
+            context = context object for tls/ssl
+            keypath = pathname of local client side PKI private key file path
+            certpath = pathname of local client side PKI public cert file path
+            checkHostname = Flag is should verify server hostName
+
+            If context is None then create default context
+            If certpath Then apply to context
+            If keypath Then apply to context
+
+            ssl.CERT_NONE = 0
+            ssl.CERT_OPTIONAL = 1
+            ssl.CERT_REQUIRED = 2
+            """
+            super(OutgoerTLS, self).__init__(**kwa)
+
+            self.handshaked = False  # True is ssl handshake completed
+
+            if context is None:
+                context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH,
+                                                     cafile=cafilepath)
+
+            if checkHostname is None:
+                checkHostname = context.check_hostname
+
+            verify = context.verify_mode != ssl.CERT_NONE
+            if checkHostname and not verify:
+                raise ValueError("Check Hostname needs a SSL context with "
+                                 "either CERT_OPTIONAL or CERT_REQUIRED")
+            if keypath or certpath:
+                context.load_cert_chain(certfile=certpath, keyfile=keypath)
+            self.context = context
+            self.checkHostname = checkHostname
+            self.serverHostname = serverHostname
+
+        def connect(self):
+            """
+            Attempt nonblocking connect to .ha
+            Returns True if successful
+            Returns False if not so try again later
+            """
+            try:
+                result = self.cs.connect_ex(self.ha)  # async connect
+            except socket.error as ex:
+                console.terse("socket.error = {0}\n".format(ex))
+                raise
+
+            if result not in [0, errno.EISCONN]:  # not yet connected
+                return False  # try again later
+
+            self.connected = True
+            self.cutoff = False
+            # now self.cs has new virtual port see self.cs.getsockname()
+            self.ca = self.cs.getsockname()  # resolved local connection address
+            # self.cs.getpeername() is self.ha
+            self.ha = self.cs.getpeername()  # resolved remote connection address
+
+            return True
+
+        def handshake(self):
+            """
+            Attempt nonblocking ssl handshake to .ha
+            Returns True if successful
+            Returns False if not so try again later
+            """
+            if not self.connected or self.cutoff:
+                raise ValueError("Must connect before handshake")
+
+            self.cs = self.context.wrap_socket(self.cs,
+                                               do_handshake_on_connect=False,
+                                               server_hostname=self.serverHostname)
+
+            try:
+                self.cs.do_handshake()
+            except ssl.SSLWantReadError as ex:
+                return False
+            except ssl.SSLWantWriteError as ex:
                 return False
             except Exception as ex:
                 self.shutclose()
@@ -1700,14 +1849,19 @@ else:
                     self.shutclose()
                     raise
 
-            self.connected = True
-            self.cutoff = False
-            # now self.cs has new virtual port see self.cs.getsockname()
-            self.ca = self.cs.getsockname()  # resolved local connection address
-            # self.cs.getpeername() is self.ha
-            self.ha = self.cs.getpeername()  # resolved remote connection address
-
+            self.handshaked = True
             return True
+
+        def serviceHandshake(self):
+            """
+            Service handshake attempt
+            If not already handshaked make a nonblocking attempt
+            Returns .handshaked
+            """
+            if not self.handshaked:
+                self.handshake()
+
+            return self.handshaked
 
         #def connect(self):
             #"Connect to a host on a given (SSL) port."
