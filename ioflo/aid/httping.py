@@ -536,10 +536,16 @@ class HttpResponseNb(object):
             # sending a valid response.
             raise BadStatusLine(line)
         try:
-            version, status, reason = line.split(maxsplit=2)
+            if sys.version > '3':
+                version, status, reason = line.split(maxsplit=2)
+            else:
+                version, status, reason = line.split()
         except ValueError:
             try:
-                version, status = line.split(maxsplit1=1)
+                if sys.version > '3':
+                    version, status = line.split(maxsplit1=1)
+                else:
+                    version, status = line.split()
                 reason = ""
             except ValueError:
                 # empty version will cause next test to fail.
@@ -719,8 +725,8 @@ class HttpResponseNb(object):
         if lines:
             #email Parser wants to see strings rather than bytes.
             #So convert bytes to string
-            lines.extend((b'', b''))  # add blank line for HeaderParser
-            hstring = CRLF.join(lines).decode('iso-8859-1')
+            lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
+            hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
             self.headers = HeaderParser().parsestr(hstring)
 
         # are we using the chunked-style of transfer encoding?
@@ -805,7 +811,7 @@ class HttpResponseNb(object):
 
         size, sep, exts = line.partition(b';')
         try:
-            size = int(size.strip(), 16)
+            size = int(size.strip().decode('ascii'), 16)
         except ValueError:  # bad size
             raise
 
