@@ -1078,11 +1078,10 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-
-
     def testClientTLS(self):
         """
         Test OutgoerTLS class  NonBlocking TCP/IP with TLS client
+        Wrapped with ssl context
         """
         try:
             import ssl
@@ -1104,11 +1103,13 @@ class BasicTestCase(unittest.TestCase):
         beta = nonblocking.OutgoerTLS(ha=serverHa,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
-                                      version= ssl.PROTOCOL_TLSv1,
+                                      context=None,
+                                      version=ssl.PROTOCOL_TLSv1,
                                       certify=ssl.CERT_REQUIRED,
-                                      keypath=None,
-                                      certpath=None,
+                                      keypath=keypath,
+                                      certpath=certpath,
                                       cafilepath=cafilepath,
+                                      checkHostname=True,
                                       serverHostname="localhost")
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
@@ -1134,6 +1135,109 @@ class BasicTestCase(unittest.TestCase):
                 break
             time.sleep(0.01)
 
+        self.assertIs(beta.handshaked, True)
+
+        msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
+        beta.transmit(msgOut)
+        while beta.txes:
+            beta.serviceTxes()
+            time.sleep(0.05)
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        msgIn = bytes(beta.rxbs)
+        beta.clearRxbs()
+        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: 104\r\nContent-Type: application/json\r\n'))
+        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {}, "verb": "GET", "url": "https://sibook.private:8080/echo", "action": null}'))
+
+        beta.close()
+
+        # repeat but only call serviceHandshake which calls connect
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting and Handshaking beta\n")
+        while True:
+            beta.serviceHandshake()
+            if beta.handshaked:
+                break
+            time.sleep(0.01)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertIs(beta.handshaked, True)
+
+        msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
+        beta.transmit(msgOut)
+        while beta.txes:
+            beta.serviceTxes()
+            time.sleep(0.05)
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        msgIn = bytes(beta.rxbs)
+        beta.clearRxbs()
+        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: 104\r\nContent-Type: application/json\r\n'))
+        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {}, "verb": "GET", "url": "https://sibook.private:8080/echo", "action": null}'))
+
+        beta.close()
+
+        wlBetaRx = wireLogBeta.getRx()
+        wlBetaTx = wireLogBeta.getTx()
+        self.assertEqual(wlBetaRx, wlBetaTx)  # since wlog is same
+
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testClientTLSDefault(self):
+        """
+        Test OutgoerTLS class  NonBlocking TCP/IP with TLS client
+        Wrapped with ssl default context
+        """
+        try:
+            import ssl
+        except ImportError:
+            return
+
+        console.terse("{0}\n".format(self.testClientTLSDefault.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogBeta.reopen()
+        #serverHa = ("127.0.0.1", 8080)
+        serverHa = ("localhost", 8080)
+        #serverHa = ("google.com", 443)
+
+        keypath = '/etc/pki/tls/certs/client_key.pem'  # local private key
+        certpath = '/etc/pki/tls/certs/client_cert.pem'  # local public cert
+        cafilepath = '/etc/pki/tls/certs/localhost.crt' # remote public cert
+        beta = nonblocking.OutgoerTLS(ha=serverHa,
+                                      bufsize=131072,
+                                      wlog=wireLogBeta,
+                                      context=None,
+                                      version=None,
+                                      certify=None,
+                                      keypath=keypath,
+                                      certpath=certpath,
+                                      cafilepath=cafilepath,
+                                      checkHostname=None,
+                                      serverHostname="localhost")
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting  and Handshaking beta\n")
+        while True:
+            beta.serviceHandshake()
+            if beta.handshaked:
+                break
+            time.sleep(0.01)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertIs(beta.handshaked, True)
 
         msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
@@ -1177,6 +1281,7 @@ def runSome():
              'testClientServerServiceCat',
              'testClientServerService',
              'testClientTLS',
+             'testClientTLSDefault',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1194,9 +1299,8 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
-    runOne('testClientTLS')
+    #runOne('testClientTLS')
 
-    #runOne('testClientServerService')
 
