@@ -1140,6 +1140,8 @@ class Incomer(object):
         self.txes = deque()  # deque of data to send
         self.rxes = deque() # deque of data received
         self.rxbs = bytearray()  # bytearray of data received
+        if self.cs:
+            self.cs.setblocking(0)
 
     def shutdown(self, how=socket.SHUT_RDWR):
         """
