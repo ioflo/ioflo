@@ -1104,7 +1104,7 @@ class BasicTestCase(unittest.TestCase):
         beta = nonblocking.OutgoerTLS(ha=serverHa,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
-                                      version=None,
+                                      version= ssl.PROTOCOL_TLSv1,
                                       certify=ssl.CERT_REQUIRED,
                                       keypath=None,
                                       certpath=None,
@@ -1196,7 +1196,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runSome()#only run some
 
-    #runOne('testClientTLS')
+    runOne('testClientTLS')
 
-    runOne('testClientServerService')
+    #runOne('testClientServerService')
 
