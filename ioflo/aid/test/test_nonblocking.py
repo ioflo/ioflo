@@ -529,7 +529,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting gamma to alpha\n")
         while True:
             gamma.serviceConnect()
-            alpha.serviceAccepts()
+            alpha.serviceAccepteds()
             if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -643,7 +643,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to alpha\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceAccepts()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -722,7 +722,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting gamma to alpha\n")
         while True:
             gamma.serviceConnect()
-            alpha.serviceAccepts()
+            alpha.serviceAccepteds()
             if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -764,7 +764,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting gamma to alpha\n")
         while True:
             gamma.serviceConnect()
-            alpha.serviceAccepts()
+            alpha.serviceAccepteds()
             if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -1146,8 +1146,8 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         beta.clearRxbs()
-        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: 104\r\nContent-Type: application/json\r\n'))
-        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {}, "verb": "GET", "url": "https://sibook.private:8080/echo", "action": null}'))
+        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: '))
+        self.assertTrue(msgIn.endswith(b'/echo", "action": null}'))
 
         beta.close()
 
@@ -1178,8 +1178,8 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         beta.clearRxbs()
-        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: 104\r\nContent-Type: application/json\r\n'))
-        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {}, "verb": "GET", "url": "https://sibook.private:8080/echo", "action": null}'))
+        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: '))
+        self.assertTrue(msgIn.endswith(b'/echo", "action": null}'))
 
         beta.close()
 
@@ -1249,8 +1249,8 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         beta.clearRxbs()
-        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: 104\r\nContent-Type: application/json\r\n'))
-        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {}, "verb": "GET", "url": "https://sibook.private:8080/echo", "action": null}'))
+        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: '))
+        self.assertTrue(msgIn.endswith(b'/echo", "action": null}'))
 
         beta.close()
 
@@ -1403,8 +1403,8 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
-    runOne('testClientServerTLSService')
+    #runOne('testClientTLS')
 
 
