@@ -416,11 +416,11 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testClientServer(self):
+    def testTcpClientServer(self):
         """
         Test Classes Client (Outgoer) and Server with Incomers
         """
-        console.terse("{0}\n".format(self.testClientServer.__doc__))
+        console.terse("{0}\n".format(self.testTcpClientServer.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
@@ -807,12 +807,12 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testClientServerServiceCat(self):
+    def testTcpClientServerServiceCat(self):
         """
         Test Classes ServerSocketTcpNb service methods that use catRxes
 
         """
-        console.terse("{0}\n".format(self.testClientServerServiceCat.__doc__))
+        console.terse("{0}\n".format(self.testTcpClientServerServiceCat.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
@@ -946,11 +946,11 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testClientServerService(self):
+    def testTcpClientServerService(self):
         """
         Test Classes ServerSocketTcpNb service methods
         """
-        console.terse("{0}\n".format(self.testClientServerService.__doc__))
+        console.terse("{0}\n".format(self.testTcpClientServerService.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         userDirpath = os.path.join('~', '.ioflo', 'test')
@@ -1859,9 +1859,9 @@ def runSome():
              'testWireLogBuffify',
              'testSocketUdpNb',
              'testSocketUxdNb',
-             'testClientServer',
-             'testClientServerServiceCat',
-             'testClientServerService',
+             'testTcpClientServer',
+             'testTcpClientServerServiceCat',
+             'testTcpClientServerService',
              'testTLSConnectionDefault',
              'testTLSConnectionVerifyNeither',
              'testTLSConnectionClientVerifyServerCert',
