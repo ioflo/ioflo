@@ -1621,6 +1621,69 @@ try:
 except ImportError:
     pass
 else:
+
+    def initServerContext(context=None,
+                    version=None,
+                    certify=None,
+                    keypath=None,
+                    certpath=None,
+                    cafilepath=None
+                    ):
+        """
+        Initialize and return context for TLS Server
+        IF context is None THEN create a context
+
+        IF version is None THEN create context using ssl library default
+        ELSE create context with version
+
+        If certify is not None then use certify value provided Otherwise use default
+
+        context = context object for tls/ssl If None use default
+        version = ssl version If None use default
+        certify = cert requirement If None use default
+                  ssl.CERT_NONE = 0
+                  ssl.CERT_OPTIONAL = 1
+                  ssl.CERT_REQUIRED = 2
+        keypath = pathname of local server side PKI private key file path
+                  If given apply to context
+        certpath = pathname of local server side PKI public cert file path
+                  If given apply to context
+        cafilepath = Cert Authority file path to use to verify client cert
+                  If given apply to context
+        """
+        if context is None:  # create context
+            if not version:  # use default context
+                context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+                context.verify_mode = certify if certify is not None else ssl.CERT_REQUIRED
+
+            else:  # create context with specified protocol version
+                context = ssl.SSLContext(version)
+                # disable bad protocols versions
+                context.options |= ssl.OP_NO_SSLv2
+                context.options |= ssl.OP_NO_SSLv3
+                # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
+                context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
+                # Prefer the server's ciphers by default fro stronger encryption
+                context.options |= getattr(ssl._ssl, "OP_CIPHER_SERVER_PREFERENCE", 0)
+                # Use single use keys in order to improve forward secrecy
+                context.options |= getattr(ssl._ssl, "OP_SINGLE_DH_USE", 0)
+                context.options |= getattr(ssl._ssl, "OP_SINGLE_ECDH_USE", 0)
+                # disallow ciphers with known vulnerabilities
+                context.set_ciphers(_RESTRICTED_SERVER_CIPHERS)
+                context.verify_mode = certify if certify is not None else ssl.CERT_REQUIRED
+
+            if cafilepath:
+                context.load_verify_locations(cafile=cafilepath,
+                                              capath=None,
+                                              cadata=None)
+            elif context.verify_mode != ssl.CERT_NONE:
+                context.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
+
+            if keypath or certpath:
+                context.load_cert_chain(certfile=certpath, keyfile=keypath)
+        return context
+
+
     class OutgoerTLS(Outgoer):
         """
         Outgoer with Nonblocking TLS/SSL support
@@ -1630,14 +1693,22 @@ else:
                      context=None,
                      version=None,
                      certify=None,
+                     hostify=None,
+                     certedhost="",
                      keypath=None,
                      certpath=None,
                      cafilepath=None,
-                     checkHostname=None,
-                     serverHostname="",
                      **kwa):
             """
             Initialization method for instance.
+
+            IF no context THEN create one
+
+            IF no version THEN create using library default
+
+            IF certify is not None then use certify else use default
+
+            IF hostify is not none the use hostify else use default
 
             context = context object for tls/ssl If None use default
             version = ssl version If None use default
@@ -1651,8 +1722,8 @@ else:
                       If given apply to context
             cafilepath = Cert Authority file path to use to verify server cert
                       If given apply to context
-            checkHostname = verify server hostName If None use default
-            serverHostname = Serverhostnamne to check against
+            hostify = verify server hostName If None use default
+            certedhost = server's certificate common name (hostname) to check against
             """
             super(OutgoerTLS, self).__init__(**kwa)
 
@@ -1661,8 +1732,10 @@ else:
             if context is None:  # create context
                 if not version:  # use default context
                     context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-                    checkHostname = context.check_hostname
-                    certify = context.verify_mode
+                    hostify = hostify if hostify is not None else context.check_hostname
+                    context.check_hostname = hostify
+                    certify = certify if certify is not None else context.verify_mode
+                    context.verify_mode = certify
 
                 else:  # create context with specified protocol version
                     context = ssl.SSLContext(version)
@@ -1671,23 +1744,24 @@ else:
                     context.options |= ssl.OP_NO_SSLv3
                     # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
                     context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
-                    context.verify_mode = ssl.CERT_REQUIRED if certify is None else certify
-                    context.check_hostname = True if checkHostname else False
+                    context.check_hostname = hostify = True if hostify else False
+                    context.verify_mode = certify = ssl.CERT_REQUIRED if certify is None else certify
+
 
             self.context = context
-            self.serverHostname = serverHostname
+            self.certedhost = certedhost
 
             if cafilepath:
                 context.load_verify_locations(cafile=cafilepath,
                                               capath=None,
                                               cadata=None)
-            elif context.verify_mode != CERT_NONE:
+            elif context.verify_mode != ssl.CERT_NONE:
                 context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
 
             if keypath or certpath:
                 context.load_cert_chain(certfile=certpath, keyfile=keypath)
 
-            if checkHostname and certify == ssl.CERT_NONE:
+            if hostify and certify == ssl.CERT_NONE:
                 raise ValueError("Check Hostname needs a SSL context with "
                                  "either CERT_OPTIONAL or CERT_REQUIRED")
 
@@ -1713,11 +1787,67 @@ else:
             """
             result = super(OutgoerTLS, self).connect()
             if result:  # truthy means connected
-                if not self.serverHostname:
-                    self.serverHostname = self.ha[0]
+                if not self.certedhost:
+                    self.certedhost = self.ha[0]
                 self.wrap()
 
             return result
+
+        def wrap(self):
+            """
+            Wrap socket .cs in ssl context
+            """
+            self.cs = self.context.wrap_socket(self.cs,
+                                               server_side=False,
+                                               do_handshake_on_connect=False,
+                                               server_hostname=self.certedhost)
+
+        def handshake(self):
+            """
+            Attempt nonblocking ssl handshake to .ha
+            Returns True if successful
+            Returns False if not so try again later
+            """
+            try:
+                self.cs.do_handshake()
+            except ssl.SSLWantReadError as ex:
+                return False
+            except ssl.SSLWantWriteError as ex:
+                return False
+            except ssl.SSLEOFError as ex:
+                self.shutclose()
+                raise  # should give up here nicely
+            except ssl.SSLError as ex:
+                self.shutclose()
+                raise
+            except OSError as ex:
+                self.shutclose()
+                if ex.args[0] == errno.ECONNABORTED:
+                    # should give up here nicely
+                    raise
+                raise
+            except Exception as ex:
+                self.shutclose()
+                raise
+
+            self.handshaked = True
+            return True
+
+        def serviceHandshake(self):
+            """
+            Service connection and handshake attempt
+            If not already connected and handshaked  Then
+                 make nonblocking attempt
+            Returns .handshaked
+            """
+            if not self.handshaked:
+                if not self.connected:
+                    self.connect()
+
+                if self.connected:
+                    self.handshake()
+
+            return self.handshaked
 
         def receive(self):
             """
@@ -1779,14 +1909,68 @@ else:
 
             return result
 
+
+    class IncomerTLS(Incomer):
+        """
+        Incomer with Nonblocking TLS/SSL support
+        Manager class for incoming nonblocking TCP connections.
+        """
+        def __init__(self,
+                     context=None,
+                     version=None,
+                     certify=None,
+                     keypath=None,
+                     certpath=None,
+                     cafilepath=None,
+                     **kwa):
+
+            """
+            Initialization method for instance.
+            context = context object for tls/ssl If None use default
+            version = ssl version If None use default
+            certify = cert requirement If None use default
+                      ssl.CERT_NONE = 0
+                      ssl.CERT_OPTIONAL = 1
+                      ssl.CERT_REQUIRED = 2
+            keypath = pathname of local server side PKI private key file path
+                      If given apply to context
+            certpath = pathname of local server side PKI public cert file path
+                      If given apply to context
+            cafilepath = Cert Authority file path to use to verify client cert
+                      If given apply to context
+            """
+            super(IncomerTLS, self).__init__(**kwa)
+
+            self.handshaked = False  # True once ssl handshake completed
+
+            self.context = initServerContext(context=context,
+                                        version=version,
+                                        certify=certify,
+                                        keypath=keypath,
+                                        certpath=certpath,
+                                        cafilepath=cafilepath
+                                      )
+            self.wrap()
+
+        def shutclose(self):
+            """
+            Shutdown and close connected socket .cs
+            """
+            if self.cs:
+                self.shutdown()
+                self.cs.close()  #close socket
+                self.cs = None
+                self.handshaked = False
+
+        close = shutclose  # alias
+
         def wrap(self):
             """
             Wrap socket .cs in ssl context
             """
             self.cs = self.context.wrap_socket(self.cs,
-                                               server_side=False,
-                                               do_handshake_on_connect=False,
-                                               server_hostname=self.serverHostname)
+                                               server_side=True,
+                                               do_handshake_on_connect=False)
 
         def handshake(self):
             """
@@ -1827,123 +2011,9 @@ else:
             Returns .handshaked
             """
             if not self.handshaked:
-                if not self.connected:
-                    self.connect()
-
-                if self.connected:
-                    self.handshake()
+                self.handshake()
 
             return self.handshaked
-
-    def initContext(context=None,
-                    version=None,
-                    certify=None,
-                    keypath=None,
-                    certpath=None,
-                    cafilepath=None
-                   ):
-        """
-        Initialize and return context
-        If context is None then create a context
-
-        context = context object for tls/ssl If None use default
-        version = ssl version If None use default
-        certify = cert requirement If None use default
-                  ssl.CERT_NONE = 0
-                  ssl.CERT_OPTIONAL = 1
-                  ssl.CERT_REQUIRED = 2
-        keypath = pathname of local server side PKI private key file path
-                  If given apply to context
-        certpath = pathname of local server side PKI public cert file path
-                  If given apply to context
-        cafilepath = Cert Authority file path to use to verify client cert
-                  If given apply to context
-        """
-        if context is None:  # create context
-            if not version:  # use default context
-                context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-                context.verify_mode = ssl.CERT_REQUIRED if certify is None else certify
-
-            else:  # create context with specified protocol version
-                context = ssl.SSLContext(version)
-                # disable bad protocols versions
-                context.options |= ssl.OP_NO_SSLv2
-                context.options |= ssl.OP_NO_SSLv3
-                # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
-                context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
-                # Prefer the server's ciphers by default fro stronger encryption
-                context.options |= getattr(ssl._ssl, "OP_CIPHER_SERVER_PREFERENCE", 0)
-                # Use single use keys in order to improve forward secrecy
-                context.options |= getattr(ssl._ssl, "OP_SINGLE_DH_USE", 0)
-                context.options |= getattr(ssl._ssl, "OP_SINGLE_ECDH_USE", 0)
-                # disallow ciphers with known vulnerabilities
-                context.set_ciphers(_RESTRICTED_SERVER_CIPHERS)
-                context.verify_mode = ssl.CERT_REQUIRED if certify is None else certify
-
-            if cafilepath:
-                context.load_verify_locations(cafile=cafilepath,
-                                              capath=None,
-                                              cadata=None)
-            elif context.verify_mode != CERT_NONE:
-                context.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
-
-            if keypath or certpath:
-                context.load_cert_chain(certfile=certpath, keyfile=keypath)
-        return context
-
-    class IncomerTLS(Incomer):
-        """
-        Incomer with Nonblocking TLS/SSL support
-        Manager class for incoming nonblocking TCP connections.
-        """
-        def __init__(self,
-                     context=None,
-                     version=None,
-                     certify=None,
-                     keypath=None,
-                     certpath=None,
-                     cafilepath=None,
-                     **kwa):
-
-            """
-            Initialization method for instance.
-            context = context object for tls/ssl If None use default
-            version = ssl version If None use default
-            certify = cert requirement If None use default
-                      ssl.CERT_NONE = 0
-                      ssl.CERT_OPTIONAL = 1
-                      ssl.CERT_REQUIRED = 2
-            keypath = pathname of local server side PKI private key file path
-                      If given apply to context
-            certpath = pathname of local server side PKI public cert file path
-                      If given apply to context
-            cafilepath = Cert Authority file path to use to verify client cert
-                      If given apply to context
-            """
-            super(IncomerTLS, self).__init__(**kwa)
-
-            self.handshaked = False  # True once ssl handshake completed
-
-            self.context = initContext(context=context,
-                                        version=version,
-                                        certify=certify,
-                                        keypath=keypath,
-                                        certpath=certpath,
-                                        cafilepath=cafilepath
-                                      )
-            self.wrap()
-
-        def shutclose(self):
-            """
-            Shutdown and close connected socket .cs
-            """
-            if self.cs:
-                self.shutdown()
-                self.cs.close()  #close socket
-                self.cs = None
-                self.handshaked = False
-
-        close = shutclose  # alias
 
         def receive(self):
             """
@@ -2009,57 +2079,6 @@ else:
 
             return result
 
-        def wrap(self):
-            """
-            Wrap socket .cs in ssl context
-            """
-            self.cs = self.context.wrap_socket(self.cs,
-                                               server_side=True,
-                                               do_handshake_on_connect=False)
-
-        def handshake(self):
-            """
-            Attempt nonblocking ssl handshake to .ha
-            Returns True if successful
-            Returns False if not so try again later
-            """
-            try:
-                self.cs.do_handshake()
-            except ssl.SSLWantReadError as ex:
-                return False
-            except ssl.SSLWantWriteError as ex:
-                return False
-            except ssl.SSLEOFError as ex:
-                self.shutclose()
-                raise  # should give up here nicely
-            except ssl.SSLError as ex:
-                self.shutclose()
-                raise
-            except OSError as ex:
-                self.shutclose()
-                if ex.args[0] == errno.ECONNABORTED:
-                    # should give up here nicely
-                    raise
-                raise
-            except Exception as ex:
-                self.shutclose()
-                raise
-
-            self.handshaked = True
-            return True
-
-        def serviceHandshake(self):
-            """
-            Service connection and handshake attempt
-            If not already connected and handshaked  Then
-                 make nonblocking attempt
-            Returns .handshaked
-            """
-            if not self.handshaked:
-                self.handshake()
-
-            return self.handshaked
-
 
     class ServerTLS(Server):
         """
@@ -2090,7 +2109,7 @@ else:
             self.certpath = certpath
             self.cafilepath = cafilepath
 
-            self.context = initContext(context=context,
+            self.context = initServerContext(context=context,
                                         version=version,
                                         certify=certify,
                                         keypath=keypath,
