@@ -1809,21 +1809,19 @@ else:
             """
             try:
                 self.cs.do_handshake()
-            except ssl.SSLWantReadError as ex:
-                return False
-            except ssl.SSLWantWriteError as ex:
-                return False
-            except ssl.SSLEOFError as ex:
-                self.shutclose()
-                raise  # should give up here nicely
             except ssl.SSLError as ex:
-                self.shutclose()
-                raise
+                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                    return False
+                elif ex.errno in (ssl.SSL_ERROR_EOF, ):
+                    self.shutclose()
+                    raise   # should give up here nicely
+                else:
+                    self.shutclose()
+                    raise
             except OSError as ex:
                 self.shutclose()
-                if ex.args[0] == errno.ECONNABORTED:
-                    # should give up here nicely
-                    raise
+                if ex.errno in (errno.ECONNABORTED, ):
+                    raise  # should give up here nicely
                 raise
             except Exception as ex:
                 self.shutclose()
@@ -1979,21 +1977,19 @@ else:
             """
             try:
                 self.cs.do_handshake()
-            except ssl.SSLWantReadError as ex:
-                return False
-            except ssl.SSLWantWriteError as ex:
-                return False
-            except ssl.SSLEOFError as ex:
-                self.shutclose()
-                raise  # should give up here nicely
             except ssl.SSLError as ex:
-                self.shutclose()
-                raise
+                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                    return False
+                elif ex.errno in (ssl.SSL_ERROR_EOF, ):
+                    self.shutclose()
+                    raise   # should give up here nicely
+                else:
+                    self.shutclose()
+                    raise
             except OSError as ex:
                 self.shutclose()
-                if ex.args[0] == errno.ECONNABORTED:
-                    # should give up here nicely
-                    raise
+                if ex.errno in (errno.ECONNABORTED, ):
+                    raise  # should give up here nicely
                 raise
             except Exception as ex:
                 self.shutclose()
