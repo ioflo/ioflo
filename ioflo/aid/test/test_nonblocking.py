@@ -40,7 +40,8 @@ class BasicTestCase(unittest.TestCase):
         """
 
         """
-        pass
+        certdirpath = os.path.dirname(os.path.abspath(sys.modules.get(__name__).__file__))
+        self.certdirpath = os.path.join(certdirpath, 'tls', 'certs')
 
     def tearDown(self):
         """
@@ -1351,13 +1352,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
+        serverCertpath = os.path.join(self.certdirpath, 'server_cert.pem')  # local server public cert
+        clientCafilepath = os.path.join(self.certdirpath, 'client.pem') # remote client public cert
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        clientKeypath = os.path.join(self.certdirpath, 'client_key.pem')  # local client private key
+        clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
+        serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
         alpha = nonblocking.ServerTLS(host='localhost',
                                       port = 6101,
@@ -1478,13 +1479,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
+        serverCertpath = os.path.join(self.certdirpath, 'server_cert.pem')  # local server public cert
+        clientCafilepath = os.path.join(self.certdirpath, 'client.pem') # remote client public cert
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        clientKeypath = os.path.join(self.certdirpath, 'client_key.pem')  # local client private key
+        clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
+        serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
         alpha = nonblocking.ServerTLS(host='localhost',
                                       port = 6101,
@@ -1605,13 +1606,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
+        serverCertpath = os.path.join(self.certdirpath, 'server_cert.pem')  # local server public cert
+        clientCafilepath = os.path.join(self.certdirpath, 'client.pem') # remote client public cert
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        clientKeypath = os.path.join(self.certdirpath, 'client_key.pem')  # local client private key
+        clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
+        serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
         alpha = nonblocking.ServerTLS(host='localhost',
                                       port = 6101,
@@ -1732,13 +1733,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
+        serverCertpath = os.path.join(self.certdirpath, 'server_cert.pem')  # local server public cert
+        clientCafilepath = os.path.join(self.certdirpath, 'client.pem') # remote client public cert
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        clientKeypath = os.path.join(self.certdirpath, 'client_key.pem')  # local client private key
+        clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
+        serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
         alpha = nonblocking.ServerTLS(host='localhost',
                                       port = 6101,
