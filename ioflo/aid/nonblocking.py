@@ -483,7 +483,7 @@ class SocketUdpNb(object):
             #sa = source address tuple (sourcehost, sourceport)
             data, sa = self.ss.recvfrom(self.bs)
         except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return (b'', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
@@ -637,7 +637,7 @@ class SocketUxdNb(object):
             #sa = source address tuple (sourcehost, sourceport)
             data, sa = self.ss.recvfrom(self.bs)
         except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return (b'', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
@@ -979,10 +979,10 @@ class Outgoer(object):
         try:
             data = self.cs.recv(self.bs)
         except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return None
             else:
-                emsg = ("socket.error = {0}: server at {1} receiving "
+                emsg = ("socket.error = {0}: Outgoer at {1} while receiving "
                         "from {2}\n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)
                 raise  # re-raise
@@ -1067,7 +1067,7 @@ class Outgoer(object):
             result = self.cs.send(data) #result is number of bytes sent
         except socket.error as ex:
             result = 0
-            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+            if ex.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
                 emsg = ("socket.error = {0}: Outgoer at {1} while sending "
                         "to {2} \n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)
@@ -1197,7 +1197,7 @@ class Incomer(object):
         try:
             data = self.cs.recv(self.bs)
         except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return None
             else:
                 emsg = ("socket.error = {0}: Incomer at {1} while receiving"
@@ -1286,7 +1286,7 @@ class Incomer(object):
             result = self.cs.send(data) #result is number of bytes sent
         except socket.error as ex:
             result = 0
-            if ex.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+            if ex.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
                 emsg = ("socket.error = {0}: Incomer at {1} while "
                         "sending to {2}\n".format(ex, self.ha, self.ca))
                 console.profuse(emsg)
@@ -1360,6 +1360,7 @@ class Acceptor(object):
         self.wlog = wlog
 
         self.ss = None  # listen socket for accepts
+        self.accepteds = deque()  # deque of duple (ca, cs) accepted connections
 
     def actualBufSizes(self):
         """
@@ -1441,7 +1442,7 @@ class Acceptor(object):
         try:
             cs, ca = self.ss.accept()  # virtual connection (socket, host address)
         except socket.error as ex:
-            if ex.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return (None, None)  # nothing yet
             emsg = ("socket.error = {0}: server at {1} while "
                     "accepting \n".format(ex, self.ha))
@@ -1453,17 +1454,13 @@ class Acceptor(object):
     def serviceAccepts(self):
         """
         Service any accept requests
-        Returns list of accepted connection socket duples
-        [(cs,ca)]
+        Adds to .axes odict key by ca
         """
-        accepteds = []
         while True:
             cs, ca = self.accept()
             if not cs:
                 break
-            accepteds.append((cs, ca))
-        return accepteds
-
+            self.accepteds.append((cs, ca))
 
 class Server(Acceptor):
     """
@@ -1476,16 +1473,19 @@ class Server(Acceptor):
         Initialization method for instance.
         """
         super(Server, self).__init__(**kwa)
+        self.ixes = odict()  # ready to rx tx incoming connections, Incomer instances
 
-        self.ixes = odict()  # accepted incoming connections, Incomer instances
+    def serviceAccepteds(self):
+        """
+        Service accepteds
+        service accepts
 
-    def serviceAccepts(self):
+        For each newly accepted connection in .accepts create Incomer
+        and add to .ixes keyed by ca
         """
-        Service accepts
-        For each new connection create Incomer and add to .ixes
-        """
-        accepteds = super(Server, self).serviceAccepts()
-        for cs, ca in accepteds:
+        self.serviceAccepts()
+        while self.accepteds:
+            cs, ca = self.accepteds.popleft()
             if ca != cs.getpeername() or self.eha != cs.getsockname():
                 raise ValueError("Accepted socket host addresses malformed for "
                                  "peer ha {0} != {1}, ca {2} != {3}\n".format(
@@ -1496,7 +1496,6 @@ class Server(Acceptor):
                               cs=cs,
                               wlog=self.wlog)
             self.ixes[ca] = incomer
-        return accepteds
 
     def shutdownIx(self, ca, how=socket.SHUT_RDWR):
         """
@@ -1614,10 +1613,7 @@ class Peer(Server):
         self.oxes = odict()  # outgoers indexed by ha
 
 
-
-
 PeerSocketTcpNb = Peer  # alias
-
 
 
 try:
@@ -1660,8 +1656,7 @@ else:
             """
             super(OutgoerTLS, self).__init__(**kwa)
 
-            self.wrapped = False  # True once socket is wrapped
-            self.handshaked = False  # True is ssl handshake completed
+            self.handshaked = False  # True once ssl handshake completed
 
             if context is None:  # create context
                 if not version:  # use default context
@@ -1716,34 +1711,82 @@ else:
             Returns True if successful
             Returns False if not so try again later
             """
+            result = super(OutgoerTLS, self).connect()
+            if result:  # truthy means connected
+                if not self.serverHostname:
+                    self.serverHostname = self.ha[0]
+                self.wrap()
+
+            return result
+
+        def receive(self):
+            """
+            Perform non blocking receive from connected socket .cs
+
+            If no data then returns None
+            If connection closed then returns ''
+            Otherwise returns data
+            """
             try:
-                result = self.cs.connect_ex(self.ha)  # async connect
-            except socket.error as ex:
-                console.terse("socket.error = {0}\n".format(ex))
-                raise
+                data = self.cs.recv(self.bs)
+            except ssl.SSLError as ex:
+                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                    return None
+                else:
+                    emsg = ("SSLError = {0}: OutgoerTLS at {1} receiving"
+                            " from {2}\n".format(ex, self.ca, self.ha))
+                    console.profuse(emsg)
+                    raise  # re-raise
 
-            if result not in [0, errno.EISCONN]:  # not yet connected
-                return False  # try again later
+            if data:  # connection open
+                if console._verbosity >= console.Wordage.profuse:  # faster to check
+                    cmsg = ("\nClient at {0}, received from {1}:\n------------\n"
+                               "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
+                    console.profuse(cmsg)
 
-            self.connected = True
-            self.cutoff = False
-            # now self.cs has new virtual port see self.cs.getsockname()
-            self.ca = self.cs.getsockname()  # resolved local connection address
-            # self.cs.getpeername() is self.ha
-            self.ha = self.cs.getpeername()  # resolved remote connection address
-            if not self.serverHostname:
-                self.serverHostname = self.ha[0]
+                if self.wlog:  # log over the wire rx
+                    self.wlog.writeRx(self.ha, data)
+            else:  # data empty so connection closed on other end
+                self.cutoff = True
 
-            return True
+            return data
+
+        def send(self, data):
+            """
+            Perform non blocking send on connected socket .cs.
+            Return number of bytes sent
+
+            data is string in python2 and bytes in python3
+            """
+            try:
+                result = self.cs.send(data) #result is number of bytes sent
+            except ssl.SSLError as ex:
+                result = 0
+                if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                    emsg = ("socket.error = {0}: OutgoerTLS at {1} while sending "
+                            "to {2} \n".format(ex, self.ca, self.ha))
+                    console.profuse(emsg)
+                    raise
+
+            if result:
+                if console._verbosity >=  console.Wordage.profuse:
+                    cmsg = ("\nClient at {0}, sent {1} bytes to {2}:\n------------\n"
+                            "{3}\n".format(self.ca, result, self.ha, data[:result].decode('UTF-8')))
+                    console.profuse(cmsg)
+
+                if self.wlog:
+                    self.wlog.writeTx(self.ha, data[:result])
+
+            return result
 
         def wrap(self):
             """
             Wrap socket .cs in ssl context
             """
             self.cs = self.context.wrap_socket(self.cs,
+                                               server_side=False,
                                                do_handshake_on_connect=False,
                                                server_hostname=self.serverHostname)
-            self.wrapped = True
 
         def handshake(self):
             """
@@ -1757,6 +1800,18 @@ else:
                 return False
             except ssl.SSLWantWriteError as ex:
                 return False
+            except ssl.SSLEOFError as ex:
+                self.shutclose()
+                raise  # should give up here nicely
+            except ssl.SSLError as ex:
+                self.shutclose()
+                raise
+            except OSError as ex:
+                self.shutclose()
+                if ex.args[0] == errno.ECONNABORTED:
+                    # should give up here nicely
+                    raise
+                raise
             except Exception as ex:
                 self.shutclose()
                 raise
@@ -1776,11 +1831,319 @@ else:
                     self.connect()
 
                 if self.connected:
-                    if not self.wrapped:
-                        self.wrap()
                     self.handshake()
 
             return self.handshaked
 
+    def initContext(context=None,
+                    version=None,
+                    certify=None,
+                    keypath=None,
+                    certpath=None,
+                    cafilepath=None
+                   ):
+        """
+        Initialize and return context
+        If context is None then create a context
+
+        context = context object for tls/ssl If None use default
+        version = ssl version If None use default
+        certify = cert requirement If None use default
+                  ssl.CERT_NONE = 0
+                  ssl.CERT_OPTIONAL = 1
+                  ssl.CERT_REQUIRED = 2
+        keypath = pathname of local server side PKI private key file path
+                  If given apply to context
+        certpath = pathname of local server side PKI public cert file path
+                  If given apply to context
+        cafilepath = Cert Authority file path to use to verify client cert
+                  If given apply to context
+        """
+        if context is None:  # create context
+            if not version:  # use default context
+                context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+                context.verify_mode = ssl.CERT_REQUIRED if certify is None else certify
+
+            else:  # create context with specified protocol version
+                context = ssl.SSLContext(version)
+                # disable bad protocols versions
+                context.options |= ssl.OP_NO_SSLv2
+                context.options |= ssl.OP_NO_SSLv3
+                # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
+                context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
+                # Prefer the server's ciphers by default fro stronger encryption
+                context.options |= getattr(ssl._ssl, "OP_CIPHER_SERVER_PREFERENCE", 0)
+                # Use single use keys in order to improve forward secrecy
+                context.options |= getattr(ssl._ssl, "OP_SINGLE_DH_USE", 0)
+                context.options |= getattr(ssl._ssl, "OP_SINGLE_ECDH_USE", 0)
+                # disallow ciphers with known vulnerabilities
+                context.set_ciphers(_RESTRICTED_SERVER_CIPHERS)
+                context.verify_mode = ssl.CERT_REQUIRED if certify is None else certify
+
+            if cafilepath:
+                context.load_verify_locations(cafile=cafilepath,
+                                              capath=None,
+                                              cadata=None)
+            elif context.verify_mode != CERT_NONE:
+                context.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
+
+            if keypath or certpath:
+                context.load_cert_chain(certfile=certpath, keyfile=keypath)
+        return context
+
+    class IncomerTLS(Incomer):
+        """
+        Incomer with Nonblocking TLS/SSL support
+        Manager class for incoming nonblocking TCP connections.
+        """
+        def __init__(self,
+                     context=None,
+                     version=None,
+                     certify=None,
+                     keypath=None,
+                     certpath=None,
+                     cafilepath=None,
+                     **kwa):
+
+            """
+            Initialization method for instance.
+            context = context object for tls/ssl If None use default
+            version = ssl version If None use default
+            certify = cert requirement If None use default
+                      ssl.CERT_NONE = 0
+                      ssl.CERT_OPTIONAL = 1
+                      ssl.CERT_REQUIRED = 2
+            keypath = pathname of local server side PKI private key file path
+                      If given apply to context
+            certpath = pathname of local server side PKI public cert file path
+                      If given apply to context
+            cafilepath = Cert Authority file path to use to verify client cert
+                      If given apply to context
+            """
+            super(IncomerTLS, self).__init__(**kwa)
+
+            self.handshaked = False  # True once ssl handshake completed
+
+            self.context = initContext(context=context,
+                                        version=version,
+                                        certify=certify,
+                                        keypath=keypath,
+                                        certpath=certpath,
+                                        cafilepath=cafilepath
+                                      )
+            self.wrap()
+
+        def shutclose(self):
+            """
+            Shutdown and close connected socket .cs
+            """
+            if self.cs:
+                self.shutdown()
+                self.cs.close()  #close socket
+                self.cs = None
+                self.handshaked = False
+
+        close = shutclose  # alias
+
+        def receive(self):
+            """
+            Perform non blocking receive on connected socket .cs
+
+            If no data then returns None
+            If connection closed then returns ''
+            Otherwise returns data
+
+            data is string in python2 and bytes in python3
+            """
+            try:
+                data = self.cs.recv(self.bs)
+            except ssl.SSLError as ex:
+                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                    return None
+                else:
+                    emsg = ("SSLError = {0}: IncomerTLS at {1} while receiving"
+                            " from {2}\n".format(ex, self.ha, self.ca))
+                    console.profuse(emsg)
+                    raise  # re-raise
+
+            if data:  # connection open
+                if console._verbosity >= console.Wordage.profuse:  # faster to check
+                    cmsg = ("Incomer at {0} received from {1}\n"
+                           "{2}\n".format(self.ha, self.ca, data.decode("UTF-8")))
+                    console.profuse(cmsg)
+
+                if self.wlog:  # log over the wire rx
+                    self.wlog.writeRx(self.ca, data)
+
+            else:  # data empty so connection closed on other end
+                self.cutoff = True
+
+            return data
+
+        def send(self, data):
+            """
+            Perform non blocking send on connected socket .cs.
+            Return number of bytes sent
+
+            data is string in python2 and bytes in python3
+            """
+            try:
+                result = self.cs.send(data) #result is number of bytes sent
+            except ssl.SSLError as ex:
+                result = 0
+                if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                    emsg = ("SSLError = {0}: IncomerTLS at {1} while "
+                            "sending to {2}\n".format(ex, self.ha, self.ca))
+                    console.profuse(emsg)
+                    raise
+
+            if result:
+                if console._verbosity >=  console.Wordage.profuse:
+                    cmsg = ("Incomer at {0} sent to {1}, {2} bytes\n"
+                            "{3}\n".format(self.ha, self.ha , result,
+                                           data[:result].decode('UTF-8')))
+                    console.profuse(cmsg)
+
+                if self.wlog:
+                    self.wlog.writeTx(self.ca, data[:result])
+
+            return result
+
+        def wrap(self):
+            """
+            Wrap socket .cs in ssl context
+            """
+            self.cs = self.context.wrap_socket(self.cs,
+                                               server_side=True,
+                                               do_handshake_on_connect=False)
+
+        def handshake(self):
+            """
+            Attempt nonblocking ssl handshake to .ha
+            Returns True if successful
+            Returns False if not so try again later
+            """
+            try:
+                self.cs.do_handshake()
+            except ssl.SSLWantReadError as ex:
+                return False
+            except ssl.SSLWantWriteError as ex:
+                return False
+            except ssl.SSLEOFError as ex:
+                self.shutclose()
+                raise  # should give up here nicely
+            except ssl.SSLError as ex:
+                self.shutclose()
+                raise
+            except OSError as ex:
+                self.shutclose()
+                if ex.args[0] == errno.ECONNABORTED:
+                    # should give up here nicely
+                    raise
+                raise
+            except Exception as ex:
+                self.shutclose()
+                raise
+
+            self.handshaked = True
+            return True
+
+        def serviceHandshake(self):
+            """
+            Service connection and handshake attempt
+            If not already connected and handshaked  Then
+                 make nonblocking attempt
+            Returns .handshaked
+            """
+            if not self.handshaked:
+                self.handshake()
+
+            return self.handshaked
 
 
+    class ServerTLS(Server):
+        """
+        Server with Nonblocking TLS/SSL support
+        Nonblocking TCP Socket Server Class.
+        Listen socket for incoming TCP connections
+        IncomerTLS sockets for accepted connections
+        """
+        def __init__(self,
+                     context=None,
+                     version=None,
+                     certify=None,
+                     keypath=None,
+                     certpath=None,
+                     cafilepath=None,
+                     **kwa):
+            """
+            Initialization method for instance.
+            """
+            super(ServerTLS, self).__init__(**kwa)
+
+            self.axes = odict()  # accepted incoming connections, IncomerTLS instances
+
+            self.context = context
+            self.version = version
+            self.certify = certify
+            self.keypath = keypath
+            self.certpath = certpath
+            self.cafilepath = cafilepath
+
+            self.context = initContext(context=context,
+                                        version=version,
+                                        certify=certify,
+                                        keypath=keypath,
+                                        certpath=certpath,
+                                        cafilepath=cafilepath
+                                      )
+
+        def serviceAccepteds(self):
+            """
+            Service accepts
+
+            For each new accepted connection create IncomerTLS and add to .axes
+            Not Handshaked
+            """
+            self.serviceAccepts()
+            while self.accepteds:
+                cs, ca = self.accepteds.popleft()
+                if ca != cs.getpeername() or self.eha != cs.getsockname():
+                    raise ValueError("Accepted socket host addresses malformed for "
+                                     "peer ha {0} != {1}, ca {2} != {3}\n".format(
+                                         self.ha, cs.getsockname(), ca, cs.getpeername()))
+                incomer = IncomerTLS(ha=cs.getsockname(),
+                                     bs=self.bs,
+                                     ca=cs.getpeername(),
+                                     cs=cs,
+                                     wlog=self.wlog,
+                                     context=self.context,
+                                     version=self.version,
+                                     certify=self.certify,
+                                     keypath=self.keypath,
+                                     certpath=self.certpath,
+                                     cafilepath=self.cafilepath,
+                                    )
+
+                self.axes[ca] = incomer
+
+        def serviceHandshakesAllAx(self):
+            """
+            Service handshakes for every incomer in .axes
+            If successful move to .ixes
+            """
+            for ca, ax in self.axes.items():
+                if ax.serviceHandshake():
+                    self.ixes[ca] = ax
+                    del self.axes[ca]
+
+        def serviceHandshakes(self):
+            """
+            Service accept and handshake attempts
+            If not already connected and handshaked  Then
+                 make nonblocking attempt
+            For each successful handshaked add to .ixes
+            Returns handshakeds
+            """
+            self.serviceAccepteds()
+            self.serviceHandshakesAllAx()
