@@ -1078,201 +1078,16 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testClientTLS(self):
+    def testTLSConnectionDefault(self):
         """
-        Test OutgoerTLS class  NonBlocking TCP/IP with TLS client
-        Wrapped with ssl context
-        """
-        try:
-            import ssl
-        except ImportError:
-            return
-
-        console.terse("{0}\n".format(self.testClientTLS.__doc__))
-        console.reinit(verbosity=console.Wordage.profuse)
-
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
-        result = wireLogBeta.reopen()
-        #serverHa = ("127.0.0.1", 8080)
-        serverHa = ("localhost", 8080)
-        #serverHa = ("google.com", 443)
-
-        keypath = '/etc/pki/tls/certs/client_key.pem'  # local private key
-        certpath = '/etc/pki/tls/certs/client_cert.pem'  # local public cert
-        cafilepath = '/etc/pki/tls/certs/localhost.crt' # remote public cert
-        beta = nonblocking.OutgoerTLS(ha=serverHa,
-                                      bufsize=131072,
-                                      wlog=wireLogBeta,
-                                      context=None,
-                                      version=ssl.PROTOCOL_TLSv1,
-                                      certify=ssl.CERT_REQUIRED,
-                                      hostify=True,
-                                      certedhost="localhost",
-                                      keypath=keypath,
-                                      certpath=certpath,
-                                      cafilepath=cafilepath,
-                                      )
-        self.assertIs(beta.reopen(), True)
-        self.assertIs(beta.connected, False)
-        self.assertIs(beta.cutoff, False)
-
-        console.terse("Connecting beta\n")
-        while True:
-            beta.serviceConnect()
-            if beta.connected:
-                break
-            time.sleep(0.05)
-
-        self.assertIs(beta.connected, True)
-        self.assertIs(beta.cutoff, False)
-        self.assertEqual(beta.ca, beta.cs.getsockname())
-        self.assertEqual(beta.ha, beta.cs.getpeername())
-        #self.assertEqual(beta.ha, serverHa)
-
-        console.terse("Handshaking beta\n")
-        while True:
-            beta.serviceHandshake()
-            if beta.handshaked:
-                break
-            time.sleep(0.01)
-
-        self.assertIs(beta.handshaked, True)
-
-        msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
-        beta.transmit(msgOut)
-        while beta.txes:
-            beta.serviceTxes()
-            time.sleep(0.05)
-            beta.serviceAllRx()
-            time.sleep(0.05)
-        msgIn = bytes(beta.rxbs)
-        beta.clearRxbs()
-        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: '))
-        self.assertTrue(msgIn.endswith(b'/echo", "action": null}'))
-
-        beta.close()
-
-        # repeat but only call serviceHandshake which calls connect
-        self.assertIs(beta.reopen(), True)
-        self.assertIs(beta.connected, False)
-        self.assertIs(beta.cutoff, False)
-
-        console.terse("Connecting and Handshaking beta\n")
-        while True:
-            beta.serviceHandshake()
-            if beta.handshaked:
-                break
-            time.sleep(0.01)
-
-        self.assertIs(beta.connected, True)
-        self.assertIs(beta.cutoff, False)
-        self.assertEqual(beta.ca, beta.cs.getsockname())
-        self.assertEqual(beta.ha, beta.cs.getpeername())
-        self.assertIs(beta.handshaked, True)
-
-        msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
-        beta.transmit(msgOut)
-        while beta.txes:
-            beta.serviceTxes()
-            time.sleep(0.05)
-            beta.serviceAllRx()
-            time.sleep(0.05)
-        msgIn = bytes(beta.rxbs)
-        beta.clearRxbs()
-        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: '))
-        self.assertTrue(msgIn.endswith(b'/echo", "action": null}'))
-
-        beta.close()
-
-        wlBetaRx = wireLogBeta.getRx()
-        wlBetaTx = wireLogBeta.getTx()
-        self.assertEqual(wlBetaRx, wlBetaTx)  # since wlog is same
-
-        wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
-
-    def testClientTLSDefault(self):
-        """
-        Test OutgoerTLS class  NonBlocking TCP/IP with TLS client
-        Wrapped with ssl default context
+        Test TLS connection with default settings
         """
         try:
             import ssl
         except ImportError:
             return
 
-        console.terse("{0}\n".format(self.testClientTLSDefault.__doc__))
-        console.reinit(verbosity=console.Wordage.profuse)
-
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
-        result = wireLogBeta.reopen()
-        #serverHa = ("127.0.0.1", 8080)
-        serverHa = ("localhost", 8080)
-        #serverHa = ("google.com", 443)
-
-        keypath = '/etc/pki/tls/certs/client_key.pem'  # local private key
-        certpath = '/etc/pki/tls/certs/client_cert.pem'  # local public cert
-        cafilepath = '/etc/pki/tls/certs/localhost.crt' # remote public cert
-        beta = nonblocking.OutgoerTLS(ha=serverHa,
-                                      bufsize=131072,
-                                      wlog=wireLogBeta,
-                                      context=None,
-                                      version=None,
-                                      certify=None,
-                                      hostify=None,
-                                      certedhost="localhost",
-                                      keypath=keypath,
-                                      certpath=certpath,
-                                      cafilepath=cafilepath,
-                                      )
-        self.assertIs(beta.reopen(), True)
-        self.assertIs(beta.connected, False)
-        self.assertIs(beta.cutoff, False)
-
-        console.terse("Connecting  and Handshaking beta\n")
-        while True:
-            beta.serviceHandshake()
-            if beta.handshaked:
-                break
-            time.sleep(0.01)
-
-        self.assertIs(beta.connected, True)
-        self.assertIs(beta.cutoff, False)
-        self.assertEqual(beta.ca, beta.cs.getsockname())
-        self.assertEqual(beta.ha, beta.cs.getpeername())
-        self.assertIs(beta.handshaked, True)
-
-        msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
-        beta.transmit(msgOut)
-        while beta.txes:
-            beta.serviceTxes()
-            time.sleep(0.05)
-            beta.serviceAllRx()
-            time.sleep(0.05)
-        msgIn = bytes(beta.rxbs)
-        beta.clearRxbs()
-        self.assertTrue(msgIn.startswith(b'HTTP/1.1 200 OK\r\nContent-Length: '))
-        self.assertTrue(msgIn.endswith(b'/echo", "action": null}'))
-
-        beta.close()
-
-        wlBetaRx = wireLogBeta.getRx()
-        wlBetaTx = wireLogBeta.getTx()
-        self.assertEqual(wlBetaRx, wlBetaTx)  # since wlog is same
-
-        wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
-
-    def testClientServerTLSService(self):
-        """
-        Test Classes ServerTLS service methods
-        """
-        try:
-            import ssl
-        except ImportError:
-            return
-
-        console.terse("{0}\n".format(self.testClientServerTLSService.__doc__))
+        console.terse("{0}\n".format(self.testTLSConnectionDefault.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
@@ -1287,13 +1102,15 @@ class BasicTestCase(unittest.TestCase):
 
         clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        clientCafilepath = '/etc/pki/tls/certs/localhost.crt' # remote server public cert
+        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
         alpha = nonblocking.ServerTLS(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
-                                      certify=ssl.CERT_NONE,
+                                      context=None,
+                                      version=None,
+                                      certify=None,
                                       keypath=serverKeypath,
                                       certpath=serverCertpath,
                                       cafilepath=clientCafilepath,
@@ -1313,7 +1130,7 @@ class BasicTestCase(unittest.TestCase):
                                       certedhost=serverCertCommonName,
                                       keypath=clientKeypath,
                                       certpath=clientCertpath,
-                                      cafilepath=clientCafilepath,
+                                      cafilepath=serverCafilepath,
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
@@ -1389,7 +1206,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testTLSConnectionNoVerify(self):
+    def testTLSConnectionVerifyNeither(self):
         """
         Test TLS client server connection with neither verify certs
         """
@@ -1398,7 +1215,7 @@ class BasicTestCase(unittest.TestCase):
         except ImportError:
             return
 
-        console.terse("{0}\n".format(self.testTLSConnectionNoVerify.__doc__))
+        console.terse("{0}\n".format(self.testTLSConnectionVerifyNeither.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
@@ -1413,12 +1230,14 @@ class BasicTestCase(unittest.TestCase):
 
         clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        clientCafilepath = '/etc/pki/tls/certs/localhost.crt' # remote server public cert
+        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
         alpha = nonblocking.ServerTLS(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
+                                      context=None,
+                                      version=None,
                                       certify=ssl.CERT_NONE,
                                       keypath=serverKeypath,
                                       certpath=serverCertpath,
@@ -1439,12 +1258,11 @@ class BasicTestCase(unittest.TestCase):
                                       certedhost=serverCertCommonName,
                                       keypath=clientKeypath,
                                       certpath=clientCertpath,
-                                      cafilepath=clientCafilepath,
+                                      cafilepath=serverCafilepath,
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
-
 
         console.terse("Connecting  and Handshaking beta to alpha\n")
         while True:
@@ -1515,6 +1333,515 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testTLSConnectionClientVerifyServerCert(self):
+        """
+        Test TLS client server connection with neither verify certs
+        """
+        try:
+            import ssl
+        except ImportError:
+            return
+
+        console.terse("{0}\n".format(self.testTLSConnectionClientVerifyServerCert.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        alpha = nonblocking.ServerTLS(host='localhost',
+                                      port = 6101,
+                                      bufsize=131072,
+                                      wlog=wireLogAlpha,
+                                      context=None,
+                                      version=None,
+                                      certify=ssl.CERT_NONE,
+                                      keypath=serverKeypath,
+                                      certpath=serverCertpath,
+                                      cafilepath=clientCafilepath,
+                                      )
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('127.0.0.1', 6101))
+
+        serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
+
+        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+                                      bufsize=131072,
+                                      wlog=wireLogBeta,
+                                      context=None,
+                                      version=None,
+                                      certify=ssl.CERT_REQUIRED,
+                                      hostify=True,
+                                      certedhost=serverCertCommonName,
+                                      keypath=clientKeypath,
+                                      certpath=clientCertpath,
+                                      cafilepath=serverCafilepath,
+                                      )
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting  and Handshaking beta to alpha\n")
+        while True:
+            beta.serviceHandshake()
+            alpha.serviceHandshakes()
+            if beta.handshaked and len(alpha.ixes) >= 1:
+                break
+            time.sleep(0.01)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertIs(beta.handshaked, True)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        msgOut = b"Beta sends to Alpha\n"
+        beta.transmit(msgOut)
+        while True:
+            beta.serviceTxes()
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.01)
+            if not beta.txes and ixBeta.rxbs:
+                break
+
+        time.sleep(0.05)
+        alpha.serviceAllRxAllIx()
+
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(ixBeta.rxbs)
+        ixBeta.clearRxbs()
+
+        msgOut = b'Alpha sends to Beta\n'
+        ixBeta.transmit(msgOut)
+        while True:
+            alpha.serviceTxesAllIx()
+            beta.serviceAllRx()
+            time.sleep(0.01)
+            if not ixBeta.txes and beta.rxbs:
+                break
+
+        msgIn = bytes(beta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(beta.rxbs)
+        beta.clearRxbs()
+
+        alpha.close()
+        beta.close()
+
+        self.assertEqual(wireLogAlpha.getRx(), wireLogAlpha.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogAlpha.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogAlpha.getRx())
+
+        self.assertEqual(wireLogBeta.getRx(), wireLogBeta.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogBeta.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogBeta.getRx())
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testTLSConnectionServerVerifyClientCert(self):
+        """
+        Test TLS client server connection with neither verify certs
+        """
+        try:
+            import ssl
+        except ImportError:
+            return
+
+        console.terse("{0}\n".format(self.testTLSConnectionServerVerifyClientCert.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        alpha = nonblocking.ServerTLS(host='localhost',
+                                      port = 6101,
+                                      bufsize=131072,
+                                      wlog=wireLogAlpha,
+                                      context=None,
+                                      version=None,
+                                      certify=ssl.CERT_REQUIRED,
+                                      keypath=serverKeypath,
+                                      certpath=serverCertpath,
+                                      cafilepath=clientCafilepath,
+                                      )
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('127.0.0.1', 6101))
+
+        serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
+
+        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+                                      bufsize=131072,
+                                      wlog=wireLogBeta,
+                                      context=None,
+                                      version=None,
+                                      certify=ssl.CERT_NONE,
+                                      hostify=False,
+                                      certedhost=serverCertCommonName,
+                                      keypath=clientKeypath,
+                                      certpath=clientCertpath,
+                                      cafilepath=serverCafilepath,
+                                      )
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting  and Handshaking beta to alpha\n")
+        while True:
+            beta.serviceHandshake()
+            alpha.serviceHandshakes()
+            if beta.handshaked and len(alpha.ixes) >= 1:
+                break
+            time.sleep(0.01)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertIs(beta.handshaked, True)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        msgOut = b"Beta sends to Alpha\n"
+        beta.transmit(msgOut)
+        while True:
+            beta.serviceTxes()
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.01)
+            if not beta.txes and ixBeta.rxbs:
+                break
+
+        time.sleep(0.05)
+        alpha.serviceAllRxAllIx()
+
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(ixBeta.rxbs)
+        ixBeta.clearRxbs()
+
+        msgOut = b'Alpha sends to Beta\n'
+        ixBeta.transmit(msgOut)
+        while True:
+            alpha.serviceTxesAllIx()
+            beta.serviceAllRx()
+            time.sleep(0.01)
+            if not ixBeta.txes and beta.rxbs:
+                break
+
+        msgIn = bytes(beta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(beta.rxbs)
+        beta.clearRxbs()
+
+        alpha.close()
+        beta.close()
+
+        self.assertEqual(wireLogAlpha.getRx(), wireLogAlpha.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogAlpha.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogAlpha.getRx())
+
+        self.assertEqual(wireLogBeta.getRx(), wireLogBeta.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogBeta.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogBeta.getRx())
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testTLSConnectionVerifyBoth(self):
+        """
+        Test TLS client server connection with neither verify certs
+        """
+        try:
+            import ssl
+        except ImportError:
+            return
+
+        console.terse("{0}\n".format(self.testTLSConnectionVerifyBoth.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        alpha = nonblocking.ServerTLS(host='localhost',
+                                      port = 6101,
+                                      bufsize=131072,
+                                      wlog=wireLogAlpha,
+                                      context=None,
+                                      version=None,
+                                      certify=ssl.CERT_REQUIRED,
+                                      keypath=serverKeypath,
+                                      certpath=serverCertpath,
+                                      cafilepath=clientCafilepath,
+                                      )
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('127.0.0.1', 6101))
+
+        serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
+
+        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+                                      bufsize=131072,
+                                      wlog=wireLogBeta,
+                                      context=None,
+                                      version=None,
+                                      certify=ssl.CERT_REQUIRED,
+                                      hostify=True,
+                                      certedhost=serverCertCommonName,
+                                      keypath=clientKeypath,
+                                      certpath=clientCertpath,
+                                      cafilepath=serverCafilepath,
+                                      )
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting  and Handshaking beta to alpha\n")
+        while True:
+            beta.serviceHandshake()
+            alpha.serviceHandshakes()
+            if beta.handshaked and len(alpha.ixes) >= 1:
+                break
+            time.sleep(0.01)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertIs(beta.handshaked, True)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        msgOut = b"Beta sends to Alpha\n"
+        beta.transmit(msgOut)
+        while True:
+            beta.serviceTxes()
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.01)
+            if not beta.txes and ixBeta.rxbs:
+                break
+
+        time.sleep(0.05)
+        alpha.serviceAllRxAllIx()
+
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(ixBeta.rxbs)
+        ixBeta.clearRxbs()
+
+        msgOut = b'Alpha sends to Beta\n'
+        ixBeta.transmit(msgOut)
+        while True:
+            alpha.serviceTxesAllIx()
+            beta.serviceAllRx()
+            time.sleep(0.01)
+            if not ixBeta.txes and beta.rxbs:
+                break
+
+        msgIn = bytes(beta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(beta.rxbs)
+        beta.clearRxbs()
+
+        alpha.close()
+        beta.close()
+
+        self.assertEqual(wireLogAlpha.getRx(), wireLogAlpha.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogAlpha.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogAlpha.getRx())
+
+        self.assertEqual(wireLogBeta.getRx(), wireLogBeta.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogBeta.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogBeta.getRx())
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testTLSConnectionVerifyBothTLSv1(self):
+        """
+        Test TLS client server connection with neither verify certs
+        """
+        try:
+            import ssl
+        except ImportError:
+            return
+
+        console.terse("{0}\n".format(self.testTLSConnectionVerifyBothTLSv1.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        alpha = nonblocking.ServerTLS(host='localhost',
+                                      port = 6101,
+                                      bufsize=131072,
+                                      wlog=wireLogAlpha,
+                                      context=None,
+                                      version=ssl.PROTOCOL_TLSv1,
+                                      certify=ssl.CERT_REQUIRED,
+                                      keypath=serverKeypath,
+                                      certpath=serverCertpath,
+                                      cafilepath=clientCafilepath,
+                                      )
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('127.0.0.1', 6101))
+
+        serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
+
+        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+                                      bufsize=131072,
+                                      wlog=wireLogBeta,
+                                      context=None,
+                                      version=ssl.PROTOCOL_TLSv1,
+                                      certify=ssl.CERT_REQUIRED,
+                                      hostify=True,
+                                      certedhost=serverCertCommonName,
+                                      keypath=clientKeypath,
+                                      certpath=clientCertpath,
+                                      cafilepath=serverCafilepath,
+                                      )
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting  and Handshaking beta to alpha\n")
+        while True:
+            beta.serviceHandshake()
+            alpha.serviceHandshakes()
+            if beta.handshaked and len(alpha.ixes) >= 1:
+                break
+            time.sleep(0.01)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertIs(beta.handshaked, True)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        msgOut = b"Beta sends to Alpha\n"
+        beta.transmit(msgOut)
+        while True:
+            beta.serviceTxes()
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.01)
+            if not beta.txes and ixBeta.rxbs:
+                break
+
+        time.sleep(0.05)
+        alpha.serviceAllRxAllIx()
+
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(ixBeta.rxbs)
+        ixBeta.clearRxbs()
+
+        msgOut = b'Alpha sends to Beta\n'
+        ixBeta.transmit(msgOut)
+        while True:
+            alpha.serviceTxesAllIx()
+            beta.serviceAllRx()
+            time.sleep(0.01)
+            if not ixBeta.txes and beta.rxbs:
+                break
+
+        msgIn = bytes(beta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        #index = len(beta.rxbs)
+        beta.clearRxbs()
+
+        alpha.close()
+        beta.close()
+
+        self.assertEqual(wireLogAlpha.getRx(), wireLogAlpha.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogAlpha.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogAlpha.getRx())
+
+        self.assertEqual(wireLogBeta.getRx(), wireLogBeta.getTx())  # since wlog is same
+        self.assertTrue(b"Beta sends to Alpha\n" in wireLogBeta.getRx())
+        self.assertTrue(b"Alpha sends to Beta\n" in wireLogBeta.getRx())
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+
 def runOne(test):
     '''
     Unittest Runner
@@ -1534,10 +1861,12 @@ def runSome():
              'testClientServer',
              'testClientServerServiceCat',
              'testClientServerService',
-             'testClientTLS',
-             'testClientTLSDefault',
-             'testClientServerTLSService',
-             'testTLSConnectionNoVerify',
+             'testTLSConnectionDefault',
+             'testTLSConnectionVerifyNeither',
+             'testTLSConnectionClientVerifyServerCert',
+             'testTLSConnectionServerVerifyClientCert',
+             'testTLSConnectionVerifyBoth',
+             'testTLSConnectionVerifyBothTLSv1',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1555,8 +1884,8 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
-    runOne('testTLSConnectionNoVerify')
+    #runOne('testTLSConnectionVerifyBothTLSv11')
 
 

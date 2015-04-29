@@ -1669,7 +1669,7 @@ else:
                 context.options |= getattr(ssl._ssl, "OP_SINGLE_DH_USE", 0)
                 context.options |= getattr(ssl._ssl, "OP_SINGLE_ECDH_USE", 0)
                 # disallow ciphers with known vulnerabilities
-                context.set_ciphers(_RESTRICTED_SERVER_CIPHERS)
+                context.set_ciphers(ssl._RESTRICTED_SERVER_CIPHERS)
                 context.verify_mode = certify if certify is not None else ssl.CERT_REQUIRED
 
             if cafilepath:
@@ -1744,9 +1744,8 @@ else:
                     context.options |= ssl.OP_NO_SSLv3
                     # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
                     context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
-                    context.check_hostname = hostify = True if hostify else False
                     context.verify_mode = certify = ssl.CERT_REQUIRED if certify is None else certify
-
+                    context.check_hostname = hostify = True if hostify else False
 
             self.context = context
             self.certedhost = certedhost
@@ -2110,12 +2109,12 @@ else:
             self.cafilepath = cafilepath
 
             self.context = initServerContext(context=context,
-                                        version=version,
-                                        certify=certify,
-                                        keypath=keypath,
-                                        certpath=certpath,
-                                        cafilepath=cafilepath
-                                      )
+                                             version=version,
+                                             certify=certify,
+                                             keypath=keypath,
+                                             certpath=certpath,
+                                             cafilepath=cafilepath
+                                            )
 
         def serviceAccepteds(self):
             """
