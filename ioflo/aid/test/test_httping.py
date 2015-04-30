@@ -66,58 +66,6 @@ class BasicTestCase(unittest.TestCase):
         """
         pass
 
-    def testBasic(self):
-        """
-        Test Basic
-        """
-        console.terse("{0}\n".format(self.testBasic.__doc__))
-
-        console.terse("{0}\n".format("Connecting ...\n"))
-        hc = HTTPConnection('127.0.0.1', port=8080, timeout=1.0,)
-
-        hc.connect()
-
-        console.terse("{0}\n".format("Get '/echo?name=fame' ...\n"))
-        headers = odict([('Accept', 'application/json')])
-        hc.request(method='GET', url='/echo?name=fame', body=None, headers=headers )
-        response = hc.getresponse()
-        console.terse(str(response.fileno()) + "\n")  # must call this before read
-        console.terse(str(response.getheaders()) + "\n")
-        console.terse(str(response.msg)  + "\n")
-        console.terse(str(response.version) + "\n")
-        console.terse(str(response.status) + "\n")
-        console.terse(response.reason + "\n")
-        console.terse(str(response.read()) + "\n")
-
-        console.terse("{0}\n".format("Post ...\n"))
-        headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
-        body = odict([('name', 'Peter'), ('occupation', 'Engineer')])
-        body = ns2b(json.dumps(body, separators=(',', ':'), encoding='utf-8'))
-        hc.request(method='POST', url='/demo', body=body, headers=headers )
-        response = hc.getresponse()
-        console.terse(str(response.fileno()) + "\n") # must call this before read
-        console.terse(str(response.getheaders()) + "\n")
-        console.terse(str(response.msg)  + "\n")
-        console.terse(str(response.version) + "\n")
-        console.terse(str(response.status) + "\n")
-        console.terse(response.reason+ "\n")
-        console.terse(str(response.read()) + "\n")
-
-        #console.terse("{0}\n".format("SSE stream ...\n"))
-        #body = b''
-        #headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
-        #hc.request(method='GET', url='/stream', body=body, headers=headers )
-        #response = hc.getresponse()
-        #console.terse(str(response.fileno()) + "\n") # must call this before read
-        #console.terse(str(response.getheaders()) + "\n")
-        #console.terse(str(response.msg)  + "\n")
-        #console.terse(str(response.version) + "\n")
-        #console.terse(str(response.status) + "\n")
-        #console.terse(response.reason+ "\n")
-        #console.terse(str(response.read()) + "\n")
-
-        hc.close()
-
     def testNonBlockingRequestEcho(self):
         """
         Test NonBlocking Http client
@@ -126,15 +74,18 @@ class BasicTestCase(unittest.TestCase):
 
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogBeta = nonblocking.WireLog(buffify=True)
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        #alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
-        #self.assertIs(alpha.reopen(), True)
-        #self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        eha = ('127.0.0.1', 8080)
-        beta = nonblocking.Outgoer(ha=eha, bufsize=131072)
+        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
@@ -142,8 +93,8 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            #alpha.serviceAccepts()
-            if beta.connected:  # and beta.ca in alpha.ixes
+            alpha.serviceAccepteds()
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
@@ -151,15 +102,15 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
-        self.assertEqual(eha, beta.ha)
+        self.assertEqual(alpha.eha, beta.ha)
 
-        #ixBeta = alpha.ixes[beta.ca]
-        #self.assertIsNotNone(ixBeta.ca)
-        #self.assertIsNotNone(ixBeta.cs)
-        #self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
-        #self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
-        #self.assertEqual(ixBeta.ca, beta.ca)
-        #self.assertEqual(ixBeta.ha, beta.ha)
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
 
         console.terse("{0}\n".format("Building Request ...\n"))
         host = u'127.0.0.1'
@@ -189,29 +140,44 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
+        console.terse("Beta requests to Alpha\n")
         beta.transmit(msgOut)
-        while beta.txes or not beta.rxbs:
+        while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
+            time.sleep(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
+        ixBeta.transmit(msgOut)
+        while ixBeta.txes or not beta.rxbs:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
             beta.serviceAllRx()
             time.sleep(0.05)
-        beta.serviceAllRx()
+        msgIn = bytes(beta.rxbs)
+        self.assertEqual(msgIn, msgOut)
 
-        msgIn, index = beta.tailRxbs(0)
-        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
-
-        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
+        console.terse("Beta processes response \n")
         response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
-
         while response.parser:
             response.parse()
 
         self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
-
         self.assertEqual(len(beta.rxbs), 0)
+        self.assertEqual(response.headers.items(), [('Content-Length', '122'),
+                                                    ('Content-Type', 'application/json'),
+                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('Server', 'IoBook.local')])
 
-        #alpha.close()
+        alpha.close()
         beta.close()
 
+        wireLogAlpha.close()
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
 
@@ -572,11 +538,12 @@ def runOne(test):
 def runSome():
     """ Unittest runner """
     tests =  []
-    names = ['testBasic',
+    names = [
              'testNonBlockingRequestEcho',
              'testNonBlockingRequestStream',
              'testNonBlockingRequestStreamFancy',
-             'testNonBlockingRequestStreamFancyJson', ]
+             'testNonBlockingRequestStreamFancyJson',
+            ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -593,10 +560,9 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
-    #runOne('testBasic')
-    #runOne('testNonBlockingRequestEcho')
+    runOne('testNonBlockingRequestEcho')
     #runOne('testNonBlockingRequestStream')
     #runOne('testNonBlockingRequestStreamFancy')
     #runOne('testNonBlockingRequestStreamFancyJson')

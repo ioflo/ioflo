@@ -973,6 +973,7 @@ class BasicTestCase(unittest.TestCase):
         alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
@@ -992,10 +993,10 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertEqual(alpha.eha, beta.ha)
+
         ixBeta = alpha.ixes[beta.ca]
         self.assertIsNotNone(ixBeta.ca)
         self.assertIsNotNone(ixBeta.cs)
-
         self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
         self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
         self.assertEqual(ixBeta.ca, beta.ca)
