@@ -1138,7 +1138,6 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
-
         console.terse("Connecting  and Handshaking beta to alpha\n")
         while True:
             beta.serviceHandshake()
@@ -1156,7 +1155,6 @@ class BasicTestCase(unittest.TestCase):
         ixBeta = alpha.ixes[beta.ca]
         self.assertIsNotNone(ixBeta.ca)
         self.assertIsNotNone(ixBeta.cs)
-
         self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
         self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
         self.assertEqual(ixBeta.ca, beta.ca)

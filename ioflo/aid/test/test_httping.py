@@ -1092,6 +1092,152 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testNonBlockingRequestEchoTLS(self):
+        """
+        Test NonBlocking HTTPS (TLS/SSL) client
+        """
+        console.terse("{0}\n".format(self.testNonBlockingRequestEchoTLS.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        alpha = nonblocking.ServerTLS(host='localhost',
+                                      port = 6101,
+                                      bufsize=131072,
+                                      wlog=wireLogAlpha,
+                                      context=None,
+                                      version=None,
+                                      certify=None,
+                                      keypath=serverKeypath,
+                                      certpath=serverCertpath,
+                                      cafilepath=clientCafilepath,
+                                      )
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('127.0.0.1', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
+
+        serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
+
+        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+                                      bufsize=131072,
+                                      wlog=wireLogBeta,
+                                      context=None,
+                                      version=None,
+                                      certify=None,
+                                      hostify=None,
+                                      certedhost=serverCertCommonName,
+                                      keypath=clientKeypath,
+                                      certpath=clientCertpath,
+                                      cafilepath=serverCafilepath,
+                                      )
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting  and Handshaking beta to alpha\n")
+        while True:
+            beta.serviceHandshake()
+            alpha.serviceHandshakes()
+            if beta.handshaked and len(alpha.ixes) >= 1:
+                break
+            time.sleep(0.01)
+
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertIs(beta.handshaked, True)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        console.terse("{0}\n".format("Building Request ...\n"))
+        host = u'127.0.0.1'
+        port = 6061
+        method = u'GET'
+        url = u'/echo?name=fame'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        headers = odict([('Accept', 'application/json')])
+        request =  httping.HttpRequestNb(host=host,
+                                     port=port,
+                                     method=method,
+                                     url=url,
+                                     headers=headers)
+        msgOut = request.build()
+        lines = [
+                   b'GET /echo?name=fame HTTP/1.1',
+                   b'Host: 127.0.0.1:6061',
+                   b'Accept-Encoding: identity',
+                   b'Content-Length: 0',
+                   b'Accept: application/json',
+                   b'',
+                   b'',
+                ]
+        for i, line in enumerate(lines):
+            self.assertEqual(line, request.lines[i])
+
+        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+
+        console.terse("Beta requests to Alpha\n")
+        beta.transmit(msgOut)
+        while beta.txes and not ixBeta.rxbs :
+            beta.serviceTxes()
+            time.sleep(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
+        ixBeta.transmit(msgOut)
+        while ixBeta.txes or not beta.rxbs:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        msgIn = bytes(beta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+
+        console.terse("Beta processes response \n")
+        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
+        while response.parser:
+            response.parse()
+
+        self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        self.assertEqual(len(beta.rxbs), 0)
+        self.assertEqual(response.headers.items(), [('Content-Length', '122'),
+                                                    ('Content-Type', 'application/json'),
+                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('Server', 'IoBook.local')])
+
+        alpha.close()
+        beta.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
 
 def runOne(test):
     '''
@@ -1112,6 +1258,7 @@ def runSome():
              'testNonBlockingRequestStreamFancyChunked',
              'testNonBlockingRequestStreamFancyJson',
              'testNonBlockingRequestStreamFancyJsonChunked',
+             'testNonBlockingRequestEchoTLS',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1131,4 +1278,4 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testNonBlockingRequestStreamFancyJson')
+    #runOne('testNonBlockingRequestEchoTLS')
