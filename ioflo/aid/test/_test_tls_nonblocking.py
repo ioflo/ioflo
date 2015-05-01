@@ -101,7 +101,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("Handshaking beta\n")
         while True:
-            beta.serviceHandshake()
+            beta.serviceConnect()
             if beta.handshaked:
                 break
             time.sleep(0.01)
@@ -129,7 +129,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("Connecting and Handshaking beta\n")
         while True:
-            beta.serviceHandshake()
+            beta.serviceConnect()
             if beta.handshaked:
                 break
             time.sleep(0.01)
@@ -200,7 +200,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("Connecting  and Handshaking beta\n")
         while True:
-            beta.serviceHandshake()
+            beta.serviceConnect()
             if beta.handshaked:
                 break
             time.sleep(0.01)

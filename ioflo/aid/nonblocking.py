@@ -1475,7 +1475,7 @@ class Server(Acceptor):
         super(Server, self).__init__(**kwa)
         self.ixes = odict()  # ready to rx tx incoming connections, Incomer instances
 
-    def serviceAccepteds(self):
+    def serviceConnects(self):
         """
         Service accepteds
         service accepts
@@ -1830,7 +1830,7 @@ else:
             self.handshaked = True
             return True
 
-        def serviceHandshake(self):
+        def serviceConnect(self):
             """
             Service connection and handshake attempt
             If not already connected and handshaked  Then
@@ -1838,8 +1838,9 @@ else:
             Returns .handshaked
             """
             if not self.handshaked:
-                if not self.connected:
-                    self.connect()
+                super(OutgoerTLS, self).serviceConnect()
+                #if not self.connected:
+                    #self.connect()
 
                 if self.connected:
                     self.handshake()
