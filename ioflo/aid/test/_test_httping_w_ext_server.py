@@ -129,9 +129,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True)
         result = wireLogBeta.reopen()
 
-        #alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
-        #self.assertIs(alpha.reopen(), True)
-        #self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+
 
         eha = ('127.0.0.1', 8080)
         beta = nonblocking.Outgoer(ha=eha, bufsize=131072)
@@ -153,13 +151,6 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertEqual(eha, beta.ha)
 
-        #ixBeta = alpha.ixes[beta.ca]
-        #self.assertIsNotNone(ixBeta.ca)
-        #self.assertIsNotNone(ixBeta.cs)
-        #self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
-        #self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
-        #self.assertEqual(ixBeta.ca, beta.ca)
-        #self.assertEqual(ixBeta.ha, beta.ha)
 
         console.terse("{0}\n".format("Building Request ...\n"))
         host = u'127.0.0.1'
@@ -226,10 +217,6 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True)
         result = wireLogBeta.reopen()
 
-        #alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
-        #self.assertIs(alpha.reopen(), True)
-        #self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
-
         eha = ('127.0.0.1', 8080)
         beta = nonblocking.Outgoer(ha=eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
@@ -250,13 +237,6 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertEqual(eha, beta.ha)
 
-        #ixBeta = alpha.ixes[beta.ca]
-        #self.assertIsNotNone(ixBeta.ca)
-        #self.assertIsNotNone(ixBeta.cs)
-        #self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
-        #self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
-        #self.assertEqual(ixBeta.ca, beta.ca)
-        #self.assertEqual(ixBeta.ha, beta.ha)
 
         console.terse("{0}\n".format("Building Request ...\n"))
         host = u'127.0.0.1'
@@ -364,13 +344,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertEqual(eha, beta.ha)
 
-        #ixBeta = alpha.ixes[beta.ca]
-        #self.assertIsNotNone(ixBeta.ca)
-        #self.assertIsNotNone(ixBeta.cs)
-        #self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
-        #self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
-        #self.assertEqual(ixBeta.ca, beta.ca)
-        #self.assertEqual(ixBeta.ha, beta.ha)
+
 
         console.terse("{0}\n".format("Building Request ...\n"))
         host = u'127.0.0.1'
@@ -454,10 +428,6 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True)
         result = wireLogBeta.reopen()
 
-        #alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
-        #self.assertIs(alpha.reopen(), True)
-        #self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
-
         eha = ('127.0.0.1', 8080)
         beta = nonblocking.Outgoer(ha=eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
@@ -477,14 +447,6 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
         self.assertEqual(eha, beta.ha)
-
-        #ixBeta = alpha.ixes[beta.ca]
-        #self.assertIsNotNone(ixBeta.ca)
-        #self.assertIsNotNone(ixBeta.cs)
-        #self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
-        #self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
-        #self.assertEqual(ixBeta.ca, beta.ca)
-        #self.assertEqual(ixBeta.ha, beta.ha)
 
         console.terse("{0}\n".format("Building Request ...\n"))
         host = u'127.0.0.1'
@@ -522,9 +484,7 @@ class BasicTestCase(unittest.TestCase):
         beta.serviceAllRx()
 
         msgIn, index = beta.tailRxbs(0)
-        #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
-        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
         response = httping.HttpResponseNb(beta.rxbs,
                                           method=method,
                                           url=url,
@@ -541,7 +501,6 @@ class BasicTestCase(unittest.TestCase):
             response.parser.close()
             response.parser = None
 
-        #self.assertTrue(response.body.startswith(b'retry: 1000\n\ndata: START\n\ndata: 1\n\ndata: 2\n\ndata: 3\n\n'))
         self.assertEqual(response.eventSource.retry, 1000)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
@@ -553,9 +512,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertTrue(len(response.body) == 0)
         self.assertTrue(len(response.eventSource.raw) == 0)
 
-        #self.assertEqual(len(beta.rxbs), 0)
 
-        #alpha.close()
         beta.close()
 
         wireLogBeta.close()
@@ -598,5 +555,5 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testBasic')
     #runOne('testNonBlockingRequestEcho')
     #runOne('testNonBlockingRequestStream')
-    runOne('testNonBlockingRequestStreamFancy')
-    #runOne('testNonBlockingRequestStreamFancyJson')
+    #runOne('testNonBlockingRequestStreamFancy')
+    runOne('testNonBlockingRequestStreamFancyJson')
