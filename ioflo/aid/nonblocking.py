@@ -1360,7 +1360,7 @@ class Acceptor(object):
         self.wlog = wlog
 
         self.ss = None  # listen socket for accepts
-        self.accepteds = deque()  # deque of duple (ca, cs) accepted connections
+        self.axes = deque()  # deque of duple (ca, cs) accepted connections
 
     def actualBufSizes(self):
         """
@@ -1454,13 +1454,13 @@ class Acceptor(object):
     def serviceAccepts(self):
         """
         Service any accept requests
-        Adds to .axes odict key by ca
+        Adds to .cxes odict key by ca
         """
         while True:
             cs, ca = self.accept()
             if not cs:
                 break
-            self.accepteds.append((cs, ca))
+            self.axes.append((cs, ca))
 
 class Server(Acceptor):
     """
@@ -1475,17 +1475,16 @@ class Server(Acceptor):
         super(Server, self).__init__(**kwa)
         self.ixes = odict()  # ready to rx tx incoming connections, Incomer instances
 
-    def serviceAccepteds(self):
+    def serviceAxes(self):
         """
-        Service accepteds
-        service accepts
+        Service axes
 
-        For each newly accepted connection in .accepts create Incomer
+        For each newly accepted connection in .axes create Incomer
         and add to .ixes keyed by ca
         """
-        self.serviceAccepts()
-        while self.accepteds:
-            cs, ca = self.accepteds.popleft()
+        self.serviceAccepts()  # populate .axes
+        while self.axes:
+            cs, ca = self.axes.popleft()
             if ca != cs.getpeername() or self.eha != cs.getsockname():
                 raise ValueError("Accepted socket host addresses malformed for "
                                  "peer ha {0} != {1}, ca {2} != {3}\n".format(
@@ -1496,6 +1495,12 @@ class Server(Acceptor):
                               cs=cs,
                               wlog=self.wlog)
             self.ixes[ca] = incomer
+
+    def serviceConnects(self):
+        """
+        Service connects is method name to be used
+        """
+        self.serviceAxes()
 
     def shutdownIx(self, ca, how=socket.SHUT_RDWR):
         """
@@ -2096,7 +2101,7 @@ else:
             """
             super(ServerTLS, self).__init__(**kwa)
 
-            self.axes = odict()  # accepted incoming connections, IncomerTLS instances
+            self.cxes = odict()  # accepted incoming connections, IncomerTLS instances
 
             self.context = context
             self.version = version
@@ -2113,16 +2118,16 @@ else:
                                              cafilepath=cafilepath
                                             )
 
-        def serviceAccepteds(self):
+        def serviceAxes(self):
             """
-            Service accepts
+            Service accepteds
 
-            For each new accepted connection create IncomerTLS and add to .axes
+            For each new accepted connection create IncomerTLS and add to .cxes
             Not Handshaked
             """
-            self.serviceAccepts()
-            while self.accepteds:
-                cs, ca = self.accepteds.popleft()
+            self.serviceAccepts()  # populate .axes
+            while self.axes:
+                cs, ca = self.axes.popleft()
                 if ca != cs.getpeername() or self.eha != cs.getsockname():
                     raise ValueError("Accepted socket host addresses malformed for "
                                      "peer ha {0} != {1}, ca {2} != {3}\n".format(
@@ -2140,17 +2145,17 @@ else:
                                      cafilepath=self.cafilepath,
                                     )
 
-                self.axes[ca] = incomer
+                self.cxes[ca] = incomer
 
-        def serviceHandshakesAllAx(self):
+        def serviceCxes(self):
             """
-            Service handshakes for every incomer in .axes
+            Service handshakes for every incomer in .cxes
             If successful move to .ixes
             """
-            for ca, ax in self.axes.items():
-                if ax.serviceHandshake():
-                    self.ixes[ca] = ax
-                    del self.axes[ca]
+            for ca, cx in self.cxes.items():
+                if cx.serviceHandshake():
+                    self.ixes[ca] = cx
+                    del self.cxes[ca]
 
         def serviceConnects(self):
             """
@@ -2160,5 +2165,5 @@ else:
             For each successful handshaked add to .ixes
             Returns handshakeds
             """
-            self.serviceAccepteds()
-            self.serviceHandshakesAllAx()
+            self.serviceAxes()
+            self.serviceCxes()
