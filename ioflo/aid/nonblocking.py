@@ -834,7 +834,8 @@ class Outgoer(object):
 
         self.cs = None  # connection socket
         self.ca = (None, None)  # host address of local connection
-        self.connected = False  # connected successfully
+        self.accepted = False  # connection accepted successfully
+        self.connected = False  # connection fully connected successfully
         self.cutoff = False  # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
         self.rxes = deque()  # deque of data received
@@ -858,6 +859,7 @@ class Outgoer(object):
         if socket not closed properly, binding socket gets error
           socket.error: (48, 'Address already in use')
         """
+        self.accepted = False
         self.connected = False
         self.cutoff = False
 
@@ -929,6 +931,7 @@ class Outgoer(object):
             self.shutdown()
             self.cs.close()  #close socket
             self.cs = None
+            self.accepted = False
             self.connected = False
 
     close = shutclose  # alias
@@ -948,7 +951,7 @@ class Outgoer(object):
         if result not in [0, errno.EISCONN]:  # not yet connected
             return False  # try again later
 
-        self.connected = True
+        self.accepted = True
         self.cutoff = False
         # now self.cs has new virtual port see self.cs.getsockname()
         self.ca = self.cs.getsockname()  # resolved local connection address
@@ -961,12 +964,12 @@ class Outgoer(object):
         """
         Service connection attempt
         If not already connected make a nonblocking attempt
-        Returns .connected
+        Returns .accepted
         """
-        if not self.connected:
+        if not self.accepted:
             self.connect()
 
-        return self.connected
+        return self.accepted
 
     def receive(self):
         """
@@ -1004,7 +1007,7 @@ class Outgoer(object):
         """
         Service receives until no more
         """
-        while self.connected and not self.cutoff:
+        while self.accepted and not self.cutoff:
             data = self.receive()
             if not data:
                 break
@@ -1014,7 +1017,7 @@ class Outgoer(object):
         '''
         Retrieve from server only one reception
         '''
-        if self.connected and not self.cutoff:
+        if self.accepted and not self.cutoff:
             data = self.receive()
             if data:
                 self.rxes.append(data)
@@ -1097,7 +1100,7 @@ class Outgoer(object):
         or no more to send
         If partial send reattach and return
         """
-        while self.txes and self.connected and not self.cutoff:
+        while self.txes and self.accepted and not self.cutoff:
             data = self.txes.popleft()
             count = self.send(data)
             if count < len(data):  # put back unsent portion
@@ -1732,7 +1735,7 @@ else:
             """
             super(OutgoerTLS, self).__init__(**kwa)
 
-            self.handshaked = False  # True once ssl handshake completed
+            self.connected = False  # True once ssl handshake completed
 
             if context is None:  # create context
                 if not version:  # use default context
@@ -1777,9 +1780,8 @@ else:
                 self.shutdown()
                 self.cs.close()  #close socket
                 self.cs = None
+                self.accepted = False
                 self.connected = False
-                self.wrapped = False
-                self.handshaked = False
 
         close = shutclose  # alias
 
@@ -1832,25 +1834,23 @@ else:
                 self.shutclose()
                 raise
 
-            self.handshaked = True
+            self.connected = True
             return True
 
         def serviceConnect(self):
             """
             Service connection and handshake attempt
-            If not already connected and handshaked  Then
+            If not already accepted and handshaked  Then
                  make nonblocking attempt
             Returns .handshaked
             """
-            if not self.handshaked:
+            if not self.connected:
                 super(OutgoerTLS, self).serviceConnect()
-                #if not self.connected:
-                    #self.connect()
 
-                if self.connected:
+                if self.accepted:
                     self.handshake()
 
-            return self.handshaked
+            return self.connected
 
         def receive(self):
             """
@@ -1944,7 +1944,7 @@ else:
             """
             super(IncomerTLS, self).__init__(**kwa)
 
-            self.handshaked = False  # True once ssl handshake completed
+            self.connected = False  # True once ssl handshake completed
 
             self.context = initServerContext(context=context,
                                         version=version,
@@ -1963,7 +1963,7 @@ else:
                 self.shutdown()
                 self.cs.close()  #close socket
                 self.cs = None
-                self.handshaked = False
+                self.connected = False
 
         close = shutclose  # alias
 
@@ -2001,20 +2001,20 @@ else:
                 self.shutclose()
                 raise
 
-            self.handshaked = True
+            self.connected = True
             return True
 
         def serviceHandshake(self):
             """
             Service connection and handshake attempt
-            If not already connected and handshaked  Then
+            If not already accepted and handshaked  Then
                  make nonblocking attempt
             Returns .handshaked
             """
-            if not self.handshaked:
+            if not self.connected:
                 self.handshake()
 
-            return self.handshaked
+            return self.connected
 
         def receive(self):
             """
@@ -2160,7 +2160,7 @@ else:
         def serviceConnects(self):
             """
             Service accept and handshake attempts
-            If not already connected and handshaked  Then
+            If not already accepted and handshaked  Then
                  make nonblocking attempt
             For each successful handshaked add to .ixes
             Returns handshakeds
