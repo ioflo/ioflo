@@ -1475,7 +1475,7 @@ class Server(Acceptor):
         super(Server, self).__init__(**kwa)
         self.ixes = odict()  # ready to rx tx incoming connections, Incomer instances
 
-    def serviceConnects(self):
+    def serviceAccepteds(self):
         """
         Service accepteds
         service accepts
@@ -2152,7 +2152,7 @@ else:
                     self.ixes[ca] = ax
                     del self.axes[ca]
 
-        def serviceHandshakes(self):
+        def serviceConnects(self):
             """
             Service accept and handshake attempts
             If not already connected and handshaked  Then

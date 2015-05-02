@@ -276,7 +276,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to alpha\n")
         while True:
             #beta.serviceConnect()
-            alpha.serviceHandshakes()
+            alpha.serviceConnects()
             #if beta.connected and beta.ca in alpha.ixes:
                 #break
             if len(alpha.ixes) == 1:

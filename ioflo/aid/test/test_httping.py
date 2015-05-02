@@ -93,7 +93,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceConnects()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -208,7 +208,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceConnects()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -355,7 +355,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceConnects()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -503,7 +503,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceConnects()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -651,7 +651,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceConnects()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -811,7 +811,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceConnects()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -964,7 +964,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting beta to server ...\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceConnects()
+            alpha.serviceAccepteds()
             if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
@@ -1150,7 +1150,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Connecting  and Handshaking beta to alpha\n")
         while True:
             beta.serviceConnect()
-            alpha.serviceHandshakes()
+            alpha.serviceConnects()
             if beta.handshaked and len(alpha.ixes) >= 1:
                 break
             time.sleep(0.01)
