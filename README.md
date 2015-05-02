@@ -1,5 +1,5 @@
 
-![Logo](docs/images/ioflo.png?raw=true)
+![Logo](docs/images/ioflo_logo.png?raw=true)
 
 #Ioflo
 
