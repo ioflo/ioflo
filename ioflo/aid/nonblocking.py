@@ -834,12 +834,40 @@ class Outgoer(object):
 
         self.cs = None  # connection socket
         self.ca = (None, None)  # host address of local connection
-        self.accepted = False  # connection accepted successfully
-        self.connected = False  # connection fully connected successfully
+        self._accepted = False  # attribute to support accepted property
         self.cutoff = False  # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
         self.rxes = deque()  # deque of data received
         self.rxbs = bytearray()  # byte array of data recieved
+
+    @property
+    def accepted(self):
+        '''
+        Property that returns accepted state of TCP socket
+        '''
+        return self._accepted
+
+    @accepted.setter
+    def accepted(self, value):
+        '''
+        setter for accepted property
+        '''
+        self._accepted = value
+
+    @property
+    def connected(self):
+        '''
+        Property that returns connected state of TCP socket
+        Non-tls tcp is connected when accepted
+        '''
+        return self.accepted
+
+    @connected.setter
+    def connected(self, value):
+        '''
+        setter for connected property
+        '''
+        self.accepted = value
 
     def actualBufSizes(self):
         """
@@ -936,9 +964,9 @@ class Outgoer(object):
 
     close = shutclose  # alias
 
-    def connect(self):
+    def accept(self):
         """
-        Attempt nonblocking connect to .ha
+        Attempt nonblocking acceptance connect to .ha
         Returns True if successful
         Returns False if not so try again later
         """
@@ -951,25 +979,34 @@ class Outgoer(object):
         if result not in [0, errno.EISCONN]:  # not yet connected
             return False  # try again later
 
-        self.accepted = True
-        self.cutoff = False
         # now self.cs has new virtual port see self.cs.getsockname()
         self.ca = self.cs.getsockname()  # resolved local connection address
         # self.cs.getpeername() is self.ha
         self.ha = self.cs.getpeername()  # resolved remote connection address
 
+        self.accepted = True
+        self.cutoff = False
         return True
+
+    def connect(self):
+        """
+        Attempt nonblocking connect to .ha
+        Returns True if successful
+        Returns False if not so try again later
+        For non-TLS tcp connect is done when accepted
+        """
+        return self.accept()
 
     def serviceConnect(self):
         """
-        Service connection attempt
-        If not already connected make a nonblocking attempt
-        Returns .accepted
+        Service connection acceptance attempt
+        If not already accepted make a nonblocking attempt
+        Returns .connected
         """
-        if not self.accepted:
+        if not self.connected:
             self.connect()
 
-        return self.accepted
+        return self.connected
 
     def receive(self):
         """
@@ -1007,7 +1044,7 @@ class Outgoer(object):
         """
         Service receives until no more
         """
-        while self.accepted and not self.cutoff:
+        while self.connected and not self.cutoff:
             data = self.receive()
             if not data:
                 break
@@ -1017,7 +1054,7 @@ class Outgoer(object):
         '''
         Retrieve from server only one reception
         '''
-        if self.accepted and not self.cutoff:
+        if self.connected and not self.cutoff:
             data = self.receive()
             if data:
                 self.rxes.append(data)
@@ -1100,7 +1137,7 @@ class Outgoer(object):
         or no more to send
         If partial send reattach and return
         """
-        while self.txes and self.accepted and not self.cutoff:
+        while self.txes and self.connected and not self.cutoff:
             data = self.txes.popleft()
             count = self.send(data)
             if count < len(data):  # put back unsent portion
@@ -1735,7 +1772,7 @@ else:
             """
             super(OutgoerTLS, self).__init__(**kwa)
 
-            self.connected = False  # True once ssl handshake completed
+            self._connected = False  # attributed supporting connected property
 
             if context is None:  # create context
                 if not version:  # use default context
@@ -1772,6 +1809,21 @@ else:
                 raise ValueError("Check Hostname needs a SSL context with "
                                  "either CERT_OPTIONAL or CERT_REQUIRED")
 
+        @property
+        def connected(self):
+            '''
+            Property that returns connected state of TCP socket
+            TLS tcp is connected when accepted and handshake completed
+            '''
+            return self._connected
+
+        @connected.setter
+        def connected(self, value):
+            '''
+            setter for connected property
+            '''
+            self._connected = value
+
         def shutclose(self):
             """
             Shutdown and close connected socket .cs
@@ -1784,20 +1836,6 @@ else:
                 self.connected = False
 
         close = shutclose  # alias
-
-        def connect(self):
-            """
-            Attempt nonblocking connect to .ha
-            Returns True if successful
-            Returns False if not so try again later
-            """
-            result = super(OutgoerTLS, self).connect()
-            if result:  # truthy means connected
-                if not self.certedhost:
-                    self.certedhost = self.ha[0]
-                self.wrap()
-
-            return result
 
         def wrap(self):
             """
@@ -1837,6 +1875,27 @@ else:
             self.connected = True
             return True
 
+        def connect(self):
+            """
+            Attempt nonblocking connect to .ha
+            Returns True if successful
+            Returns False if not so try again later
+            Connected when both accepted connection and TLS handshake complete
+            """
+            if not self.accepted:
+                self.accept()
+
+                if self.accepted:  # only do this once immediately after accepted
+                    if not self.certedhost:
+                        self.certedhost = self.ha[0]
+                    self.wrap()
+
+            if self.accepted and not self.connected:
+                self.handshake()
+
+            return self.connected
+
+
         def serviceConnect(self):
             """
             Service connection and handshake attempt
@@ -1845,10 +1904,7 @@ else:
             Returns .handshaked
             """
             if not self.connected:
-                super(OutgoerTLS, self).serviceConnect()
-
-                if self.accepted:
-                    self.handshake()
+                self.connect()
 
             return self.connected
 

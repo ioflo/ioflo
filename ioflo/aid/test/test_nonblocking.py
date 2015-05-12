@@ -444,22 +444,25 @@ class BasicTestCase(unittest.TestCase):
         beta = nonblocking.Client(ha=alpha.eha, bufsize=131072)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         gamma = nonblocking.Client(ha=alpha.eha, bufsize=131072)
         self.assertIs(gamma.reopen(), True)
         self.assertIs(gamma.accepted, False)
+        self.assertIs(gamma.connected, False)
         self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
         while True:
             beta.serviceConnect()
             alpha.serviceConnects()
-            if beta.accepted and beta.ca in alpha.ixes:
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -531,11 +534,12 @@ class BasicTestCase(unittest.TestCase):
         while True:
             gamma.serviceConnect()
             alpha.serviceConnects()
-            if gamma.accepted and gamma.ca in alpha.ixes:
+            if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(gamma.accepted, True)
+        self.assertIs(gamma.connected, True)
         self.assertIs(gamma.cutoff, False)
         self.assertEqual(gamma.ca, gamma.cs.getsockname())
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
@@ -639,17 +643,19 @@ class BasicTestCase(unittest.TestCase):
         # reopen beta
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
         while True:
             beta.serviceConnect()
             alpha.serviceConnects()
-            if beta.accepted and beta.ca in alpha.ixes:
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -718,17 +724,19 @@ class BasicTestCase(unittest.TestCase):
         # reopen gamma
         self.assertIs(gamma.reopen(), True)
         self.assertIs(gamma.accepted, False)
+        self.assertIs(gamma.connected, False)
         self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting gamma to alpha\n")
         while True:
             gamma.serviceConnect()
             alpha.serviceConnects()
-            if gamma.accepted and gamma.ca in alpha.ixes:
+            if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(gamma.accepted, True)
+        self.assertIs(gamma.connected, True)
         self.assertIs(gamma.cutoff, False)
         self.assertEqual(gamma.ca, gamma.cs.getsockname())
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
@@ -760,17 +768,19 @@ class BasicTestCase(unittest.TestCase):
         # reopen gamma
         self.assertIs(gamma.reopen(), True)
         self.assertIs(gamma.accepted, False)
+        self.assertIs(gamma.connected, False)
         self.assertIs(gamma.cutoff, False)
 
         console.terse("Connecting gamma to alpha\n")
         while True:
             gamma.serviceConnect()
             alpha.serviceConnects()
-            if gamma.accepted and gamma.ca in alpha.ixes:
+            if gamma.connected and gamma.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(gamma.accepted, True)
+        self.assertIs(gamma.connected, True)
         self.assertIs(gamma.cutoff, False)
         self.assertEqual(gamma.ca, gamma.cs.getsockname())
         self.assertEqual(gamma.ha, gamma.cs.getpeername())
@@ -839,17 +849,19 @@ class BasicTestCase(unittest.TestCase):
         beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
         while True:
             beta.serviceConnect()
             alpha.serviceConnects()
-            if beta.accepted and beta.ca in alpha.ixes:
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -978,17 +990,19 @@ class BasicTestCase(unittest.TestCase):
         beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting beta to alpha\n")
         while True:
             beta.serviceConnect()
             alpha.serviceConnects()
-            if beta.accepted and beta.ca in alpha.ixes:
+            if beta.connected and beta.ca in alpha.ixes:
                 break
             time.sleep(0.05)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -1136,6 +1150,7 @@ class BasicTestCase(unittest.TestCase):
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting  and Handshaking beta to alpha\n")
@@ -1147,6 +1162,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.01)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -1262,6 +1278,7 @@ class BasicTestCase(unittest.TestCase):
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting  and Handshaking beta to alpha\n")
@@ -1273,6 +1290,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.01)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -1389,6 +1407,7 @@ class BasicTestCase(unittest.TestCase):
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting  and Handshaking beta to alpha\n")
@@ -1400,6 +1419,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.01)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -1516,6 +1536,7 @@ class BasicTestCase(unittest.TestCase):
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting  and Handshaking beta to alpha\n")
@@ -1527,6 +1548,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.01)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -1643,6 +1665,7 @@ class BasicTestCase(unittest.TestCase):
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting  and Handshaking beta to alpha\n")
@@ -1654,6 +1677,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.01)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
@@ -1770,6 +1794,7 @@ class BasicTestCase(unittest.TestCase):
                                       )
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
         console.terse("Connecting  and Handshaking beta to alpha\n")
@@ -1781,6 +1806,7 @@ class BasicTestCase(unittest.TestCase):
             time.sleep(0.01)
 
         self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
         self.assertEqual(beta.ca, beta.cs.getsockname())
         self.assertEqual(beta.ha, beta.cs.getpeername())
