@@ -56,14 +56,7 @@ Note: this enforcement is applied by the HTTPConnection class. The
       requests cannot be placed into the pipeline until it is known that
       the server will NOT be closing the connection.
 
-Logical State                  __state            __response
--------------                  -------            ----------
-Idle                           _CS_IDLE           None
-Request-started                _CS_REQ_STARTED    None
-Request-sent                   _CS_REQ_SENT       None
-Unread-response                _CS_IDLE           <response_class>
-Req-started-unread-response    _CS_REQ_STARTED    <response_class>
-Req-sent-unread-response       _CS_REQ_SENT       <response_class>
+
 """
 #print("module {0}".format(__name__))
 
@@ -341,7 +334,7 @@ class IncompleteRead(HTTPException):
         return repr(self)
 
 
-class HttpRequestNb(object):
+class RequesterNB(object):
     """
     Nonblocking HTTP Request class
     """
@@ -475,7 +468,7 @@ class HttpRequestNb(object):
         return (name + b': ' + value)
 
 
-class HttpResponseNb(object):
+class ResponderNB(object):
     """
     Nonblocking HTTP Response class
     """

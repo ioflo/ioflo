@@ -121,7 +121,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -165,7 +165,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
+        response = httping.ResponderNB(beta.rxbs, method=method, url=url)
         while response.parser:
             response.parse()
 
@@ -238,7 +238,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -291,7 +291,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
 
         lines =  [
                     b'retry: 1000\n\n',
@@ -388,7 +388,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -441,7 +441,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
 
         lines =  [
                     b'd\r\nretry: 1000\n\n\r\n',
@@ -537,7 +537,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -590,7 +590,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
 
         lines =  [
             b'retry: 1000\n\n',
@@ -687,7 +687,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -741,7 +741,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -849,7 +849,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                          port=port,
                                          method=method,
                                          url=url,
@@ -902,7 +902,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs,
+        response = httping.ResponderNB(beta.rxbs,
                                   method=method,
                                   url=url,
                                   wlog=wireLogBeta,
@@ -1004,7 +1004,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                          port=port,
                                          method=method,
                                          url=url,
@@ -1057,7 +1057,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs,
+        response = httping.ResponderNB(beta.rxbs,
                                   method=method,
                                   url=url,
                                   wlog=wireLogBeta,
@@ -1192,7 +1192,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.HttpRequestNb(host=host,
+        request =  httping.RequesterNB(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -1236,7 +1236,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.HttpResponseNb(beta.rxbs, method=method, url=url)
+        response = httping.ResponderNB(beta.rxbs, method=method, url=url)
         while response.parser:
             response.parse()
 
