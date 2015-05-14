@@ -98,16 +98,15 @@ HTTP_PORT = 80
 HTTPS_PORT = 443
 HTTP_11_VERSION_STRING = u'HTTP/1.1'  # http v1.1 version string
 
-_UNKNOWN = 'UNKNOWN'
-
-# connection states
-_CS_IDLE = 'Idle'
-_CS_REQ_STARTED = 'Request-started'
-_CS_REQ_SENT = 'Request-sent'
-
 # status codes
 # informational
 CONTINUE = 100
+
+# These constants are here for potential backwards compatibility
+# currently most are unused
+# status codes
+# informational
+
 SWITCHING_PROTOCOLS = 101
 PROCESSING = 102
 
@@ -234,16 +233,34 @@ class HTTPException(Exception):
     # or define self.args.  Otherwise, str() will fail.
     pass
 
-class NotConnected(HTTPException):
-    pass
-
 class InvalidURL(HTTPException):
     pass
+
 
 class UnknownProtocol(HTTPException):
     def __init__(self, version):
         self.args = version,
         self.version = version
+
+class BadStatusLine(HTTPException):
+    def __init__(self, line):
+        if not line:
+            line = repr(line)
+        self.args = line,
+        self.line = line
+
+
+class LineTooLong(HTTPException):
+    def __init__(self, kind):
+        HTTPException.__init__(self, "got more than %d bytes while parsing %s"
+                                     % (MAX_LINE_SIZE, kind))
+
+
+# these are here for potential backwards compatibility
+# currently unused
+
+class NotConnected(HTTPException):
+    pass
 
 class UnknownTransferEncoding(HTTPException):
     pass
@@ -277,18 +294,6 @@ class CannotSendHeader(ImproperConnectionState):
 class ResponseNotReady(ImproperConnectionState):
     pass
 
-class BadStatusLine(HTTPException):
-    def __init__(self, line):
-        if not line:
-            line = repr(line)
-        self.args = line,
-        self.line = line
-
-class LineTooLong(HTTPException):
-    def __init__(self, kind):
-        HTTPException.__init__(self, "got more than %d bytes while parsing %s"
-                                     % (MAX_LINE_SIZE, kind))
-
 class WaitLine(HTTPException):
     def __init__(self, kind, actual, index):
         self.args = (kind, actual, index)
@@ -319,19 +324,8 @@ class WaitContent(HTTPException):
     def __str__(self):
         return repr(self)
 
-class IncompleteRead(HTTPException):
-    def __init__(self, partial, expected=None):
-        self.args = partial,
-        self.partial = partial
-        self.expected = expected
-    def __repr__(self):
-        if self.expected is not None:
-            e = ', %i more expected' % self.expected
-        else:
-            e = ''
-        return 'IncompleteRead(%i bytes read%s)' % (len(self.partial), e)
-    def __str__(self):
-        return repr(self)
+#  Non Blocking Class Definitions
+
 
 
 class RequesterNB(object):
@@ -466,6 +460,278 @@ class RequesterNB(object):
         value = b', '.join(values)
         value = value.lower()
         return (name + b': ' + value)
+
+
+def parseLine(raw, eols=(CRLF, LF, CR ), kind="event line"):
+    """
+    Generator to parse  line from raw bytearray
+    Each line demarcated by one of eols
+    kind is line type string for error message
+
+    Yields None If waiting for more to parse
+    Yields line Otherwise
+
+    Consumes parsed portions of raw bytearray
+
+    Raise error if eol not found before MAX_LINE_SIZE
+    """
+    while True:
+        for eol in eols:  # loop over eols unless found
+            index = raw.find(eol)  # not found index == -1
+            if index >= 0:
+                break
+
+        if index < 0:  # not found
+            if len(raw) > MAX_LINE_SIZE:
+                raise LineTooLong(kind)
+            else:
+                (yield None)  # more data needed not done parsing header
+                continue
+
+        if index > MAX_LINE_SIZE:  # found but line too long
+            raise LineTooLong(kind)
+
+        line = raw[:index]
+        index += len(eol)  # strip eol
+        del raw[:index] # remove used bytes
+        (yield line)
+    return
+
+def parseBom(raw, bom=codecs.BOM_UTF8):
+    """
+    Generator to parse bom from raw bytearray
+    Yields None If waiting for more to parse
+    Yields bom If found
+    Yields empty bytearray Otherwise
+    Consumes parsed portions of raw bytearray
+    """
+    size = len(bom)
+    while True:
+        if len(raw) >= size:  # enough bytes for bom
+            if raw[:size] == bom: # bom present
+                del raw[:size]
+                (yield bom)
+                break
+            (yield raw[0:0])  # bom not present so yield empty bytearray
+            break
+        (yield None)  # not enough bytes yet
+    return
+
+class EventSource(object):
+    """
+    Server Sent Event Stream parser
+    """
+    Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
+
+    def __init__(self, raw=None, events=None, jsoned=False):
+        """
+        Initialize Instance
+        raw must be bytearray
+        IF events is not None then used passed in deque
+            .events will be deque of event odicts
+        IF jsoned then deserialize event data as json
+
+        """
+        self.raw = raw if raw is not None else bytearray()
+        self.events = events if events is not None else deque()
+        self.jsoned = True if jsoned else False
+
+        self.parser = None
+        self.leid = None  # last event id
+        self.bom = None  # bom if any
+        self.retry = None  # reconnection time in milliseconds
+        self.ended = None
+        self.closed = None
+
+        self.makeParser()
+
+    def close(self):
+        """
+        Assign True to .closed
+        """
+        self.closed = True
+
+    def parseEvents(self):
+        """
+        Generator to parse events from .raw bytearray and append to .events
+        Each event is odict with the following items:
+             id: event id utf-8 decoded or empty
+           name: event name utf-8 decoded or empty
+           data: event data utf-8 decoded
+           json: event data deserialized to odict when applicable pr None
+
+        assigns .retry if any
+
+        Yields None If waiting for more bytes
+        Yields True When done
+
+
+        event         = *( comment / field ) end-of-line
+        comment       = colon *any-char end-of-line
+        field         = 1*name-char [ colon [ space ] *any-char ] end-of-line
+        end-of-line   = ( cr lf / cr / lf / eof )
+        eof           = < matches repeatedly at the end of the stream >
+        lf            = \n 0xA
+        cr            = \r 0xD
+        space         = 0x20
+        colon         = 0x3A
+        bom           = \uFEFF when encoded as utf-8 b'\xef\xbb\xbf'
+        name-char     = a Unicode character other than LF, CR, or :
+        any-char      = a Unicode character other than LF or CR
+        Event streams in this format must always be encoded as UTF-8. [RFC3629]
+        """
+        eid = self.leid
+        ename = u''
+        edata = u''
+        parts = []
+        ejson = None
+        lineParser = parseLine(raw=self.raw, eols=(CRLF, LF, CR ), kind="event line")
+        while True:
+            line = next(lineParser)
+            if line is None:
+                (yield None)
+                continue
+
+            if not line or self.closed:  # empty line or closed so attempt dispatch
+                if parts:
+                    edata = u'\n'.join(parts)
+                if edata:  # data so dispatch event by appending to .events
+                    if self.jsoned:
+                        try:
+                            ejson = json.loads(edata, encoding='utf-8', object_pairs_hook=odict)
+                        except ValueError as ex:
+                            ejson = None
+                        else:  # valid json so null out edata
+                            edata = None
+
+                    self.events.append(odict([('id', eid),
+                                              ('name', ename),
+                                              ('data', edata),
+                                              ('json', ejson)]))
+                if self.closed:  # all done
+                    lineParser.close()  # close generator
+                    break
+                ename = u''
+                edata = u''
+                parts = []
+                ejson = None
+                continue  # parse another event if any
+
+            field, sep, value = line.partition(b':')
+            if sep:  # has colon
+                if not field:  # comment so ignore
+                    # may need to update retry timer here
+                    continue
+
+            field = field.decode('UTF-8')
+            if value and value[0:1] == b' ':
+                del value[0]
+            value = value.decode('UTF-8')
+
+            if field == u'event':
+                ename = value
+            elif field == u'data':
+                parts.append(value)
+            elif field == u'id':
+                self.leid = eid = value
+            elif field == u'retry':  #
+                try:
+                    value = int(value)
+                except ValueError as ex:
+                    pass  # ignore
+                else:
+                    self.retry = value
+
+        (yield (eid, ename, edata))
+        return
+
+    def parseEventStream(self):
+        """
+        Generator to parse event stream from .raw bytearray stream
+        appends each event to .events deque.
+        assigns .bom if any
+        assigns .retry if any
+        Parses until connection closed
+
+        Each event is odict with the following items:
+              id: event id utf-8 decoded or empty
+            name: event name utf-8 decoded or empty
+            data: event data utf-8 decoded
+            json: event data deserialized to odict when applicable pr None
+
+        Yields None If waiting for more bytes
+        Yields True When completed and sets .ended to True
+        If BOM present at beginning of event stream then assigns to .bom and
+        deletes.
+        Consumes bytearray as it parses
+
+        stream        = [ bom ] *event
+        event         = *( comment / field ) end-of-line
+        comment       = colon *any-char end-of-line
+        field         = 1*name-char [ colon [ space ] *any-char ] end-of-line
+        end-of-line   = ( cr lf / cr / lf / eof )
+        eof           = < matches repeatedly at the end of the stream >
+        lf            = \n 0xA
+        cr            = \r 0xD
+        space         = 0x20
+        colon         = 0x3A
+        bom           = \uFEFF when encoded as utf-8 b'\xef\xbb\xbf'
+        name-char     = a Unicode character other than LF, CR, or :
+        any-char      = a Unicode character other than LF or CR
+        Event streams in this format must always be encoded as UTF-8. [RFC3629]
+        """
+        self.bom = None
+        self.retry = None
+        self.leid = None
+        self.ended = None
+        self.closed = None
+
+        bomParser = parseBom(raw=self.raw, bom=self.Bom)
+        while True:  # parse bom if any
+            bom = next(bomParser)
+            if bom is not None:
+                bomParser.close()  # close generator
+                self.bom = bom.decode('UTF-8')
+                break
+
+            if self.closed:  # no more data so finish
+                bomParser.close()
+                break
+            (yield None)
+
+        eventsParser = self.parseEvents()
+        while True:  # parse event(s) so far if any
+            result = next(eventParser)
+            if result is not None:
+                eventsParser.close()
+                break
+            (yield None)
+
+        (yield True)
+        return
+
+    def makeParser(self, raw=None):
+        """
+        Make event stream parser generator and assign to .parser
+        Assign msg to .msg If provided
+        """
+        if raw:
+            self.raw = raw
+        self.parser = self.parseEvents()  # make generator
+
+    def parse(self):
+        """
+        Service the event stream parsing
+        must call .makeParser to setup parser
+        When done parsing,
+           .parser is None
+           .ended is True
+        """
+        if self.parser:
+            result = next(self.parser)
+            if result is not None:
+                self.parser.close()
+                self.parser = None
 
 
 class ResponderNB(object):
@@ -966,273 +1232,3 @@ class ResponderNB(object):
                 self.parser = None
 
 
-def parseLine(raw, eols=(CRLF, LF, CR ), kind="event line"):
-    """
-    Generator to parse  line from raw bytearray
-    Each line demarcated by one of eols
-    kind is line type string for error message
-
-    Yields None If waiting for more to parse
-    Yields line Otherwise
-
-    Consumes parsed portions of raw bytearray
-
-    Raise error if eol not found before MAX_LINE_SIZE
-    """
-    while True:
-        for eol in eols:  # loop over eols unless found
-            index = raw.find(eol)  # not found index == -1
-            if index >= 0:
-                break
-
-        if index < 0:  # not found
-            if len(raw) > MAX_LINE_SIZE:
-                raise LineTooLong(kind)
-            else:
-                (yield None)  # more data needed not done parsing header
-                continue
-
-        if index > MAX_LINE_SIZE:  # found but line too long
-            raise LineTooLong(kind)
-
-        line = raw[:index]
-        index += len(eol)  # strip eol
-        del raw[:index] # remove used bytes
-        (yield line)
-    return
-
-def parseBom(raw, bom=codecs.BOM_UTF8):
-    """
-    Generator to parse bom from raw bytearray
-    Yields None If waiting for more to parse
-    Yields bom If found
-    Yields empty bytearray Otherwise
-    Consumes parsed portions of raw bytearray
-    """
-    size = len(bom)
-    while True:
-        if len(raw) >= size:  # enough bytes for bom
-            if raw[:size] == bom: # bom present
-                del raw[:size]
-                (yield bom)
-                break
-            (yield raw[0:0])  # bom not present so yield empty bytearray
-            break
-        (yield None)  # not enough bytes yet
-    return
-
-class EventSource(object):
-    """
-    Server Sent Event Stream parser
-    """
-    Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
-
-    def __init__(self, raw=None, events=None, jsoned=False):
-        """
-        Initialize Instance
-        raw must be bytearray
-        IF events is not None then used passed in deque
-            .events will be deque of event odicts
-        IF jsoned then deserialize event data as json
-
-        """
-        self.raw = raw if raw is not None else bytearray()
-        self.events = events if events is not None else deque()
-        self.jsoned = True if jsoned else False
-
-        self.parser = None
-        self.leid = None  # last event id
-        self.bom = None  # bom if any
-        self.retry = None  # reconnection time in milliseconds
-        self.ended = None
-        self.closed = None
-
-        self.makeParser()
-
-    def close(self):
-        """
-        Assign True to .closed
-        """
-        self.closed = True
-
-    def parseEvents(self):
-        """
-        Generator to parse events from .raw bytearray and append to .events
-        Each event is odict with the following items:
-             id: event id utf-8 decoded or empty
-           name: event name utf-8 decoded or empty
-           data: event data utf-8 decoded
-           json: event data deserialized to odict when applicable pr None
-
-        assigns .retry if any
-
-        Yields None If waiting for more bytes
-        Yields True When done
-
-
-        event         = *( comment / field ) end-of-line
-        comment       = colon *any-char end-of-line
-        field         = 1*name-char [ colon [ space ] *any-char ] end-of-line
-        end-of-line   = ( cr lf / cr / lf / eof )
-        eof           = < matches repeatedly at the end of the stream >
-        lf            = \n 0xA
-        cr            = \r 0xD
-        space         = 0x20
-        colon         = 0x3A
-        bom           = \uFEFF when encoded as utf-8 b'\xef\xbb\xbf'
-        name-char     = a Unicode character other than LF, CR, or :
-        any-char      = a Unicode character other than LF or CR
-        Event streams in this format must always be encoded as UTF-8. [RFC3629]
-        """
-        eid = self.leid
-        ename = u''
-        edata = u''
-        parts = []
-        ejson = None
-        lineParser = parseLine(raw=self.raw, eols=(CRLF, LF, CR ), kind="event line")
-        while True:
-            line = next(lineParser)
-            if line is None:
-                (yield None)
-                continue
-
-            if not line or self.closed:  # empty line or closed so attempt dispatch
-                if parts:
-                    edata = u'\n'.join(parts)
-                if edata:  # data so dispatch event by appending to .events
-                    if self.jsoned:
-                        try:
-                            ejson = json.loads(edata, encoding='utf-8', object_pairs_hook=odict)
-                        except ValueError as ex:
-                            ejson = None
-                        else:  # valid json so null out edata
-                            edata = None
-
-                    self.events.append(odict([('id', eid),
-                                              ('name', ename),
-                                              ('data', edata),
-                                              ('json', ejson)]))
-                if self.closed:  # all done
-                    lineParser.close()  # close generator
-                    break
-                ename = u''
-                edata = u''
-                parts = []
-                ejson = None
-                continue  # parse another event if any
-
-            field, sep, value = line.partition(b':')
-            if sep:  # has colon
-                if not field:  # comment so ignore
-                    # may need to update retry timer here
-                    continue
-
-            field = field.decode('UTF-8')
-            if value and value[0:1] == b' ':
-                del value[0]
-            value = value.decode('UTF-8')
-
-            if field == u'event':
-                ename = value
-            elif field == u'data':
-                parts.append(value)
-            elif field == u'id':
-                self.leid = eid = value
-            elif field == u'retry':  #
-                try:
-                    value = int(value)
-                except ValueError as ex:
-                    pass  # ignore
-                else:
-                    self.retry = value
-
-        (yield (eid, ename, edata))
-        return
-
-    def parseEventStream(self):
-        """
-        Generator to parse event stream from .raw bytearray stream
-        appends each event to .events deque.
-        assigns .bom if any
-        assigns .retry if any
-        Parses until connection closed
-
-        Each event is odict with the following items:
-              id: event id utf-8 decoded or empty
-            name: event name utf-8 decoded or empty
-            data: event data utf-8 decoded
-            json: event data deserialized to odict when applicable pr None
-
-        Yields None If waiting for more bytes
-        Yields True When completed and sets .ended to True
-        If BOM present at beginning of event stream then assigns to .bom and
-        deletes.
-        Consumes bytearray as it parses
-
-        stream        = [ bom ] *event
-        event         = *( comment / field ) end-of-line
-        comment       = colon *any-char end-of-line
-        field         = 1*name-char [ colon [ space ] *any-char ] end-of-line
-        end-of-line   = ( cr lf / cr / lf / eof )
-        eof           = < matches repeatedly at the end of the stream >
-        lf            = \n 0xA
-        cr            = \r 0xD
-        space         = 0x20
-        colon         = 0x3A
-        bom           = \uFEFF when encoded as utf-8 b'\xef\xbb\xbf'
-        name-char     = a Unicode character other than LF, CR, or :
-        any-char      = a Unicode character other than LF or CR
-        Event streams in this format must always be encoded as UTF-8. [RFC3629]
-        """
-        self.bom = None
-        self.retry = None
-        self.leid = None
-        self.ended = None
-        self.closed = None
-
-        bomParser = parseBom(raw=self.raw, bom=self.Bom)
-        while True:  # parse bom if any
-            bom = next(bomParser)
-            if bom is not None:
-                bomParser.close()  # close generator
-                self.bom = bom.decode('UTF-8')
-                break
-
-            if self.closed:  # no more data so finish
-                bomParser.close()
-                break
-            (yield None)
-
-        eventsParser = self.parseEvents()
-        while True:  # parse event(s) so far if any
-            result = next(eventParser)
-            if result is not None:
-                eventsParser.close()
-                break
-            (yield None)
-
-        (yield True)
-        return
-
-    def makeParser(self, raw=None):
-        """
-        Make event stream parser generator and assign to .parser
-        Assign msg to .msg If provided
-        """
-        if raw:
-            self.raw = raw
-        self.parser = self.parseEvents()  # make generator
-
-    def parse(self):
-        """
-        Service the event stream parsing
-        must call .makeParser to setup parser
-        When done parsing,
-           .parser is None
-           .ended is True
-        """
-        if self.parser:
-            result = next(self.parser)
-            if result is not None:
-                self.parser.close()
-                self.parser = None
