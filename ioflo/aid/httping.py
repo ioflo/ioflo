@@ -3,59 +3,6 @@ httping.py
 
 nonblocking http classes
 
-HTTPConnection goes through a number of "states", which define when a client
-may legally make another request or fetch the response for a particular
-request. This diagram details these state transitions:
-
-    (null)
-      |
-      | HTTPConnection()
-      v
-    Idle
-      |
-      | putrequest()
-      v
-    Request-started
-      |
-      | ( putheader() )*  endheaders()
-      v
-    Request-sent
-      |
-      | response = getresponse()
-      v
-    Unread-response   [Response-headers-read]
-      |\____________________
-      |                     |
-      | response.read()     | putrequest()
-      v                     v
-    Idle                  Req-started-unread-response
-                     ______/|
-                   /        |
-   response.read() |        | ( putheader() )*  endheaders()
-                   v        v
-       Request-started    Req-sent-unread-response
-                            |
-                            | response.read()
-                            v
-                          Request-sent
-
-This diagram presents the following rules:
-  -- a second request may not be started until {response-headers-read}
-  -- a response [object] cannot be retrieved until {request-sent}
-  -- there is no differentiation between an unread response body and a
-     partially read response body
-
-Note: this enforcement is applied by the HTTPConnection class. The
-      HTTPResponse class does not enforce this state machine, which
-      implies sophisticated clients may accelerate the request/response
-      pipeline. Caution should be taken, though: accelerating the states
-      beyond the above pattern may imply knowledge of the server's
-      connection-close behavior for certain requests. For example, it
-      is impossible to tell whether the server will close the connection
-      UNTIL the response headers have been read; this means that further
-      requests cannot be placed into the pipeline until it is known that
-      the server will NOT be closing the connection.
-
 
 """
 #print("module {0}".format(__name__))
@@ -84,6 +31,7 @@ from email.parser import HeaderParser
 from .p23ing import *
 from ..base.odicting import odict
 from ..base import excepting
+from .nonblocking import Outgoer, OutgoerTls
 
 from ..base.consoling import getConsole
 console = getConsole()
@@ -324,11 +272,29 @@ class WaitContent(HTTPException):
     def __str__(self):
         return repr(self)
 
+# Utility functions
+
+def normalizeHostPort(host, port, defaultPort=80):
+    if port is None:
+        i = host.rfind(u':')
+        j = host.rfind(u']')         # ipv6 addresses have [...]
+        if i > j:
+            try:
+                port = int(host[i+1:])
+            except ValueError:
+                if host[i+1:] == u"": # foo.com: == foo.com
+                    port = defaultPort
+                else:
+                    raise InvalidURL("nonnumeric port: '%s'" % host[i+1:])
+            host = host[:i]
+        else:
+            port = defaultPort
+        if host and host[0] == u'[' and host[-1] == u']':
+            host = host[1:-1]
+    return (host, port)
+
 #  Non Blocking Class Definitions
-
-
-
-class RequesterNB(object):
+class Requester(object):
     """
     Nonblocking HTTP Request class
     """
@@ -344,8 +310,14 @@ class RequesterNB(object):
                  body=b'',):
         """
         Initialize Instance
+
+        host = remote server host address (may include port as host:port)
+        port = remote server port
+        method = http request method verb
+        url = http url
+        body = http request body
         """
-        self.host, self.port = self.getHostPort(host, port)
+        self.host, self.port = normalizeHostPort(host, port, 80)
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
         self.headers = headers or odict()
@@ -359,10 +331,33 @@ class RequesterNB(object):
         self.head = b""
         self.msg = b""
 
-    def build(self):
+    def reinit(self,
+               method=None,  # unicode
+               url=None,  # unicode
+               headers=None,
+               body=None,):
+        """
+        Reinitialize anything that is not None
+        This enables creating another request on a connection to the same host port
+        """
+        if method is not None:
+            self.method = method.upper()
+        if url is not None:
+            self.url = url
+        if headers is not None:
+            self.headers = headers
+        if body is not None:
+            if isinstance(body, unicode):
+                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+                body = body.encode('iso-8859-1')
+            self.body = body
+
+    def build(self, method=None, url=None, headers=None, body=None):
         """
         Build and return request message
+
         """
+        self.reinit(method, url, headers, body)
         self.lines = []
 
         headerKeys = dict.fromkeys([unicode(k.lower()) for k in self.headers])
@@ -421,26 +416,6 @@ class RequesterNB(object):
 
         self.msg = self.head + self.body
         return self.msg
-
-
-    def getHostPort(self, host, port):
-        if port is None:
-            i = host.rfind(u':')
-            j = host.rfind(u']')         # ipv6 addresses have [...]
-            if i > j:
-                try:
-                    port = int(host[i+1:])
-                except ValueError:
-                    if host[i+1:] == u"": # http://foo.com:/ == http://foo.com/
-                        port = self.default_port
-                    else:
-                        raise InvalidURL("nonnumeric port: '%s'" % host[i+1:])
-                host = host[:i]
-            else:
-                port = self.default_port
-            if host and host[0] == u'[' and host[-1] == u']':
-                host = host[1:-1]
-        return (host, port)
 
     def packHeader(self, name, *values):
         """
@@ -734,20 +709,31 @@ class EventSource(object):
                 self.parser = None
 
 
-class ResponderNB(object):
+class Respondent(object):
     """
     Nonblocking HTTP Response class
     """
 
-    def __init__(self, msg=None, method=u'GET', url=u'/', wlog=None, jsoned=None):
+    def __init__(self,
+                 msg=None,
+                 method=u'GET',
+                 jsoned=None,
+                 events=None,
+                 wlog=None,):
         """
         Initialize Instance
         msg must be bytearray
 
+        msg = bytearray of response msg to parse
+        method = request method verb
+        jsoned = Boolean flag if response body is expected to be json
+        events = deque of events if any
+        wlog = WireLog instance if any
         """
-        self.msg = msg or bytearray()
+        self.msg = msg if msg is not None else bytearray()
         self.method = method.upper() if method else u'GET'
-        self.url = url or u'/'
+        self.jsoned = True if jsoned else False  # is body json
+        self.events = events if events is not None else deque()
         self.wlog = wlog
 
         self.parser = None  # response parser generator
@@ -768,7 +754,7 @@ class ResponderNB(object):
 
         self.chunked = None    # is transfer encoding "chunked" being used?
         self.evented = None   # are server sent events being used
-        self.jsoned = jsoned  # is body json
+
         self.persisted = None   # persist connection until server closes
         self.headed = None    # head completely parsed
         self.bodied =  None   # body completely parsed
@@ -776,6 +762,26 @@ class ResponderNB(object):
         self.closed = None  # True when connection closed
 
         self.makeParser(msg=msg)
+
+    def reinit(self,
+               msg=None,
+               method=u'GET',
+               jsoned=None):
+        """
+        Reinitialize Instance
+        msg must be bytearray
+
+        msg = bytearray of response msg to parse
+        method = request method verb
+        jsoned = Boolean flag if response body is expected to be json
+
+        """
+        if msg is not None:
+            self.msg = msg
+        if method is not None:
+            self.method = method.upper()
+        if jsoned is not None:
+            self.jsoned = True if jsoned else False
 
     def close(self):
         """
@@ -1232,3 +1238,110 @@ class ResponderNB(object):
                 self.parser = None
 
 
+class Connector(Outgoer):
+    """
+    Http Client Connection Manager with Nonblocking support
+    Uses Nonblocking TCP Socket Client Class.
+    """
+    def __init__(self,
+                 requester=None,
+                 respondent=None,
+                 name='',
+                 uid=0,
+                 bufsize=8096,
+                 host='127.0.0.1',
+                 port=None,
+                 method=u'GET',  # unicode
+                 url=u'/',  # unicode
+                 headers=None,
+                 body=b'',
+                 msg=None,
+                 jsoned=None,
+                 events=None,
+                 wlog=None,
+                 **kwa):
+        """
+        Initialization method for instance.
+        requester = instance of Requester or None
+        respondent = instance of Respondent or None
+
+        if either of requester, respondent instances are not provided (None)
+        some or all of these parameters will be used for initialization
+
+        name = user friendly name for connection
+        uid = unique identifier for connection
+        host = host address of remote server
+        port = socket port of remote server
+        bufsize = buffer size
+
+        method = http request method verb unicode
+        url = http url unicode
+        headers = dict of http headers
+        body = byte or binary array of request body bytes or bytearray
+        msg = bytearray of response msg to parse
+        jsoned = Boolean flag if response body is expected to be json
+        events = deque of events if any
+        wlog = WireLog instance if any
+        """
+        host, port = normalizeHostPort(host, port, defaultPort=80)
+
+        super(Connector, self).__init__(name=name,
+                                        uid=uid,
+                                        ha=(host, port),
+                                        bufsize=bufsize,
+                                        wlog=wlog,
+                                        **kwa)
+
+        if requester is None:
+            requester = Requester(host=host,
+                                  port=port,
+                                  method=method,
+                                  url=url,  # unicode
+                                  headers=headers,
+                                  body=body,)
+        else:
+            if requester.host != host:
+                requester.host = host
+            if requester.port != port:
+                requester.port = port
+            requester.reinit(method=method, url=url, headers=headers, body=body)
+        self.requester = requester
+
+        if respondent is None:
+            respondent = Respondent(msg=self.rxbs,
+                                    method=method,
+                                    jsoned=jsoned,
+                                    events=events,
+                                    wlog=wlog,)
+        else:
+            respondent.reinit(method=method, jsoned=jsoned)
+        self.respondent = respondent
+
+    def reinit(self,
+               method=None,
+               url=None,
+               headers=None,
+               body=None,
+               jsoned=None):
+        """
+        Reinit to send another request and process response
+        """
+        self.requester.reinit(method=method, url=url, headers=headers, body=body)
+        self.respondent.reinit(method=method, jsoned=jsoned)
+
+    def request(self, method=None, url=None, headers=None, body=None):
+        """
+        Build and transmit request
+        """
+        self.transmit(self.requester.build(method=method,
+                                           url=url,
+                                           headers=headers,
+                                           body=body))
+
+    def serviceRequestResponse(self):
+        """
+        Service request response
+        """
+        self.serviceTxes()
+        self.serviceAllRx()
+        self.respondent.parse()

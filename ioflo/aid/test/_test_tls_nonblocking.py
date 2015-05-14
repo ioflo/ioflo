@@ -71,7 +71,7 @@ class BasicTestCase(unittest.TestCase):
         keypath = '/etc/pki/tls/certs/client_key.pem'  # local private key
         certpath = '/etc/pki/tls/certs/client_cert.pem'  # local public cert
         cafilepath = '/etc/pki/tls/certs/localhost.crt' # remote public cert
-        beta = nonblocking.OutgoerTLS(ha=serverHa,
+        beta = nonblocking.OutgoerTls(ha=serverHa,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -183,7 +183,7 @@ class BasicTestCase(unittest.TestCase):
         keypath = '/etc/pki/tls/certs/client_key.pem'  # local private key
         certpath = '/etc/pki/tls/certs/client_cert.pem'  # local public cert
         cafilepath = '/etc/pki/tls/certs/localhost.crt' # remote public cert
-        beta = nonblocking.OutgoerTLS(ha=serverHa,
+        beta = nonblocking.OutgoerTls(ha=serverHa,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -254,7 +254,7 @@ class BasicTestCase(unittest.TestCase):
         serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local public cert
         clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,

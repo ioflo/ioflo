@@ -18,11 +18,6 @@ import shutil
 import socket
 import errno
 
-if sys.version > '3':
-    from http.client import HTTPConnection
-else:
-    from httplib import HTTPConnection
-
 try:
     import simplejson as json
 except ImportError:
@@ -116,12 +111,12 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("{0}\n".format("Building Request ...\n"))
         host = u'127.0.0.1'
-        port = 6061
+        port = 6101
         method = u'GET'
         url = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -129,7 +124,7 @@ class BasicTestCase(unittest.TestCase):
         msgOut = request.build()
         lines = [
                    b'GET /echo?name=fame HTTP/1.1',
-                   b'Host: 127.0.0.1:6061',
+                   b'Host: 127.0.0.1:6101',
                    b'Accept-Encoding: identity',
                    b'Content-Length: 0',
                    b'Accept: application/json',
@@ -139,8 +134,8 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
-        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
         beta.transmit(msgOut)
@@ -165,7 +160,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs, method=method, url=url)
+        response = httping.Respondent(beta.rxbs, method=method)
         while response.parser:
             response.parse()
 
@@ -238,7 +233,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -291,7 +286,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.Respondent(beta.rxbs, method=method)
 
         lines =  [
                     b'retry: 1000\n\n',
@@ -365,7 +360,6 @@ class BasicTestCase(unittest.TestCase):
                 break
             time.sleep(0.05)
 
-
         self.assertIs(beta.accepted, True)
         self.assertIs(beta.connected, True)
         self.assertIs(beta.cutoff, False)
@@ -388,7 +382,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -441,7 +435,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.Respondent(beta.rxbs, method=method, wlog=wireLogBeta)
 
         lines =  [
                     b'd\r\nretry: 1000\n\n\r\n',
@@ -537,7 +531,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -590,7 +584,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.Respondent(beta.rxbs, method=method, wlog=wireLogBeta)
 
         lines =  [
             b'retry: 1000\n\n',
@@ -687,7 +681,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -741,7 +735,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        response = httping.Respondent(beta.rxbs, method=method, wlog=wireLogBeta)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -849,7 +843,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                          port=port,
                                          method=method,
                                          url=url,
@@ -902,11 +896,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs,
-                                  method=method,
-                                  url=url,
-                                  wlog=wireLogBeta,
-                                  jsoned=True)
+        response = httping.Respondent(beta.rxbs,
+                                      method=method,
+                                      jsoned=True,
+                                      wlog=wireLogBeta,
+                                      )
 
         lines =  [
             b'retry: 1000\n\n',
@@ -1004,7 +998,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                          port=port,
                                          method=method,
                                          url=url,
@@ -1057,11 +1051,10 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs,
-                                  method=method,
-                                  url=url,
-                                  wlog=wireLogBeta,
-                                  jsoned=True)
+        response = httping.Respondent(beta.rxbs,
+                                      method=method,
+                                      jsoned=True,
+                                      wlog=wireLogBeta,)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -1128,7 +1121,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
         serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1145,7 +1138,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+        beta = nonblocking.OutgoerTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1192,7 +1185,7 @@ class BasicTestCase(unittest.TestCase):
         url = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
         headers = odict([('Accept', 'application/json')])
-        request =  httping.RequesterNB(host=host,
+        request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
                                      url=url,
@@ -1236,13 +1229,259 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.ResponderNB(beta.rxbs, method=method, url=url)
+        response = httping.Respondent(beta.rxbs, method=method)
         while response.parser:
             response.parse()
 
         self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.headers.items(), [('Content-Length', '122'),
+                                                    ('Content-Type', 'application/json'),
+                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('Server', 'IoBook.local')])
+
+        alpha.close()
+        beta.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testConnectorRequestEcho(self):
+        """
+        Test Connector request echo non blocking
+        """
+        console.terse("{0}\n".format(self.testConnectorRequestEcho.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Connector ...\n"))
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+        host = alpha.eha[0]
+        port = alpha.eha[1]
+        method = u'GET'
+        url = u'/echo?name=fame'
+        headers = odict([('Accept', 'application/json')])
+
+
+        beta = httping.Connector(bufsize=131072,
+                                     wlog=wireLogBeta,
+                                     host=host,
+                                     port=port,
+                                     method=method,
+                                     url=url,
+                                     headers=headers,
+                                     )
+
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to server ...\n")
+        while True:
+            beta.serviceConnect()
+            alpha.serviceConnects()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(alpha.eha, beta.ha)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        msgOut = beta.requester.build()
+        lines = [
+                   b'GET /echo?name=fame HTTP/1.1',
+                   b'Host: 127.0.0.1:6101',
+                   b'Accept-Encoding: identity',
+                   b'Content-Length: 0',
+                   b'Accept: application/json',
+                   b'',
+                   b'',
+                ]
+        for i, line in enumerate(lines):
+            self.assertEqual(line, beta.requester.lines[i])
+
+        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+
+        console.terse("Beta requests to Alpha\n")
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        beta.transmit(msgOut)
+        while beta.txes and not ixBeta.rxbs :
+            beta.serviceTxes()
+            time.sleep(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
+        ixBeta.transmit(msgOut)
+        while ixBeta.txes or not beta.rxbs:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        msgIn = bytes(beta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+
+        console.terse("Beta processes response \n")
+
+        while beta.respondent.parser:
+            beta.respondent.parse()
+
+        self.assertEqual(bytes(beta.respondent.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        self.assertEqual(len(beta.rxbs), 0)
+        self.assertEqual(beta.respondent.headers.items(), [('Content-Length', '122'),
+                                                    ('Content-Type', 'application/json'),
+                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('Server', 'IoBook.local')])
+
+        alpha.close()
+        beta.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testConnectorServiceEcho(self):
+        """
+        Test Connector service request rewponse of echo non blocking
+        """
+        console.terse("{0}\n".format(self.testConnectorServiceEcho.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Connector ...\n"))
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+        host = alpha.eha[0]
+        port = alpha.eha[1]
+        method = u'GET'
+        url = u'/echo?name=fame'
+        headers = odict([('Accept', 'application/json')])
+
+
+        beta = httping.Connector(bufsize=131072,
+                                     wlog=wireLogBeta,
+                                     host=host,
+                                     port=port,
+                                     method=method,
+                                     url=url,
+                                     headers=headers,
+                                     )
+
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to server ...\n")
+        while True:
+            beta.serviceConnect()
+            alpha.serviceConnects()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(alpha.eha, beta.ha)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        beta.request()
+
+        lines = [
+                   b'GET /echo?name=fame HTTP/1.1',
+                   b'Host: 127.0.0.1:6101',
+                   b'Accept-Encoding: identity',
+                   b'Content-Length: 0',
+                   b'Accept: application/json',
+                   b'',
+                   b'',
+                ]
+        for i, line in enumerate(lines):
+            self.assertEqual(line, beta.requester.lines[i])
+
+        msgOut = beta.txes[0]
+        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+
+        console.terse("Beta requests to Alpha\n")
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+
+        while beta.txes and not ixBeta.rxbs :
+            beta.serviceRequestResponse()
+            time.sleep(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
+        ixBeta.transmit(msgOut)
+        while ixBeta.txes or beta.respondent.parser:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.serviceRequestResponse()
+            time.sleep(0.05)
+        #msgIn = bytes(beta.rxbs)
+        #self.assertEqual(msgIn, msgOut)
+
+        console.terse("Beta processes response \n")
+
+        while beta.respondent.parser:
+            beta.serviceRequestResponse()
+
+        self.assertEqual(bytes(beta.respondent.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        self.assertEqual(len(beta.rxbs), 0)
+        self.assertEqual(beta.respondent.headers.items(), [('Content-Length', '122'),
                                                     ('Content-Type', 'application/json'),
                                                     ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
                                                     ('Server', 'IoBook.local')])
@@ -1275,6 +1514,8 @@ def runSome():
              'testNonBlockingRequestStreamFancyJson',
              'testNonBlockingRequestStreamFancyJsonChunked',
              'testNonBlockingRequestEchoTLS',
+             'testConnectorRequestEcho',
+             'testConnectorServiceEcho',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1294,4 +1535,6 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testNonBlockingRequestEchoTLS')
+    #runOne('testConnectorRequestEcho')
+    #runOne('testConnectorServiceEcho')
+

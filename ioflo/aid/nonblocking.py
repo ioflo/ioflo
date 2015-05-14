@@ -1729,7 +1729,7 @@ else:
         return context
 
 
-    class OutgoerTLS(Outgoer):
+    class OutgoerTls(Outgoer):
         """
         Outgoer with Nonblocking TLS/SSL support
         Nonblocking TCP Socket Client Class.
@@ -1770,7 +1770,7 @@ else:
             hostify = verify server hostName If None use default
             certedhost = server's certificate common name (hostname) to check against
             """
-            super(OutgoerTLS, self).__init__(**kwa)
+            super(OutgoerTls, self).__init__(**kwa)
 
             self._connected = False  # attributed supporting connected property
 
@@ -1969,7 +1969,7 @@ else:
             return result
 
 
-    class IncomerTLS(Incomer):
+    class IncomerTls(Incomer):
         """
         Incomer with Nonblocking TLS/SSL support
         Manager class for incoming nonblocking TCP connections.
@@ -1998,7 +1998,7 @@ else:
             cafilepath = Cert Authority file path to use to verify client cert
                       If given apply to context
             """
-            super(IncomerTLS, self).__init__(**kwa)
+            super(IncomerTls, self).__init__(**kwa)
 
             self.connected = False  # True once ssl handshake completed
 
@@ -2137,7 +2137,7 @@ else:
             return result
 
 
-    class ServerTLS(Server):
+    class ServerTls(Server):
         """
         Server with Nonblocking TLS/SSL support
         Nonblocking TCP Socket Server Class.
@@ -2155,7 +2155,7 @@ else:
             """
             Initialization method for instance.
             """
-            super(ServerTLS, self).__init__(**kwa)
+            super(ServerTls, self).__init__(**kwa)
 
             self.cxes = odict()  # accepted incoming connections, IncomerTLS instances
 
@@ -2188,7 +2188,7 @@ else:
                     raise ValueError("Accepted socket host addresses malformed for "
                                      "peer ha {0} != {1}, ca {2} != {3}\n".format(
                                          self.ha, cs.getsockname(), ca, cs.getpeername()))
-                incomer = IncomerTLS(ha=cs.getsockname(),
+                incomer = IncomerTls(ha=cs.getsockname(),
                                      bs=self.bs,
                                      ca=cs.getpeername(),
                                      cs=cs,

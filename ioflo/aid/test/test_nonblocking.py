@@ -1120,7 +1120,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
         serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1136,7 +1136,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+        beta = nonblocking.OutgoerTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1248,7 +1248,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
         serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1264,7 +1264,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+        beta = nonblocking.OutgoerTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1377,7 +1377,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1393,7 +1393,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+        beta = nonblocking.OutgoerTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1506,7 +1506,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1522,7 +1522,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+        beta = nonblocking.OutgoerTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1635,7 +1635,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1651,7 +1651,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+        beta = nonblocking.OutgoerTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1764,7 +1764,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTLS(host='localhost',
+        alpha = nonblocking.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1780,7 +1780,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTLS(ha=alpha.ha,
+        beta = nonblocking.OutgoerTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
