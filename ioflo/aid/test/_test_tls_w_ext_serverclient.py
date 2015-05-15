@@ -109,7 +109,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connected, True)
 
         msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes:
             beta.serviceTxes()
             time.sleep(0.05)
@@ -141,7 +141,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connected, True)
 
         msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes:
             beta.serviceTxes()
             time.sleep(0.05)
@@ -212,7 +212,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connected, True)
 
         msgOut = b"GET /echo HTTP/1.0\r\n\r\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes:
             beta.serviceTxes()
             time.sleep(0.05)
@@ -322,7 +322,7 @@ class BasicTestCase(unittest.TestCase):
         index = len(ix.rxbs)
 
         msgOut = b'Wait what?'
-        ix.transmit(msgOut)
+        ix.tx(msgOut)
         while ix.txes:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)

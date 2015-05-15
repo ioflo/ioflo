@@ -742,7 +742,7 @@ class Respondent(object):
         self.headers = None
         self.body = bytearray()  # body data
         self.events = deque()  # events if evented
-        self.data = None
+        self.data = None  # content data parsed from body
         self.parms = None  # chunked encoding extension parameters
         self.trails = None  # chunked encoding trailing headers
 
@@ -1122,7 +1122,6 @@ class Respondent(object):
             raise ValueError("Invalid content length of {0}".format(self.length))
 
         del self.body[:]  # clear body
-        #self.events.clear()  # clear events
 
         if self.chunked:  # chunked takes precedence over length
             self.parms = odict()
@@ -1177,6 +1176,8 @@ class Respondent(object):
                 (yield None)
 
         self.bodied = True
+        # convert body to data based on .evented, content-type, and .jsoned flag
+
         (yield True)
         return
 
@@ -1288,7 +1289,7 @@ class Connector(Outgoer):
         # .requests is deque of dicts of request data
         self.requests = requests if requests is not None else deque()
         # .responses is deque of dicts of response data
-        self.responses = responses if responses is None else deque()
+        self.responses = responses if responses is not None else deque()
         # .events is deque of dicts of response server sent event data
         self.events = events if events is not None else deque()
         self.waited = False  # Boolean True If sent request but waiting for response
@@ -1339,31 +1340,65 @@ class Connector(Outgoer):
         self.requester.reinit(method=method, url=url, headers=headers, body=body)
         self.respondent.reinit(method=method, jsoned=jsoned)
 
-    def request(self, method=None, url=None, headers=None, body=None):
+    def transmit(self, method=None, url=None, headers=None, body=None):
         """
         Build and transmit request
         """
         self.waited = True
-        self.transmit(self.requester.build(method=method,
-                                           url=url,
-                                           headers=headers,
-                                           body=body))
+        request = self.requester.build(method=method,
+                                       url=url,
+                                       headers=headers,
+                                       body=body)
+        self.tx(request)
+
+    def serviceRequests(self):
+        """
+        Service requests deque
+        """
+        if not self.waited:
+            if self.requests:
+                request = self.requests.popleft()
+                self.transmit(method=request['method'],
+                             url=request['url'],
+                             headers=request['headers'],
+                             body=request['body'])
 
     def serviceResponse(self):
         """
         Service Rx on connection and parse
         """
         self.serviceAllRx()
-        self.respondent.parse()
-        if self.respondent.ended:
-            self.waited = False
+        if self.waited:
+            self.respondent.parse()
+            if self.respondent.ended:
+                if not self.respondent.evented:
+                    request = odict([('method', self.requester.method),
+                                     ('url', self.requester.url),
+                                     ('headers', self.requester.headers),
+                                     ('body', self.requester.body),
+                                    ])
+                    response = odict([('version', self.respondent.version),
+                                      ('status', self.respondent.status),
+                                      ('reason', self.respondent.reason),
+                                      ('headers', self.respondent.headers),
+                                      ('body', self.respondent.body),
+                                      ('data', self.respondent.data),
+                                      ('request', request),
+                                     ])
+                    self.responses.append(response)
+                self.waited = False
+                self.respondent.makeParser()  #set up for next time
 
+    def serviceAllTx(self):
+        """
+        service the tx side of request
+        """
+        self.serviceRequests()
+        self.serviceTxes()
 
-
-    def serviceRequestResponse(self):
+    def serviceAll(self):
         """
         Service request response
         """
-        self.serviceTxes()
-        self.serviceAllRx()
-        self.respondent.parse()
+        self.serviceAllTx()
+        self.serviceResponse()

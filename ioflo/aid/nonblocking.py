@@ -1029,7 +1029,7 @@ class Outgoer(object):
 
         if data:  # connection open
             if console._verbosity >= console.Wordage.profuse:  # faster to check
-                cmsg = ("\nClient at {0}, received from {1}:\n------------\n"
+                cmsg = ("\nOutGoer at {0}, received from {1}:\n------------\n"
                            "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
                 console.profuse(cmsg)
 
@@ -1114,8 +1114,8 @@ class Outgoer(object):
                 raise
 
         if result:
-            if console._verbosity >=  console.Wordage.profuse:
-                cmsg = ("\nClient at {0}, sent {1} bytes to {2}:\n------------\n"
+            if console._verbosity >= console.Wordage.profuse:
+                cmsg = ("\nOutgoer at {0}, sent {1} bytes to {2}:\n------------\n"
                         "{3}\n".format(self.ca, result, self.ha, data[:result].decode('UTF-8')))
                 console.profuse(cmsg)
 
@@ -1124,7 +1124,7 @@ class Outgoer(object):
 
         return result
 
-    def transmit(self, data):
+    def tx(self, data):
         '''
         Queue data onto .txes
         '''
@@ -1344,7 +1344,7 @@ class Incomer(object):
 
         return result
 
-    def transmit(self, data):
+    def tx(self, data):
         '''
         Queue data onto .txes
         '''
@@ -1612,7 +1612,7 @@ class Server(Acceptor):
         if ca not in self.ixes:
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
-        self.ixes[ca].transmit(data)
+        self.ixes[ca].tx(data)
 
     def serviceReceivesAllIx(self):
         """

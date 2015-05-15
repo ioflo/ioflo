@@ -180,7 +180,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
             beta.serviceAllRx()
@@ -266,7 +266,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(request.head, b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
             beta.serviceAllRx()
@@ -374,7 +374,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(request.head, b'GET /fancy?idify=true;multiply=true HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
             beta.serviceAllRx()
@@ -476,7 +476,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(request.head, b'GET /fancy?idify=true;jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
             beta.serviceAllRx()

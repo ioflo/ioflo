@@ -138,7 +138,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -150,7 +150,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("Alpha responds to Beta\n")
         msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -255,7 +255,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -276,7 +276,7 @@ class BasicTestCase(unittest.TestCase):
                     ]
 
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -297,7 +297,7 @@ class BasicTestCase(unittest.TestCase):
                     b'data: 4\n\n',
                  ]
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         timer = Timer(duration=0.5)
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
@@ -404,7 +404,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -425,7 +425,7 @@ class BasicTestCase(unittest.TestCase):
                     ]
 
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -446,7 +446,7 @@ class BasicTestCase(unittest.TestCase):
                     b'9\r\ndata: 4\n\n\r\n',
                  ]
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         timer = Timer(duration=0.5)
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
@@ -553,7 +553,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -574,7 +574,7 @@ class BasicTestCase(unittest.TestCase):
         ]
 
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -595,7 +595,7 @@ class BasicTestCase(unittest.TestCase):
             b'id: 4\ndata: 7\ndata: 8\n\n',
         ]
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         timer = Timer(duration=0.5)
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
@@ -704,7 +704,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -725,7 +725,7 @@ class BasicTestCase(unittest.TestCase):
         ]
 
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -757,7 +757,7 @@ class BasicTestCase(unittest.TestCase):
             b'1\r\n\n\r\n',
         ]
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         timer = Timer(duration=0.5)
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
@@ -865,7 +865,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -886,7 +886,7 @@ class BasicTestCase(unittest.TestCase):
         ]
 
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -912,7 +912,7 @@ class BasicTestCase(unittest.TestCase):
             b'id: 4\ndata: {"count":4}\n\n',
         ]
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         timer = Timer(duration=0.5)
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
@@ -1020,7 +1020,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -1041,7 +1041,7 @@ class BasicTestCase(unittest.TestCase):
         ]
 
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -1068,7 +1068,7 @@ class BasicTestCase(unittest.TestCase):
             b'6\r\nid: 4\n\r\n12\r\ndata: {"count":4}\n\r\n1\r\n\n\r\n',
         ]
         msgOut = b''.join(lines)
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         timer = Timer(duration=0.5)
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
@@ -1207,7 +1207,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -1219,7 +1219,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("Alpha responds to Beta\n")
         msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -1329,7 +1329,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("Beta requests to Alpha\n")
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
@@ -1341,7 +1341,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("Alpha responds to Beta\n")
         msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -1433,7 +1433,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ca, beta.ca)
         self.assertEqual(ixBeta.ha, beta.ha)
 
-        beta.request()
+        beta.transmit()
 
         lines = [
                    b'GET /echo?name=fame HTTP/1.1',
@@ -1455,7 +1455,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
 
         while beta.txes and not ixBeta.rxbs :
-            beta.serviceRequestResponse()
+            beta.serviceAll()
             time.sleep(0.05)
             alpha.serviceAllRxAllIx()
             time.sleep(0.05)
@@ -1464,20 +1464,19 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.clearRxbs()
 
         console.terse("Alpha responds to Beta\n")
+        console.terse("Beta processes response \n")
         msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
-        ixBeta.transmit(msgOut)
-        while ixBeta.txes or beta.respondent.parser:
+        ixBeta.tx(msgOut)
+        while ixBeta.txes or not beta.respondent.ended:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceRequestResponse()
+            beta.serviceAll()
             time.sleep(0.05)
-        #msgIn = bytes(beta.rxbs)
-        #self.assertEqual(msgIn, msgOut)
 
-        console.terse("Beta processes response \n")
-
-        while beta.respondent.parser:
-            beta.serviceRequestResponse()
+        self.assertEqual(len(beta.rxbs), 0)
+        self.assertIs(beta.waited, False)
+        self.assertIs(beta.respondent.ended, True)
+        self.assertEqual(len(beta.responses), 1)
 
         self.assertEqual(bytes(beta.respondent.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(len(beta.rxbs), 0)
@@ -1485,6 +1484,172 @@ class BasicTestCase(unittest.TestCase):
                                                     ('content-type', 'application/json'),
                                                     ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
                                                     ('server', 'IoBook.local')])
+
+        alpha.close()
+        beta.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testConnectorPipelineEcho(self):
+        """
+        Test Connector pipeline servicing
+        """
+        console.terse("{0}\n".format(self.testConnectorPipelineEcho.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Connector ...\n"))
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+        host = alpha.eha[0]
+        port = alpha.eha[1]
+
+        beta = httping.Connector(bufsize=131072,
+                                     wlog=wireLogBeta,
+                                     host=host,
+                                     port=port,
+                                     )
+
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to server ...\n")
+        while True:
+            beta.serviceConnect()
+            alpha.serviceConnects()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(alpha.eha, beta.ha)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        request = odict([('method', u'GET'),
+                         ('url', u'/echo?name=fame'),
+                         ('headers', odict([('Accept', 'application/json')])),
+                         ('body', None),
+                        ])
+
+        beta.requests.append(request)
+
+        console.terse("Beta requests to Alpha\n")
+        console.terse("from {0}:{1}, {2} {3} ...\n".format(beta.ha[0],
+                                                         beta.ha[1],
+                                                         request['method'],
+                                                         request['url']))
+
+        while (beta.requests or beta.txes) and not ixBeta.rxbs :
+            beta.serviceAll()
+            time.sleep(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n'
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        console.terse("Beta processes response \n")
+        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
+        ixBeta.tx(msgOut)
+        while ixBeta.txes or not beta.respondent.ended:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+
+        self.assertEqual(len(beta.rxbs), 0)
+        self.assertIs(beta.waited, False)
+        self.assertIs(beta.respondent.ended, True)
+
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response, {'version': 11,
+                                    'status': 200,
+                                    'reason': 'OK',
+                                    'headers': {'content-length': '122', 'content-type': 'application/json', 'date': 'Thu, 30 Apr 2015 19:37:17 GMT', 'server': 'IoBook.local'},
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
+                                    'data': None,
+                                    'request': {'method': 'GET',
+                                                'url': '/echo?name=fame',
+                                                'headers': {'Accept': 'application/json'},
+                                                'body': b''
+                                                }
+                                    })
+
+        beta.requests.append(request)
+
+        console.terse("\nBeta requests to Alpha again\n")
+        console.terse("from {0}:{1}, {2} {3} ...\n".format(beta.ha[0],
+                                                           beta.ha[1],
+                                                           request['method'],
+                                                           request['url']))
+
+        while (beta.requests or beta.txes) and not ixBeta.rxbs :
+            beta.serviceAll()
+            time.sleep(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n'
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        console.terse("Beta processes response \n")
+        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
+        ixBeta.tx(msgOut)
+        while ixBeta.txes or not beta.respondent.ended:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+
+        self.assertEqual(len(beta.rxbs), 0)
+        self.assertIs(beta.waited, False)
+        self.assertIs(beta.respondent.ended, True)
+
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response, {'version': 11,
+                                    'status': 200,
+                                    'reason': 'OK',
+                                    'headers': {'content-length': '122', 'content-type': 'application/json', 'date': 'Thu, 30 Apr 2015 19:37:17 GMT', 'server': 'IoBook.local'},
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
+                                    'data': None,
+                                    'request': {'method': 'GET',
+                                                'url': '/echo?name=fame',
+                                                'headers': {'Accept': 'application/json'},
+                                                'body': b''
+                                                }
+                                    })
+
+
 
         alpha.close()
         beta.close()
@@ -1516,6 +1681,8 @@ def runSome():
              'testNonBlockingRequestEchoTLS',
              'testConnectorRequestEcho',
              'testConnectorServiceEcho',
+             'testConnectorPipelineEcho',
+
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1535,6 +1702,6 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testConnectorRequestEcho')
+    #runOne('testConnectorPipelineEcho')
     #runOne('testConnectorServiceEcho')
 

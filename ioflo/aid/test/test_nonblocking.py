@@ -876,7 +876,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         msgIn = b''
         while not msgIn and beta.txes:
             beta.serviceTxes()
@@ -887,9 +887,9 @@ class BasicTestCase(unittest.TestCase):
 
         # send multiple
         msgOut1 = b"First Message"
-        beta.transmit(msgOut1)
+        beta.tx(msgOut1)
         msgOut2 = b"Second Message"
-        beta.transmit(msgOut2)
+        beta.tx(msgOut2)
         msgIn = b''
         while len(msgIn) < len(msgOut1 + msgOut2):
             beta.serviceTxes()
@@ -909,7 +909,7 @@ class BasicTestCase(unittest.TestCase):
             count += 1
         self.assertTrue(len(msgOutBig) >= size * 4)
 
-        beta.transmit(msgOutBig)
+        beta.tx(msgOutBig)
         msgIn = b''
         count = 0
         while len(msgIn) < len(msgOutBig):
@@ -923,7 +923,7 @@ class BasicTestCase(unittest.TestCase):
 
         # send from alpha to beta
         msgOut = b"Alpha sends to Beta"
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         msgIn = b''
         while len(msgIn) < len(msgOut):
             alpha.serviceTxesAllIx()
@@ -934,7 +934,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         # send big from alpha to beta
-        ixBeta.transmit(msgOutBig)
+        ixBeta.tx(msgOutBig)
         msgIn = b''
         while len(msgIn) < len(msgOutBig):
             alpha.serviceTxesAllIx()
@@ -1017,7 +1017,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while not ixBeta.rxbs and beta.txes:
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1028,9 +1028,9 @@ class BasicTestCase(unittest.TestCase):
 
         # send multiple
         msgOut1 = b"First Message"
-        beta.transmit(msgOut1)
+        beta.tx(msgOut1)
         msgOut2 = b"Second Message"
-        beta.transmit(msgOut2)
+        beta.tx(msgOut2)
         while len(ixBeta.rxbs) < len(msgOut1 + msgOut2):
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1049,7 +1049,7 @@ class BasicTestCase(unittest.TestCase):
             count += 1
         self.assertTrue(len(msgOutBig) >= size * 4)
 
-        beta.transmit(msgOutBig)
+        beta.tx(msgOutBig)
         count = 0
         while len(ixBeta.rxbs) < len(msgOutBig):
             beta.serviceTxes()
@@ -1062,7 +1062,7 @@ class BasicTestCase(unittest.TestCase):
 
         # send from alpha to beta
         msgOut = b"Alpha sends to Beta"
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while len(beta.rxbs) < len(msgOut):
             alpha.serviceTxesAllIx()
             beta.serviceAllRx()
@@ -1072,7 +1072,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         # send big from alpha to beta
-        ixBeta.transmit(msgOutBig)
+        ixBeta.tx(msgOutBig)
         while len(beta.rxbs) < len(msgOutBig):
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
@@ -1177,7 +1177,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while True:
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1194,7 +1194,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.clearRxbs()
 
         msgOut = b'Alpha sends to Beta\n'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
             beta.serviceAllRx()
@@ -1306,7 +1306,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while True:
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1323,7 +1323,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.clearRxbs()
 
         msgOut = b'Alpha sends to Beta\n'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
             beta.serviceAllRx()
@@ -1435,7 +1435,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while True:
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1452,7 +1452,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.clearRxbs()
 
         msgOut = b'Alpha sends to Beta\n'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
             beta.serviceAllRx()
@@ -1564,7 +1564,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while True:
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1581,7 +1581,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.clearRxbs()
 
         msgOut = b'Alpha sends to Beta\n'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
             beta.serviceAllRx()
@@ -1693,7 +1693,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while True:
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1710,7 +1710,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.clearRxbs()
 
         msgOut = b'Alpha sends to Beta\n'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
             beta.serviceAllRx()
@@ -1822,7 +1822,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         msgOut = b"Beta sends to Alpha\n"
-        beta.transmit(msgOut)
+        beta.tx(msgOut)
         while True:
             beta.serviceTxes()
             alpha.serviceAllRxAllIx()
@@ -1839,7 +1839,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.clearRxbs()
 
         msgOut = b'Alpha sends to Beta\n'
-        ixBeta.transmit(msgOut)
+        ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
             beta.serviceAllRx()
