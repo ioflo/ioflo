@@ -28,7 +28,7 @@ else:
 from email.parser import HeaderParser
 
 # Import ioflo libs
-from .p23ing import *
+from .sixing import *
 from ..base.odicting import odict, lodict
 from ..base import excepting
 from .nonblocking import Outgoer, OutgoerTls
