@@ -2,6 +2,27 @@
 CHANGE LOG
 -------------------
 ---------
+20150515
+---------
+v1.2.3
+
+Some refactoring of repository directory structure. Added ioflo.aid as
+sub-package for utility modules. Started moving some stuff out of .base
+into .aid. Left reference in .base for now but deprecated in future.
+
+ioflo.base.nonblocking is depracated use ioflo.aid.nonblocking instead
+
+Added support for nonblocking tcp/ip and tcp/ip + tls client and server classes
+in aid.nonblocking
+
+Added support for nonblocking http client in aid.httping
+
+
+
+
+
+
+---------
 201503XX
 ---------
 v1.2.2
