@@ -17,25 +17,12 @@ else:
     import unittest
 import os
 
-
+from ioflo import test
 from ioflo.base.consoling import getConsole
 console = getConsole()
 console.reinit(verbosity=console.Wordage.concise)
 
-def run(start=None):
-    """
-    Run unittests starting at directory given by start
-    Default start is the location of the ioflo.base package
-    """
-    top = os.path.dirname(os.path.abspath(sys.modules.get(__name__).__file__))
-
-    if not start:
-        start = top
-
-    console.terse("\nRunning ioflo tests starting at '{0}' from '{1}', \n".format(start, top))
-    loader = unittest.TestLoader()
-    suite = loader.discover(start, 'test_*.py', top )
-    unittest.TextTestRunner(verbosity=2).run(suite)
+top = os.path.dirname(os.path.abspath(sys.modules.get(__name__).__file__))
 
 if __name__ == "__main__":
-    run()
+    test.run(top)

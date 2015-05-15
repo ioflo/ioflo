@@ -272,14 +272,15 @@ class lodict(odict):
         d = odict()
         for a in pa:
             if hasattr(a,'get'): #positional arg is dictionary
-                for k, v in a.iteritems():
-                    d[k.lower()] = v
+                for k in a:
+                    d[k.lower()] = a[k]
+
             else: #positional arg is sequence of duples (k,v)
                 for k, v in a:
                     d[k.lower()] = v
 
-        for k, v in kwa.iteritems():
-            d[k.lower()] = v
+        for k in kwa:
+            d[k.lower()] = kwa[k]
 
         super(lodict, self).update(d)
 
