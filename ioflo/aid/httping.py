@@ -29,7 +29,7 @@ from email.parser import HeaderParser
 
 # Import ioflo libs
 from .p23ing import *
-from ..base.odicting import odict
+from ..base.odicting import odict, lodict
 from ..base import excepting
 from .nonblocking import Outgoer, OutgoerTls
 
@@ -986,13 +986,13 @@ class Respondent(object):
                 break
             (yield None)
 
-        self.headers = odict()
+        self.headers = lodict()
         if lines:
             #email Parser wants to see strings rather than bytes.
             #So convert bytes to string
             lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
             hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
-            self.headers = HeaderParser().parsestr(hstring)
+            self.headers.update(HeaderParser().parsestr(hstring).items())
 
         # are we using the chunked-style of transfer encoding?
         transferEncoding = self.headers.get("transfer-encoding")
@@ -1251,6 +1251,7 @@ class Connector(Outgoer):
                  bufsize=8096,
                  host='127.0.0.1',
                  port=None,
+                 wlog=None,
                  method=u'GET',  # unicode
                  url=u'/',  # unicode
                  headers=None,
@@ -1258,7 +1259,8 @@ class Connector(Outgoer):
                  msg=None,
                  jsoned=None,
                  events=None,
-                 wlog=None,
+                 requests=None,
+                 responses=None,
                  **kwa):
         """
         Initialization method for instance.
@@ -1283,6 +1285,14 @@ class Connector(Outgoer):
         events = deque of events if any
         wlog = WireLog instance if any
         """
+        # .requests is deque of dicts of request data
+        self.requests = requests if requests is not None else deque()
+        # .responses is deque of dicts of response data
+        self.responses = responses if responses is None else deque()
+        # .events is deque of dicts of response server sent event data
+        self.events = events if events is not None else deque()
+        self.waited = False  # Boolean True If sent request but waiting for response
+
         host, port = normalizeHostPort(host, port, defaultPort=80)
 
         super(Connector, self).__init__(name=name,
@@ -1311,7 +1321,7 @@ class Connector(Outgoer):
             respondent = Respondent(msg=self.rxbs,
                                     method=method,
                                     jsoned=jsoned,
-                                    events=events,
+                                    events=self.events,
                                     wlog=wlog,)
         else:
             respondent.reinit(method=method, jsoned=jsoned)
@@ -1333,10 +1343,22 @@ class Connector(Outgoer):
         """
         Build and transmit request
         """
+        self.waited = True
         self.transmit(self.requester.build(method=method,
                                            url=url,
                                            headers=headers,
                                            body=body))
+
+    def serviceResponse(self):
+        """
+        Service Rx on connection and parse
+        """
+        self.serviceAllRx()
+        self.respondent.parse()
+        if self.respondent.ended:
+            self.waited = False
+
+
 
     def serviceRequestResponse(self):
         """

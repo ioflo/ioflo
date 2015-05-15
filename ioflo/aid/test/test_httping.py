@@ -166,10 +166,10 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(len(beta.rxbs), 0)
-        self.assertEqual(response.headers.items(), [('Content-Length', '122'),
-                                                    ('Content-Type', 'application/json'),
-                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
-                                                    ('Server', 'IoBook.local')])
+        self.assertEqual(response.headers.items(), [('content-length', '122'),
+                                                    ('content-type', 'application/json'),
+                                                    ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('server', 'IoBook.local')])
 
         alpha.close()
         beta.close()
@@ -1235,10 +1235,10 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(len(beta.rxbs), 0)
-        self.assertEqual(response.headers.items(), [('Content-Length', '122'),
-                                                    ('Content-Type', 'application/json'),
-                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
-                                                    ('Server', 'IoBook.local')])
+        self.assertEqual(response.headers.items(), [('content-length', '122'),
+                                                    ('content-type', 'application/json'),
+                                                    ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('server', 'IoBook.local')])
 
         alpha.close()
         beta.close()
@@ -1357,10 +1357,10 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(bytes(beta.respondent.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(len(beta.rxbs), 0)
-        self.assertEqual(beta.respondent.headers.items(), [('Content-Length', '122'),
-                                                    ('Content-Type', 'application/json'),
-                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
-                                                    ('Server', 'IoBook.local')])
+        self.assertEqual(beta.respondent.headers.items(), [('content-length', '122'),
+                                                    ('content-type', 'application/json'),
+                                                    ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('server', 'IoBook.local')])
 
         alpha.close()
         beta.close()
@@ -1481,10 +1481,10 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(bytes(beta.respondent.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(len(beta.rxbs), 0)
-        self.assertEqual(beta.respondent.headers.items(), [('Content-Length', '122'),
-                                                    ('Content-Type', 'application/json'),
-                                                    ('Date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
-                                                    ('Server', 'IoBook.local')])
+        self.assertEqual(beta.respondent.headers.items(), [('content-length', '122'),
+                                                    ('content-type', 'application/json'),
+                                                    ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('server', 'IoBook.local')])
 
         alpha.close()
         beta.close()
