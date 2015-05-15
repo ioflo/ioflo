@@ -38,7 +38,7 @@ class odict(dict):
 
             d = {}
             for a in pa:
-               if isinstance(a, dict):
+               if hasattr(a,'get'):
                   for k, v in a.items():
                      d[k] = v
                else:
@@ -62,7 +62,7 @@ class odict(dict):
         dict.__init__(self)
 
         for a in pa:
-            if isinstance(a, dict): #positional arg is dictionary
+            if hasattr(a,'get'): #positional arg is dictionary
                 for k in a:
                     self[k] = a[k]
             else: #positional arg is sequence of duples (k,v)
@@ -132,7 +132,7 @@ class odict(dict):
            kwa is dict of keyword arguments
         """
         for a in pa:
-            if isinstance(a, dict): #positional arg is dictionary
+            if hasattr(a,'get'): #positional arg is dictionary
                 for k in a:
                     if k not in self._keys:
                         self[k] = a[k]
@@ -226,7 +226,7 @@ class odict(dict):
            kwa is dict of keyword arguments
         """
         for a in pa:
-            if isinstance(a, dict): #positional arg is dictionary
+            if hasattr(a,'get'): #positional arg is dictionary
                 for k in a:
                     self[k] = a[k]
             else: #positional arg is sequence of duples (k,v)
@@ -243,6 +243,63 @@ ODict = odict  # alias
 
 #from . import optimize
 #optimize.bind_all(odict)
+
+
+class lodict(odict):
+    """ Lowercase odict
+        ensures that all keys are lower case.
+    """
+    def __init__(self, *pa, **kwa):
+        """
+        lodict() -> new empty lodict instance.
+
+            lodict(pa1, pa2, ...) where pa = tuple of positional args,
+            (pa1, pa2, ...) each paX may be  a sequence of duples (k,v) or a dict
+
+            lodict(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args,
+            {k1: v1, k2 : v2, ...}
+        """
+        super(lodict, self).__init__()  # must do this first
+        self.update(*pa, **kwa)
+
+    def update(self, *pa, **kwa):
+        """ lodict.update(pa1, pa2, ...) where pa = tuple of positional args,
+            (pa1, pa2, ...) each paX may be  a sequence of duples (k,v) or a dict
+
+            lodict.update(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args,
+            {k1: v1, k2 : v2, ...}
+        """
+        d = odict()
+        for a in pa:
+            if hasattr(a,'get'): #positional arg is dictionary
+                for k in a:
+                    d[k.lower()] = a[k]
+
+            else: #positional arg is sequence of duples (k,v)
+                for k, v in a:
+                    d[k.lower()] = v
+
+        for k in kwa:
+            d[k.lower()] = kwa[k]
+
+        super(lodict, self).update(d)
+
+
+    def __setitem__(self, key, val):
+        """ Make key lowercalse then setitem """
+        super(lodict, self).__setitem__(key.lower(), val)
+
+    def __delitem__(self, key):
+        """ Make key lowercase then delitem """
+        super(lodict, self).__delitem__(key.lower())
+
+    def __contains__(self, key):
+        """ Make key lowercase then test for inclusion"""
+        return super(lodict, self).__contains__(key.lower())
+
+    def __getitem__(self, key):
+        return super(lodict, self).__getitem__(key.lower())
+
 
 
 def TestPickle():

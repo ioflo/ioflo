@@ -40,7 +40,7 @@ console = getConsole()
 # Temporary import of nonblocking io classes which were moved to nonblocking.py
 # import via aiding is deprecated and these imports will be removed in the future
 
-from .nonblocking import SerialNB, ConsoleNB, SocketUdpNb, SocketUxdNb, WinMailslotNb
+from .nonblocking import SerialNb, ConsoleNb, SocketUdpNb, SocketUxdNb, WinMailslotNb
 
 def metaclassify(metaclass):
     """

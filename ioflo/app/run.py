@@ -8,16 +8,22 @@ from ..__metadata__ import __version__
 from ..base import skedding, consoling
 
 
-def parseArgs():
-    """ Parse command line arguments"""
+def parseArgs(version=__version__):
+    """
+    Parse command line arguments
+
+    version parameter defaults to ioflo version
+    allows different version if parseArgs is embedded in another script
+
+    """
 
     d = "Runs ioflo. "
     d += "Example: ioflo -f filename -p period -v level -r -h -b 'mybehaviors.py'\n"
     p = argparse.ArgumentParser(description=d)
     p.add_argument('-V', '--version',
             action='version',
-            version=__version__,
-            help="Prints out version of ioflo.")
+            version=version,
+            help="Prints out version of ioflo script runner.")
     p.add_argument('-v', '--verbose',
             action='store',
             default='concise',

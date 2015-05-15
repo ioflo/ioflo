@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ioflo.base  test package
+ioflo.aid  test package
 
 To run all the unittests:
 

@@ -1,4 +1,4 @@
-"""globaling.py module with global constang
+"""globaling.py module with global constants
 
 """
 #print("module {0}".format(__name__))

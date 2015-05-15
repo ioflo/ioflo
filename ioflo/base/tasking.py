@@ -68,14 +68,12 @@ class Tasker(registering.StoriedRegistrar):
         self.runner = None #reference to runner generator
         self.remake() #make generator assign to .runner and advance to yield
 
-
     def reinit(self, period=None, schedule=None, **kw):
         if period is not None:
             self.period = period
 
         if schedule is not None:
             self.schedule = schedule
-
 
     def remake(self):
         """Re make runner generator
@@ -127,7 +125,6 @@ class Tasker(registering.StoriedRegistrar):
 
         """
         return self.runner.send(ABORT)
-
 
     def makeRunner(self):
         """generator factory function to create generator to run this tasker

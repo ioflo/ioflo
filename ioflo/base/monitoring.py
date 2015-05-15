@@ -49,7 +49,7 @@ class Monitor(tasking.Tasker):
         super(Monitor,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
 
 
-        self.console = aiding.ConsoleNB()  #create console object for Non Blocking IO
+        self.console = aiding.ConsoleNb()  #create console object for Non Blocking IO
 
         #create socket server
         self.host = host
