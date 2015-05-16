@@ -1343,13 +1343,16 @@ class Connector(Outgoer):
     def transmit(self, method=None, url=None, headers=None, body=None):
         """
         Build and transmit request
+        Add jsoned parameter
         """
         self.waited = True
+        # build calls reinit
         request = self.requester.build(method=method,
                                        url=url,
                                        headers=headers,
                                        body=body)
         self.tx(request)
+        self.respondent.reinit(method=method)
 
     def serviceRequests(self):
         """
@@ -1400,5 +1403,17 @@ class Connector(Outgoer):
         """
         Service request response
         """
+        if self.cutoff:  # add auto reconnect flag
+            self.reopen()
+
+        if not self.connected:
+            self.serviceConnect()
+            if self.connected:
+                pass
+                # queue up last http request here
+                # self.transmit()
+                # if evented then use retry timer and last id header
+
+
         self.serviceAllTx()
         self.serviceResponse()
