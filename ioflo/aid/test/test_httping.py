@@ -1811,7 +1811,98 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2', 'json': None})
         event = beta.events.popleft()
         self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4', 'json': None})
+        beta.events.clear()
 
+        # alpha's ixBeta connection shutdown prematurely
+        console.terse("Disconnecting server so beta must auto reconnect ...\n")
+        alpha.shutcloseIx(beta.ca)
+        alpha.removeIx(beta.ca)
+        while True:
+            beta.serviceAll()
+            if not beta.connected:
+                break
+            time.sleep(0.1)
+            beta.store.advanceStamp(0.1)
+
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Auto reconnecting beta and rerequesting...\n")
+        while True:
+            beta.serviceAll()
+            alpha.serviceConnects()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+
+        self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(alpha.eha, beta.ha)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        console.terse("Server receiving...\n")
+        while (beta.requests or beta.txes) or not ixBeta.rxbs:
+            beta.serviceAll()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+
+        msgIn = bytes(ixBeta.rxbs)
+        msgOut = b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\nLast-Event-Id: 4\r\n\r\n'
+
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        lines = [
+            b'HTTP/1.0 200 OK\r\n',
+            b'Server: PasteWSGIServer/0.5 Python/2.7.9\r\n',
+            b'Date: Thu, 30 Apr 2015 21:35:25 GMT\r\n'
+            b'Content-Type: text/event-stream\r\n',
+            b'Cache-Control: no-cache\r\n',
+            b'Connection: close\r\n\r\n',
+            b'id: 5\ndata: 9\ndata: 10\n\n',
+            b'id: 6\ndata: 11\ndata: 12\n\n',
+        ]
+
+        msgOut = b''.join(lines)
+        ixBeta.tx(msgOut)
+        timer = StoreTimer(store=store, duration=0.5)
+        while ixBeta.txes or not timer.expired:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+
+        self.assertEqual(len(beta.rxbs), 0)
+
+        #timed out while stream still open so no responses in .responses
+        self.assertIs(beta.waited, True)
+        self.assertIs(beta.respondent.ended, False)
+        self.assertEqual(len(beta.responses), 0)
+
+        # but are events in .events
+        self.assertEqual(len(beta.events), 2)
+        self.assertEqual(beta.respondent.retry, 1000)
+        self.assertEqual(beta.respondent.leid, '6')
+        event = beta.events.popleft()
+        self.assertEqual(event, {'id': '5', 'name': '', 'data': '9\n10', 'json': None})
+        event = beta.events.popleft()
+        self.assertEqual(event, {'id': '6', 'name': '', 'data': '11\n12', 'json': None})
 
 
         alpha.close()
@@ -1863,8 +1954,8 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
     #runOne('testConnectorPipelineEcho')
-    runOne('testConnectorPipelineStream')
+    #runOne('testConnectorPipelineStream')
 

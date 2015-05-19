@@ -1559,6 +1559,8 @@ class Server(Acceptor):
                               ca=cs.getpeername(),
                               cs=cs,
                               wlog=self.wlog)
+            if ca in self.ixes and self.ixes[ca] is not incomer:
+                self.shutdownIx[ca]
             self.ixes[ca] = incomer
 
     def serviceConnects(self):
@@ -1602,6 +1604,17 @@ class Server(Acceptor):
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
         self.ixes[ca].shutclose()
+
+    def removeIx(self, ca, shutclose=True):
+        """
+        Remove incomer given by connection address ca
+        """
+        if ca not in self.ixes:
+            emsg = "Invalid connection address '{0}'".format(ca)
+            raise ValueError(emsg)
+        if shutclose:
+            self.ixes[ca].shutclose()
+        del self.ixes[ca]
 
     def serviceRxesIx(self, ca):
         """
