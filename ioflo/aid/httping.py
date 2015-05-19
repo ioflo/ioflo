@@ -320,7 +320,7 @@ class Requester(object):
         self.host, self.port = normalizeHostPort(host, port, 80)
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
-        self.headers = headers or odict()
+        self.headers = headers or lodict()
 
         if body and isinstance(body, unicode):  # use default
             # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
@@ -360,14 +360,12 @@ class Requester(object):
         self.reinit(method, url, headers, body)
         self.lines = []
 
-        headerKeys = dict.fromkeys([unicode(k.lower()) for k in self.headers])
-
-        skip_accept_encoding = True if 'accept-encoding' in headerKeys else False
+        skip_accept_encoding = True if 'accept-encoding' in self.headers else False
 
         startLine = "{0} {1} {2}".format(self.method, self.url, self.HttpVersionString)
         self.lines.append(startLine.encode('ascii'))
 
-        if u'host' not in headerKeys:
+        if u'host' not in self.headers:
             # If we need a non-standard port, include it in the header
             netloc = ''
             if self.url.startswith('http'):
@@ -402,11 +400,11 @@ class Requester(object):
 
         # we only want a Content-Encoding of "identity" since we don't
         # support encodings such as x-gzip or x-deflate.
-        if u'accept-encoding' not in headerKeys:
-            self.lines.append(self.packHeader('Accept-Encoding', 'identity'))
+        if u'accept-encoding' not in self.headers:
+            self.lines.append(self.packHeader(u'Accept-Encoding', u'identity'))
 
-        if self.body is not None and (u'content-length' not in headerKeys):
-            self.lines.append(self.packHeader('Content-Length', str(len(self.body))))
+        if self.body is not None and (u'content-length' not in self.headers):
+            self.lines.append(self.packHeader(u'Content-Length', str(len(self.body))))
 
         for name, value in self.headers.items():
             self.lines.append(self.packHeader(name, value))

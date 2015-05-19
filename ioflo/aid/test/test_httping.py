@@ -115,7 +115,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
@@ -232,7 +232,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
@@ -384,7 +384,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
@@ -536,7 +536,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
@@ -689,7 +689,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
@@ -854,7 +854,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                          port=port,
                                          method=method,
@@ -1012,7 +1012,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                          port=port,
                                          method=method,
@@ -1202,7 +1202,7 @@ class BasicTestCase(unittest.TestCase):
         method = u'GET'
         url = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
@@ -1289,7 +1289,7 @@ class BasicTestCase(unittest.TestCase):
         port = alpha.eha[1]
         method = u'GET'
         url = u'/echo?name=fame'
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
 
 
         beta = httping.Connector(bufsize=131072,
@@ -1411,7 +1411,7 @@ class BasicTestCase(unittest.TestCase):
         port = alpha.eha[1]
         method = u'GET'
         url = u'/echo?name=fame'
-        headers = odict([('Accept', 'application/json')])
+        headers = odict([(u'Accept', u'application/json')])
 
 
         beta = httping.Connector(bufsize=131072,
