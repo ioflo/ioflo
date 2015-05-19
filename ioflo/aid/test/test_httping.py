@@ -311,6 +311,9 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
+        self.assertEqual(response.retry, response.eventSource.retry)
+        self.assertEqual(response.eventSource.leid, None)
+        self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
         self.assertEqual(event, {'id': None, 'name': '', 'data': 'START', 'json': None})
@@ -460,6 +463,9 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
+        self.assertEqual(response.retry, response.eventSource.retry)
+        self.assertEqual(response.eventSource.leid, None)
+        self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
         self.assertEqual(event, {'id': None, 'name': '', 'data': 'START', 'json': None})
@@ -609,6 +615,9 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
+        self.assertEqual(response.retry, response.eventSource.retry)
+        self.assertTrue(int(response.eventSource.leid) >= 2)
+        self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
         self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
@@ -771,6 +780,9 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
+        self.assertEqual(response.retry, response.eventSource.retry)
+        self.assertTrue(int(response.eventSource.leid) >= 2)
+        self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
         self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
@@ -926,6 +938,9 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
+        self.assertEqual(response.retry, response.eventSource.retry)
+        self.assertTrue(int(response.eventSource.leid) >= 2)
+        self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
         self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
@@ -1082,6 +1097,9 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
+        self.assertEqual(response.retry, response.eventSource.retry)
+        self.assertTrue(int(response.eventSource.leid) >= 2)
+        self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
         self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
@@ -1519,6 +1537,7 @@ class BasicTestCase(unittest.TestCase):
                                      wlog=wireLogBeta,
                                      host=host,
                                      port=port,
+                                     reconnectable=True,
                                      )
 
         self.assertIs(beta.reopen(), True)
@@ -1703,5 +1722,5 @@ if __name__ == '__main__' and __package__ is None:
     runSome()#only run some
 
     #runOne('testConnectorPipelineEcho')
-    #runOne('testConnectorServiceEcho')
+    #runOne('testNonBlockingRequestStream')
 

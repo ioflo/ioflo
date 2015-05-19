@@ -713,12 +713,15 @@ class Respondent(object):
     """
     Nonblocking HTTP Response class
     """
+    Retry = 100  # retry timeout in milliseconds if evented
 
     def __init__(self,
                  msg=None,
                  method=u'GET',
                  jsoned=None,
                  events=None,
+                 retry=None,
+                 leid=None,
                  wlog=None,):
         """
         Initialize Instance
@@ -728,12 +731,16 @@ class Respondent(object):
         method = request method verb
         jsoned = Boolean flag if response body is expected to be json
         events = deque of events if any
+        retry = retry timeout in seconds if any if evented
+        leid = last event id if any if evented
         wlog = WireLog instance if any
         """
         self.msg = msg if msg is not None else bytearray()
         self.method = method.upper() if method else u'GET'
         self.jsoned = True if jsoned else False  # is body json
         self.events = events if events is not None else deque()
+        self.retry = retry if retry is not None else self.Retry  # retry timeout in milliseconds if evented
+        self.leid = None  # non None if evented with event ids sent
         self.wlog = wlog
 
         self.parser = None  # response parser generator
@@ -741,7 +748,6 @@ class Respondent(object):
 
         self.headers = None
         self.body = bytearray()  # body data
-        self.events = deque()  # events if evented
         self.data = None  # content data parsed from body
         self.parms = None  # chunked encoding extension parameters
         self.trails = None  # chunked encoding trailing headers
@@ -1143,6 +1149,12 @@ class Respondent(object):
                     self.body.extend(chunk)
                     if self.evented:
                         self.eventSource.parse()  # parse events here
+                        if (self.eventSource.retry is not None and
+                                self.retry != self.eventSource.retry):
+                            self.retry = self.eventSource.retry
+                        if (self.eventSource.leid is not None and
+                                self.leid != self.eventSource.leid):
+                            self.leid = self.eventSource.leid
 
                     if self.closed:  # no more data so finish
                         chunkParser.close()
@@ -1169,6 +1181,12 @@ class Respondent(object):
 
                 if self.evented:
                     self.eventSource.parse()  # parse events here
+                    if (self.eventSource.retry is not None and
+                            self.retry != self.eventSource.retry):
+                        self.retry = self.eventSource.retry
+                    if (self.eventSource.leid is not None and
+                            self.leid != self.eventSource.leid):
+                        self.leid = self.eventSource.leid
 
                 if self.closed:  # no more data so finish
                     break
@@ -1176,7 +1194,8 @@ class Respondent(object):
                 (yield None)
 
         self.bodied = True
-        # convert body to data based on .evented, content-type, and .jsoned flag
+        # convert body to data based on content-type, and .jsoned flag
+        # only gets to here if finite content length (not streaming or streaming ends)
 
         (yield True)
         return
@@ -1403,17 +1422,21 @@ class Connector(Outgoer):
         """
         Service request response
         """
-        if self.cutoff:  # add auto reconnect flag
-            self.reopen()
+        if self.cutoff and self.reconnectable:
+            if self.timeout > 0.0 and self.timer.expired:  # timed out
+                self.reopen()
+                if self.respondent.evented:
+                    duration = float(self.respondent.retry) / 1000.0 # convert to seconds
+                else:
+                    duration = None  # reused current duration
+                self.timer.restart(duration=duration)
 
         if not self.connected:
             self.serviceConnect()
             if self.connected:
-                pass
-                # queue up last http request here
-                # self.transmit()
-                # if evented then use retry timer and last id header
-
+                if self.evented and self.respondent.leid is not None:  # update Last-Event-ID header
+                    self.requester.headers['Last-Event-ID'] = self.respondent.leid
+                self.transmit()  # rebuilds and queues up most recent http request here
 
         self.serviceAllTx()
         self.serviceResponse()

@@ -1891,7 +1891,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
-        console.terse("Connecting  and Handshaking beta to alpha\n")
+        console.terse("Connecting and Handshaking beta to alpha\n")
         while True:
             beta.serviceConnect()
             alpha.serviceConnects()

@@ -1026,7 +1026,7 @@ class Outgoer(object):
         if not self.connected:
             self.connect()
 
-            if not self.connected:
+            if not self.connected and self.reconnectable:
                 if self.timeout > 0.0 and self.timer.expired:  # timed out
                     self.reopen()
                     self.timer.restart()
