@@ -717,6 +717,8 @@ class Respondent(object):
                  msg=None,
                  method=u'GET',
                  jsoned=None,
+                 redirects=None,
+                 redirectable=True,
                  events=None,
                  retry=None,
                  leid=None,
@@ -728,6 +730,8 @@ class Respondent(object):
         msg = bytearray of response msg to parse
         method = request method verb
         jsoned = Boolean flag if response body is expected to be json
+        redirects = list of redirects if any
+        redirectable = Boolean allow redirects
         events = deque of events if any
         retry = retry timeout in seconds if any if evented
         leid = last event id if any if evented
@@ -736,6 +740,8 @@ class Respondent(object):
         self.msg = msg if msg is not None else bytearray()
         self.method = method.upper() if method else u'GET'
         self.jsoned = True if jsoned else False  # is body json
+        self.redirects = redirects if redirects is not None else []
+        self.redirectable = True if redirectable else False
         self.events = events if events is not None else deque()
         self.retry = retry if retry is not None else self.Retry  # retry timeout in milliseconds if evented
         self.leid = None  # non None if evented with event ids sent
@@ -761,6 +767,8 @@ class Respondent(object):
 
         self.persisted = None   # persist connection until server closes
         self.headed = None    # head completely parsed
+        self.redirectant = None  # Boolean True if receive redirect status, need to redirect
+        self.redirected = None  # attempted a redirection
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
         self.closed = None  # True when connection closed
@@ -1035,6 +1043,11 @@ class Respondent(object):
 
         # Should connection be kept open until server closes
         self.checkPersisted()  # sets .persisted
+
+        # Check for redirect
+        if self.status in (MULTIPLE_CHOICES, MOVED_PERMANENTLY, FOUND, SEE_OTHER, TEMPORARY_REDIRECT):
+            self.redirectant = True
+            self.redirects.append((self.status, lodict(self.headers)))  # duple of status and copy of headers
 
         self.headed = True
         yield True
