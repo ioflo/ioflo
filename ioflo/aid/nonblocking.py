@@ -23,6 +23,9 @@ except ImportError:
 from ..base.globaling import *
 from ..base.odicting import odict
 from ..base import excepting
+from ..base import storing
+from ..base.aiding import StoreTimer
+
 
 from ..base.consoling import getConsole
 console = getConsole()
@@ -808,6 +811,9 @@ class Outgoer(object):
     """
     Nonblocking TCP Socket Client Class.
     """
+    Timeout = 1.0  # timeout in seconds
+    Reconnectable = False  # auto reconnect flag
+
     def __init__(self,
                  name='',
                  uid=0,
@@ -815,7 +821,10 @@ class Outgoer(object):
                  host='',
                  port=56000,
                  bufsize=8096,
-                 wlog=None):
+                 wlog=None,
+                 store=None,
+                 timeout=None,
+                 reconnectable=None, ):
         """
         Initialization method for instance.
         name = user friendly name for connection
@@ -825,10 +834,16 @@ class Outgoer(object):
         port = socket port
         bufsize = buffer size
         wlog = WireLog object if any
+        store = store reference
+        timeout = auto reconnect timeout
+        reconnectable = Boolean auto reconnect if timed out
         """
         self.name = name
         self.uid = uid
         self.ha = ha or (host, port)
+        host, port = self.ha
+        host = socket.gethostbyname(host)
+        self.ha = (host, port)
         self.bs = bufsize
         self.wlog = wlog
 
@@ -839,6 +854,11 @@ class Outgoer(object):
         self.txes = deque()  # deque of data to send
         self.rxes = deque()  # deque of data received
         self.rxbs = bytearray()  # byte array of data recieved
+
+        self.store = store or storing.Store(stamp=0.0)
+        self.timeout = timeout if timeout is not None else self.Timeout
+        self.timer = StoreTimer(self.store, duration=self.timeout)
+        self.reconnectable = reconnectable if reconnectable is not None else self.Reconnectable
 
     @property
     def accepted(self):
@@ -999,12 +1019,17 @@ class Outgoer(object):
 
     def serviceConnect(self):
         """
-        Service connection acceptance attempt
-        If not already accepted make a nonblocking attempt
+        Service connection attempt
+        If not already connected make a nonblocking attempt
         Returns .connected
         """
         if not self.connected:
             self.connect()
+
+            if not self.connected:
+                if self.timeout > 0.0 and self.timer.expired:  # timed out
+                    self.reopen()
+                    self.timer.restart()
 
         return self.connected
 
@@ -1896,17 +1921,17 @@ else:
             return self.connected
 
 
-        def serviceConnect(self):
-            """
-            Service connection and handshake attempt
-            If not already accepted and handshaked  Then
-                 make nonblocking attempt
-            Returns .handshaked
-            """
-            if not self.connected:
-                self.connect()
+        #def serviceConnect(self):
+            #"""
+            #Service connection and handshake attempt
+            #If not already accepted and handshaked  Then
+                 #make nonblocking attempt
+            #Returns .handshaked
+            #"""
+            #if not self.connected:
+                #self.connect()
 
-            return self.connected
+            #return self.connected
 
         def receive(self):
             """

@@ -24,6 +24,7 @@ from ioflo.base.consoling import getConsole
 console = getConsole()
 
 from ioflo.aid import nonblocking
+from ioflo.base import storing
 
 def setUpModule():
     console.reinit(verbosity=console.Wordage.concise)
@@ -1094,6 +1095,99 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testClientAutoReconnect(self):
+        """
+        Test Classes Outgoer reconnectable
+        """
+        console.terse("{0}\n".format(self.testClientAutoReconnect.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        store = storing.Store(stamp=0.0)
+
+
+        beta = nonblocking.Outgoer(ha=('127.0.0.1', 6101),
+                                   bufsize=131072,
+                                   wlog=wireLogBeta,
+                                   store=store,
+                                   timeout=0.2,
+                                   reconnectable=True, )
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+        self.assertIs(beta.store, store)
+        self.assertIs(beta.reconnectable, True)
+
+        console.terse("Connecting beta to alpha when alpha not up\n")
+        while beta.store.stamp <= 0.25:
+            beta.serviceConnect()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            beta.store.advanceStamp(0.05)
+            time.sleep(0.05)
+
+        self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
+
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
+
+
+        console.terse("Connecting beta to alpha when alpha up\n")
+        while True:
+            beta.serviceConnect()
+            alpha.serviceConnects()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            beta.store.advanceStamp(0.05)
+            time.sleep(0.05)
+
+        self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(alpha.eha, beta.ha)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        msgOut = b"Beta sends to Alpha"
+        beta.tx(msgOut)
+        while not ixBeta.rxbs and beta.txes:
+            beta.serviceTxes()
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        index = len(ixBeta.rxbs)
+
+        alpha.close()
+        beta.close()
+
+        wlBetaRx = wireLogBeta.getRx()
+        wlBetaTx = wireLogBeta.getTx()
+        self.assertEqual(wlBetaRx, wlBetaTx)  # since wlog is same
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+
+        console.reinit(verbosity=console.Wordage.concise)
+
     def testTLSConnectionDefault(self):
         """
         Test TLS connection with default settings
@@ -1887,12 +1981,14 @@ def runSome():
              'testTcpClientServer',
              'testTcpClientServerServiceCat',
              'testTcpClientServerService',
+             'testClientAutoReconnect',
              'testTLSConnectionDefault',
              'testTLSConnectionVerifyNeither',
              'testTLSConnectionClientVerifyServerCert',
              'testTLSConnectionServerVerifyClientCert',
              'testTLSConnectionVerifyBoth',
              'testTLSConnectionVerifyBothTLSv1',
+
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1912,6 +2008,6 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testTLSConnectionVerifyBothTLSv11')
+    #runOne('testClientAutoReconnect')
 
 
