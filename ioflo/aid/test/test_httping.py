@@ -30,7 +30,8 @@ from ioflo.base.odicting import odict
 
 from ioflo.aid import nonblocking
 from ioflo.aid import httping
-from ioflo.base.aiding import Timer
+from ioflo.base.aiding import Timer, StoreTimer
+from ioflo.base import storing
 
 from ioflo.base.consoling import getConsole
 console = getConsole()
@@ -1668,6 +1669,149 @@ class BasicTestCase(unittest.TestCase):
                                                 }
                                     })
 
+        alpha.close()
+        beta.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testConnectorPipelineStream(self):
+        """
+        Test Connector pipeline stream
+        """
+        console.terse("{0}\n".format(self.testConnectorPipelineStream.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Connector ...\n"))
+
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+        host = alpha.eha[0]
+        port = alpha.eha[1]
+
+        store = storing.Store(stamp=0.0)
+
+        beta = httping.Connector(bufsize=131072,
+                                 wlog=wireLogBeta,
+                                 host=host,
+                                 port=port,
+                                 store=store,
+                                 reconnectable=True,
+                                 )
+
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.accepted, False)
+        self.assertIs(beta.connected, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to server ...\n")
+        while True:
+            beta.serviceAll()
+            alpha.serviceConnects()
+            if beta.connected and beta.ca in alpha.ixes:
+                break
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+
+        self.assertIs(beta.accepted, True)
+        self.assertIs(beta.connected, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(alpha.eha, beta.ha)
+
+        ixBeta = alpha.ixes[beta.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.ca)
+        self.assertEqual(ixBeta.ha, beta.ha)
+
+        console.terse("{0}\n".format("Building Request ...\n"))
+        request = odict([('method', u'GET'),
+                         ('url', u'/stream'),
+                         ('headers', odict([('Accept', 'application/json')])),
+                         ('body', None),
+                        ])
+
+        beta.requests.append(request)
+
+        console.terse("Beta requests to Alpha\n")
+        console.terse("from {0}:{1}, {2} {3} ...\n".format(beta.ha[0],
+                                                         beta.ha[1],
+                                                         request['method'],
+                                                         request['url']))
+
+        while (beta.requests or beta.txes) and not ixBeta.rxbs :
+            beta.serviceAll()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+            alpha.serviceAllRxAllIx()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+
+        msgIn = bytes(ixBeta.rxbs)
+        msgOut = b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n'
+
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        lines = [
+            b'HTTP/1.0 200 OK\r\n',
+            b'Server: PasteWSGIServer/0.5 Python/2.7.9\r\n',
+            b'Date: Thu, 30 Apr 2015 21:35:25 GMT\r\n'
+            b'Content-Type: text/event-stream\r\n',
+            b'Cache-Control: no-cache\r\n',
+            b'Connection: close\r\n\r\n',
+            b'retry: 1000\n\n',
+            b'id: 0\ndata: START\n\n',
+            b'id: 1\ndata: 1\ndata: 2\n\n',
+            b'id: 2\ndata: 3\ndata: 4\n\n',
+            b'id: 3\ndata: 5\ndata: 6\n\n',
+            b'id: 4\ndata: 7\ndata: 8\n\n',
+        ]
+
+        msgOut = b''.join(lines)
+        ixBeta.tx(msgOut)
+        timer = StoreTimer(store=store, duration=0.5)
+        while ixBeta.txes or not timer.expired:
+            alpha.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+            beta.store.advanceStamp(0.05)
+
+        self.assertEqual(len(beta.rxbs), 0)
+
+        #timed out while stream still open so no responses in .responses
+        self.assertIs(beta.waited, True)
+        self.assertIs(beta.respondent.ended, False)
+        self.assertEqual(len(beta.responses), 0)
+
+        # but are events in .events
+        self.assertEqual(len(beta.events), 5)
+        self.assertEqual(beta.respondent.retry, 1000)
+        self.assertEqual(beta.respondent.leid, '4')
+        event = beta.events.popleft()
+        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
+        event = beta.events.popleft()
+        self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2', 'json': None})
+        event = beta.events.popleft()
+        self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4', 'json': None})
+
 
 
         alpha.close()
@@ -1701,7 +1845,7 @@ def runSome():
              'testConnectorRequestEcho',
              'testConnectorServiceEcho',
              'testConnectorPipelineEcho',
-
+             'testConnectorPipelineStream',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -1719,8 +1863,8 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
     #runOne('testConnectorPipelineEcho')
-    #runOne('testNonBlockingRequestStream')
+    runOne('testConnectorPipelineStream')
 

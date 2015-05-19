@@ -1432,9 +1432,11 @@ class Connector(Outgoer):
         if not self.connected:
             self.serviceConnect()
             if self.connected:
-                if self.evented and self.respondent.leid is not None:  # update Last-Event-ID header
-                    self.requester.headers['Last-Event-ID'] = self.respondent.leid
-                self.transmit()  # rebuilds and queues up most recent http request here
+                if self.respondent:
+                    if self.respondent.evented and self.respondent.leid is not None:  # update Last-Event-ID header
+                        self.requester.headers['Last-Event-ID'] = self.respondent.leid
+                        self.transmit()  # rebuilds and queues up most recent http request here
+                        self.txes.rotate()  # ensure first request in txes
 
         self.serviceAllTx()
         self.serviceResponse()

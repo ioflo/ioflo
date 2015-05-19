@@ -1110,7 +1110,6 @@ class BasicTestCase(unittest.TestCase):
 
         store = storing.Store(stamp=0.0)
 
-
         beta = nonblocking.Outgoer(ha=('127.0.0.1', 6101),
                                    bufsize=131072,
                                    wlog=wireLogBeta,
