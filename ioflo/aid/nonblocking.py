@@ -860,6 +860,35 @@ class Outgoer(object):
         self.timer = StoreTimer(self.store, duration=self.timeout)
         self.reconnectable = reconnectable if reconnectable is not None else self.Reconnectable
 
+
+    @property
+    def host(self):
+        '''
+        Property that returns host in .ha duple
+        '''
+        return self.ha[0]
+
+    @host.setter
+    def host(self, value):
+        '''
+        setter for host property
+        '''
+        self.ha = (value, self.port)
+
+    @property
+    def port(self):
+        '''
+        Property that returns port in .ha duple
+        '''
+        return self.ha[1]
+
+    @port.setter
+    def port(self, value):
+        '''
+        setter for port property
+        '''
+        self.ha = (self.host, value)
+
     @property
     def accepted(self):
         '''

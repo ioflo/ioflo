@@ -1612,14 +1612,24 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response, {'version': 11,
                                     'status': 200,
                                     'reason': 'OK',
-                                    'headers': {'content-length': '122', 'content-type': 'application/json', 'date': 'Thu, 30 Apr 2015 19:37:17 GMT', 'server': 'IoBook.local'},
+                                    'headers':
+                                        {'content-length': '122',
+                                        'content-type': 'application/json',
+                                        'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
+                                        'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
                                     'data': None,
-                                    'request': {'method': 'GET',
-                                                'url': '/echo?name=fame',
-                                                'headers': {'Accept': 'application/json'},
-                                                'body': b''
-                                                }
+                                    'request':
+                                        {'host': '127.0.0.1',
+                                         'port': 6101,
+                                         'scheme': 'http',
+                                         'method': 'GET',
+                                         'url': '/echo?name=fame',
+                                         'qargs': {},
+                                         'headers':
+                                             {'Accept': 'application/json'},
+                                         'body': b''
+                                        }
                                     })
 
         beta.requests.append(request)
@@ -1659,14 +1669,21 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response, {'version': 11,
                                     'status': 200,
                                     'reason': 'OK',
-                                    'headers': {'content-length': '122', 'content-type': 'application/json', 'date': 'Thu, 30 Apr 2015 19:37:17 GMT', 'server': 'IoBook.local'},
+                                    'headers':
+                                        {'content-length': '122',
+                                         'content-type': 'application/json',
+                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
+                                         'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
                                     'data': None,
-                                    'request': {'method': 'GET',
+                                    'request': {'host': '127.0.0.1',
+                                                'port': 6101,
+                                                'scheme': 'http',
+                                                'method': 'GET',
                                                 'url': '/echo?name=fame',
+                                                'qargs': {},
                                                 'headers': {'Accept': 'application/json'},
-                                                'body': b''
-                                                }
+                                                'body': b''}
                                     })
 
         alpha.close()

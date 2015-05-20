@@ -293,7 +293,9 @@ def normalizeHostPort(host, port, defaultPort=80):
             host = host[1:-1]
     return (host, port)
 
-#  Non Blocking Class Definitions
+
+#  Class Definitions
+
 class Requester(object):
     """
     Nonblocking HTTP Request class
@@ -304,22 +306,30 @@ class Requester(object):
     def __init__(self,
                  host='127.0.0.1',
                  port=None,
+                 scheme=u'http',
                  method=u'GET',  # unicode
                  url=u'/',  # unicode
+                 qargs=None,
                  headers=None,
                  body=b'',):
         """
         Initialize Instance
 
+
         host = remote server host address (may include port as host:port)
         port = remote server port
+        scheme = http scheme 'http' or 'https' usually
         method = http request method verb
         url = http url
+        qargs = http query args
+        headers = http request headers
         body = http request body
         """
         self.host, self.port = normalizeHostPort(host, port, 80)
+        self.scheme = scheme
         self.method = method.upper() if method else u'GET'
         self.url = url or u'/'
+        self.qargs = qargs if qargs is not None else odict()
         self.headers = headers or lodict()
 
         if body and isinstance(body, unicode):  # use default
@@ -332,18 +342,33 @@ class Requester(object):
         self.msg = b""
 
     def reinit(self,
+               host=None,
+               port=None,
+               scheme=None,
                method=None,  # unicode
                url=None,  # unicode
+               qargs=None,
                headers=None,
                body=None,):
         """
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
         """
+        if host is not None:
+            self.host = host
+        if port is not None:
+            self.port = port
+        if scheme is not None:
+            self.scheme = scheme
+
+        # may need to renormalize host port
+
         if method is not None:
             self.method = method.upper()
         if url is not None:
             self.url = url
+        if qargs is not None:
+            self.qargs = qargs
         if headers is not None:
             self.headers = headers
         if body is not None:
@@ -352,12 +377,12 @@ class Requester(object):
                 body = body.encode('iso-8859-1')
             self.body = body
 
-    def build(self, method=None, url=None, headers=None, body=None):
+    def build(self, method=None, url=None, qargs=None, headers=None, body=None):
         """
         Build and return request message
 
         """
-        self.reinit(method, url, headers, body)
+        self.reinit(method=method, url=url, qargs=qargs, headers=headers, body=body)
         self.lines = []
 
         skip_accept_encoding = True if 'accept-encoding' in self.headers else False
@@ -716,9 +741,9 @@ class Respondent(object):
     def __init__(self,
                  msg=None,
                  method=u'GET',
-                 jsoned=None,
                  redirects=None,
                  redirectable=True,
+                 jsoned=None,
                  events=None,
                  retry=None,
                  leid=None,
@@ -767,7 +792,7 @@ class Respondent(object):
 
         self.persisted = None   # persist connection until server closes
         self.headed = None    # head completely parsed
-        self.redirectant = None  # Boolean True if receive redirect status, need to redirect
+        self.redirectant = None  # Boolean True if received redirect status, need to redirect
         self.redirected = None  # attempted a redirection
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
@@ -1044,10 +1069,12 @@ class Respondent(object):
         # Should connection be kept open until server closes
         self.checkPersisted()  # sets .persisted
 
-        # Check for redirect
-        if self.status in (MULTIPLE_CHOICES, MOVED_PERMANENTLY, FOUND, SEE_OTHER, TEMPORARY_REDIRECT):
+        if self.status in (MULTIPLE_CHOICES,
+                           MOVED_PERMANENTLY,
+                           FOUND,
+                           SEE_OTHER,
+                           TEMPORARY_REDIRECT):
             self.redirectant = True
-            self.redirects.append((self.status, lodict(self.headers)))  # duple of status and copy of headers
 
         self.headed = True
         yield True
@@ -1280,18 +1307,22 @@ class Connector(Outgoer):
                  name='',
                  uid=0,
                  bufsize=8096,
+                 wlog=None,
                  host='127.0.0.1',
                  port=None,
-                 wlog=None,
+                 scheme=u'http',
                  method=u'GET',  # unicode
                  url=u'/',  # unicode
                  headers=None,
+                 qargs=None,
                  body=b'',
                  msg=None,
                  jsoned=None,
                  events=None,
                  requests=None,
                  responses=None,
+                 redirectable=True,
+                 redirects=None,
                  **kwa):
         """
         Initialization method for instance.
@@ -1303,28 +1334,36 @@ class Connector(Outgoer):
 
         name = user friendly name for connection
         uid = unique identifier for connection
+        bufsize = buffer size
+        wlog = WireLog instance if any
         host = host address of remote server
         port = socket port of remote server
-        bufsize = buffer size
-
+        scheme = http scheme
         method = http request method verb unicode
         url = http url unicode
+        qargs = dict of query args
         headers = dict of http headers
         body = byte or binary array of request body bytes or bytearray
         msg = bytearray of response msg to parse
         jsoned = Boolean flag if response body is expected to be json
         events = deque of events if any
-        wlog = WireLog instance if any
+        requests = deque of requests if any each request is dict
+        reponses = deque of responses if any each response is dict
+        redirectable = Boolean is allow redirects
+        redirects = list of redirects if any each redirect is dict
         """
         # .requests is deque of dicts of request data
         self.requests = requests if requests is not None else deque()
         # .responses is deque of dicts of response data
         self.responses = responses if responses is not None else deque()
+        # .redicrest is list of dicts of response data when response is redirect
+        self.redirects = redirects if redirects is not None else list()
         # .events is deque of dicts of response server sent event data
         self.events = events if events is not None else deque()
         self.waited = False  # Boolean True If sent request but waiting for response
 
-        host, port = normalizeHostPort(host, port, defaultPort=80)
+        defaultPort = 80
+        host, port = normalizeHostPort(host, port, defaultPort=defaultPort)
 
         super(Connector, self).__init__(name=name,
                                         uid=uid,
@@ -1334,11 +1373,13 @@ class Connector(Outgoer):
                                         **kwa)
 
         if requester is None:
-            requester = Requester(host=host,
-                                  port=port,
+            requester = Requester(host=self.host,
+                                  port=self.port,
+                                  scheme=scheme,
                                   method=method,
                                   url=url,  # unicode
                                   headers=headers,
+                                  qargs=qargs,
                                   body=body,)
         else:
             if requester.host != host:
@@ -1353,22 +1394,37 @@ class Connector(Outgoer):
                                     method=method,
                                     jsoned=jsoned,
                                     events=self.events,
+                                    redirectable=redirectable,
+                                    redirects=self.redirects,
                                     wlog=wlog,)
         else:
             respondent.reinit(method=method, jsoned=jsoned)
         self.respondent = respondent
 
     def reinit(self,
+               host=None,
+               port=None,
+               scheme=None,
                method=None,
                url=None,
+               qargs=None,
                headers=None,
                body=None,
                jsoned=None):
         """
         Reinit to send another request and process response
         """
-        self.requester.reinit(method=method, url=url, headers=headers, body=body)
-        self.respondent.reinit(method=method, jsoned=jsoned)
+        self.requester.reinit(host=host,
+                              port=port,
+                              scheme=scheme,
+                              method=method,
+                              url=url,
+                              qargs=qargs,
+                              headers=headers,
+                              body=body)
+
+        self.respondent.reinit(method=method,
+                               jsoned=jsoned)
 
     def transmit(self, method=None, url=None, headers=None, body=None):
         """
@@ -1383,6 +1439,16 @@ class Connector(Outgoer):
                                        body=body)
         self.tx(request)
         self.respondent.reinit(method=method)
+
+    def redirect(self):
+        """
+        Peform redirect
+        """
+        if self.redirects:
+            redirect = self.redirects[-1]
+
+            self.redirectant = False
+            self.redirected = True
 
     def serviceRequests(self):
         """
@@ -1403,10 +1469,16 @@ class Connector(Outgoer):
         self.serviceAllRx()
         if self.waited:
             self.respondent.parse()
+
             if self.respondent.ended:
                 if not self.respondent.evented:
-                    request = odict([('method', self.requester.method),
+                    request = odict([
+                                     ('host', self.requester.host),
+                                     ('port', self.requester.port),
+                                     ('scheme', self.requester.scheme),
+                                     ('method', self.requester.method),
                                      ('url', self.requester.url),
+                                     ('qargs', self.requester.qargs),
                                      ('headers', self.requester.headers),
                                      ('body', self.requester.body),
                                     ])
@@ -1418,7 +1490,11 @@ class Connector(Outgoer):
                                       ('data', self.respondent.data),
                                       ('request', request),
                                      ])
-                    self.responses.append(response)
+                    if self.respondent.redirectable and self.respondent.redirectant:
+                        self.redirects.append(response)
+                        self.redirect()
+                    else:
+                        self.responses.append(response)
                 self.waited = False
                 self.respondent.makeParser()  #set up for next time
 
