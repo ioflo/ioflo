@@ -594,7 +594,7 @@ class Actor(object):
                 if not ipath.startswith('.'): # full path is inode joined to ipath
                     ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
             else:
-                ipath = '.'.join(inode.rstrip('.'), key)
+                ipath = '.'.join([inode.rstrip('.'), key])
             ioi = odict(ipath=ipath, ival=ival, iown=iown)
             iois[key] = ioi
 
