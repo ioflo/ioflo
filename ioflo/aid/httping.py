@@ -1446,6 +1446,7 @@ class Connector(Outgoer):
         """
         if self.redirects:
             redirect = self.redirects[-1]
+            location = redirect['headers'].get('location')
 
             self.redirectant = False
             self.redirected = True
