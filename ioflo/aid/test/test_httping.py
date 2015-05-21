@@ -1390,7 +1390,7 @@ class BasicTestCase(unittest.TestCase):
 
     def testConnectorServiceEcho(self):
         """
-        Test Connector service request rewponse of echo non blocking
+        Test Connector service request response of echo non blocking
         """
         console.terse("{0}\n".format(self.testConnectorServiceEcho.__doc__))
 

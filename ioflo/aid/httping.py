@@ -1587,3 +1587,265 @@ class Connector(Outgoer):
 
         self.serviceAllTx()
         self.serviceResponse()
+
+
+class ConnectorTls(OutgoerTls):
+    """
+    Http Client Connection Manager with Nonblocking support
+    Uses Nonblocking TCP Socket Client Class.
+    """
+    def __init__(self,
+                 requester=None,
+                 respondent=None,
+                 name='',
+                 uid=0,
+                 bufsize=8096,
+                 wlog=None,
+                 host='127.0.0.1',
+                 port=None,
+                 scheme=u'http',
+                 method=u'GET',  # unicode
+                 path=u'/',  # unicode
+                 headers=None,
+                 qargs=None,
+                 body=b'',
+                 msg=None,
+                 jsoned=None,
+                 events=None,
+                 requests=None,
+                 responses=None,
+                 redirectable=True,
+                 redirects=None,
+                 **kwa):
+        """
+        Initialization method for instance.
+        requester = instance of Requester or None
+        respondent = instance of Respondent or None
+
+        if either of requester, respondent instances are not provided (None)
+        some or all of these parameters will be used for initialization
+
+        name = user friendly name for connection
+        uid = unique identifier for connection
+        bufsize = buffer size
+        wlog = WireLog instance if any
+        host = host address of remote server
+        port = socket port of remote server
+        scheme = http scheme
+        method = http request method verb unicode
+        path = http url path unicode
+        qargs = dict of query args
+        headers = dict of http headers
+        body = byte or binary array of request body bytes or bytearray
+        msg = bytearray of response msg to parse
+        jsoned = Boolean flag if response body is expected to be json
+        events = deque of events if any
+        requests = deque of requests if any each request is dict
+        reponses = deque of responses if any each response is dict
+        redirectable = Boolean is allow redirects
+        redirects = list of redirects if any each redirect is dict
+        """
+        # .requests is deque of dicts of request data
+        self.requests = requests if requests is not None else deque()
+        # .responses is deque of dicts of response data
+        self.responses = responses if responses is not None else deque()
+        # .redicrest is list of dicts of response data when response is redirect
+        self.redirects = redirects if redirects is not None else list()
+        # .events is deque of dicts of response server sent event data
+        self.events = events if events is not None else deque()
+        self.waited = False  # Boolean True If sent request but waiting for response
+
+        defaultPort = 80
+        host, port = normalizeHostPort(host, port, defaultPort=defaultPort)
+
+        super(Connector, self).__init__(name=name,
+                                        uid=uid,
+                                        ha=(host, port),
+                                        bufsize=bufsize,
+                                        wlog=wlog,
+                                        **kwa)
+
+        if requester is None:
+            requester = Requester(host=self.host,
+                                  port=self.port,
+                                  scheme=scheme,
+                                  method=method,
+                                  path=path,  # unicode
+                                  headers=headers,
+                                  qargs=qargs,
+                                  body=body,)
+        else:
+            if requester.host != host:
+                requester.host = host
+            if requester.port != port:
+                requester.port = port
+            requester.reinit(method=method, path=path, headers=headers, body=body)
+        self.requester = requester
+
+        if respondent is None:
+            respondent = Respondent(msg=self.rxbs,
+                                    method=method,
+                                    jsoned=jsoned,
+                                    events=self.events,
+                                    redirectable=redirectable,
+                                    redirects=self.redirects,
+                                    wlog=wlog,)
+        else:
+            respondent.reinit(method=method, jsoned=jsoned)
+        self.respondent = respondent
+
+    def reinit(self,
+               host=None,
+               port=None,
+               scheme=None,
+               method=None,
+               path=None,
+               qargs=None,
+               headers=None,
+               body=None,
+               jsoned=None):
+        """
+        Reinit to send another request and process response
+        """
+        self.requester.reinit(host=host,
+                              port=port,
+                              scheme=scheme,
+                              method=method,
+                              path=path,
+                              qargs=qargs,
+                              headers=headers,
+                              body=body)
+
+        self.respondent.reinit(method=method,
+                               jsoned=jsoned)
+
+    def transmit(self,
+                 method=None,
+                 path=None,
+                 qargs=None,
+                 fragment=None,
+                 headers=None,
+                 body=None):
+        """
+        Build and transmit request
+        Add jsoned parameter
+        """
+        self.waited = True
+        # build calls reinit
+        request = self.requester.build(method=method,
+                                       path=path,
+                                       qargs=qargs,
+                                       fragment=fragment,
+                                       headers=headers,
+                                       body=body)
+        self.tx(request)
+        self.respondent.reinit(method=method)
+
+    def redirect(self):
+        """
+        Perform redirect
+        """
+        if self.redirects:
+            redirect = self.redirects[-1]
+            location = redirect['headers'].get('location')
+            splits = urlsplit(location)
+            host = splits.host
+            port = splits.port
+            scheme = splits.scheme
+            if not port:
+                if scheme == 'https':
+                    port = 443
+                else:
+                    port = 80
+            path = splits.path
+            query = splits.query
+            fragment = splits.fragment
+
+
+            self.redirectant = False
+            self.redirected = True
+
+    def serviceRequests(self):
+        """
+        Service requests deque
+        """
+        if not self.waited:
+            if self.requests:
+                request = self.requests.popleft()
+                # future check host port scheme if need to reconnect on new ha
+                # reconnect here
+                self.transmit(method=request['method'],
+                             path=request['path'],
+                             qargs=request['qargs'],
+                             fragment=request['fragment'],
+                             headers=request['headers'],
+                             body=request['body'])
+
+    def serviceResponse(self):
+        """
+        Service Rx on connection and parse
+        """
+        self.serviceAllRx()
+        if self.waited:
+            self.respondent.parse()
+
+            if self.respondent.ended:
+                if not self.respondent.evented:
+                    request = odict([
+                                     ('host', self.requester.host),
+                                     ('port', self.requester.port),
+                                     ('scheme', self.requester.scheme),
+                                     ('method', self.requester.method),
+                                     ('path', self.requester.path),
+                                     ('fragment', self.requester.fragment),
+                                     ('qargs', self.requester.qargs),
+                                     ('headers', self.requester.headers),
+                                     ('body', self.requester.body),
+                                    ])
+                    response = odict([('version', self.respondent.version),
+                                      ('status', self.respondent.status),
+                                      ('reason', self.respondent.reason),
+                                      ('headers', self.respondent.headers),
+                                      ('body', self.respondent.body),
+                                      ('data', self.respondent.data),
+                                      ('request', request),
+                                     ])
+                    if self.respondent.redirectable and self.respondent.redirectant:
+                        self.redirects.append(response)
+                        self.redirect()
+                    else:
+                        self.responses.append(response)
+                self.waited = False
+                self.respondent.makeParser()  #set up for next time
+
+    def serviceAllTx(self):
+        """
+        service the tx side of request
+        """
+        self.serviceRequests()
+        self.serviceTxes()
+
+    def serviceAll(self):
+        """
+        Service request response
+        """
+        if self.cutoff and self.reconnectable:
+            if self.timeout > 0.0 and self.timer.expired:  # timed out
+                self.reopen()
+                if self.respondent.evented:
+                    duration = float(self.respondent.retry) / 1000.0 # convert to seconds
+                else:
+                    duration = None  # reused current duration
+                self.timer.restart(duration=duration)
+
+        if not self.connected:
+            self.serviceConnect()
+            if self.connected:
+                if self.respondent:
+                    if self.respondent.evented and self.respondent.leid is not None:  # update Last-Event-ID header
+                        self.requester.headers['Last-Event-ID'] = self.respondent.leid
+                        self.transmit()  # rebuilds and queues up most recent http request here
+                        self.txes.rotate()  # ensure first request in txes
+
+        self.serviceAllTx()
+        self.serviceResponse()
