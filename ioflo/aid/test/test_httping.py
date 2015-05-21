@@ -114,13 +114,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6101
         method = u'GET'
-        url = u'/echo?name=fame'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/echo?name=fame'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -231,13 +231,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        url = u'/stream'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/stream'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -383,13 +383,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        url = u'/stream'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/stream'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -535,13 +535,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        url = u'/fancy?idify=true;multiply=true'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/fancy?idify=true;multiply=true'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -688,13 +688,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        url = u'/fancy?idify=true;multiply=true'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/fancy?idify=true;multiply=true'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
 
         msgOut = request.build()
@@ -853,13 +853,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        url = u'/fancy?idify=true;jsonify=true'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/fancy?idify=true;jsonify=true'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                          port=port,
                                          method=method,
-                                         url=url,
+                                         path=path,
                                          headers=headers)
         msgOut = request.build()
         lines = [
@@ -1011,13 +1011,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        url = u'/fancy?idify=true;jsonify=true'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/fancy?idify=true;jsonify=true'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                          port=port,
                                          method=method,
-                                         url=url,
+                                         path=path,
                                          headers=headers)
         msgOut = request.build()
         lines = [
@@ -1201,13 +1201,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        url = u'/echo?name=fame'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/echo?name=fame'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -1289,7 +1289,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
         method = u'GET'
-        url = u'/echo?name=fame'
+        path = u'/echo?name=fame'
         headers = odict([(u'Accept', u'application/json')])
 
 
@@ -1298,7 +1298,7 @@ class BasicTestCase(unittest.TestCase):
                                      host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers,
                                      )
 
@@ -1347,7 +1347,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         beta.tx(msgOut)
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
@@ -1411,7 +1411,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
         method = u'GET'
-        url = u'/echo?name=fame'
+        path = u'/echo?name=fame'
         headers = odict([(u'Accept', u'application/json')])
 
 
@@ -1420,7 +1420,7 @@ class BasicTestCase(unittest.TestCase):
                                      host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers,
                                      )
 
@@ -1471,7 +1471,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
 
         while beta.txes and not ixBeta.rxbs :
             beta.serviceAll()
@@ -1570,7 +1570,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.ha)
 
         request = odict([('method', u'GET'),
-                         ('url', u'/echo?name=fame'),
+                         ('path', u'/echo?name=fame'),
                          ('headers', odict([('Accept', 'application/json')])),
                          ('body', None),
                         ])
@@ -1581,7 +1581,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("from {0}:{1}, {2} {3} ...\n".format(beta.ha[0],
                                                          beta.ha[1],
                                                          request['method'],
-                                                         request['url']))
+                                                         request['path']))
 
         while (beta.requests or beta.txes) and not ixBeta.rxbs :
             beta.serviceAll()
@@ -1624,7 +1624,7 @@ class BasicTestCase(unittest.TestCase):
                                          'port': 6101,
                                          'scheme': 'http',
                                          'method': 'GET',
-                                         'url': '/echo?name=fame',
+                                         'path': '/echo?name=fame',
                                          'qargs': {},
                                          'headers':
                                              {'Accept': 'application/json'},
@@ -1638,7 +1638,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("from {0}:{1}, {2} {3} ...\n".format(beta.ha[0],
                                                            beta.ha[1],
                                                            request['method'],
-                                                           request['url']))
+                                                           request['path']))
 
         while (beta.requests or beta.txes) and not ixBeta.rxbs :
             beta.serviceAll()
@@ -1680,7 +1680,7 @@ class BasicTestCase(unittest.TestCase):
                                                 'port': 6101,
                                                 'scheme': 'http',
                                                 'method': 'GET',
-                                                'url': '/echo?name=fame',
+                                                'path': '/echo?name=fame',
                                                 'qargs': {},
                                                 'headers': {'Accept': 'application/json'},
                                                 'body': b''}
@@ -1757,7 +1757,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("{0}\n".format("Building Request ...\n"))
         request = odict([('method', u'GET'),
-                         ('url', u'/stream'),
+                         ('path', u'/stream'),
                          ('headers', odict([('Accept', 'application/json')])),
                          ('body', None),
                         ])
@@ -1768,7 +1768,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("from {0}:{1}, {2} {3} ...\n".format(beta.ha[0],
                                                          beta.ha[1],
                                                          request['method'],
-                                                         request['url']))
+                                                         request['path']))
 
         while (beta.requests or beta.txes) and not ixBeta.rxbs :
             beta.serviceAll()

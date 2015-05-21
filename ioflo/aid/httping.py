@@ -308,7 +308,7 @@ class Requester(object):
                  port=None,
                  scheme=u'http',
                  method=u'GET',  # unicode
-                 url=u'/',  # unicode
+                 path=u'/',  # unicode
                  qargs=None,
                  headers=None,
                  body=b'',):
@@ -320,7 +320,7 @@ class Requester(object):
         port = remote server port
         scheme = http scheme 'http' or 'https' usually
         method = http request method verb
-        url = http url
+        path = http url path
         qargs = http query args
         headers = http request headers
         body = http request body
@@ -328,7 +328,7 @@ class Requester(object):
         self.host, self.port = normalizeHostPort(host, port, 80)
         self.scheme = scheme
         self.method = method.upper() if method else u'GET'
-        self.url = url or u'/'
+        self.path = path or u'/'
         self.qargs = qargs if qargs is not None else odict()
         self.headers = headers or lodict()
 
@@ -346,7 +346,7 @@ class Requester(object):
                port=None,
                scheme=None,
                method=None,  # unicode
-               url=None,  # unicode
+               path=None,  # unicode
                qargs=None,
                headers=None,
                body=None,):
@@ -365,8 +365,8 @@ class Requester(object):
 
         if method is not None:
             self.method = method.upper()
-        if url is not None:
-            self.url = url
+        if path is not None:
+            self.path = path
         if qargs is not None:
             self.qargs = qargs
         if headers is not None:
@@ -377,24 +377,24 @@ class Requester(object):
                 body = body.encode('iso-8859-1')
             self.body = body
 
-    def build(self, method=None, url=None, qargs=None, headers=None, body=None):
+    def build(self, method=None, path=None, qargs=None, headers=None, body=None):
         """
         Build and return request message
 
         """
-        self.reinit(method=method, url=url, qargs=qargs, headers=headers, body=body)
+        self.reinit(method=method, path=path, qargs=qargs, headers=headers, body=body)
         self.lines = []
 
         skip_accept_encoding = True if 'accept-encoding' in self.headers else False
 
-        startLine = "{0} {1} {2}".format(self.method, self.url, self.HttpVersionString)
+        startLine = "{0} {1} {2}".format(self.method, self.path, self.HttpVersionString)
         self.lines.append(startLine.encode('ascii'))
 
         if u'host' not in self.headers:
             # If we need a non-standard port, include it in the header
             netloc = ''
-            if self.url.startswith('http'):
-                nil, netloc, nil, nil, nil = urlsplit(url)
+            if self.path.startswith('http'):  # strip off scheme and host port
+                nil, netloc, nil, nil, nil = urlsplit(path)
 
             if netloc:
                 try:
@@ -1312,7 +1312,7 @@ class Connector(Outgoer):
                  port=None,
                  scheme=u'http',
                  method=u'GET',  # unicode
-                 url=u'/',  # unicode
+                 path=u'/',  # unicode
                  headers=None,
                  qargs=None,
                  body=b'',
@@ -1340,7 +1340,7 @@ class Connector(Outgoer):
         port = socket port of remote server
         scheme = http scheme
         method = http request method verb unicode
-        url = http url unicode
+        path = http url path unicode
         qargs = dict of query args
         headers = dict of http headers
         body = byte or binary array of request body bytes or bytearray
@@ -1377,7 +1377,7 @@ class Connector(Outgoer):
                                   port=self.port,
                                   scheme=scheme,
                                   method=method,
-                                  url=url,  # unicode
+                                  path=path,  # unicode
                                   headers=headers,
                                   qargs=qargs,
                                   body=body,)
@@ -1386,7 +1386,7 @@ class Connector(Outgoer):
                 requester.host = host
             if requester.port != port:
                 requester.port = port
-            requester.reinit(method=method, url=url, headers=headers, body=body)
+            requester.reinit(method=method, path=path, headers=headers, body=body)
         self.requester = requester
 
         if respondent is None:
@@ -1406,7 +1406,7 @@ class Connector(Outgoer):
                port=None,
                scheme=None,
                method=None,
-               url=None,
+               path=None,
                qargs=None,
                headers=None,
                body=None,
@@ -1418,7 +1418,7 @@ class Connector(Outgoer):
                               port=port,
                               scheme=scheme,
                               method=method,
-                              url=url,
+                              path=path,
                               qargs=qargs,
                               headers=headers,
                               body=body)
@@ -1426,7 +1426,7 @@ class Connector(Outgoer):
         self.respondent.reinit(method=method,
                                jsoned=jsoned)
 
-    def transmit(self, method=None, url=None, headers=None, body=None):
+    def transmit(self, method=None, path=None, headers=None, body=None):
         """
         Build and transmit request
         Add jsoned parameter
@@ -1434,7 +1434,7 @@ class Connector(Outgoer):
         self.waited = True
         # build calls reinit
         request = self.requester.build(method=method,
-                                       url=url,
+                                       path=path,
                                        headers=headers,
                                        body=body)
         self.tx(request)
@@ -1459,7 +1459,7 @@ class Connector(Outgoer):
             if self.requests:
                 request = self.requests.popleft()
                 self.transmit(method=request['method'],
-                             url=request['url'],
+                             path=request['path'],
                              headers=request['headers'],
                              body=request['body'])
 
@@ -1478,7 +1478,7 @@ class Connector(Outgoer):
                                      ('port', self.requester.port),
                                      ('scheme', self.requester.scheme),
                                      ('method', self.requester.method),
-                                     ('url', self.requester.url),
+                                     ('path', self.requester.path),
                                      ('qargs', self.requester.qargs),
                                      ('headers', self.requester.headers),
                                      ('body', self.requester.body),
