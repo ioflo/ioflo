@@ -1572,6 +1572,7 @@ class BasicTestCase(unittest.TestCase):
         request = odict([('method', u'GET'),
                          ('path', u'/echo?name=fame'),
                          ('qargs', odict()),
+                         ('fragment', u''),
                          ('headers', odict([('Accept', 'application/json')])),
                          ('body', None),
                         ])
@@ -1627,6 +1628,7 @@ class BasicTestCase(unittest.TestCase):
                                          'method': 'GET',
                                          'path': '/echo',
                                          'qargs': {'name': 'fame'},
+                                         'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b''
@@ -1683,6 +1685,7 @@ class BasicTestCase(unittest.TestCase):
                                                 'method': 'GET',
                                                 'path': '/echo',
                                                 'qargs': {'name': 'fame'},
+                                                'fragment': '',
                                                 'headers': {'Accept': 'application/json'},
                                                 'body': b''}
                                     })
@@ -1760,6 +1763,7 @@ class BasicTestCase(unittest.TestCase):
         request = odict([('method', u'GET'),
                          ('path', u'/stream'),
                          ('qargs', odict()),
+                         ('fragment', u''),
                          ('headers', odict([('Accept', 'application/json')])),
                          ('body', None),
                         ])

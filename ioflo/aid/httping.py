@@ -311,6 +311,7 @@ class Requester(object):
                  method=u'GET',  # unicode
                  path=u'/',  # unicode
                  qargs=None,
+                 fragment=u'', #unicode
                  headers=None,
                  body=b'',):
         """
@@ -322,6 +323,7 @@ class Requester(object):
         method = http request method verb
         path = http url path
         qargs = http query args
+        fragment = http fragment
         headers = http request headers
         body = http request body
         """
@@ -330,6 +332,7 @@ class Requester(object):
         self.method = method.upper() if method else u'GET'
         self.path = path or u'/'
         self.qargs = qargs if qargs is not None else odict()
+        self.fragment = fragment
         self.headers = headers or lodict()
 
         if body and isinstance(body, unicode):  # use default
@@ -348,27 +351,27 @@ class Requester(object):
                method=None,  # unicode
                path=None,  # unicode
                qargs=None,
+               fragment=None,
                headers=None,
                body=None,):
         """
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
         """
-        if host is not None:
+        if host is not None: # may need to renormalize host port
             self.host = host
         if port is not None:
             self.port = port
         if scheme is not None:
             self.scheme = scheme
-
-        # may need to renormalize host port
-
         if method is not None:
             self.method = method.upper()
         if path is not None:
             self.path = path
         if qargs is not None:
             self.qargs = qargs
+        if fragment is not None:
+            self.fragment = fragment
         if headers is not None:
             self.headers = headers
         if body is not None:
@@ -381,6 +384,7 @@ class Requester(object):
               method=None,
               path=None,
               qargs=None,
+              fragment=None,
               headers=None,
               body=None):
         """
@@ -390,6 +394,7 @@ class Requester(object):
         self.reinit(method=method,
                     path=path,
                     qargs=qargs,
+                    fragment=fragment,
                     headers=headers,
                     body=body)
         self.lines = []
@@ -398,8 +403,8 @@ class Requester(object):
 
         pathSplits = urlsplit(self.path)  # path should not include scheme host port
         path = pathSplits.path
-        path = quote(path)
         self.path = path
+        path = quote(path)
 
         query = pathSplits.query
         if u';' in query:
@@ -416,9 +421,13 @@ class Requester(object):
         query = ';'.join(qargParts)
         query = quote_plus(query, ';=')
 
-        combine = u"{0}?{1}#".format(path, query, pathSplits.fragment)
-        combine = urlsplit(combine).geturl()
-        #self.path = path
+        fragment = pathSplits.fragment
+        if fragment:
+            self.fragment = fragment
+        # we should quote the fragment  here
+
+        combine = u"{0}?{1}#".format(path, query, fragment)
+        combine = urlsplit(combine).geturl()  # strips blank parts
 
         startLine = "{0} {1} {2}".format(self.method, combine, self.HttpVersionString)
         try:
@@ -1452,6 +1461,7 @@ class Connector(Outgoer):
                  method=None,
                  path=None,
                  qargs=None,
+                 fragment=None,
                  headers=None,
                  body=None):
         """
@@ -1463,6 +1473,7 @@ class Connector(Outgoer):
         request = self.requester.build(method=method,
                                        path=path,
                                        qargs=qargs,
+                                       fragment=fragment,
                                        headers=headers,
                                        body=body)
         self.tx(request)
@@ -1504,6 +1515,7 @@ class Connector(Outgoer):
                 self.transmit(method=request['method'],
                              path=request['path'],
                              qargs=request['qargs'],
+                             fragment=request['fragment'],
                              headers=request['headers'],
                              body=request['body'])
 
@@ -1523,6 +1535,7 @@ class Connector(Outgoer):
                                      ('scheme', self.requester.scheme),
                                      ('method', self.requester.method),
                                      ('path', self.requester.path),
+                                     ('fragment', self.requester.fragment),
                                      ('qargs', self.requester.qargs),
                                      ('headers', self.requester.headers),
                                      ('body', self.requester.body),
