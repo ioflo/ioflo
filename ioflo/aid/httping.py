@@ -400,6 +400,7 @@ class Requester(object):
         path = pathSplits.path
         path = quote(path)
         self.path = path
+
         query = pathSplits.query
         if u';' in query:
             querySplits = query.split(u';')
@@ -412,15 +413,14 @@ class Requester(object):
                 key, val = queryPart.split('=')
                 self.qargs[key] = val
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
-        #querySplits.extend(qargParts)
-        #query = ';'.join(querySplits)
         query = ';'.join(qargParts)
         query = quote_plus(query, ';=')
-        path = u"{0}?{1}#".format(path, query, pathSplits.fragment)
-        path = urlsplit(path).geturl()
-        self.path = path
 
-        startLine = "{0} {1} {2}".format(self.method, self.path, self.HttpVersionString)
+        combine = u"{0}?{1}#".format(path, query, pathSplits.fragment)
+        combine = urlsplit(combine).geturl()
+        #self.path = path
+
+        startLine = "{0} {1} {2}".format(self.method, combine, self.HttpVersionString)
         try:
             startLine = startLine.encode('ascii')
         except UnicodeEncodeError:

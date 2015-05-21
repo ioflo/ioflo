@@ -1625,7 +1625,7 @@ class BasicTestCase(unittest.TestCase):
                                          'port': 6101,
                                          'scheme': 'http',
                                          'method': 'GET',
-                                         'path': '/echo?name=fame',
+                                         'path': '/echo',
                                          'qargs': {'name': 'fame'},
                                          'headers':
                                              {'Accept': 'application/json'},
@@ -1681,7 +1681,7 @@ class BasicTestCase(unittest.TestCase):
                                                 'port': 6101,
                                                 'scheme': 'http',
                                                 'method': 'GET',
-                                                'path': '/echo?name=fame',
+                                                'path': '/echo',
                                                 'qargs': {'name': 'fame'},
                                                 'headers': {'Accept': 'application/json'},
                                                 'body': b''}
