@@ -378,9 +378,6 @@ class Requester(object):
             self.body = body
 
     def build(self,
-              host=None,
-              port=None,
-              scheme=None,
               method=None,
               path=None,
               qargs=None,
@@ -390,10 +387,7 @@ class Requester(object):
         Build and return request message
 
         """
-        self.reinit(host=host,
-                    port=port,
-                    scheme=scheme,
-                    method=method,
+        self.reinit(method=method,
                     path=path,
                     qargs=qargs,
                     headers=headers,
@@ -1449,9 +1443,6 @@ class Connector(Outgoer):
                                jsoned=jsoned)
 
     def transmit(self,
-                 host=None,
-                 port=None,
-                 scheme=None,
                  method=None,
                  path=None,
                  headers=None,
@@ -1462,10 +1453,7 @@ class Connector(Outgoer):
         """
         self.waited = True
         # build calls reinit
-        request = self.requester.build(host=host,
-                                       port=port,
-                                       scheme=scheme,
-                                       method=method,
+        request = self.requester.build(method=method,
                                        path=path,
                                        headers=headers,
                                        body=body)
