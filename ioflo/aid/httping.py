@@ -376,12 +376,27 @@ class Requester(object):
                 body = body.encode('iso-8859-1')
             self.body = body
 
-    def build(self, method=None, path=None, qargs=None, headers=None, body=None):
+    def build(self,
+              host=None,
+              port=None,
+              scheme=None,
+              method=None,
+              path=None,
+              qargs=None,
+              headers=None,
+              body=None):
         """
         Build and return request message
 
         """
-        self.reinit(method=method, path=path, qargs=qargs, headers=headers, body=body)
+        self.reinit(host=host,
+                    port=port,
+                    scheme=scheme,
+                    method=method,
+                    path=path,
+                    qargs=qargs,
+                    headers=headers,
+                    body=body)
         self.lines = []
 
         skip_accept_encoding = True if 'accept-encoding' in self.headers else False
@@ -1425,14 +1440,24 @@ class Connector(Outgoer):
         self.respondent.reinit(method=method,
                                jsoned=jsoned)
 
-    def transmit(self, method=None, path=None, headers=None, body=None):
+    def transmit(self,
+                 host=None,
+                 port=None,
+                 scheme=None,
+                 method=None,
+                 path=None,
+                 headers=None,
+                 body=None):
         """
         Build and transmit request
         Add jsoned parameter
         """
         self.waited = True
         # build calls reinit
-        request = self.requester.build(method=method,
+        request = self.requester.build(host=host,
+                                       port=port,
+                                       scheme=scheme,
+                                       method=method,
                                        path=path,
                                        headers=headers,
                                        body=body)
