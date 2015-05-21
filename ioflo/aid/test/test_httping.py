@@ -1571,6 +1571,7 @@ class BasicTestCase(unittest.TestCase):
 
         request = odict([('method', u'GET'),
                          ('path', u'/echo?name=fame'),
+                         ('qargs', odict()),
                          ('headers', odict([('Accept', 'application/json')])),
                          ('body', None),
                         ])
@@ -1625,7 +1626,7 @@ class BasicTestCase(unittest.TestCase):
                                          'scheme': 'http',
                                          'method': 'GET',
                                          'path': '/echo?name=fame',
-                                         'qargs': {},
+                                         'qargs': {'name': 'fame'},
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b''
@@ -1681,7 +1682,7 @@ class BasicTestCase(unittest.TestCase):
                                                 'scheme': 'http',
                                                 'method': 'GET',
                                                 'path': '/echo?name=fame',
-                                                'qargs': {},
+                                                'qargs': {'name': 'fame'},
                                                 'headers': {'Accept': 'application/json'},
                                                 'body': b''}
                                     })
@@ -1758,6 +1759,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format("Building Request ...\n"))
         request = odict([('method', u'GET'),
                          ('path', u'/stream'),
+                         ('qargs', odict()),
                          ('headers', odict([('Accept', 'application/json')])),
                          ('body', None),
                         ])

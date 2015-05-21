@@ -399,6 +399,7 @@ class Requester(object):
         pathSplits = urlsplit(self.path)  # path should not include scheme host port
         path = pathSplits.path
         path = quote(path)
+        self.path = path
         query = pathSplits.query
         if u';' in query:
             querySplits = query.split(u';')
@@ -406,9 +407,14 @@ class Requester(object):
             querySplits = query.split(u'&')
         else:
             querySplits = [query]
+        for queryPart in querySplits:  # this prevents duplicates even if desired
+            if '=' in queryPart:
+                key, val = queryPart.split('=')
+                self.qargs[key] = val
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
-        querySplits.extend(qargParts)
-        query = ';'.join(querySplits)
+        #querySplits.extend(qargParts)
+        #query = ';'.join(querySplits)
+        query = ';'.join(qargParts)
         query = quote_plus(query, ';=')
         path = u"{0}?{1}#".format(path, query, pathSplits.fragment)
         path = urlsplit(path).geturl()
@@ -1445,6 +1451,7 @@ class Connector(Outgoer):
     def transmit(self,
                  method=None,
                  path=None,
+                 qargs=None,
                  headers=None,
                  body=None):
         """
@@ -1455,6 +1462,7 @@ class Connector(Outgoer):
         # build calls reinit
         request = self.requester.build(method=method,
                                        path=path,
+                                       qargs=qargs,
                                        headers=headers,
                                        body=body)
         self.tx(request)
@@ -1462,11 +1470,24 @@ class Connector(Outgoer):
 
     def redirect(self):
         """
-        Peform redirect
+        Perform redirect
         """
         if self.redirects:
             redirect = self.redirects[-1]
             location = redirect['headers'].get('location')
+            splits = urlsplit(location)
+            host = splits.host
+            port = splits.port
+            scheme = splits.scheme
+            if not port:
+                if scheme == 'https':
+                    port = 443
+                else:
+                    port = 80
+            path = splits.path
+            query = splits.query
+            fragment = splits.fragment
+
 
             self.redirectant = False
             self.redirected = True
@@ -1478,8 +1499,11 @@ class Connector(Outgoer):
         if not self.waited:
             if self.requests:
                 request = self.requests.popleft()
+                # future check host port scheme if need to reconnect on new ha
+                # reconnect here
                 self.transmit(method=request['method'],
                              path=request['path'],
+                             qargs=request['qargs'],
                              headers=request['headers'],
                              body=request['body'])
 
