@@ -842,7 +842,8 @@ class Outgoer(object):
         self.uid = uid
         self.ha = ha or (host, port)
         host, port = self.ha
-        host = socket.gethostbyname(host)
+        self.hostname = host  # host domain name
+        host = socket.gethostbyname(host)  # ip host address
         self.ha = (host, port)
         self.bs = bufsize
         self.wlog = wlog
