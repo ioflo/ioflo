@@ -315,7 +315,6 @@ class Requester(object):
         """
         Initialize Instance
 
-
         host = remote server host address (may include port as host:port)
         port = remote server port
         scheme = http scheme 'http' or 'https' usually

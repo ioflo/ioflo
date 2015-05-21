@@ -84,7 +84,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("{0}\n".format("Get '/echo?name=fame' ...\n"))
         headers = odict([('Accept', 'application/json')])
-        hc.request(method='GET', url='/echo?name=fame', body=None, headers=headers )
+        hc.request(method='GET', path='/echo?name=fame', body=None, headers=headers )
         response = hc.getresponse()
         console.terse(str(response.fileno()) + "\n")  # must call this before read
         console.terse(str(response.getheaders()) + "\n")
@@ -98,7 +98,7 @@ class BasicTestCase(unittest.TestCase):
         headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
         body = odict([('name', 'Peter'), ('occupation', 'Engineer')])
         body = ns2b(json.dumps(body, separators=(',', ':'), encoding='utf-8'))
-        hc.request(method='POST', url='/demo', body=body, headers=headers )
+        hc.request(method='POST', path='/demo', body=body, headers=headers )
         response = hc.getresponse()
         console.terse(str(response.fileno()) + "\n") # must call this before read
         console.terse(str(response.getheaders()) + "\n")
@@ -111,7 +111,7 @@ class BasicTestCase(unittest.TestCase):
         #console.terse("{0}\n".format("SSE stream ...\n"))
         #body = b''
         #headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
-        #hc.request(method='GET', url='/stream', body=body, headers=headers )
+        #hc.request(method='GET', path='/stream', body=body, headers=headers )
         #response = hc.getresponse()
         #console.terse(str(response.fileno()) + "\n") # must call this before read
         #console.terse(str(response.getheaders()) + "\n")
@@ -161,13 +161,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 8080
         method = u'GET'
-        url = u'/echo?name=fame'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/echo?name=fame'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([('Accept', 'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -193,10 +193,10 @@ class BasicTestCase(unittest.TestCase):
         beta.serviceAllRx()
 
         msgIn, index = beta.tailRxbs(0)
-        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
+        self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "path": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
-        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
-        response = httping.Respondent(beta.rxbs, method=method, url=url)
+        #response = httping.HttpResponseNb(msgIn, method=method, path=path)
+        response = httping.Respondent(beta.rxbs, method=method, path=path)
 
         while response.parser:
             response.parse()
@@ -247,13 +247,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 8080
         method = u'GET'
-        url = u'/stream'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/stream'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([('Accept', 'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -281,7 +281,7 @@ class BasicTestCase(unittest.TestCase):
         msgIn, index = beta.tailRxbs(0)
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
-        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
+        #response = httping.HttpResponseNb(msgIn, method=method, path=path)
         response = httping.Respondent(beta.rxbs, method=method,  wlog=wireLogBeta)
 
         timer = Timer(duration=3.0)
@@ -355,13 +355,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 8080
         method = u'GET'
-        url = u'/fancy?idify=true;multiply=true'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/fancy?idify=true;multiply=true'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([('Accept', 'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -389,8 +389,8 @@ class BasicTestCase(unittest.TestCase):
         msgIn, index = beta.tailRxbs(0)
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
-        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
-        response = httping.Respondent(beta.rxbs, method=method, url=url,  wlog=wireLogBeta)
+        #response = httping.HttpResponseNb(msgIn, method=method, path=path)
+        response = httping.Respondent(beta.rxbs, method=method, path=path,  wlog=wireLogBeta)
 
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
@@ -457,13 +457,13 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 8080
         method = u'GET'
-        url = u'/fancy?idify=true;jsonify=true'
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, url))
+        path = u'/fancy?idify=true;jsonify=true'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([('Accept', 'application/json')])
         request =  httping.Requester(host=host,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         lines = [
@@ -492,7 +492,7 @@ class BasicTestCase(unittest.TestCase):
 
         response = httping.Respondent(beta.rxbs,
                                           method=method,
-                                          url=url,
+                                          path=path,
                                           wlog=wireLogBeta,
                                           jsoned=True)
 
@@ -589,15 +589,15 @@ class BasicTestCase(unittest.TestCase):
         host = eha[0]
         port = eha[1]
         method = u'GET'
-        url = u'/comments.json?auth={0}'.format(token)
+        path = u'/comments.json?auth={0}'.format(token)
 
-        console.terse("{0} from  {1}:{2} {3} ...\n".format(method, host, port, url))
+        console.terse("{0} from  {1}:{2} {3} ...\n".format(method, host, port, path))
         headers = odict([('Accept', 'text/event-stream')])
         #headers = odict([('Accept', 'application/json')])
         request =  httping.Requester(host=hostname,
                                      port=port,
                                      method=method,
-                                     url=url,
+                                     path=path,
                                      headers=headers)
         msgOut = request.build()
         console.terse("{0}".format(msgOut))
@@ -626,7 +626,7 @@ class BasicTestCase(unittest.TestCase):
         msgIn, index = beta.tailRxbs(0)
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
-        #response = httping.HttpResponseNb(msgIn, method=method, url=url)
+        #response = httping.HttpResponseNb(msgIn, method=method, path=path)
         response = httping.Respondent(beta.rxbs, method=method,  wlog=wireLogBeta)
 
         timer = Timer(duration=3.0)
