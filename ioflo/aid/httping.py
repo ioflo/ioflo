@@ -21,9 +21,10 @@ import json
 import ssl
 
 if sys.version > '3':
-    from urllib.parse import urlsplit
+    from urllib.parse import urlsplit, quote, quote_plus
 else:
     from urlparse import urlsplit
+    from urllib import quote, quote_plus
 
 from email.parser import HeaderParser
 
@@ -399,43 +400,50 @@ class Requester(object):
                     body=body)
         self.lines = []
 
-        skip_accept_encoding = True if 'accept-encoding' in self.headers else False
+        # need to check for proxy as the start line is different if proxied
+
+        pathSplits = urlsplit(self.path)  # path should not include scheme host port
+        path = pathSplits.path
+        path = quote(path)
+        query = pathSplits.query
+        if u';' in query:
+            querySplits = query.split(u';')
+        elif u'&' in query:
+            querySplits = query.split(u'&')
+        else:
+            querySplits = [query]
+        qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
+        querySplits.extend(qargParts)
+        query = ';'.join(querySplits)
+        query = quote_plus(query, ';=')
+        path = u"{0}?{1}#".format(path, query, pathSplits.fragment)
+        path = urlsplit(path).geturl()
+        self.path = path
 
         startLine = "{0} {1} {2}".format(self.method, self.path, self.HttpVersionString)
-        self.lines.append(startLine.encode('ascii'))
+        try:
+            startLine = startLine.encode('ascii')
+        except UnicodeEncodeError:
+            startLine = startLine.encode('idna')
+        self.lines.append(startLine)
 
-        if u'host' not in self.headers:
-            # If we need a non-standard port, include it in the header
-            netloc = ''
-            if self.path.startswith('http'):  # strip off scheme and host port
-                nil, netloc, nil, nil, nil = urlsplit(path)
+        if u'host' not in self.headers:  # create Host header
+            host = self.host
+            port = self.port
 
-            if netloc:
-                try:
-                    netloc_enc = netloc.encode("ascii")
-                except UnicodeEncodeError:
-                    netloc_enc = netloc.encode("idna")
-                self.lines.append(self.packHeader(u'Host', netloc_enc))
-            else:
-                host = self.host
-                port = self.port
+            # As per RFC 273, IPv6 address should be wrapped with []
+            # when used as Host header
+            if host.find(u':') >= 0:
+                host = u'[' + host + u']'
 
-                try:
-                    host_enc = host.encode("ascii")
-                except UnicodeEncodeError:
-                    host_enc = host.encode("idna")
+            value = "{0}:{1}".format(host, port)
 
-                # As per RFC 273, IPv6 address should be wrapped with []
-                # when used as Host header
+            try:
+                value = value.encode("ascii")
+            except UnicodeEncodeError:
+                value = value.encode("idna")
 
-                if host.find(':') >= 0:
-                    host_enc = b'[' + host_enc + b']'
-
-                if port == self.Port:
-                    self.lines.append(self.packHeader('Host', host_enc))
-                else:
-                    host_enc = host_enc.decode("ascii")
-                    self.lines.append(self.packHeader('Host', "{0}:{1}".format(host_enc, port)))
+            self.lines.append(self.packHeader('Host', value))
 
         # we only want a Content-Encoding of "identity" since we don't
         # support encodings such as x-gzip or x-deflate.
