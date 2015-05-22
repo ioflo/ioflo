@@ -1559,12 +1559,12 @@ class Patron(object):
                 request = self.requests.popleft()
                 # future check host port scheme if need to reconnect on new ha
                 # reconnect here
-                self.transmit(method=request['method'],
-                             path=request['path'],
-                             qargs=request['qargs'],
-                             fragment=request['fragment'],
-                             headers=request['headers'],
-                             body=request['body'])
+                self.transmit(method=request.get('method'),
+                             path=request.get('path'),
+                             qargs=request.get('qargs'),
+                             fragment=request.get('fragment'),
+                             headers=request.get('headers'),
+                             body=request.get('body'), )
 
     def serviceResponse(self):
         """
