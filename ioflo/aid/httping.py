@@ -1302,7 +1302,6 @@ class Respondent(object):
         Generator to parse response bytearray.
         Parses msg if not None
         Otherwise parse .msg
-
         """
         self.headed = False
         self.bodied = False
@@ -1338,6 +1337,7 @@ class Respondent(object):
             self.msg = msg
 
         self.parser = self.parseResponse()  # make generator
+
 
     def parse(self):
         """
@@ -1596,6 +1596,7 @@ class Patron(object):
 
             self.respondent.redirectant = False
             self.respondent.redirected = True
+            self.respondent.ended = False  # since redirecting not done
 
     def serviceRequests(self):
         """
@@ -1647,7 +1648,7 @@ class Patron(object):
                         self.redirect()
                     else:
                         self.responses.append(response)
-                self.waited = False
+                        self.waited = False
                 self.respondent.makeParser()  #set up for next time
 
     def serviceAllTx(self):

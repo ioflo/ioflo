@@ -2315,12 +2315,12 @@ class BasicTestCase(unittest.TestCase):
             msgIn = bytes(ixClient.rxbs)
             if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
-                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nAccess-Control-Allow-Origin: *\r\nLocation: http://localhost:6101/redirect\r\n\r\n'
+                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nAccess-Control-Allow-Origin: *\r\nLocation: http://localhost:6101/redirect?name=fame\r\n\r\n'
                 ixClient.tx(msgOut)
                 msgIn = b''
                 msgOut = b''
 
-            elif  msgIn== b'GET /redirect HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            elif  msgIn== b'GET /redirect?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -2405,7 +2405,7 @@ class BasicTestCase(unittest.TestCase):
                                          'port': 6101,
                                          'scheme': 'http',
                                          'method': 'GET',
-                                         'path': '/echo',
+                                         'path': '/redirect',
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
@@ -2467,7 +2467,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
     #runOne('testPatronRequestEcho')
     #runOne('testPatronServiceEcho')
@@ -2475,4 +2475,4 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testPatronPipelineStream')
     #runOne('testPatronPipelineEchoSimpleSecure')
     #runOne('testPatronSecurePipelineEcho')
-    runOne('testPatronRedirectSimple')
+    #runOne('testPatronRedirectSimple')
