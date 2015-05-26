@@ -822,7 +822,7 @@ class Respondent(object):
         self.chunked = None    # is transfer encoding "chunked" being used?
         self.evented = None   # are server sent events being used
         self.jsoned = None    # is content application/json
-        self.encoding = 'ISO-8859-1'  # encoding charset if provided else default 
+        self.encoding = 'ISO-8859-1'  # encoding charset if provided else default
 
         self.persisted = None   # persist connection until server closes
         self.headed = None    # head completely parsed
@@ -1100,7 +1100,7 @@ class Respondent(object):
                 contentType, sep, encoding = contentType.rpartition(u';')
                 if encoding:
                     self.encoding = encoding
-                
+
             if 'text/event-stream' in contentType.lower():
                 self.evented = True
                 self.eventSource = EventSource(raw=self.body,
@@ -1110,7 +1110,7 @@ class Respondent(object):
                 self.evented = False
 
             if 'application/json' in contentType.lower():
-                self.jsoned = True  
+                self.jsoned = True
             else:
                 self.jsoned = False
 
@@ -1559,7 +1559,7 @@ class Patron(object):
             redirect = self.redirects[-1]
             location = redirect['headers'].get('location')
             splits = urlsplit(location)
-            host = splits.host
+            hostname = splits.hostname
             port = splits.port
             scheme = splits.scheme
             if not port:
@@ -1571,6 +1571,28 @@ class Patron(object):
             query = splits.query
             fragment = splits.fragment
 
+
+            host = socket.gethostbyname(hostname)
+            ha = (host, port)
+            if ha != self.connector.ha or scheme != self.requester.scheme:
+                pass  # need to close and reopen new connection
+
+
+            method = redirect.get('method')
+
+            qargs = odict()
+            if u';' in query:
+                querySplits = query.split(u';')
+            elif u'&' in query:
+                querySplits = query.split(u'&')
+            else:
+                querySplits = [query]
+            for queryPart in querySplits:  # this prevents duplicates even if desired
+                if '=' in queryPart:
+                    key, val = queryPart.split('=')
+                    qargs[key] = val
+
+            self.transmit(method=method, path=path, qargs=qargs, fragment=fragment)
 
             self.respondent.redirectant = False
             self.respondent.redirected = True

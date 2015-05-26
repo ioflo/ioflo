@@ -2313,7 +2313,14 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if  msgIn== b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+                ixClient.clearRxbs()
+                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nAccess-Control-Allow-Origin: *\r\nLocation: http://localhost:6101/redirect\r\n\r\n'
+                ixClient.tx(msgOut)
+                msgIn = b''
+                msgOut = b''
+
+            elif  msgIn== b'GET /redirect HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -2368,7 +2375,7 @@ class BasicTestCase(unittest.TestCase):
         beta.requests.append(request)
 
         while not alpha.ixes or beta.requests or beta.connector.txes or not beta.respondent.ended:
-            self.mockEchoService(alpha)
+            self.mockRedirectService(alpha)
             time.sleep(0.05)
             beta.serviceAll()
             time.sleep(0.05)
@@ -2460,7 +2467,7 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
     #runOne('testPatronRequestEcho')
     #runOne('testPatronServiceEcho')
@@ -2468,4 +2475,4 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testPatronPipelineStream')
     #runOne('testPatronPipelineEchoSimpleSecure')
     #runOne('testPatronSecurePipelineEcho')
-    #runOne('testPatronRedirectSimple')
+    runOne('testPatronRedirectSimple')
