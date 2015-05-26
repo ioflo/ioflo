@@ -911,7 +911,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Beta processes response \n")
         response = httping.Respondent(beta.rxbs,
                                       method=method,
-                                      jsoned=True,
+                                      dictify=True,
                                       wlog=wireLogBeta,
                                       )
 
@@ -1069,7 +1069,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Beta processes response \n")
         response = httping.Respondent(beta.rxbs,
                                       method=method,
-                                      jsoned=True,
+                                      dictify=True,
                                       wlog=wireLogBeta,)
 
         lines =  [
@@ -2415,4 +2415,4 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testPatronPipelineStream')
     #runOne('testPatronPipelineEchoSimpleSecure')
     #runOne('testPatronSecurePipelineEcho')
-    runOne('testPatronRedirectSimple')
+    #runOne('testPatronRedirectSimple')

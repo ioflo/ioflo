@@ -552,18 +552,18 @@ class EventSource(object):
     """
     Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
 
-    def __init__(self, raw=None, events=None, jsoned=False):
+    def __init__(self, raw=None, events=None, dictify=False):
         """
         Initialize Instance
         raw must be bytearray
         IF events is not None then used passed in deque
             .events will be deque of event odicts
-        IF jsoned then deserialize event data as json
+        IF dictify then deserialize event data as json
 
         """
         self.raw = raw if raw is not None else bytearray()
         self.events = events if events is not None else deque()
-        self.jsoned = True if jsoned else False
+        self.dictify = True if dictify else False
 
         self.parser = None
         self.leid = None  # last event id
@@ -625,7 +625,7 @@ class EventSource(object):
                 if parts:
                     edata = u'\n'.join(parts)
                 if edata:  # data so dispatch event by appending to .events
-                    if self.jsoned:
+                    if self.dictify:
                         try:
                             ejson = json.loads(edata, encoding='utf-8', object_pairs_hook=odict)
                         except ValueError as ex:
@@ -774,7 +774,7 @@ class Respondent(object):
                  method=u'GET',
                  redirects=None,
                  redirectable=True,
-                 jsoned=None,
+                 dictify=None,
                  events=None,
                  retry=None,
                  leid=None,
@@ -785,7 +785,7 @@ class Respondent(object):
 
         msg = bytearray of response msg to parse
         method = request method verb
-        jsoned = Boolean flag if response body is expected to be json
+        dictify = Boolean flag If True attempt to convert json body
         redirects = list of redirects if any
         redirectable = Boolean allow redirects
         events = deque of events if any
@@ -795,7 +795,7 @@ class Respondent(object):
         """
         self.msg = msg if msg is not None else bytearray()
         self.method = method.upper() if method else u'GET'
-        self.jsoned = True if jsoned else False  # is body json
+        self.dictify = True if dictify else False  # convert body json
         self.redirects = redirects if redirects is not None else []
         self.redirectable = True if redirectable else False
         self.events = events if events is not None else deque()
@@ -834,7 +834,7 @@ class Respondent(object):
     def reinit(self,
                msg=None,
                method=u'GET',
-               jsoned=None,
+               dictify=None,
                redirectable=None):
         """
         Reinitialize Instance
@@ -842,15 +842,15 @@ class Respondent(object):
 
         msg = bytearray of response msg to parse
         method = request method verb
-        jsoned = Boolean flag if response body is expected to be json
+        dictify = Boolean flag If True attempt to convert json body
 
         """
         if msg is not None:
             self.msg = msg
         if method is not None:
             self.method = method.upper()
-        if jsoned is not None:
-            self.jsoned = True if jsoned else False
+        if dictify is not None:
+            self.dictify = True if dictify else False
         if redirectable is not None:
             self.redirectable = True if redirectable else False
 
@@ -1096,7 +1096,7 @@ class Respondent(object):
             self.evented = True
             self.eventSource = EventSource(raw=self.body,
                                            events=self.events,
-                                           jsoned=self.jsoned)
+                                           dictify=self.dictify)
         else:
             self.evented = False
 
@@ -1266,7 +1266,7 @@ class Respondent(object):
                 (yield None)
 
         self.bodied = True
-        # convert body to data based on content-type, and .jsoned flag
+        # convert body to data based on content-type, and .dictify flag
         # only gets to here if finite content length (not streaming or streaming ends)
 
         (yield True)
@@ -1352,7 +1352,7 @@ class Patron(object):
                  fragment=u'',
                  body=b'',
                  msg=None,
-                 jsoned=None,
+                 dictify=None,
                  events=None,
                  requests=None,
                  responses=None,
@@ -1382,7 +1382,7 @@ class Patron(object):
         headers = dict of http headers
         body = byte or binary array of request body bytes or bytearray
         msg = bytearray of response msg to parse
-        jsoned = Boolean flag if response body is expected to be json
+        dictify = Boolean flag If True attempt to convert body from json
         events = deque of events if any
         requests = deque of requests if any each request is dict
         responses = deque of responses if any each response is dict
@@ -1464,7 +1464,7 @@ class Patron(object):
         if respondent is None:
             respondent = Respondent(msg=self.connector.rxbs,
                                     method=method,
-                                    jsoned=jsoned,
+                                    dictify=dictify,
                                     events=self.events,
                                     redirectable=redirectable,
                                     redirects=self.redirects,
@@ -1473,7 +1473,7 @@ class Patron(object):
             # do we need to assign the events, redirects, wlog as well?
             respondent.reinit(msg=self.connector.rxbs,
                               method=method,
-                              jsoned=jsoned,
+                              dictify=dictify,
                               redirectable=redirectable)
         self.respondent = respondent
 
@@ -1486,7 +1486,7 @@ class Patron(object):
                qargs=None,
                headers=None,
                body=None,
-               jsoned=None,
+               dictify=None,
                redirectable=None):
         """
         Reinit to send another request and process response
@@ -1501,7 +1501,7 @@ class Patron(object):
                               body=body)
 
         self.respondent.reinit(method=method,
-                               jsoned=jsoned,
+                               dictify=dictify,
                                redirectable=redirectable)
 
     def transmit(self,

@@ -494,7 +494,7 @@ class BasicTestCase(unittest.TestCase):
                                           method=method,
                                           path=path,
                                           wlog=wireLogBeta,
-                                          jsoned=True)
+                                          reconnectable=True)
 
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
