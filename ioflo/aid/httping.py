@@ -808,7 +808,7 @@ class Respondent(object):
 
         self.headers = None
         self.body = bytearray()  # body data
-        self.data = None  # content data parsed from body
+        self.json = None  # content dict deserialized from body json
         self.parms = None  # chunked encoding extension parameters
         self.trails = None  # chunked encoding trailing headers
 
@@ -820,6 +820,7 @@ class Respondent(object):
 
         self.chunked = None    # is transfer encoding "chunked" being used?
         self.evented = None   # are server sent events being used
+        self.jsoned = None    # is content application/json
 
         self.persisted = None   # persist connection until server closes
         self.headed = None    # head completely parsed
@@ -1092,13 +1093,19 @@ class Respondent(object):
             self.length = 0
 
         contentType = self.headers.get("content-type")
-        if contentType and contentType.lower() == 'text/event-stream':
-            self.evented = True
-            self.eventSource = EventSource(raw=self.body,
+        if contentType:
+            if contentType.lower() == 'text/event-stream':
+                self.evented = True
+                self.eventSource = EventSource(raw=self.body,
                                            events=self.events,
                                            dictify=self.dictify)
-        else:
-            self.evented = False
+            else:
+                self.evented = False
+
+            if contentType.lower() == 'application/json':
+                self.jsoned = True
+            else:
+                self.jsoned = False
 
         # Should connection be kept open until server closes
         self.checkPersisted()  # sets .persisted
@@ -1592,7 +1599,7 @@ class Patron(object):
                                       ('reason', self.respondent.reason),
                                       ('headers', self.respondent.headers),
                                       ('body', self.respondent.body),
-                                      ('data', self.respondent.data),
+                                      ('json', self.respondent.json),
                                       ('request', request),
                                      ])
                     if self.respondent.redirectable and self.respondent.redirectant:

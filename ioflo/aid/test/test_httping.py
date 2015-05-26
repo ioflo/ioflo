@@ -1623,7 +1623,7 @@ class BasicTestCase(unittest.TestCase):
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'data': None,
+                                    'json': None,
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -1681,7 +1681,7 @@ class BasicTestCase(unittest.TestCase):
                                          'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                          'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'data': None,
+                                    'json': None,
                                     'request': {'host': '127.0.0.1',
                                                 'port': 6101,
                                                 'scheme': 'http',
@@ -1785,7 +1785,7 @@ class BasicTestCase(unittest.TestCase):
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'data': None,
+                                    'json': None,
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -1823,7 +1823,7 @@ class BasicTestCase(unittest.TestCase):
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'data': None,
+                                    'json': None,
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -2194,7 +2194,7 @@ class BasicTestCase(unittest.TestCase):
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'data': None,
+                                    'json': None,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2232,7 +2232,7 @@ class BasicTestCase(unittest.TestCase):
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'data': None,
+                                    'json': None,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2339,7 +2339,7 @@ class BasicTestCase(unittest.TestCase):
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
                                     'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'data': None,
+                                    'json': None,
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
