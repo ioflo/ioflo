@@ -807,7 +807,8 @@ class Respondent(object):
         self.eventSource = None  # EventSource instance when .evented
 
         self.headers = None
-        self.body = bytearray()  # body data
+        self.body = bytearray()  # body data bytearray
+        self.text = u''  # body decoded as unicode string
         self.json = None  # content dict deserialized from body json
         self.parms = None  # chunked encoding extension parameters
         self.trails = None  # chunked encoding trailing headers
@@ -1206,7 +1207,8 @@ class Respondent(object):
         if self.length and self.length < 0:
             raise ValueError("Invalid content length of {0}".format(self.length))
 
-        del self.body[:]  # clear body
+        self.body.clear()  # clear body
+        #del self.body[:]  # clear body
 
         if self.chunked:  # chunked takes precedence over length
             self.parms = odict()
@@ -1256,7 +1258,8 @@ class Respondent(object):
             while True:
                 if self.msg:
                     self.body.extend(self.msg[:])
-                    del self.msg[:len(self.msg)]
+                    self.msg.clear()
+                    #del self.msg[:len(self.msg)]
 
                 if self.evented:
                     self.eventSource.parse()  # parse events here
@@ -1271,6 +1274,15 @@ class Respondent(object):
                     break
 
                 (yield None)
+
+
+        if self.jsoned or self.dictify:  # attempt to deserialize json
+            try:
+                self.json = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
+            except ValueError as ex:
+                self.json = None
+            else:  # valid json so clear out body
+                self.body.clear()
 
         self.bodied = True
         # convert body to data based on content-type, and .dictify flag

@@ -165,7 +165,13 @@ class BasicTestCase(unittest.TestCase):
         while response.parser:
             response.parse()
 
-        self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        #self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        self.assertEqual(bytes(response.body), b'')
+        self.assertEqual(response.json, {'action': None,
+                                         'content': None,
+                                         'query': {'name': 'fame'},
+                                         'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                         'verb': 'GET'})
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.headers.items(), [('content-length', '122'),
                                                     ('content-type', 'application/json'),
@@ -1252,7 +1258,14 @@ class BasicTestCase(unittest.TestCase):
         while response.parser:
             response.parse()
 
-        self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        #self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        self.assertEqual(bytes(response.body), b'')
+        self.assertEqual(response.json, {'action': None,
+                                         'content': None,
+                                         'query': {'name': 'fame'},
+                                         'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                         'verb': 'GET'}
+                        )
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.headers.items(), [('content-length', '122'),
                                                     ('content-type', 'application/json'),
@@ -1375,7 +1388,13 @@ class BasicTestCase(unittest.TestCase):
         while beta.respondent.parser:
             beta.respondent.parse()
 
-        self.assertEqual(bytes(beta.respondent.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        self.assertEqual(bytes(beta.respondent.body), b'')
+        self.assertEqual(beta.respondent.json, {'action': None,
+                                         'content': None,
+                                         'query': {'name': 'fame'},
+                                         'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                         'verb': 'GET'}
+                         )
         self.assertEqual(len(beta.connector.rxbs), 0)
         self.assertEqual(beta.respondent.headers.items(), [('content-length', '122'),
                                                     ('content-type', 'application/json'),
@@ -1499,7 +1518,13 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.respondent.ended, True)
         self.assertEqual(len(beta.responses), 1)
 
-        self.assertEqual(bytes(beta.respondent.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
+        self.assertEqual(bytes(beta.respondent.body), b'')
+        self.assertEqual(beta.respondent.json, {'action': None,
+                                         'content': None,
+                                         'query': {'name': 'fame'},
+                                         'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                         'verb': 'GET'}
+                         )
         self.assertEqual(len(beta.connector.rxbs), 0)
         self.assertEqual(beta.respondent.headers.items(), [('content-length', '122'),
                                                     ('content-type', 'application/json'),
@@ -1622,8 +1647,12 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'json': None,
+                                    'body': bytearray(b''),
+                                    'json': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -1680,8 +1709,12 @@ class BasicTestCase(unittest.TestCase):
                                          'content-type': 'application/json',
                                          'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                          'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'json': None,
+                                    'body': bytearray(b''),
+                                    'json': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
                                     'request': {'host': '127.0.0.1',
                                                 'port': 6101,
                                                 'scheme': 'http',
@@ -1784,8 +1817,12 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'json': None,
+                                    'body': bytearray(b''),
+                                    'json': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -1822,8 +1859,12 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'json': None,
+                                    'body': bytearray(b''),
+                                    'json': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -2193,8 +2234,12 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'json': None,
+                                    'body': bytearray(b''),
+                                    'json': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2231,8 +2276,12 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'json': None,
+                                    'body': bytearray(b''),
+                                    'json': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2338,8 +2387,12 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'),
-                                    'json': None,
+                                    'body': bytearray(b''),
+                                    'json': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
