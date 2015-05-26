@@ -822,6 +822,7 @@ class Respondent(object):
         self.chunked = None    # is transfer encoding "chunked" being used?
         self.evented = None   # are server sent events being used
         self.jsoned = None    # is content application/json
+        self.encoding = 'ISO-8859-1'  # encoding charset if provided else default 
 
         self.persisted = None   # persist connection until server closes
         self.headed = None    # head completely parsed
@@ -1095,7 +1096,12 @@ class Respondent(object):
 
         contentType = self.headers.get("content-type")
         if contentType:
-            if contentType.lower() == 'text/event-stream':
+            if u';' in contentType: # should also parse out charset for decoding
+                contentType, sep, encoding = contentType.rpartition(u';')
+                if encoding:
+                    self.encoding = encoding
+                
+            if 'text/event-stream' in contentType.lower():
                 self.evented = True
                 self.eventSource = EventSource(raw=self.body,
                                            events=self.events,
@@ -1103,8 +1109,8 @@ class Respondent(object):
             else:
                 self.evented = False
 
-            if contentType.lower() == 'application/json':
-                self.jsoned = True
+            if 'application/json' in contentType.lower():
+                self.jsoned = True  
             else:
                 self.jsoned = False
 
