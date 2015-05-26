@@ -1861,7 +1861,7 @@ else:
                     context.check_hostname = hostify = True if hostify else False
 
             self.context = context
-            self.certedhost = certedhost
+            self.certedhost = certedhost or self.hostname
 
             if cafilepath:
                 context.load_verify_locations(cafile=cafilepath,

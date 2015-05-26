@@ -1562,23 +1562,45 @@ class Patron(object):
             hostname = splits.hostname
             port = splits.port
             scheme = splits.scheme
-            if not port:
-                if scheme == 'https':
-                    port = 443
-                else:
-                    port = 80
+            scheme = 'https' if scheme.lower() == 'https' else 'http'
+            if scheme == 'https':
+                secured = True  # use tls socket connection
+                defaultPort = 443
+            else:
+                secured = False # non tls socket connection
+                defaultPort = 80
+            hostname, port = normalizeHostPort(hostname, port, defaultPort=defaultPort)
             path = splits.path
             query = splits.query
             fragment = splits.fragment
 
+            method = redirect.get('method')
 
             host = socket.gethostbyname(hostname)
             ha = (host, port)
             if ha != self.connector.ha or scheme != self.requester.scheme:
-                pass  # need to close and reopen new connection
+                self.connector.close()
+                if secured:
+                    connector = OutgoerTls(name=self.connector.name,
+                                           uid=self.connector.uid,
+                                           ha=(hostname, port),
+                                           bufsize=self.connector.bs,
+                                           wlog=self.connector.wlog,)
+                else:
+                    connector = Outgoer(name=self.connector.name,
+                                        uid=self.connector.uid,
+                                        ha=(hostname, port),
+                                        bufsize=self.connector.bs,
+                                        wlog=self.connector.wlog,)
 
-
-            method = redirect.get('method')
+                self.secured = secured
+                self.connector = connector
+                self.connector.reopen()
+                self.requester.reinit(host=hostname,
+                                      port=port,
+                                      scheme=scheme)
+                self.respondent.reinit(msg=self.connector.rxbs,
+                                       method=method)
 
             qargs = odict()
             if u';' in query:
