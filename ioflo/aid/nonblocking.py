@@ -1997,7 +1997,7 @@ else:
 
             if data:  # connection open
                 if console._verbosity >= console.Wordage.profuse:  # faster to check
-                    cmsg = ("\nClient at {0}, received from {1}:\n------------\n"
+                    cmsg = ("\nOutgoer at {0}, received from {1}:\n------------\n"
                                "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
                     console.profuse(cmsg)
 
@@ -2027,7 +2027,7 @@ else:
 
             if result:
                 if console._verbosity >=  console.Wordage.profuse:
-                    cmsg = ("\nClient at {0}, sent {1} bytes to {2}:\n------------\n"
+                    cmsg = ("\nOutgoer at {0}, sent {1} bytes to {2}:\n------------\n"
                             "{3}\n".format(self.ca, result, self.ha, data[:result].decode('UTF-8')))
                     console.profuse(cmsg)
 
