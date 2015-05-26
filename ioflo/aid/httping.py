@@ -32,6 +32,7 @@ from email.parser import HeaderParser
 from .sixing import *
 from ..base.odicting import odict, lodict
 from ..base import excepting
+from ..base import storing
 from .nonblocking import Outgoer, OutgoerTls
 
 from ..base.consoling import getConsole
@@ -1363,6 +1364,7 @@ class Patron(object):
                  connector=None,
                  requester=None,
                  respondent=None,
+                 store=None,
                  name='',
                  uid=0,
                  bufsize=8096,
@@ -1424,6 +1426,8 @@ class Patron(object):
         self.events = events if events is not None else deque()
         self.waited = False  # Boolean True If sent request but waiting for response
 
+        self.store = store or storing.Store(stamp=0.0)
+
         if connector:
             if isinstance(connector, OutgoerTls):
                 secured = True
@@ -1447,14 +1451,16 @@ class Patron(object):
             host, port = normalizeHostPort(host, port, defaultPort=defaultPort)
 
             if secured:
-                connector = OutgoerTls(name=name,
+                connector = OutgoerTls(store=self.store,
+                                       name=name,
                                        uid=uid,
                                        ha=(host, port),
                                        bufsize=bufsize,
                                        wlog=wlog,
                                        **kwa)
             else:
-                connector = Outgoer(name=name,
+                connector = Outgoer(store=self.store,
+                                    name=name,
                                     uid=uid,
                                     ha=(host, port),
                                     bufsize=bufsize,
@@ -1579,15 +1585,22 @@ class Patron(object):
             host = socket.gethostbyname(hostname)
             ha = (host, port)
             if ha != self.connector.ha or scheme != self.requester.scheme:
+                if self.requester.scheme == 'https' and scheme != 'https':
+                    raise  ValueError("Attempt to redirect to non secure "
+                                      "host '{0}'".format(location))
                 self.connector.close()
                 if secured:
-                    connector = OutgoerTls(name=self.connector.name,
+                    context = getattr(self.connector, 'context')
+                    connector = OutgoerTls(store=self.connector.store,
+                                           name=self.connector.name,
                                            uid=self.connector.uid,
                                            ha=(hostname, port),
                                            bufsize=self.connector.bs,
-                                           wlog=self.connector.wlog,)
+                                           wlog=self.connector.wlog,
+                                           context=context)
                 else:
-                    connector = Outgoer(name=self.connector.name,
+                    connector = Outgoer(store=self.connector.store,
+                                        name=self.connector.name,
                                         uid=self.connector.uid,
                                         ha=(hostname, port),
                                         bufsize=self.connector.bs,
