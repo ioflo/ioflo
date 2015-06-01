@@ -33,6 +33,7 @@ from .sixing import *
 from ..base.odicting import odict, lodict
 from ..base import excepting
 from ..base import storing
+from ..base import aiding
 from .nonblocking import Outgoer, OutgoerTls
 
 from ..base.consoling import getConsole
@@ -908,21 +909,11 @@ class Respondent(object):
             # Presumably, the server closed the connection before
             # sending a valid response.
             raise BadStatusLine(line)
-        try:
-            if sys.version > '3':
-                version, status, reason = line.split(maxsplit=2)
-            else:
-                version, status, reason = line.split()
-        except ValueError:
-            try:
-                if sys.version > '3':
-                    version, status = line.split(maxsplit1=1)
-                else:
-                    version, status = line.split()
-                reason = ""
-            except ValueError:
-                # empty version will cause next test to fail.
-                version = ""
+
+        # python2 split does not support maxsplit keyword arg
+        version, status, reason = aiding.repack(3, line.split(), default = u'')
+        reason = u" ".join(reason)
+
         if not version.startswith("HTTP/"):
             raise BadStatusLine(line)
 
@@ -1247,8 +1238,7 @@ class Respondent(object):
         if self.length and self.length < 0:
             raise ValueError("Invalid content length of {0}".format(self.length))
 
-        self.body.clear()  # clear body
-        #del self.body[:]  # clear body
+        del self.body[:]  # self.body.clear() clear body python2 bytearrays don't clear
 
         if self.chunked:  # chunked takes precedence over length
             self.parms = odict()
@@ -1298,8 +1288,7 @@ class Respondent(object):
             while True:
                 if self.msg:
                     self.body.extend(self.msg[:])
-                    self.msg.clear()
-                    #del self.msg[:len(self.msg)]
+                    del self.msg[:]  # python2 bytearrays dont have clear self.msg.clear()
 
                 if self.evented:
                     self.eventSource.parse()  # parse events here
@@ -1322,7 +1311,7 @@ class Respondent(object):
             except ValueError as ex:
                 self.json = None
             else:  # valid json so clear out body
-                self.body.clear()
+                del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
 
         self.bodied = True
         # convert body to data based on content-type, and .dictify flag

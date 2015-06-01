@@ -3109,4 +3109,4 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testPatronPipelineStream')
     #runOne('testPatronPipelineEchoSimpleSecure')
     #runOne('testPatronSecurePipelineEcho')
-    #runOne('testPatronRedirectComplexSecure')
+    #runOne('testPatronRedirectSimple')
