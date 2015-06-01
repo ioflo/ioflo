@@ -283,8 +283,6 @@ def normalizeHostPort(host, port=None, defaultPort=80):
     generate and return tuple (hostname, port)
     priority is if port is provided in hostname as host:port then use
     otherwise use port otherwise use defaultPort
-
-
     """
     if port is None:
         port = defaultPort
@@ -319,7 +317,7 @@ class Requester(object):
     Port = HTTP_PORT  # default port
 
     def __init__(self,
-                 host='127.0.0.1',
+                 hostname='127.0.0.1',
                  port=None,
                  scheme=u'http',
                  method=u'GET',  # unicode
@@ -341,7 +339,7 @@ class Requester(object):
         headers = http request headers
         body = http request body
         """
-        self.host, self.port = normalizeHostPort(host, port, 80)
+        self.hostname, self.port = normalizeHostPort(hostname, port, 80)
         self.scheme = scheme
         self.method = method.upper() if method else u'GET'
         self.path = path or u'/'
@@ -359,7 +357,7 @@ class Requester(object):
         self.msg = b""
 
     def reinit(self,
-               host=None,
+               hostname=None,
                port=None,
                scheme=None,
                method=None,  # unicode
@@ -372,8 +370,8 @@ class Requester(object):
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
         """
-        if host is not None: # may need to renormalize host port
-            self.host = host
+        if hostname is not None: # may need to renormalize host port
+            self.hostname = hostname
         if port is not None:
             self.port = port
         if scheme is not None:
@@ -431,7 +429,7 @@ class Requester(object):
                               " to '{0}'".format(port))
 
         hostname = pathSplits.hostname
-        if hostname and hostname != self.host:
+        if hostname and hostname != self.hostname:
             raise  ValueError("Already open connection attempt to change hostname  "
                                   " to '{0}'".format(hostname))
 
@@ -467,7 +465,7 @@ class Requester(object):
         self.lines.append(startLine)
 
         if u'host' not in self.headers:  # create Host header
-            host = self.host
+            host = self.hostname
             port = self.port
 
             # As per RFC 273, IPv6 address should be wrapped with []
@@ -1500,7 +1498,7 @@ class Patron(object):
         self.connector = connector
 
         if requester is None:
-            requester = Requester(host=self.connector.hostname,
+            requester = Requester(hostname=self.connector.hostname,
                                   port=self.connector.port,
                                   scheme=scheme,
                                   method=method,
@@ -1510,7 +1508,7 @@ class Patron(object):
                                   fragment=fragment,
                                   body=body,)
         else:
-            requester.reinit(host=self.connector.hostname,
+            requester.reinit(hostname=self.connector.hostname,
                              port=self.connector.port,
                              scheme=scheme,
                              method=method,
@@ -1536,33 +1534,6 @@ class Patron(object):
                               dictify=dictify,
                               redirectable=redirectable)
         self.respondent = respondent
-
-    def reinit(self,
-               host=None,
-               port=None,
-               scheme=None,
-               method=None,
-               path=None,
-               qargs=None,
-               headers=None,
-               body=None,
-               dictify=None,
-               redirectable=None):
-        """
-        Reinit to send another request and process response
-        """
-        self.requester.reinit(host=host,
-                              port=port,
-                              scheme=scheme,
-                              method=method,
-                              path=path,
-                              qargs=qargs,
-                              headers=headers,
-                              body=body)
-
-        self.respondent.reinit(method=method,
-                               dictify=dictify,
-                               redirectable=redirectable)
 
     def transmit(self,
                  method=None,
@@ -1638,7 +1609,7 @@ class Patron(object):
                 self.secured = secured
                 self.connector = connector
                 self.connector.reopen()
-                self.requester.reinit(host=hostname,
+                self.requester.reinit(hostname=hostname,
                                       port=port,
                                       scheme=scheme)
                 self.respondent.reinit(msg=self.connector.rxbs,
@@ -1689,7 +1660,7 @@ class Patron(object):
             if self.respondent.ended:
                 if not self.respondent.evented:
                     request = odict([
-                                     ('host', self.requester.host),
+                                     ('host', self.requester.hostname),
                                      ('port', self.requester.port),
                                      ('scheme', self.requester.scheme),
                                      ('method', self.requester.method),

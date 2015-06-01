@@ -117,7 +117,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -240,7 +240,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -392,7 +392,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -544,7 +544,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -697,7 +697,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true;multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -862,7 +862,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                          port=port,
                                          method=method,
                                          path=path,
@@ -1020,7 +1020,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true;jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                          port=port,
                                          method=method,
                                          path=path,
@@ -1210,7 +1210,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(host=host,
+        request =  httping.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
