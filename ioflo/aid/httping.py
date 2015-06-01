@@ -329,7 +329,7 @@ class Requester(object):
         """
         Initialize Instance
 
-        host = remote server host address (may include port as host:port)
+        hostname = remote server hostname (may include port as hostname:port)
         port = remote server port
         scheme = http scheme 'http' or 'https' usually
         method = http request method verb
@@ -442,9 +442,14 @@ class Requester(object):
         else:
             querySplits = [query]
         for queryPart in querySplits:  # this prevents duplicates even if desired
-            if '=' in queryPart:
-                key, val = queryPart.split('=')
+            if queryPart:
+                if '=' in queryPart:
+                    key, val = queryPart.split('=')
+                else:
+                    key = queryPart
+                    val = True
                 self.qargs[key] = val
+
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
         query = ';'.join(qargParts)
         query = quote_plus(query, ';=')
@@ -1398,7 +1403,7 @@ class Patron(object):
                  wlog=None,
                  host='127.0.0.1',
                  port=None,
-                 scheme=u'http',
+                 scheme=u'',
                  method=u'GET',  # unicode
                  path=u'/',  # unicode
                  headers=None,
@@ -1426,11 +1431,12 @@ class Patron(object):
         uid = unique identifier for connection
         bufsize = buffer size
         wlog = WireLog instance if any
-        host = host address of remote server
+        host = host address or hostname of remote server
         port = socket port of remote server
         scheme = http scheme
         method = http request method verb unicode
-        path = http url path unicode
+        path = http url path section in unicode
+               path may include scheme and netloc which takes priority
         qargs = dict of http query args
         fragment = http fragment
         headers = dict of http headers
@@ -1452,36 +1458,57 @@ class Patron(object):
         # .events is deque of dicts of response server sent event data
         self.events = events if events is not None else deque()
         self.waited = False  # Boolean True If sent request but waiting for response
-
         self.store = store or storing.Store(stamp=0.0)
+
+        # see if path also includes scheme, netloc, query, fragment
+        splits = urlsplit(path)
+        scheme = splits.scheme or scheme  # is scheme provided
+        scheme = scheme.lower()
 
         if connector:
             if isinstance(connector, OutgoerTls):
+                if scheme and scheme != u'https':
+                    raise  ValueError("Provided scheme '{0}' incompatible with connector".format(scheme))
                 secured = True
-                scheme = 'https'
+                scheme = u'https'
                 defaultPort = 443
             elif isinstance(connector, Outgoer):
+                if scheme and scheme != u'http':
+                    raise  ValueError("Provided scheme '{0}' incompatible with connector".format(scheme))
                 secured = False
                 scheme = 'http'
                 defaultPort = 80
             else:
                 raise ValueError("Invalid connector type {0}".format(type(connector)))
         else:
-            scheme = 'https' if scheme.lower() == 'https' else 'http'
-            if scheme == 'https':
+            scheme = u'https' if scheme == u'https' else u'http'
+            if scheme == u'https':
                 secured = True  # use tls socket connection
                 defaultPort = 443
             else:
                 secured = False # non tls socket connection
                 defaultPort = 80
 
-            host, port = normalizeHostPort(host, port, defaultPort=defaultPort)
+        hostname = splits.hostname or host  # is host or port provided
+        port = splits.port or port  # is port provided
+        port = int(port)
+        hostname, port = normalizeHostPort(host=hostname, port=port, defaultPort=defaultPort)
+        host = socket.gethostbyname(host)
+        ha = (host, port)
 
+        if connector:
+            if connector.hostname != hostname:
+                ValueError("Provided hostname '{0}' incompatible with connector".format(hostname))
+            if connector.ha != ha:
+                ValueError("Provided ha '{0}' incompatible with connector".format(hostname))
+            # at some point may want to support changing the hostname and ha of provided connector
+        else:
             if secured:
                 connector = OutgoerTls(store=self.store,
                                        name=name,
                                        uid=uid,
-                                       ha=(host, port),
+                                       host=hostname,
+                                       port=port,
                                        bufsize=bufsize,
                                        wlog=wlog,
                                        **kwa)
@@ -1489,13 +1516,37 @@ class Patron(object):
                 connector = Outgoer(store=self.store,
                                     name=name,
                                     uid=uid,
-                                    ha=(host, port),
+                                    host=hostname,
+                                    port=port,
                                     bufsize=bufsize,
                                     wlog=wlog,
                                     **kwa)
 
         self.secured = secured
         self.connector = connector
+
+        path = splits.path  # only path component
+
+        query = splits.query  # is query in original path
+        qargs = qargs or odict()
+        if u';' in query:
+            querySplits = query.split(u';')
+        elif u'&' in query:
+            querySplits = query.split(u'&')
+        else:
+            querySplits = [query]
+
+        for queryPart in querySplits:  # this prevents duplicates even if desired
+            if queryPart:
+                if '=' in queryPart:
+                    key, val = queryPart.split('=')
+                else:
+                    key = queryPart
+                    val = True
+                qargs[key] = val
+
+        fragment = splits.fragment or fragment  # fragment in path prioritized
+
 
         if requester is None:
             requester = Requester(hostname=self.connector.hostname,
@@ -1575,7 +1626,7 @@ class Patron(object):
             else:
                 secured = False # non tls socket connection
                 defaultPort = 80
-            hostname, port = normalizeHostPort(hostname, port, defaultPort=defaultPort)
+            hostname, port = normalizeHostPort(hostname, port=port, defaultPort=defaultPort)
             path = splits.path
             query = splits.query
             fragment = splits.fragment
@@ -1623,8 +1674,12 @@ class Patron(object):
             else:
                 querySplits = [query]
             for queryPart in querySplits:  # this prevents duplicates even if desired
-                if '=' in queryPart:
-                    key, val = queryPart.split('=')
+                if queryPart:
+                    if '=' in queryPart:
+                        key, val = queryPart.split('=')
+                    else:
+                        key = queryPart
+                        val = True
                     qargs[key] = val
 
             self.transmit(method=method, path=path, qargs=qargs, fragment=fragment)
