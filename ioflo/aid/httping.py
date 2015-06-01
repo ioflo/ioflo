@@ -407,6 +407,22 @@ class Requester(object):
         self.path = path
         path = quote(path)
 
+        scheme = pathSplits.scheme
+        if scheme and scheme != self.scheme:
+            raise  ValueError("Already open connection attempt to change scheme  "
+                              " to '{0}'".format(scheme))
+
+        port = pathSplits.port
+        if port and port != self.port:
+            raise  ValueError("Already open connection attempt to change port  "
+                              " to '{0}'".format(port))
+
+        hostname = pathSplits.hostname
+        if hostname and hostname != self.host:
+            raise  ValueError("Already open connection attempt to change hostname  "
+                                  " to '{0}'".format(hostname))
+
+
         query = pathSplits.query
         if u';' in query:
             querySplits = query.split(u';')
