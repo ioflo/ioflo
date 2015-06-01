@@ -435,20 +435,21 @@ class Requester(object):
 
 
         query = pathSplits.query
-        if u';' in query:
-            querySplits = query.split(u';')
-        elif u'&' in query:
-            querySplits = query.split(u'&')
-        else:
-            querySplits = [query]
-        for queryPart in querySplits:  # this prevents duplicates even if desired
-            if queryPart:
-                if '=' in queryPart:
-                    key, val = queryPart.split('=')
-                else:
-                    key = queryPart
-                    val = True
-                self.qargs[key] = val
+        if query:
+            if u';' in query:
+                querySplits = query.split(u';')
+            elif u'&' in query:
+                querySplits = query.split(u'&')
+            else:
+                querySplits = [query]
+            for queryPart in querySplits:  # this prevents duplicates even if desired
+                if queryPart:
+                    if '=' in queryPart:
+                        key, val = queryPart.split('=')
+                    else:
+                        key = queryPart
+                        val = True
+                    self.qargs[key] = val
 
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
         query = ';'.join(qargParts)
@@ -1529,21 +1530,22 @@ class Patron(object):
 
         query = splits.query  # is query in original path
         qargs = qargs or odict()
-        if u';' in query:
-            querySplits = query.split(u';')
-        elif u'&' in query:
-            querySplits = query.split(u'&')
-        else:
-            querySplits = [query]
+        if query:
+            if u';' in query:
+                querySplits = query.split(u';')
+            elif u'&' in query:
+                querySplits = query.split(u'&')
+            else:
+                querySplits = [query]
 
-        for queryPart in querySplits:  # this prevents duplicates even if desired
-            if queryPart:
-                if '=' in queryPart:
-                    key, val = queryPart.split('=')
-                else:
-                    key = queryPart
-                    val = True
-                qargs[key] = val
+            for queryPart in querySplits:  # this prevents duplicates even if desired
+                if queryPart:
+                    if '=' in queryPart:
+                        key, val = queryPart.split('=')
+                    else:
+                        key = queryPart
+                        val = True
+                    qargs[key] = val
 
         fragment = splits.fragment or fragment  # fragment in path prioritized
 
@@ -1667,20 +1669,21 @@ class Patron(object):
                                        method=method)
 
             qargs = odict()
-            if u';' in query:
-                querySplits = query.split(u';')
-            elif u'&' in query:
-                querySplits = query.split(u'&')
-            else:
-                querySplits = [query]
-            for queryPart in querySplits:  # this prevents duplicates even if desired
-                if queryPart:
-                    if '=' in queryPart:
-                        key, val = queryPart.split('=')
-                    else:
-                        key = queryPart
-                        val = True
-                    qargs[key] = val
+            if query:
+                if u';' in query:
+                    querySplits = query.split(u';')
+                elif u'&' in query:
+                    querySplits = query.split(u'&')
+                else:
+                    querySplits = [query]
+                for queryPart in querySplits:  # this prevents duplicates even if desired
+                    if queryPart:
+                        if '=' in queryPart:
+                            key, val = queryPart.split('=')
+                        else:
+                            key = queryPart
+                            val = True
+                        qargs[key] = val
 
             self.transmit(method=method, path=path, qargs=qargs, fragment=fragment)
 
