@@ -276,23 +276,36 @@ class WaitContent(HTTPException):
 
 # Utility functions
 
-def normalizeHostPort(host, port, defaultPort=80):
+def normalizeHostPort(host, port=None, defaultPort=80):
+    """
+    Given hostname host which could also be netloc which includes port
+    and or port
+    generate and return tuple (hostname, port)
+    priority is if port is provided in hostname as host:port then use
+    otherwise use port otherwise use defaultPort
+
+
+    """
     if port is None:
-        i = host.rfind(u':')
-        j = host.rfind(u']')         # ipv6 addresses have [...]
-        if i > j:
-            try:
-                port = int(host[i+1:])
-            except ValueError:
-                if host[i+1:] == u"": # foo.com: == foo.com
-                    port = defaultPort
-                else:
-                    raise InvalidURL("nonnumeric port: '%s'" % host[i+1:])
-            host = host[:i]
-        else:
-            port = defaultPort
-        if host and host[0] == u'[' and host[-1] == u']':
-            host = host[1:-1]
+        port = defaultPort
+
+    # rfind  returns -1 if not found
+    # ipv6
+    i = host.rfind(u':')  # is port included in hostname
+    j = host.rfind(u']')  # ipv6 addresses have [...]
+    if i > j:  # means ':' is found
+        if host[i+1:]:  # non empty after ':' since 'hostname:' == 'hostname'
+            port = host[i+1:]
+        host = host[:i]
+
+    if host and host[0] == u'[' and host[-1] == u']':  # strip of ipv6 brackets
+        host = host[1:-1]
+
+    try:
+        port = int(port)
+    except ValueError:
+        raise InvalidURL("Nonnumeric port: '{0}'".format(port))
+
     return (host, port)
 
 
