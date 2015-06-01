@@ -815,10 +815,10 @@ class Outgoer(object):
     Reconnectable = False  # auto reconnect flag
 
     def __init__(self,
-                 name='',
+                 name=u'',
                  uid=0,
                  ha=None,
-                 host='',
+                 host=u'127.0.0.1',
                  port=56000,
                  bufsize=8096,
                  wlog=None,
@@ -840,6 +840,7 @@ class Outgoer(object):
         """
         self.name = name
         self.uid = uid
+        self.reinitHostPort(ha=ha, hostname=host, port=port)
         self.ha = ha or (host, port)
         host, port = self.ha
         self.hostname = host  # host domain name
@@ -918,6 +919,19 @@ class Outgoer(object):
         setter for connected property
         '''
         self.accepted = value
+
+    def reinitHostPort(self, ha=None, hostname=u'127.0.0.1', port=56000):
+        """
+        Reinit self.ha and self.hostname from ha = (host, port) or hostname port
+        self.ha is of form (host, port) where host is either dns name or ip
+        self.hostname is hostname as dns name
+        host eventually is host ip address output from gethostbyname()
+        """
+        self.ha = ha or (hostname, port)
+        hostname, port = self.ha
+        self.hostname = hostname  # host domain name
+        host = socket.gethostbyname(hostname)  # ip host address
+        self.ha = (host, port)
 
     def actualBufSizes(self):
         """
@@ -1207,7 +1221,7 @@ class Incomer(object):
     Manager class for incoming nonblocking TCP connections.
     """
     def __init__(self,
-                 name='',
+                 name=u'',
                  uid=0,
                  ha=None,
                  bs=None,
@@ -1427,7 +1441,7 @@ class Acceptor(object):
     """
     def __init__(self,
                  ha=None,
-                 host='',
+                 host=u'',
                  port=56000,
                  eha=None,
                  bufsize=8096,
