@@ -158,7 +158,8 @@ CommandList = ['load', 'house', 'init',
 
 #reserved tokens
 Comparisons = ['==', '<', '<=', '>=', '>', '!=']
-Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'as', 'at', 'in', 'of', 'on',
+Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'via', 'cum', 'qua',
+               'as', 'at', 'in', 'of', 'on',
                'if', 'be', 'into', 'and', 'not', '+-', ]
 Reserved = Connectives + Comparisons #concatenate to get reserved words
 ReservedFrameNames = ['next', 'prev'] #these frame names have special meaning as goto target
@@ -2313,8 +2314,9 @@ class Builder(object):
         return True
 
     def buildDo(self, command, tokens, index):
-        """ do kind [part ...] [as name [part ...]] [at context]
-               [to data][by source] [with data] [from source]
+        """ do kind [part ...] [as name [part ...]] [at context] [qua inode]
+               [to data][by source]
+               [with data] [from source]
                [per data] [for source]
                [cum data] [via source]
 
@@ -2348,6 +2350,7 @@ class Builder(object):
         try:
             kind = "" # deed class key in registry
             name = "" #specific name of deed instance
+            inode = None
             parts = []
             parms = odict()
             inits = odict()
@@ -2359,7 +2362,7 @@ class Builder(object):
             context = self.currentContext
 
             while index < len(tokens):
-                if (tokens[index] in ['as', 'at', 'to', 'by', 'with', 'from',
+                if (tokens[index] in ['as', 'at', 'qua', 'to', 'by', 'with', 'from',
                                       'per', 'for', 'cum', 'via']): # end of parts
                     break
                 parts.append(tokens[index])
@@ -2393,6 +2396,9 @@ class Builder(object):
                         " '{1} for connective 'as'".format(command, context))
                         raise excepting.ParseError(msg, tokens, index)
                     context = ActionContextValues[context]
+
+                elif connective in ['qua']:
+                    inode, index = self.parseIndirect(tokens, index)
 
                 elif connective in ['to', 'with']:
                     data, index = self.parseDirect(tokens, index)
@@ -2444,6 +2450,8 @@ class Builder(object):
                 (command, kind)
             raise excepting.ParseError(msg, tokens, index)
 
+        if inode:
+            ioinits.update(inode=inode)  # qua argument takes precedence over others
         if name:
             inits['name'] = name
         act = acting.Act(   actor=kind,

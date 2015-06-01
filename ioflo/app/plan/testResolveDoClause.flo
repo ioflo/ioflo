@@ -57,12 +57,21 @@ framer test be active first test0
                  width in .trial == width in goal.dims
 
     frame test7 in timeout
-       put 6 into .marked.changed
-       go next if change .marked.changed
+      put 6 into .marked.changed
+      go next if change .marked.changed
 
     frame test8 in timeout
-       put true into .marked.updated
-       go next if update .marked.updated
+      put true into .marked.updated
+      go next if update .marked.updated
+
+    frame test9 in timeout
+      do deed at enter qua .rooted
+      do deed at enter qua unrooted
+      do deed at enter qua rooted of root
+      do deed at enter qua framered of framer
+      do deed at enter qua framed of frame
+      do deed at enter qua actored of actor
+      go next
 
   frame done
     print "Success"
