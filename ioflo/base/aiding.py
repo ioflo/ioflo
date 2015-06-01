@@ -475,13 +475,13 @@ def NameToPath(name):
 
 nameToPath = NameToPath
 
-def Repack(n, seq):
+def Repack(n, seq, default=None):
     """ Repacks seq into a generator of len n and returns the generator.
         The purpose is to enable unpacking into n variables.
         The first n-1 elements of seq are returned as the first n-1 elements of the
         generator and any remaining elements are returned in a tuple as the
         last element of the generator
-        None is substituted for missing elements when len(seq) < n
+        default (None) is substituted for missing elements when len(seq) < n
 
         Example:
 
@@ -508,15 +508,15 @@ def Repack(n, seq):
     """
     it = iter(seq)
     for _i in range(n - 1):
-        yield next(it, None)
+        yield next(it, default)
     yield tuple(it)
 
 repack = Repack #alias
 
 
-def Just(n, seq):
+def Just(n, seq, default=None):
     """ Returns a generator of just the first n elements of seq and substitutes
-        None for any missing elements. This guarantees that a generator of exactly
+        default (None) for any missing elements. This guarantees that a generator of exactly
         n elements is returned. This is to enable unpacking into n varaibles
 
         Example:
@@ -540,7 +540,7 @@ def Just(n, seq):
     """
     it = iter(seq)
     for _i in range(n):
-        yield next(it, None)
+        yield next(it, default)
 
 just = Just #alias
 
