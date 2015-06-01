@@ -1402,7 +1402,7 @@ class Patron(object):
                  uid=0,
                  bufsize=8096,
                  wlog=None,
-                 host='127.0.0.1',
+                 hostname='127.0.0.1',
                  port=None,
                  scheme=u'',
                  method=u'GET',  # unicode
@@ -1490,11 +1490,11 @@ class Patron(object):
                 secured = False # non tls socket connection
                 defaultPort = 80
 
-        hostname = splits.hostname or host  # is host or port provided
+        hostname = splits.hostname or hostname  # is host or port provided
         port = splits.port or port  # is port provided
         port = int(port)
         hostname, port = normalizeHostPort(host=hostname, port=port, defaultPort=defaultPort)
-        host = socket.gethostbyname(host)
+        host = socket.gethostbyname(hostname)
         ha = (host, port)
 
         if connector:

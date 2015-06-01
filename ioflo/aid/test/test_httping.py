@@ -1309,7 +1309,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
-                                     host=host,
+                                     hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -1438,7 +1438,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                               wlog=wireLogBeta,
-                              host=host,
+                              hostname=host,
                               port=port,
                               method=method,
                               path=path,
@@ -1564,7 +1564,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
-                                     host=host,
+                                     hostname=host,
                                      port=port,
                                      reconnectable=True,
                                      )
@@ -1777,7 +1777,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
-                                     host=host,
+                                     hostname=host,
                                      port=port,
                                      reconnectable=True,
                                      )
@@ -2068,7 +2068,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                                  wlog=wireLogBeta,
-                                 host=host,
+                                 hostname=host,
                                  port=port,
                                  store=store,
                                  reconnectable=True,
@@ -2341,7 +2341,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
 
-        beta = httping.Patron(host=serverCertCommonName,
+        beta = httping.Patron(hostname=serverCertCommonName,
                               port=alpha.eha[1],
                               bufsize=131072,
                               wlog=wireLogBeta,
@@ -2665,7 +2665,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
-                                     host=host,
+                                     hostname=host,
                                      port=port,
                                      reconnectable=True,
                                      )
@@ -2808,7 +2808,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
-                                     host=host,
+                                     hostname=host,
                                      port=port,
                                      reconnectable=True,
                                      )
@@ -2979,7 +2979,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta = httping.Patron(bufsize=131072,
                               wlog=wireLogBeta,
-                              host=host,
+                              hostname=host,
                               port=port,
                               reconnectable=True,
                               scheme='https',
