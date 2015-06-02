@@ -1481,7 +1481,6 @@ class Patron(object):
 
         hostname = splits.hostname or hostname  # is host or port provided
         port = splits.port or port  # is port provided
-        port = int(port)
         hostname, port = normalizeHostPort(host=hostname, port=port, defaultPort=defaultPort)
         host = socket.gethostbyname(hostname)
         ha = (host, port)
