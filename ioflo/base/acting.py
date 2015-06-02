@@ -554,8 +554,7 @@ class Actor(object):
         if not isinstance(inode, basestring):
             raise ValueError("Nonstring inode arg '{0}'".format(inode))
 
-        if not inode:
-            #inode = aiding.nameToPath(self.name)
+        if not inode:  # empty or missing use default actor relative
             inode = "framer.me.frame.me.actor.me."
 
         if not inode.endswith('.'):
