@@ -24,8 +24,13 @@ console = getConsole()
 
 from .aiding import nonStringIterable, just, nameToPath
 
-def deedify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
-            parametric=None):
+def deedify(name,
+            base=None,
+            registry=None,
+            parametric=None,
+            inits=None,
+            ioinits=None,
+            parms=None):
     """ Parametrized decorator function that converts the decorated function
         into an Actor sub class with .action method and with class name name
         and registers the new subclass in the registry under name.
