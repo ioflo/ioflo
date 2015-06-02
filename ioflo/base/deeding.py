@@ -40,8 +40,6 @@ def deedify(name, base=None, registry=None, inits=None, ioinits=None, parms=None
         msg = "Base class '{0}' not subclass of Deed".format(base)
         raise excepting.RegisterError(msg)
 
-    #name = aiding.reverseCamel(name, lower=False)
-
     attrs = odict()
     if registry:
         attrs['Registry'] = odict()
