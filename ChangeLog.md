@@ -3,11 +3,13 @@ CHANGE LOG
 -------------------
 
 ---------
-201506XX
+20150603
 ---------
-v1.2.X
+v1.2.6
 
 FloScript now supports single quoted values in addition to doubled quoted
+
+Exchanged 'qua' and 'via' connective semantics in 'do' verb since now via is more commmon
 
 
 ---------
