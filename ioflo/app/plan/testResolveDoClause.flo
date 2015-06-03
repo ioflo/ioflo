@@ -17,14 +17,14 @@ framer test be active first test0
       do deed at enter per trial ".trial"
       do deed at enter for trial in .init.test
       do deed at enter cum stuff 7
-      do deed at enter via width in .trial
+      do deed at enter qua width in .trial
 
       do deed param at enter to stuff 5
       do deed param at enter by depth in .trial
       do deed param at enter per trial ".trial"
       do deed param at enter for trial in .init.test
       do deed param at enter cum stuff 7
-      do deed param at enter via width in .trial
+      do deed param at enter qua width in .trial
 
       set elapsed to 1.0
       go next if elapsed >= goal
@@ -65,12 +65,12 @@ framer test be active first test0
       go next if update .marked.updated
 
     frame test9 in timeout
-      do deed at enter qua .rooted
-      do deed at enter qua unrooted
-      do deed at enter qua rooted of root
-      do deed at enter qua framered of framer
-      do deed at enter qua framed of frame
-      do deed at enter qua actored of actor
+      do deed at enter via .rooted
+      do deed at enter via unrooted
+      do deed at enter via rooted of root
+      do deed at enter via framered of framer
+      do deed at enter via framed of frame
+      do deed at enter via actored of actor
       go next
 
   frame done

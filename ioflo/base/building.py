@@ -161,7 +161,7 @@ CommandList = ['load', 'house', 'init',
 
 #reserved tokens
 Comparisons = ['==', '<', '<=', '>=', '>', '!=']
-Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'via', 'cum', 'qua',
+Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'cum', 'qua', 'via',
                'as', 'at', 'in', 'of', 'on',
                'if', 'be', 'into', 'and', 'not', '+-', ]
 Reserved = Connectives + Comparisons #concatenate to get reserved words
@@ -2317,11 +2317,11 @@ class Builder(object):
         return True
 
     def buildDo(self, command, tokens, index):
-        """ do kind [part ...] [as name [part ...]] [at context] [qua inode]
+        """ do kind [part ...] [as name [part ...]] [at context] [via inode]
                [to data][by source]
                [with data] [from source]
                [per data] [for source]
-               [cum data] [via source]
+               [cum data] [qua source]
 
             deed:
                 name [part ...]
@@ -2365,8 +2365,8 @@ class Builder(object):
             context = self.currentContext
 
             while index < len(tokens):
-                if (tokens[index] in ['as', 'at', 'qua', 'to', 'by', 'with', 'from',
-                                      'per', 'for', 'cum', 'via']): # end of parts
+                if (tokens[index] in ['as', 'at', 'via', 'to', 'by', 'with', 'from',
+                                      'per', 'for', 'cum', 'qua']): # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -2400,7 +2400,7 @@ class Builder(object):
                         raise excepting.ParseError(msg, tokens, index)
                     context = ActionContextValues[context]
 
-                elif connective in ['qua']:
+                elif connective in ['via']:
                     inode, index = self.parseIndirect(tokens, index)
 
                 elif connective in ['to', 'with']:
@@ -2425,7 +2425,7 @@ class Builder(object):
                     data, index = self.parseDirect(tokens, index)
                     inits.update(data)
 
-                elif connective in ['via']:
+                elif connective in ['qua']:
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['inits'][srcPath] = srcFields
