@@ -135,6 +135,9 @@ def Convert2StrBoolCoordNum(text):
     if REO_Quoted.match(text): #text is double quoted string
         return text.strip('"')  #strip off quotes
 
+    if REO_QuotedSingle.match(text): #text is single quoted string
+        return text.strip("'")  #strip off quotes
+
     try:
         return (Convert2BoolCoordNum(text))
     except ValueError:
@@ -3494,7 +3497,10 @@ class Builder(object):
                 break
 
             if REO_Quoted.match(field): # field is double quoted string
-                field = field.strip('"')
+                field = field.strip('"')  #strip off quotes
+            elif REO_QuotedSingle.match(field): #field is single quoted string
+                field = field.strip("'")  #strip off quotes
+
 
             index += 1 #eat token
             value = tokens[index]
@@ -3574,8 +3580,11 @@ class Builder(object):
 
         for i, field in enumerate(fields):
             if REO_Quoted.match(field): # field is double quoted string
-                field = field.strip('"')
-                fields.insert(i, field )  #strip off quotes
+                field = field.strip('"')  #strip off quotes
+                fields.insert(i, field )
+            elif REO_QuotedSingle.match(field): #field is single quoted string
+                field = field.strip("'")  #strip off quotes
+                fields.insert(i, field )
 
             if not REO_IdentPub.match(field):
                 msg = "ParseError: Invalid format of field '%s'" % (field)
@@ -3627,6 +3636,9 @@ class Builder(object):
             index += 1 #eat token
             if REO_Quoted.match(field): # field is double quoted string
                 field = field.strip('"')
+            elif REO_QuotedSingle.match(field): #field is single quoted string
+                field = field.strip("'")  #strip off quotes
+
             fields.append(field)
 
         if not found: #no fields clause

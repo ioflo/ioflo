@@ -1,6 +1,15 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+201506XX
+---------
+v1.2.X
+
+FloScript now supports single quoted values in addition to doubled quoted
+
+
 ---------
 20150601
 ---------

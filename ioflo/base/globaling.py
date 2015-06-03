@@ -148,12 +148,14 @@ REO_DotPath = re.compile(r'^([.][a-zA-Z_]\w*)+$')
 REO_PathDotPath = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)+$|^([.][a-zA-Z_]\w*)+$')
 
 #regex object to split hafscript command line
-REO_Chunks = re.compile(r'#.*|[^ "]+|"[^"]*"')
+#REO_Chunks = re.compile(r'#.*|[^ "]+|"[^"]*"')
+REO_Chunks = re.compile(r"""#.*|[^ "']+|"[^"]*"|'[^']*'""")
 # Usage
 # chunks = REO_Chunks.findall(s)
 
 # to match each part
 REO_Quoted = re.compile(r'^"[^"]*"$')
+REO_QuotedSingle = re.compile(r"^'[^']*'$")
 REO_Comment = re.compile(r'^#.*$')
 REO_Plain = re.compile(r'^[^ "]+$')
 #Usage

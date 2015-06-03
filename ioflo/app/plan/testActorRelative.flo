@@ -12,8 +12,8 @@ framer test be active first start
     frame test0 in start
       print "Test 0"
       #framer.test.frame.test0.actor.poke.direct.test
-      put "who am I" into value in .test of actor
-      go next if value in .framer.test.frame.test0.actor.poke.direct.test  == "who am I"
+      put 'who am I' into value in .test of actor
+      go next if value in .framer.test.frame.test0.actor.poke.direct.test  == 'who am I'
 
     frame test1 in start
       print "Test 1"
