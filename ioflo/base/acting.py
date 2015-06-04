@@ -123,6 +123,8 @@ class Act(object):
                 # each key is share src path, and value is list of src fields
                 for src, fields in self.prerefs.get('inits', {}).items():
                     src = self.resolvePath(ipath=src, warn=True) # now a share
+                    if not fields:  # default is use existing fields
+                        fields = self._prepareSrcFields(src, fields)
                     for field in fields:  # requires src pre inited
                         if field in src:  # only update if src has field
                             inits[field] = src[field]
@@ -137,6 +139,8 @@ class Act(object):
                 # each key is share src path, and value is list of src fields
                 for src, fields in self.prerefs.get('parms', {}).items():
                     src = self.resolvePath(ipath=src, warn=True) # now a share
+                    if not fields:  # default is use existing fields
+                        fields = self._prepareSrcFields(src, fields)
                     for field in fields:  # requires src pre inited
                         if field in src:  # only update if src has field
                             parms[field] = src[field]
@@ -146,6 +150,8 @@ class Act(object):
                 # each key is share src path, and value is list of src fields
                 for src, fields in self.prerefs.get('ioinits', {}).items():
                     src = self.resolvePath(ipath=src, warn=True) # now a share
+                    if not fields:  # default is use existing fields
+                        fields = self._prepareSrcFields(src, fields)
                     for field in fields:  # requires src pre inited
                         if field in src:  # only update if src has field
                             ioinits[field] = src[field]
@@ -318,6 +324,25 @@ class Act(object):
                                      "... creating anyway\n".format(ipath))
 
         return ipath
+
+    def _prepareSrcFields(self, src, fields):
+        """
+        Prepares and verifys list field names fields in share src
+           handles default conditions when fields is empty
+
+           src is share
+           fields is list of field names
+
+        """
+        if not fields: # empty source fields so assign defaults
+            if src:
+                if 'value' in src:
+                    fields = ['value'] #use value field
+                else: #use pre-existing source fields
+                    fields = src.keys()
+            else: # empty src
+                fields = ['value'] #use value field
+        return fields
 
 class Nact(Act):
     """ Negating Act used for actor needs to give Not Need

@@ -92,14 +92,14 @@ def Convert2CoordNum(text):
     dm = REO_LatLonNE.findall(text) #returns list of tuples of groups [(deg,min)]
     if dm:
         deg = float(dm[0][0])
-        min = float(dm[0][1])
-        return (deg + min/60.0)
+        min_ = float(dm[0][1])
+        return (deg + min_/60.0)
 
     dm = REO_LatLonSW.findall(text) #returns list of tuples of groups [(deg,min)]
     if dm:
         deg = float(dm[0][0])
-        min = float(dm[0][1])
-        return (-(deg + min/60.0))
+        min_ = float(dm[0][1])
+        return (-(deg + min_/60.0))
 
     try:
         return (Convert2Num(text))
@@ -121,10 +121,9 @@ def Convert2BoolCoordNum(text):
     try:
         return (Convert2CoordNum(text))
     except ValueError:
-        raise ValueError("Expected BoolCoordNum got '{0}'".format(text))
+        raise ValueError("Expected PathBoolCoordNum got '{0}'".format(text))
 
     return None
-
 
 def Convert2StrBoolCoordNum(text):
     """converts text to python type in order
@@ -140,6 +139,61 @@ def Convert2StrBoolCoordNum(text):
 
     try:
         return (Convert2BoolCoordNum(text))
+    except ValueError:
+        raise ValueError("Expected StrBoolNum got '{0}'".format(text))
+
+    return None
+
+def Convert2PathCoordNum(text):
+    """converts text to python type in order
+       Boolean, Int, Float, Complex
+       ValueError if can't
+    """
+    #convert to path string if possible
+    if REO_PathNode.match(text):
+        return (text)
+
+    try:
+        return (Convert2CoordNum(text))
+    except ValueError:
+        raise ValueError("Expected BoolCoordNum got '{0}'".format(text))
+
+    return None
+
+
+def Convert2BoolPathCoordNum(text):
+    """converts text to python type in order
+       Boolean, Int, Float, Complex
+       ValueError if can't
+    """
+    #convert to boolean if possible
+    if text.lower() in ['true', 'yes']:
+        return (True)
+    if text.lower() in ['false', 'no']:
+        return (False)
+
+    try:
+        return (Convert2PathCoordNum(text))
+    except ValueError:
+        raise ValueError("Expected PathBoolCoordNum got '{0}'".format(text))
+
+    return None
+
+
+def Convert2StrBoolPathCoordNum(text):
+    """converts text to python type in order
+       Boolean, Int, Float, complex or double quoted string
+       ValueError if can't
+    """
+
+    if REO_Quoted.match(text): #text is double quoted string
+        return text.strip('"')  #strip off quotes
+
+    if REO_QuotedSingle.match(text): #text is single quoted string
+        return text.strip("'")  #strip off quotes
+
+    try:
+        return (Convert2BoolPathCoordNum(text))
     except ValueError:
         raise ValueError("Expected StrBoolNum got '{0}'".format(text))
 
@@ -2332,6 +2386,9 @@ class Builder(object):
             context:
                 (native, benter, enter, recur, exit, precur, renter, rexit)
 
+            inode:
+                indirect
+
             data:
                 direct
 
@@ -2401,7 +2458,7 @@ class Builder(object):
                     context = ActionContextValues[context]
 
                 elif connective in ['via']:
-                    inode, index = self.parseIndirect(tokens, index)
+                    inode, index = self.parseIndirect(tokens, index, node=True)
 
                 elif connective in ['to', 'with']:
                     data, index = self.parseDirect(tokens, index)
@@ -3488,7 +3545,7 @@ class Builder(object):
             else: #first token was field and second value
                 index += 1 #eat token
 
-        data[field] = Convert2StrBoolCoordNum(value) #convert to BoolNumStr, load data
+        data[field] = Convert2StrBoolPathCoordNum(value) #convert to BoolNumStr, load data
 
         #parse rest if any
         while index < len(tokens): #must be in pairs unless first is ending token
@@ -3506,7 +3563,7 @@ class Builder(object):
             value = tokens[index]
             index += 1
 
-            data[field] = Convert2StrBoolCoordNum(value) #convert to BoolNumStr, load data
+            data[field] = Convert2StrBoolPathCoordNum(value) #convert to BoolNumStr, load data
 
         #prevent using multiple fields if one of them is 'value'
         if (len(data) > 1) and ('value' in data):
@@ -3663,7 +3720,8 @@ class Builder(object):
 
     def parsePath(self, tokens, index):
         """Parse required (path or dotpath) path
-           No relative path processing.
+           Does not support relative path processing for contexts not inside
+           framer such as init or server.
            method must be wrapped in appropriate try excepts
         """
         path = tokens[index]
@@ -3678,47 +3736,57 @@ class Builder(object):
         return (path, index)
 
 
-    def parseIndirect(self, tokens, index):
-        """Parse Indirect data address
+    def parseIndirect(self, tokens, index, node=False):
+        """
+        Parse Indirect data address
+        If node then allow trailing dot in path
 
-           parms:
-              tokens = list of tokens for command
-              index = current index into tokens
 
-           returns:
-              path
-              index
+        parms:
+           tokens = list of tokens for command
+           index = current index into tokens
 
-           method must be wrapped in appropriate try excepts
+        returns:
+           path
+           index
 
-           Syntax:
+        method must be wrapped in appropriate try excepts
 
-           indirect:
-              absolute
-              relative
+        Syntax:
 
-           absolute:
-              dotpath
+        indirect:
+           absolute
+           relative
 
-           relative:
-              root
-              framer
-              frame
-              actor
+        absolute:
+           dotpath
 
-           root:
-              path [of root]
+        relative:
+           root
+           framer
+           frame
+           actor
 
-           framer:
-              path of framer [name]
+        root:
+           path [of root]
 
-           frame:
-              path of frame [name]
+        framer:
+           path of framer [name]
 
-           actor:
-              path of actor [name]
+        frame:
+           path of frame [name]
+
+        actor:
+           path of actor [name]
 
         """
+        if node:
+            reoDotPath = REO_DotPathNode
+            reoRelPath = REO_RelPathNode
+        else:
+            reoDotPath = REO_DotPath
+            reoRelPath = REO_RelPath
+
         path = tokens[index]
         index +=1
 
@@ -3726,14 +3794,14 @@ class Builder(object):
             msg = "ParseError: Invalid path '%s' using reserved" % (path)
             raise excepting.ParseError(msg, tokens, index)
 
-        if REO_DotPath.match(path): #valid absolute path segment
+        if reoDotPath.match(path): #valid absolute path segment
             #check for optional relation clause
             #if 'of relation' clause then allows relative but no
             #implied relation clauses
             relation, index = self.parseRelation(tokens, index)
             # dotpath starts with '.' no need to add
 
-        elif REO_RelPath.match(path): #valid relative path segment
+        elif reoRelPath.match(path): #valid relative path segment
             #get optional relation clause, default is root
             relation, index = self.parseRelation(tokens, index)
 

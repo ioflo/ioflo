@@ -142,10 +142,15 @@ REO_IdentPub = re.compile(r'^[a-zA-Z]\w*$') #valid python public identifier ie n
 #if REO_Path.match(s):
 #  then s is valid path
 
-REO_Path = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)*$|^([.][a-zA-Z_]\w*)+$')
-REO_RelPath = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)*$')
-REO_DotPath = re.compile(r'^([.][a-zA-Z_]\w*)+$')
-REO_PathDotPath = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)+$|^([.][a-zA-Z_]\w*)+$')
+REO_RelPath = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)*$')  # not start with dot
+REO_DotPath = re.compile(r'^([.][a-zA-Z_]\w*)+$')  # starts with dot
+REO_Path = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)*$|^([.][a-zA-Z_]\w*)+$')  # dotpath or relpath
+REO_PathDotPath = re.compile(r'^([a-zA-Z_]\w*)+([.][a-zA-Z_]\w*)+$|^([.][a-zA-Z_]\w*)+$') # at least one dot
+
+# allows path to end in dot or not for node paths
+REO_RelPathNode = re.compile(r'^([a-zA-Z_]\w*)+(([.][a-zA-Z_]\w*)*$|([.][a-zA-Z_]\w*)*[.]$)')  # not start with dot
+REO_DotPathNode = re.compile(r'^([.][a-zA-Z_]\w*)+$|^([.][a-zA-Z_]\w*)+[.]$')  # starts with dot
+REO_PathNode = re.compile(r'^([a-zA-Z_]\w*)+(([.][a-zA-Z_]\w*)*$|([.][a-zA-Z_]\w*)*[.]$)|^([.][a-zA-Z_]\w*)+$|^([.][a-zA-Z_]\w*)+[.]$')
 
 #regex object to split hafscript command line
 #REO_Chunks = re.compile(r'#.*|[^ "]+|"[^"]*"')

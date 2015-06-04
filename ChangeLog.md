@@ -3,13 +3,25 @@ CHANGE LOG
 -------------------
 
 ---------
+201506XX
+---------
+v1.2.X
+
+do verb via connective now supports paths that end with dot or not
+
+do verb by/from for qua now use all the fields in the source if a field list is not provided
+
+values of field value expressions can now be unquoted path strings
+
+
+---------
 20150603
 ---------
 v1.2.6
 
 FloScript now supports single quoted values in addition to doubled quoted
 
-Exchanged 'qua' and 'via' connective semantics in 'do' verb since now via is more commmon
+Exchanged 'qua' and 'via' connective semantics in 'do' verb because via is more commmon
 
 
 ---------

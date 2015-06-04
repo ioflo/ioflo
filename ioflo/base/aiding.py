@@ -1183,14 +1183,14 @@ def HumanLLToFracDeg(hdm):
     dm = REO_LatLonNE.findall(hdm) #returns list of tuples of groups [(deg,min)]
     if dm:
         deg = float(dm[0][0])
-        min = float(dm[0][1])
-        return (deg + min/60.0)
+        min_ = float(dm[0][1])
+        return (deg + min_/60.0)
 
     dm = REO_LatLonSW.findall(hdm) #returns list of tuples of groups [(deg,min)]
     if dm:
         deg = float(dm[0][0])
-        min = float(dm[0][1])
-        return (-(deg + min/60.0))
+        min_ = float(dm[0][1])
+        return (-(deg + min_/60.0))
 
     raise ValueError("Bad format for lat or lon '{0}'".format(hdm))
 
