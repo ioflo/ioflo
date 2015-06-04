@@ -1017,7 +1017,8 @@ class Builder(object):
     def buildFramer(self, command, tokens, index):
         """Create a new framer and make it the current one
 
-           framework framername [be (active, inactive, aux, slave)] [at period] [first frame]
+           framework framername [be (active, inactive, aux, slave)] [at period]
+                                [first frame] [via (main, mine, inode)]
            framework framername be active at 0.0
            framework framername
         """
@@ -1039,6 +1040,7 @@ class Builder(object):
             order = MID #globaling.py
             period = 0.0
             frame = ''
+            inode = ''
 
 
             while index < len(tokens): #options
@@ -1075,6 +1077,9 @@ class Builder(object):
 
                     self.verifyName(frame, command, tokens, index)
 
+                elif connective == 'via':
+                    inode, index = self.parseIndirect(tokens, index, node=True)
+
                 else:
                     msg = "Error building %s. Bad connective got %s." %\
                             (command, connective)
@@ -1085,10 +1090,12 @@ class Builder(object):
                         (command, name)
                 raise excepting.ParseError(msg, tokens, index)
             else:
-                framer = framing.Framer(name = name, store = self.currentStore,
+                framer = framing.Framer(name = name,
+                                        store = self.currentStore,
                                         period = period)
                 framer.schedule = schedule
                 framer.first = frame #need to resolve later
+                framer.inode = inode
 
                 self.currentHouse.taskers.append(framer)
                 self.currentHouse.framers.append(framer)
@@ -1352,12 +1359,18 @@ class Builder(object):
               aux framername
 
            Cloned Auxiliary:
-              aux framername as (mine, clonedauxname)
+              aux framername as (mine, clonedauxname) [via (main, mine, inode)]
 
 
-           Conditional Auxiliary:
-              aux framername [as (mine, clonedauxname)] if [not] need
-              aux framername [as (mine, clonedauxname)] if [not] need [and [not] need ...]
+           Simple Conditional Auxiliary:
+              aux framername  if [not] need
+              aux framername  if [not] need [and [not] need ...]
+
+           Cloned Conditional Auxiliary:
+              aux framername as (mine, clonedauxname) [via (main, mine, inode)]
+                             if [not] need
+              aux framername as (mine, clonedauxname) [via (main, mine, inode)]
+                             if [not] need [and [not] need ...]
 
         """
         self.verifyCurrentContext(tokens, index) #currentStore, currentFramer, currentFrame exist
@@ -1367,6 +1380,7 @@ class Builder(object):
             aux = None #original
             connective = None
             clone = None
+            inode = ''
 
             aux = tokens[index]
             index +=1 #eat token
@@ -1382,6 +1396,9 @@ class Builder(object):
                     index += 1
 
                     self.verifyName(clone, command, tokens, index)
+
+                elif connective == 'via':
+                    inode, index = self.parseIndirect(tokens, index, node=True)
 
                 elif connective == 'if':
                     while (index < len(tokens)):
@@ -1415,7 +1432,8 @@ class Builder(object):
                          clone=clone,
                          schedule=AUX,
                          human=self.currentHuman,
-                         count=self.currentCount)
+                         count=self.currentCount,
+                         inode=inode)
             if clone == 'mine':  # insular clone
                 aux = data # create clone when resolve aux
             else:  # named clone create clone when resolve framer.moots

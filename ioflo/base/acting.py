@@ -265,7 +265,7 @@ class Act(object):
                         parts[1] = self.frame.framer.name
                     elif parts[1] == 'main': # current main framer
                         if not self.frame.framer.main:
-                            raise excepting.ResolveError("ResolveError: Missing main frame"
+                            raise excepting.ResolveError("ResolveError: Missing main framer"
                                 " context to resolve relative pathname.", ipath,
                                 self.frame.framer,
                                 self.human, self.count)
@@ -486,7 +486,10 @@ class Actor(object):
 
     def action(self, **kwa):
         """Action called by Actor. Should override in subclass."""
-        console.profuse("Actioning {0} with {1}\n".format(self.name, str(kwa)))
+        console.profuse("Actioning {0} in {1} of {2} with {3}\n".format(self.name,
+                                                                        self._act.frame.name,
+                                                                        self._act.frame.framer.name,
+                                                                        str(kwa)))
         pass
 
     def _expose(self):
@@ -578,6 +581,26 @@ class Actor(object):
         """
         if not isinstance(inode, basestring):
             raise ValueError("Nonstring inode arg '{0}'".format(inode))
+
+        finode = ''  # inode of framer
+        if self._act.frame.framer:
+            framer = self._act.frame.framer
+            finode = framer.inode
+            if framer.main:  # aux framer so special meaning of main or mine
+                if finode == "main":  # replace finode with main framer inode
+                    finode = framer.main.framer.inode
+                elif finode == "mine":  # don't prepend main framer inode
+                    finode = ""
+                else:  # possibly prepend main framer inode if finode relative
+                    minode = framer.main.framer.inode
+                    minode = minode.rstrip('.')
+                    if not finode.startswith('.') and minode:  # prepend if relative
+                        finode = '.'.join([minode, finode])
+
+        finode = finode.rstrip('.')
+
+        if not inode.startswith('.') and finode:  # not absolute and finode so prepend
+            inode = ".".join([finode, inode])
 
         if not inode:  # empty or missing use default actor relative
             inode = "framer.me.frame.me.actor.me."

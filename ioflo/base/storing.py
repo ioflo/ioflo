@@ -242,7 +242,7 @@ class Store(registering.Registrar):
             depth += 1
             node = node.setdefault(level, Node().byName('.'.join(levels[:depth]))) #add node if not exist
             if isinstance(node, Share):
-                raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, share.name))
+                raise ValueError("Level  '%s' in '%s' is preexisting share" % (level, node.name))
 
         console.profuse("{0}Added node {1} to {2}\n".format(INDENT_ADD,
                                                             name,

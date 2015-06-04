@@ -64,6 +64,7 @@ class Framer(tasking.Tasker):
             .frameCounter = frame name registry counter
 
             .moots = list of moot framers to be cloned
+            .inode = prefix string for inode ioinit of do verb objects in framer
     """
     #Counter = 0
     #Names = {}
@@ -108,6 +109,7 @@ class Framer(tasking.Tasker):
         self.frameCounter = 0 #frame name registry counter for framer
 
         self.moots = []  # moot framers to be cloned
+        self.inode = ''  # framer inode prefix
 
     def clone(self, name, period=0.0, schedule=AUX):
         """ Return clone of self named name
@@ -132,6 +134,7 @@ class Framer(tasking.Tasker):
         clone.schedule = schedule
         clone.first = self.first # resolve later
         clone.moots = copy.deepcopy(self.moots)
+        clone.inode = self.inode
 
         clone.assignFrameRegistry() #Frame.names is cloned framer registry
         for frame in self.frameNames.values():
@@ -188,7 +191,8 @@ class Framer(tasking.Tasker):
             clone: string,
             schedule: constant,
             human: string,
-            count: number
+            count: number,
+            inode: pathstring,
         }
 
         creates clone and adds to taskables if named clone
@@ -205,6 +209,7 @@ class Framer(tasking.Tasker):
             schedule = data['schedule']
             human = data['human']
             count = data['count']
+            inode = data['inode']
             console.terse("         Cloning original '{0}' as named clone '{1}'\n"
                             "".format(original, clone))
             if clone == 'mine':  # invalid name for named clone
@@ -221,6 +226,15 @@ class Framer(tasking.Tasker):
                                      human=human,
                                      count=count)
             clone = original.clone(name=clone, schedule=schedule)
+            if inode:  # only update if new inode not empty
+                if (clone.inode and
+                        clone.inode != 'mine' and
+                        inode == 'mine'):
+                    if not clone.inode.startswith('.'):  # old relative so make absolute
+                        clone.inode = ".{0}".format(clone.inode)
+                    # otherwise leave as is since old absolue
+                else:  # replace
+                    clone.inode = inode
             clone.original = False  # main frame will be fixed
             self.store.house.resolvables.append(clone)
             self.store.house.taskers.append(clone)

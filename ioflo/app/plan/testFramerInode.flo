@@ -1,0 +1,103 @@
+house test
+
+init meta.test to value "test"
+init meta.spot to when "now" where "here"
+init meta.stuff to value "test2"
+init .cop.pit to value 4
+init .pop.cop.kit to value 5
+init .top.cop.wit to value 15
+init .top.pop.cop.fit to value 10
+
+framer test be active first test0 via .top.
+  frame timeout
+    go abort if elapsed >= 3.0
+
+    frame test0 in timeout
+      print "Hello World"
+      do deed param at enter via cop
+      do deed param at enter via .cop
+      go next
+
+    frame sub1 in timeout
+      aux sub as sub1
+      go next if done sub1
+
+    frame pub1 in timeout
+      aux pub as pub1
+      go next if done pub1
+
+    frame pub2 in timeout
+      aux pub as pub2 via main
+      go next if done pub2
+
+    frame pub3 in timeout
+      aux pub as pub3 via mine
+      go next if done pub3
+
+    frame pub4 in timeout
+      aux pub as pub4 via pop
+      go next if done pub4
+
+    frame pub5 in timeout
+      aux pub as pub5 via .pop
+      go next if done pub5
+
+    frame cub1 in timeout
+      aux cub as cub1
+      go next if done cub1
+
+    frame cub2 in timeout
+      aux cub as cub2 via mine
+      go next if done cub2
+
+    frame bub1 in timeout
+      aux bub as bub1 via mine
+      go next if done bub1
+
+  frame done
+    print "Success"
+    bid stop all
+
+  frame abort
+    print "Failure"
+    put "Resolve Do" into meta.failure
+    bid stop all
+
+
+framer sub be moot first start via main
+  frame start
+    do deed param at enter via cop
+    do deed param at enter via .cop
+    go next
+
+  frame done
+    done me
+
+
+framer pub be moot first start
+  frame start
+    do deed param at enter via cop
+    do deed param at enter via .cop
+    go next
+
+  frame done
+    done me
+
+
+framer cub be moot first start via pop
+  frame start
+    do deed param at enter via cop
+    do deed param at enter via .cop
+    go next
+
+  frame done
+    done me
+
+framer bub be moot first start via .pop
+  frame start
+    do deed param at enter via cop
+    do deed param at enter via .cop
+    go next
+
+  frame done
+    done me
