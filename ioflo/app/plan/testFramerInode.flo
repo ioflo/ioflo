@@ -54,6 +54,30 @@ framer test be active first test0 via .top.
       aux bub as bub1 via mine
       go next if done bub1
 
+    frame bub2 in timeout
+      aux bub as bub2
+      go next if done bub2
+
+    frame bub3 in timeout
+      aux bub as bub3 via main
+      go next if done bub3
+
+    frame lub1 in timeout
+      aux lub as lub1 via mine
+      go next if done lub1
+
+    frame lub2 in timeout
+      aux lub as lub2 via pop
+      go next if done lub2
+
+    frame lub3 in timeout
+      aux lub as lub3
+      go next if done lub3
+
+    frame lub4 in timeout
+      aux lub as lub4 via main
+      go next if done lub4
+
   frame done
     print "Success"
     bid stop all
@@ -93,7 +117,18 @@ framer cub be moot first start via pop
   frame done
     done me
 
+
 framer bub be moot first start via .pop
+  frame start
+    do deed param at enter via cop
+    do deed param at enter via .cop
+    go next
+
+  frame done
+    done me
+
+
+framer lub be moot first start via mine
   frame start
     do deed param at enter via cop
     do deed param at enter via .cop

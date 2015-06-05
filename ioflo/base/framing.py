@@ -227,14 +227,18 @@ class Framer(tasking.Tasker):
                                      count=count)
             clone = original.clone(name=clone, schedule=schedule)
             if inode:  # only update if new inode not empty
-                if (clone.inode and
-                        clone.inode != 'mine' and
-                        inode == 'mine'):
-                    if not clone.inode.startswith('.'):  # old relative so make absolute
-                        clone.inode = ".{0}".format(clone.inode)
-                    # otherwise leave as is since old absolue
+                if clone.inode:  # old inode provided
+                    if inode == 'mine':  # do not override the old inode
+                        if (clone.inode != 'mine' and
+                                clone.inode != 'main' and
+                                not clone.inode.startswith('.')):  # old relative
+                            clone.inode = ".{0}".format(clone.inode)  # make absolute
+                        # otherwise use the old inode
+                    else:  # new inode overrides
+                        clone.inode = inode
                 else:  # replace
                     clone.inode = inode
+
             clone.original = False  # main frame will be fixed
             self.store.house.resolvables.append(clone)
             self.store.house.taskers.append(clone)
