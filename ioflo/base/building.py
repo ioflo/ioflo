@@ -1434,11 +1434,13 @@ class Builder(object):
                          human=self.currentHuman,
                          count=self.currentCount,
                          inode=inode)
-            if clone == 'mine':  # insular clone
-                aux = data # create clone when resolve aux
-            else:  # named clone create clone when resolve framer.moots
-                self.currentFramer.moots.append(data)
-                aux = clone # assign aux to clone as original aux is to be cloned
+            if clone == 'mine':  # insular clone may not be referenced
+                aux = data # create clone when resolve aux can wait until then
+            else:  # named clone create clone when resolve framer.moots may be referenced
+                self.currentFramer.moots.append(data)  # need to resolve early
+                aux = clone # assign aux to clone name as original aux is to be cloned
+                # named clones must be resolved before any frames get resolved
+                # and are added to the framer.names so they can be referenced
 
         if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging

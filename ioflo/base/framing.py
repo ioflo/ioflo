@@ -970,6 +970,7 @@ class Frame(registering.StoriedRegistrar):
                 schedule = aux['schedule']
                 human = aux['human']
                 count = aux['count']
+                inode = aux['inode']
                 if schedule != AUX:
                     msg = ("ResolveError: Invalid insular clone schedule '{0}' "
                            "for {1}.".format(schedule, original))
@@ -1002,6 +1003,19 @@ class Frame(registering.StoriedRegistrar):
                 self.framer.assignFrameRegistry()  # restore original.clone changes above
                 clone.original = False  # main frame will be fixed
                 clone.insular =  True #  local to this framer
+                if inode:  # only update if new inode not empty
+                    if clone.inode:  # old inode provided
+                        if inode == 'mine':  # do not override the old inode
+                            if (clone.inode != 'mine' and
+                                clone.inode != 'main' and
+                                not clone.inode.startswith('.')):  # old relative
+                                clone.inode = ".{0}".format(clone.inode)  # make absolute
+                            # otherwise use the old inode
+                        else:  # new inode overrides
+                            clone.inode = inode
+                    else:  # replace
+                        clone.inode = inode
+
                 self.auxes[i] = aux = clone
                 self.store.house.resolvables.append(clone)
             else:
