@@ -3,15 +3,26 @@ CHANGE LOG
 -------------------
 
 ---------
-201506XX
+20150604
 ---------
-v1.2.X
+v1.2.7
 
 do verb via connective now supports paths that end with dot or not
 
-do verb by/from for qua now use all the fields in the source if a field list is not provided
+do verb by/from, for, qua, now all use all the fields in the source if a field
+   list is not provided
 
 values of field value expressions can now be unquoted path strings
+
+Support for optional via inode clause in framer verb to provide framer wide
+   prefix for ioinit inodes
+
+Support for optional via inode clause in aux verb for cloned aux framers to
+   provide override of aux framer via clause on invocation of aux verb
+
+Semantics of aux via inode is to prepend main framer via inode unless
+   the aux via inode is absolute or main or mine. if main then use main framer's
+   via inode if mine then ignore main framer's via inode
 
 
 ---------
