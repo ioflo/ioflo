@@ -5,6 +5,14 @@ CHANGE LOG
 ---------
 20150604
 ---------
+v1.2.8
+
+Fixed bug with Nact   go .. if not ... in Need expression
+
+
+---------
+20150604
+---------
 v1.2.7
 
 do verb via connective now supports paths that end with dot or not
