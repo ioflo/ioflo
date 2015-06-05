@@ -3092,6 +3092,7 @@ class Builder(object):
 
         if Negate:
             act = acting.Nact(actor=act.actor,
+                              registrar=act.registrar, 
                               parms=act.parms,
                               human=self.currentHuman,
                               count=self.currentCount)
