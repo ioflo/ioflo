@@ -22,6 +22,10 @@ framer test be active first test0 via .top.
       aux sub as sub1
       go next if done sub1
 
+    frame sub2 in timeout
+      aux sub as mine
+      go next if done all
+
     frame pub1 in timeout
       aux pub as pub1
       go next if done pub1
