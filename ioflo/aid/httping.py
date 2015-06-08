@@ -494,7 +494,10 @@ class Requester(object):
         if u'accept-encoding' not in self.headers:
             self.lines.append(self.packHeader(u'Accept-Encoding', u'identity'))
 
-        if self.body is not None and (u'content-length' not in self.headers):
+        if self.method == u"GET":  # do not send body on GET
+            self.body = b''
+
+        if self.body and (u'content-length' not in self.headers):
             self.lines.append(self.packHeader(u'Content-Length', str(len(self.body))))
 
         for name, value in self.headers.items():

@@ -127,7 +127,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:6101',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -135,8 +134,8 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
-        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
         beta.tx(msgOut)
@@ -250,7 +249,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /stream HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -258,7 +256,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -402,7 +400,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /stream HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -410,7 +407,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -554,7 +551,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /fancy?idify=true;multiply=true HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -562,7 +558,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true;multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -708,7 +704,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /fancy?idify=true;multiply=true HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -716,7 +711,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true;multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -872,7 +867,6 @@ class BasicTestCase(unittest.TestCase):
             b'GET /fancy?idify=true;jsonify=true HTTP/1.1',
             b'Host: 127.0.0.1:6061',
             b'Accept-Encoding: identity',
-            b'Content-Length: 0',
             b'Accept: application/json',
             b'',
             b'',
@@ -880,7 +874,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true;jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -1030,7 +1024,6 @@ class BasicTestCase(unittest.TestCase):
             b'GET /fancy?idify=true;jsonify=true HTTP/1.1',
             b'Host: 127.0.0.1:6061',
             b'Accept-Encoding: identity',
-            b'Content-Length: 0',
             b'Accept: application/json',
             b'',
             b'',
@@ -1038,7 +1031,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true;jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -1220,7 +1213,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -1228,8 +1220,8 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
-        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
         beta.tx(msgOut)
@@ -1349,7 +1341,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:6101',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -1357,8 +1348,8 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, beta.requester.lines[i])
 
-        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
-        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
@@ -1479,7 +1470,6 @@ class BasicTestCase(unittest.TestCase):
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:6101',
                    b'Accept-Encoding: identity',
-                   b'Content-Length: 0',
                    b'Accept: application/json',
                    b'',
                    b'',
@@ -1488,8 +1478,8 @@ class BasicTestCase(unittest.TestCase):
             self.assertEqual(line, beta.requester.lines[i])
 
         msgOut = beta.connector.txes[0]
-        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
-        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
 
         console.terse("Beta requests to Alpha\n")
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
@@ -1619,7 +1609,7 @@ class BasicTestCase(unittest.TestCase):
             alpha.serviceAllRxAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
-        msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n'
+        msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n'
         self.assertEqual(msgIn, msgOut)
         ixBeta.clearRxbs()
 
@@ -1681,7 +1671,7 @@ class BasicTestCase(unittest.TestCase):
             alpha.serviceAllRxAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
-        msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n'
+        msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n'
         self.assertEqual(msgIn, msgOut)
         ixBeta.clearRxbs()
 
@@ -1743,7 +1733,7 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if  msgIn== b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if  msgIn== b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -1898,7 +1888,7 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if  msgIn== b'GET /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if  msgIn== b'GET /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -2279,7 +2269,7 @@ class BasicTestCase(unittest.TestCase):
             beta.connector.store.advanceStamp(0.05)
 
         msgIn = bytes(ixBeta.rxbs)
-        msgOut = b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n'
+        msgOut = b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n'
 
         self.assertEqual(msgIn, msgOut)
         ixBeta.clearRxbs()
@@ -2377,7 +2367,7 @@ class BasicTestCase(unittest.TestCase):
             beta.connector.store.advanceStamp(0.05)
 
         msgIn = bytes(ixBeta.rxbs)
-        msgOut = b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\nLast-Event-Id: 4\r\n\r\n'
+        msgOut = b'GET /stream HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\nLast-Event-Id: 4\r\n\r\n'
 
         self.assertEqual(msgIn, msgOut)
         ixBeta.clearRxbs()
@@ -2439,7 +2429,7 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if  msgIn== b'GET /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if  msgIn== b'GET /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -2778,14 +2768,14 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
-                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nAccess-Control-Allow-Origin: *\r\nLocation: http://localhost:6101/redirect?name=fame\r\n\r\n'
+                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Type: text/plain\r\nContent-Length: 0\r\nAccess-Control-Allow-Origin: *\r\nLocation: http://localhost:6101/redirect?name=fame\r\n\r\n'
                 ixClient.tx(msgOut)
                 msgIn = b''
                 msgOut = b''
 
-            elif  msgIn== b'GET /redirect?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            elif  msgIn== b'GET /redirect?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -2900,9 +2890,9 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
-                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nAccess-Control-Allow-Origin: *\r\nLocation: http://localhost:6103/redirect?name=fame\r\n\r\n'
+                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Type: text/plain\r\nContent-Length: 0\r\nAccess-Control-Allow-Origin: *\r\nLocation: http://localhost:6103/redirect?name=fame\r\n\r\n'
                 ixClient.tx(msgOut)
                 msgIn = b''
                 msgOut = b''
@@ -2920,7 +2910,7 @@ class BasicTestCase(unittest.TestCase):
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
 
-            if  msgIn== b'GET /redirect?name=fame HTTP/1.1\r\nHost: localhost:6103\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if  msgIn== b'GET /redirect?name=fame HTTP/1.1\r\nHost: localhost:6103\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -3045,9 +3035,9 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if msgIn == b'GET /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
-                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Length: 0\r\nContent-Type: text/plain\r\nAccess-Control-Allow-Origin: *\r\nLocation: https://localhost:6103/redirect?name=fame\r\n\r\n'
+                msgOut = b'HTTP/1.1 307 Temporary Redirect\r\nContent-Type: text/plain\r\nContent-Length: 0\r\nAccess-Control-Allow-Origin: *\r\nLocation: https://localhost:6103/redirect?name=fame\r\n\r\n'
                 ixClient.tx(msgOut)
                 msgIn = b''
                 msgOut = b''
@@ -3065,7 +3055,7 @@ class BasicTestCase(unittest.TestCase):
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
 
-            if  msgIn== b'GET /redirect?name=fame HTTP/1.1\r\nHost: localhost:6103\r\nAccept-Encoding: identity\r\nContent-Length: 0\r\nAccept: application/json\r\n\r\n':
+            if  msgIn== b'GET /redirect?name=fame HTTP/1.1\r\nHost: localhost:6103\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
