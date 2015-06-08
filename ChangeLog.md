@@ -3,6 +3,14 @@ CHANGE LOG
 -------------------
 
 ---------
+20150608
+---------
+v1.2.9
+
+Patron now passes through copy of request odict to reponses copy so that requester
+can add tracking and return information to request that shows up in response
+
+---------
 20150604
 ---------
 v1.2.8
