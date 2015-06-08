@@ -1653,7 +1653,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -1713,7 +1714,9 @@ class BasicTestCase(unittest.TestCase):
                                                 'qargs': {'name': 'fame'},
                                                 'fragment': '',
                                                 'headers': {'Accept': 'application/json'},
-                                                'body': b''}
+                                                'body': b'',
+                                                'data': {},
+                                                }
                                     })
 
         alpha.close()
@@ -1824,7 +1827,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -1867,7 +1871,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -1980,7 +1985,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -2023,7 +2029,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -2122,6 +2129,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
+                                         'data': {},
                                          'mid': 1,
                                          'drop': '.stuff.reply'
                                         }
@@ -2168,6 +2176,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
+                                         'data': {},
                                          'mid': 2,
                                          'drop': '.puff.reply'
                                         }
@@ -2545,7 +2554,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -2588,7 +2598,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -2704,7 +2715,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -2747,7 +2759,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -2866,7 +2879,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 
@@ -3011,7 +3025,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': {},
                                         }
                                     })
 

@@ -1599,7 +1599,8 @@ class Patron(object):
                  qargs=None,
                  fragment=None,
                  headers=None,
-                 body=None):
+                 body=None,
+                 data=None):
         """
         Build and transmit request
         Add jsoned parameter
@@ -1611,7 +1612,8 @@ class Patron(object):
                                        qargs=qargs,
                                        fragment=fragment,
                                        headers=headers,
-                                       body=body)
+                                       body=body,
+                                       data=data)
         self.connector.tx(request)
         self.respondent.reinit(method=method)
 
@@ -1710,7 +1712,8 @@ class Patron(object):
                              qargs=request.get('qargs'),
                              fragment=request.get('fragment'),
                              headers=request.get('headers'),
-                             body=request.get('body'), )
+                             body=request.get('body'),
+                             data=request.get('data'))
 
     def serviceResponse(self):
         """
@@ -1734,6 +1737,7 @@ class Patron(object):
                                         ('qargs', self.requester.qargs),
                                         ('headers', self.requester.headers),
                                         ('body', self.requester.body),
+                                        ('data', self.requester.data),
                                        ])
                         self.request = None
                     else:
@@ -1747,6 +1751,7 @@ class Patron(object):
                                          ('qargs', self.requester.qargs),
                                          ('headers', self.requester.headers),
                                          ('body', self.requester.body),
+                                         ('data', self.requester.data),
                                         ])
                     response = odict([('version', self.respondent.version),
                                       ('status', self.respondent.status),
