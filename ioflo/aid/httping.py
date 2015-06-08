@@ -502,13 +502,14 @@ class Requester(object):
         if u'accept-encoding' not in self.headers:
             self.lines.append(self.packHeader(u'Accept-Encoding', u'identity'))
 
-        if self.data:
-            body = ns2b(json.dumps(self.data, separators=(',', ':'), encoding='utf-8'))
-        else:
-            body = self.body
-
         if self.method == u"GET":  # do not send body on GET
-            body = b''
+                body = b''
+        else:
+            if self.data:
+                body = ns2b(json.dumps(self.data, separators=(',', ':'), encoding='utf-8'))
+                self.headers[u'content-type'] = u'application/json; charset=utf-8'
+            else:
+                body = self.body
 
         if body and (u'content-length' not in self.headers):
             self.lines.append(self.packHeader(u'Content-Length', str(len(body))))
