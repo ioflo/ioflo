@@ -1685,7 +1685,8 @@ class Patron(object):
         """
         if not self.waited:
             if self.requests:
-                request = self.requests.popleft()
+                #request = self.requests.popleft()
+                request = self.requests[0]  # leave on deque until response
                 # future check host port scheme if need to reconnect on new ha
                 # reconnect here
                 self.transmit(method=request.get('method'),
@@ -1705,17 +1706,31 @@ class Patron(object):
 
             if self.respondent.ended:
                 if not self.respondent.evented:
-                    request = odict([
-                                     ('host', self.requester.hostname),
-                                     ('port', self.requester.port),
-                                     ('scheme', self.requester.scheme),
-                                     ('method', self.requester.method),
-                                     ('path', self.requester.path),
-                                     ('fragment', self.requester.fragment),
-                                     ('qargs', self.requester.qargs),
-                                     ('headers', self.requester.headers),
-                                     ('body', self.requester.body),
-                                    ])
+                    if self.requests:
+                        request = self.requests.popleft()  # remove request
+                        request.update([
+                                        ('host', self.requester.hostname),
+                                        ('port', self.requester.port),
+                                        ('scheme', self.requester.scheme),
+                                        ('method', self.requester.method),
+                                        ('path', self.requester.path),
+                                        ('fragment', self.requester.fragment),
+                                        ('qargs', self.requester.qargs),
+                                        ('headers', self.requester.headers),
+                                        ('body', self.requester.body),
+                                       ])
+                    else:
+                        request = odict([
+                                         ('host', self.requester.hostname),
+                                         ('port', self.requester.port),
+                                         ('scheme', self.requester.scheme),
+                                         ('method', self.requester.method),
+                                         ('path', self.requester.path),
+                                         ('fragment', self.requester.fragment),
+                                         ('qargs', self.requester.qargs),
+                                         ('headers', self.requester.headers),
+                                         ('body', self.requester.body),
+                                        ])
                     response = odict([('version', self.respondent.version),
                                       ('status', self.respondent.status),
                                       ('reason', self.respondent.reason),
