@@ -1613,7 +1613,7 @@ class BasicTestCase(unittest.TestCase):
                                                          request['method'],
                                                          request['path']))
 
-        while ((not beta.waited and beta.requests) or beta.connector.txes) and not ixBeta.rxbs :
+        while (beta.requests or beta.connector.txes) and not ixBeta.rxbs :
             beta.serviceAll()
             time.sleep(0.05)
             alpha.serviceAllRxAllIx()
@@ -1675,7 +1675,7 @@ class BasicTestCase(unittest.TestCase):
                                                            request['method'],
                                                            request['path']))
 
-        while ((not beta.waited and beta.requests) or beta.connector.txes) and not ixBeta.rxbs :
+        while ( beta.requests or beta.connector.txes) and not ixBeta.rxbs :
             beta.serviceAll()
             time.sleep(0.05)
             alpha.serviceAllRxAllIx()
@@ -1797,7 +1797,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or  beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockEchoService(alpha)
             time.sleep(0.05)
@@ -1840,7 +1840,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or  beta.requests or
                 beta.connector.txes or not beta.respondent.ended):
             self.mockEchoService(alpha)
             time.sleep(0.05)
@@ -1953,7 +1953,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                 beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServicePath(alpha)
             time.sleep(0.05)
@@ -1996,7 +1996,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                 beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServicePath(alpha)
             time.sleep(0.05)
@@ -2094,7 +2094,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                 beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServicePath(alpha)
             time.sleep(0.05)
@@ -2140,7 +2140,7 @@ class BasicTestCase(unittest.TestCase):
         request.update(mid=2, drop='.puff.reply')
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                 beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServicePath(alpha)
             time.sleep(0.05)
@@ -2270,7 +2270,7 @@ class BasicTestCase(unittest.TestCase):
                                                          request['method'],
                                                          request['path']))
 
-        while ((not beta.waited and beta.requests) or beta.connector.txes) and not ixBeta.rxbs:
+        while (beta.requests or beta.connector.txes) and not ixBeta.rxbs:
             beta.serviceAll()
             time.sleep(0.05)
             beta.connector.store.advanceStamp(0.05)
@@ -2368,7 +2368,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ha, beta.connector.ha)
 
         console.terse("Server receiving...\n")
-        while ((not beta.waited and beta.requests) or beta.connector.txes) or not ixBeta.rxbs:
+        while (beta.requests or beta.connector.txes) or not ixBeta.rxbs:
             beta.serviceAll()
             time.sleep(0.05)
             beta.connector.store.advanceStamp(0.05)
@@ -2518,7 +2518,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServiceSecure(alpha)
             time.sleep(0.05)
@@ -2561,7 +2561,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServiceSecure(alpha)
             time.sleep(0.05)
@@ -2677,7 +2677,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServiceSecure(alpha)
             time.sleep(0.05)
@@ -2720,7 +2720,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockEchoServiceSecure(alpha)
             time.sleep(0.05)
@@ -2839,7 +2839,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockRedirectService(alpha)
             time.sleep(0.05)
@@ -2983,7 +2983,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockRedirectComplexServiceA(alpha)
             self.mockRedirectComplexServiceG(gamma)
@@ -3159,7 +3159,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (not alpha.ixes or (not beta.waited and beta.requests) or
+        while (not alpha.ixes or beta.requests or
                beta.connector.txes or not beta.respondent.ended):
             self.mockRedirectComplexServiceASecure(alpha)
             self.mockRedirectComplexServiceGSecure(gamma)

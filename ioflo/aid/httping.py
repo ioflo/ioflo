@@ -1448,6 +1448,7 @@ class Patron(object):
         # .events is deque of dicts of response server sent event data
         self.events = events if events is not None else deque()
         self.waited = False  # Boolean True If sent request but waiting for response
+        self.request = None  # current request odict from .requests in process if any
         self.store = store or storing.Store(stamp=0.0)
 
         # see if path also includes scheme, netloc, query, fragment
@@ -1685,8 +1686,7 @@ class Patron(object):
         """
         if not self.waited:
             if self.requests:
-                #request = self.requests.popleft()
-                request = self.requests[0]  # leave on deque until response
+                self.request = request = self.requests.popleft()
                 # future check host port scheme if need to reconnect on new ha
                 # reconnect here
                 self.transmit(method=request.get('method'),
@@ -1706,8 +1706,8 @@ class Patron(object):
 
             if self.respondent.ended:
                 if not self.respondent.evented:
-                    if self.requests:
-                        request = self.requests.popleft()  # remove request
+                    if self.request:
+                        request = self.request
                         request.update([
                                         ('host', self.requester.hostname),
                                         ('port', self.requester.port),
@@ -1719,6 +1719,7 @@ class Patron(object):
                                         ('headers', self.requester.headers),
                                         ('body', self.requester.body),
                                        ])
+                        self.request = None
                     else:
                         request = odict([
                                          ('host', self.requester.hostname),
