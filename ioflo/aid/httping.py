@@ -326,7 +326,8 @@ class Requester(object):
                  qargs=None,
                  fragment=u'', #unicode
                  headers=None,
-                 body=b'',):
+                 body=b'',
+                 data=None):
         """
         Initialize Instance
 
@@ -339,6 +340,7 @@ class Requester(object):
         fragment = http fragment
         headers = http request headers
         body = http request body
+        data = dict to jsonify as body if provided
         """
         self.hostname, self.port = normalizeHostPort(hostname, port, 80)
         self.scheme = scheme
@@ -352,6 +354,7 @@ class Requester(object):
             # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
             body = body.encode('iso-8859-1')
         self.body = body or b''
+        self.data = data or odict()
 
         self.lines = []
         self.head = b""
@@ -366,7 +369,8 @@ class Requester(object):
                qargs=None,
                fragment=None,
                headers=None,
-               body=None,):
+               body=None,
+               data=None):
         """
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
@@ -387,11 +391,13 @@ class Requester(object):
             self.fragment = fragment
         if headers is not None:
             self.headers = headers
-        if body is not None:
+        if body is not None:  # body should be bytes
             if isinstance(body, unicode):
                 # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
                 body = body.encode('iso-8859-1')
             self.body = body
+        if data is not None:
+            self.data = data
 
     def build(self,
               method=None,
@@ -399,7 +405,8 @@ class Requester(object):
               qargs=None,
               fragment=None,
               headers=None,
-              body=None):
+              body=None,
+              data=None):
         """
         Build and return request message
 
@@ -409,7 +416,8 @@ class Requester(object):
                     qargs=qargs,
                     fragment=fragment,
                     headers=headers,
-                    body=body)
+                    body=body,
+                    data=data,)
         self.lines = []
 
         # need to check for proxy as the start line is different if proxied
@@ -494,11 +502,16 @@ class Requester(object):
         if u'accept-encoding' not in self.headers:
             self.lines.append(self.packHeader(u'Accept-Encoding', u'identity'))
 
-        if self.method == u"GET":  # do not send body on GET
-            self.body = b''
+        if self.data:
+            body = ns2b(json.dumps(self.data, separators=(',', ':'), encoding='utf-8'))
+        else:
+            body = self.body
 
-        if self.body and (u'content-length' not in self.headers):
-            self.lines.append(self.packHeader(u'Content-Length', str(len(self.body))))
+        if self.method == u"GET":  # do not send body on GET
+            body = b''
+
+        if body and (u'content-length' not in self.headers):
+            self.lines.append(self.packHeader(u'Content-Length', str(len(body))))
 
         for name, value in self.headers.items():
             self.lines.append(self.packHeader(name, value))
