@@ -1654,7 +1654,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -1715,7 +1715,7 @@ class BasicTestCase(unittest.TestCase):
                                                 'fragment': '',
                                                 'headers': {'Accept': 'application/json'},
                                                 'body': b'',
-                                                'data': {},
+                                                'data': None,
                                                 }
                                     })
 
@@ -1828,7 +1828,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -1872,7 +1872,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -1986,7 +1986,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -2030,7 +2030,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -2129,7 +2129,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                          'mid': 1,
                                          'drop': '.stuff.reply'
                                         }
@@ -2176,7 +2176,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                          'mid': 2,
                                          'drop': '.puff.reply'
                                         }
@@ -2555,7 +2555,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -2599,7 +2599,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -2716,7 +2716,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -2760,7 +2760,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -2880,7 +2880,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -3026,7 +3026,7 @@ class BasicTestCase(unittest.TestCase):
                                          'headers':
                                              {'Accept': 'application/json'},
                                          'body': b'',
-                                         'data': {},
+                                         'data': None,
                                         }
                                     })
 
@@ -3078,7 +3078,6 @@ class BasicTestCase(unittest.TestCase):
                 msgOut = b''
 
             server.serviceTxesAllIx()
-
 
     def testPatronRedirectComplexSecure(self):
         """
@@ -3202,7 +3201,8 @@ class BasicTestCase(unittest.TestCase):
                                          'fragment': '',
                                          'headers':
                                              {'Accept': 'application/json'},
-                                         'body': b''
+                                         'body': b'',
+                                         'data': None,
                                         }
                                     })
 
@@ -3247,6 +3247,7 @@ def runSome():
              'testPatronPipelineEchoSimpleSecurePath',
              'testPatronRedirectSimple',
              'testPatronRedirectComplex',
+             'testPatronRedirectComplexSecure',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

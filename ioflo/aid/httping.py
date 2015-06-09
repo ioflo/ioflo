@@ -354,7 +354,7 @@ class Requester(object):
             # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
             body = body.encode('iso-8859-1')
         self.body = body or b''
-        self.data = data or odict()
+        self.data = data
 
         self.lines = []
         self.head = b""
@@ -505,7 +505,7 @@ class Requester(object):
         if self.method == u"GET":  # do not send body on GET
                 body = b''
         else:
-            if self.data:
+            if self.data is not None:
                 body = ns2b(json.dumps(self.data, separators=(',', ':'), encoding='utf-8'))
                 self.headers[u'content-type'] = u'application/json; charset=utf-8'
             else:
