@@ -719,7 +719,7 @@ class Actor(object):
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' in "
                        "share {1} ... creating anyway\n".format(field, dst.name))
-                dst[field] = 0 #create
+                dst[field] = None #create
 
         return dstFields
 
@@ -775,13 +775,13 @@ class Actor(object):
             if field not in src:
                 console.profuse("     Warning: Transfer from non-existent field '{0}' "
                         "in share {1} ... creating anyway".format(field, src.name))
-                src[field] = 0.0 #create
+                src[field] = None #create
 
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' "
                         "in share {1} ... creating anyway\n".format(field, dst.name))
-                dst[field] = 0.0 #create
+                dst[field] = None #create
 
         return (srcFields, dstFields)
 

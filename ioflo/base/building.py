@@ -109,9 +109,13 @@ def Convert2CoordNum(text):
 
 def Convert2BoolCoordNum(text):
     """converts text to python type in order
-       Boolean, Int, Float, Complex
+       None, Boolean, Int, Float, Complex
        ValueError if can't
     """
+    #convert to None if possible
+    if text.lower() == 'none':
+        return None
+
     #convert to boolean if possible
     if text.lower() in ['true', 'yes']:
         return (True)
@@ -3092,7 +3096,7 @@ class Builder(object):
 
         if Negate:
             act = acting.Nact(actor=act.actor,
-                              registrar=act.registrar, 
+                              registrar=act.registrar,
                               parms=act.parms,
                               human=self.currentHuman,
                               count=self.currentCount)
@@ -4202,13 +4206,13 @@ class Builder(object):
             if field not in src:
                 console.profuse("     Warning: Transfer from non-existent field '{0}' "
                         "in share {1} ... creating anyway".format(field, src.name))
-                src[field] = 0.0 #create
+                src[field] = None #create
 
         for field in dstFields: #use destination fields for destination data
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' "
                         "in share {1} ... creating anyway\n".format(field, dst.name))
-                dst[field] = 0.0 #create
+                dst[field] = None #create
 
         return (srcFields, dstFields)
 
@@ -4248,7 +4252,7 @@ class Builder(object):
             if field not in dst:
                 console.profuse("     Warning: Transfer into non-existent field '{0}' in "
                        "share {1} ... creating anyway\n".format(field, dst.name))
-                dst[field] = 0 #create
+                dst[field] = None #create
 
         return (dataFields, dstFields)
 
