@@ -866,7 +866,7 @@ class Respondent(object):
         self.headers = None
         self.body = bytearray()  # body data bytearray
         self.text = u''  # body decoded as unicode string
-        self.json = None  # content dict deserialized from body json
+        self.data = None  # content dict deserialized from body json
         self.parms = None  # chunked encoding extension parameters
         self.trails = None  # chunked encoding trailing headers
 
@@ -1329,9 +1329,9 @@ class Respondent(object):
 
         if self.jsoned or self.dictify:  # attempt to deserialize json
             try:
-                self.json = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
+                self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
             except ValueError as ex:
-                self.json = None
+                self.data = None
             else:  # valid json so clear out body
                 del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
 
@@ -1764,7 +1764,7 @@ class Patron(object):
                                       ('reason', self.respondent.reason),
                                       ('headers', self.respondent.headers),
                                       ('body', self.respondent.body),
-                                      ('json', self.respondent.json),
+                                      ('data', self.respondent.data),
                                       ('request', request),
                                      ])
                     if self.respondent.redirectable and self.respondent.redirectant:
