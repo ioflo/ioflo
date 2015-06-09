@@ -321,11 +321,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
-        self.assertEqual(event, {'id': None, 'name': '', 'data': 'START', 'json': None})
+        self.assertEqual(event, {'id': None, 'name': '', 'data': 'START'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': None, 'name': '', 'data': '1', 'json': None})
+        self.assertEqual(event, {'id': None, 'name': '', 'data': '1'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': None, 'name': '', 'data': '2', 'json': None})
+        self.assertEqual(event, {'id': None, 'name': '', 'data': '2'})
         self.assertTrue(len(response.body) == 0)
         self.assertTrue(len(response.eventSource.raw) == 0)
 
@@ -472,11 +472,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
-        self.assertEqual(event, {'id': None, 'name': '', 'data': 'START', 'json': None})
+        self.assertEqual(event, {'id': None, 'name': '', 'data': 'START'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': None, 'name': '', 'data': '1', 'json': None})
+        self.assertEqual(event, {'id': None, 'name': '', 'data': '1'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': None, 'name': '', 'data': '2', 'json': None})
+        self.assertEqual(event, {'id': None, 'name': '', 'data': '2'})
         self.assertTrue(len(response.body) == 0)
         self.assertTrue(len(response.eventSource.raw) == 0)
 
@@ -623,11 +623,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
+        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2', 'json': None})
+        self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4', 'json': None})
+        self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4'})
         self.assertTrue(len(response.body) == 0)
         self.assertTrue(len(response.eventSource.raw) == 0)
 
@@ -787,11 +787,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
+        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2', 'json': None})
+        self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4', 'json': None})
+        self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4'})
         self.assertTrue(len(response.body) == 0)
         self.assertTrue(len(response.eventSource.raw) == 0)
 
@@ -944,11 +944,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
+        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '1', 'name': '', 'data': None, 'json': {'count': 1}})
+        self.assertEqual(event, {'id': '1', 'name': '', 'data': {'count': 1}})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '2', 'name': '', 'data': None, 'json': {'count': 2}})
+        self.assertEqual(event, {'id': '2', 'name': '', 'data': {'count': 2}})
         self.assertTrue(len(response.body) == 0)
         self.assertTrue(len(response.eventSource.raw) == 0)
 
@@ -1102,11 +1102,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(response.leid, response.eventSource.leid)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
+        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START'})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '1', 'name': '', 'data': None, 'json': {'count': 1}})
+        self.assertEqual(event, {'id': '1', 'name': '', 'data': {'count': 1}})
         event = response.events.popleft()
-        self.assertEqual(event, {'id': '2', 'name': '', 'data': None, 'json': {'count': 2}})
+        self.assertEqual(event, {'id': '2', 'name': '', 'data': {'count': 2}})
         self.assertTrue(len(response.body) == 0)
         self.assertTrue(len(response.eventSource.raw) == 0)
 
@@ -2199,7 +2199,7 @@ class BasicTestCase(unittest.TestCase):
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
-            if msgIn == b'PUT /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nContent-Length: 31\r\nAccept: application/json\r\nContent-Type: application/json; charset=utf-8\r\n\r\n{"last":"Smith","first":"John"}':
+            if msgIn == b'PUT /echo?name=fame HTTP/1.1\r\nHost: localhost:6101\r\nAccept-Encoding: identity\r\nContent-Length: 31\r\nAccept: application/json\r\nContent-Type: application/json; charset=utf-8\r\n\r\n{"first":"John","last":"Smith"}':
                 ixClient.clearRxbs()
                 msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
                 ixClient.tx(msgOut)
@@ -2252,7 +2252,7 @@ class BasicTestCase(unittest.TestCase):
                          ('qargs', odict()),
                          ('fragment', u''),
                          ('headers', odict([('Accept', 'application/json')])),
-                         ('data', odict(first="John", last="Smith")),
+                         ('data', odict([("first", "John"), ("last", "Smith")])),
                          ('mid', 1),
                          ('drop', '.stuff.reply'),
                         ])
@@ -2298,7 +2298,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json',
                                               'content-type': 'application/json; charset=utf-8'},
                                          'body': b'',
-                                         'data': {'last': 'Smith', 'first': 'John'},
+                                         'data': { 'first': 'John', 'last': 'Smith'},
                                          'mid': 1,
                                          'drop': '.stuff.reply'
                                         }
@@ -2346,7 +2346,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json',
                                               'content-type': 'application/json; charset=utf-8'},
                                          'body': b'',
-                                         'data': {'last': 'Smith', 'first': 'John'},
+                                         'data': { 'first': 'John', 'last': 'Smith'},
                                          'mid': 2,
                                          'drop': '.puff.reply'
                                         }
@@ -2491,11 +2491,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.respondent.retry, 1000)
         self.assertEqual(beta.respondent.leid, '4')
         event = beta.events.popleft()
-        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START', 'json': None})
+        self.assertEqual(event, {'id': '0', 'name': '', 'data': 'START'})
         event = beta.events.popleft()
-        self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2', 'json': None})
+        self.assertEqual(event, {'id': '1', 'name': '', 'data': '1\n2'})
         event = beta.events.popleft()
-        self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4', 'json': None})
+        self.assertEqual(event, {'id': '2', 'name': '', 'data': '3\n4'})
         beta.events.clear()
 
         # alpha's ixBeta connection shutdown prematurely
@@ -2585,9 +2585,9 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.respondent.retry, 1000)
         self.assertEqual(beta.respondent.leid, '6')
         event = beta.events.popleft()
-        self.assertEqual(event, {'id': '5', 'name': '', 'data': '9\n10', 'json': None})
+        self.assertEqual(event, {'id': '5', 'name': '', 'data': '9\n10'})
         event = beta.events.popleft()
-        self.assertEqual(event, {'id': '6', 'name': '', 'data': '11\n12', 'json': None})
+        self.assertEqual(event, {'id': '6', 'name': '', 'data': '11\n12'})
 
 
         alpha.close()

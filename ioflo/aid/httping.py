@@ -687,13 +687,13 @@ class EventSource(object):
                             ejson = json.loads(edata, encoding='utf-8', object_pairs_hook=odict)
                         except ValueError as ex:
                             ejson = None
-                        else:  # valid json so null out edata
-                            edata = None
+                        else:  # valid json set edata to ejson
+                            edata = ejson
 
                     self.events.append(odict([('id', eid),
                                               ('name', ename),
                                               ('data', edata),
-                                              ('json', ejson)]))
+                                             ]))
                 if self.closed:  # all done
                     lineParser.close()  # close generator
                     break
