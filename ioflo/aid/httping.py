@@ -26,6 +26,11 @@ else:
     from urlparse import urlsplit
     from urllib import quote, quote_plus
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 from email.parser import HeaderParser
 
 # Import ioflo libs
@@ -506,7 +511,7 @@ class Requester(object):
                 body = b''
         else:
             if self.data is not None:
-                body = ns2b(json.dumps(self.data, separators=(',', ':'), encoding='utf-8'))
+                body = ns2b(json.dumps(self.data, separators=(',', ':')))
                 self.headers[u'content-type'] = u'application/json; charset=utf-8'
             else:
                 body = self.body
@@ -520,7 +525,7 @@ class Requester(object):
         self.lines.extend((b"", b""))
         self.head = CRLF.join(self.lines)  # b'/r/n'
 
-        self.msg = self.head + self.body
+        self.msg = self.head + body
         return self.msg
 
     def packHeader(self, name, *values):

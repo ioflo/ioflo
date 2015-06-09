@@ -97,7 +97,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format("Post ...\n"))
         headers = odict([('Accept', 'application/json'), ('Content-Type', 'application/json')])
         body = odict([('name', 'Peter'), ('occupation', 'Engineer')])
-        body = ns2b(json.dumps(body, separators=(',', ':'), encoding='utf-8'))
+        body = ns2b(json.dumps(body, separators=(',', ':')))
         hc.request(method='POST', path='/demo', body=body, headers=headers )
         response = hc.getresponse()
         console.terse(str(response.fileno()) + "\n") # must call this before read
