@@ -1,6 +1,14 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+20150610
+---------
+v1.3.2
+
+Fixed bug in value parsing due to new None as valid value
+
 ---------
 20150610
 ---------
