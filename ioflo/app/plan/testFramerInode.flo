@@ -18,6 +18,7 @@ framer test be active first test0 via .top.
       do deed param at enter via .cop
       put 1 into me.zop
       put 1 into zop of me
+      put 1 into .zop of me
       go next
 
     frame sub1 in timeout
