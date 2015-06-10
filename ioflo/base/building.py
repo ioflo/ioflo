@@ -172,7 +172,7 @@ def Convert2BoolPathCoordNum(text):
     """
     #convert to None if possible
     if text.lower() == 'none':
-        return None    
+        return None
 
     #convert to boolean if possible
     if text.lower() in ['true', 'yes']:
@@ -425,7 +425,7 @@ class Builder(object):
             self.counts.append(self.currentCount) #push current line ct
             cwd = os.getcwd() #save current working directory
             os.chdir(os.path.split(self.currentFile.name)[0]) # set cwd to current file
-            name = os.path.abspath(name) # resolve name if relpath to cwd
+            name = os.path.abspath(os.path.expanduser(name)) # resolve name if relpath to cwd
             os.chdir(cwd) #restore old cwd
             self.currentFile = open(name,"r")
             self.currentCount = 0
