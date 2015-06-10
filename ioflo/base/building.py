@@ -170,6 +170,10 @@ def Convert2BoolPathCoordNum(text):
        Boolean, Int, Float, Complex
        ValueError if can't
     """
+    #convert to None if possible
+    if text.lower() == 'none':
+        return None    
+
     #convert to boolean if possible
     if text.lower() in ['true', 'yes']:
         return (True)
