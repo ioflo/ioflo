@@ -3745,8 +3745,8 @@ class Builder(object):
 
     def parsePath(self, tokens, index):
         """Parse required (path or dotpath) path
-           Does not support relative path processing for contexts not inside
-           framer such as init or server.
+           Does not support relative path processing for verbs such as init or
+           server which are not inside a framer context
            method must be wrapped in appropriate try excepts
         """
         path = tokens[index]
@@ -3788,12 +3788,16 @@ class Builder(object):
 
         relative:
            root
+           inode
            framer
            frame
            actor
 
         root:
            path [of root]
+
+        inode:
+           path of me
 
         framer:
            path of framer [name]
@@ -3837,10 +3841,14 @@ class Builder(object):
                             (chunks[0] == 'frame' and  '.frame.' in relation) or
                             (chunks[0] == 'actor' and  '.actor.' in  relation)):
                         msg = ("ParseError: Relation conflict in path '{0}'"
-                               " with relation '{1}'".format(path, relations))
+                               " with relation '{1}'".format(path, relation))
+                        raise excepting.ParseError(msg, tokens, index)
+                    if relation == 'me':
+                        msg = ("ParseError: Relation conflict in path '{0}'"
+                              " with relation '{1}'".format(path, relation))
                         raise excepting.ParseError(msg, tokens, index)
 
-            else: # prepend missing relations if partial relation
+            else: # prepend missing relations if partial relation in path
                 if chunks[0] == 'actor':
                     if len(chunks) < 3: # actor name or share name missing
                         msg = ("ParseError: Incomplete path '{0}'. Actor name"
@@ -3871,37 +3879,43 @@ class Builder(object):
         return (path, index)
 
     def parseRelation(self, tokens, index, framername=''):
-        """Parse optional relation clause of relative data address
+        """
+        Parse optional relation clause of relative data address
 
-           parms:
-              tokens = list of tokens for command
-              index = current index into tokens
-              framername = default framer name if not provided such as 'main'
+        parms:
+            tokens = list of tokens for command
+            index = current index into tokens
+            framername = default framer name if not provided such as 'main'
 
-           returns:
-              relation
-              index
+        returns:
+            relation
+            index
 
-           method must be wrapped in appropriate try excepts
+        method must be wrapped in appropriate try excepts
 
-           Syntax:
+        Syntax:
 
-           relative:
-              root
-              framer
-              frame
+        relative:
+            root
+            inode
+            framer
+            frame
+            actor
 
-           root:
-              path [of root]
+        root:
+            path [of root]
 
-           framer:
-              path of framer [(me, main, name)]
+        inode:
+            path of me
 
-           frame:
-              path of frame [(me, main, name)]
+        framer:
+            path of framer [(me, main, name)]
 
-           actor:
-              path of actor [(me, name)]
+        frame:
+            path of frame [(me, main, name)]
+
+        actor:
+            path of actor [(me, name)]
 
 
         """
@@ -3913,12 +3927,14 @@ class Builder(object):
                 relation = tokens[index]
                 index +=1
 
-                if relation not in ['root', 'framer', 'frame', 'actor']:
+                if relation not in ['root', 'me', 'framer', 'frame', 'actor']:
                     msg = "ParseError: Invalid relation '%s'" % (relation)
                     raise excepting.ParseError(msg, tokens, index)
 
                 if relation == 'root':
                     relation = '' #nothing gets prepended for root relative
+                elif relation == 'me':
+                    pass # do nothing
 
             if relation in ['framer']: #may be optional name for framer
                 name = '' #default name is empty

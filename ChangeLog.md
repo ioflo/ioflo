@@ -1,6 +1,13 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+20150610
+---------
+v1.3.1
+
+Added framer inode relative 'me' to path resolution so put set etc can use framer inode relative addressing as per ionints
+
 
 ---------
 20150609

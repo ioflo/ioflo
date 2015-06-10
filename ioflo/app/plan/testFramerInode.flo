@@ -17,6 +17,7 @@ framer test be active first test0 via .top.
       do deed param at enter via cop
       do deed param at enter via .cop
       put 1 into me.zop
+      put 1 into zop of me
       go next
 
     frame sub1 in timeout
@@ -98,6 +99,7 @@ framer sub be moot first start via main
     do deed param at enter via cop
     do deed param at enter via .cop
     put 2 into me.mop
+    put 2 into mop of me
     go next
 
   frame done
@@ -109,6 +111,7 @@ framer pub be moot first start
     do deed param at enter via cop
     do deed param at enter via .cop
     put 3 into me.rop
+    put 3 into rop of me
     go next
 
   frame done
@@ -120,6 +123,7 @@ framer cub be moot first start via pop
     do deed param at enter via cop
     do deed param at enter via .cop
     put 4 into me.nop
+    put 4 into nop of me
     go next
 
   frame done
@@ -131,6 +135,7 @@ framer bub be moot first start via .pop
     do deed param at enter via cop
     do deed param at enter via .cop
     put 6 into me.lop
+    put 6 into lop of me
     go next
 
   frame done
@@ -142,6 +147,7 @@ framer lub be moot first start via mine
     do deed param at enter via cop
     do deed param at enter via .cop
     put 7 into me.rop
+    put 7 into rop of me
     go next
 
   frame done
