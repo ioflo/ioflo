@@ -7,7 +7,7 @@ CHANGE LOG
 v1.3.1
 
 Added framer inode relative 'me' to path resolution so put set etc can use framer inode relative addressing as per ionints
-
+Added 'of me' relation clause so can perform inode relative addessing
 
 ---------
 20150609
