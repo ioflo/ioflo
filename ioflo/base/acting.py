@@ -251,6 +251,39 @@ class Act(object):
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
             if not ipath.startswith('.'): # not reconciled so do relative substitutions
                 parts = ipath.split('.')
+                if parts[0] == 'me':  #  framer inode relative addressing
+                    if not self.frame:
+                        raise excepting.ResolveError("ResolveError: Missing frame context"
+                                " to resolve relative pathname.", ipath, self,
+                                self.human, self.count)
+                    if not self.frame.framer:
+                        raise excepting.ResolveError("ResolveError: Missing framer context"
+                                " to resolve relative pathname.", ipath, self.frame,
+                                self.human, self.count)
+                    del parts[0]
+
+                    finode = ''  # inode of framer
+                    framer = self.frame.framer
+                    finode = framer.inode
+                    if framer.main:  # aux framer so special meaning of main or mine
+                        if finode == "main":  # replace finode with main framer inode
+                            finode = framer.main.framer.inode
+                        elif finode == "mine":  # don't prepend main framer inode
+                            finode = ""
+                        else:  # possibly prepend main framer inode if finode relative
+                            minode = framer.main.framer.inode
+                            minode = minode.rstrip('.')
+                            if not finode.startswith('.') and minode:  # prepend if relative
+                                finode = '.'.join([minode, finode])
+                    finode = finode.rstrip('.')
+                    if finode:
+                        finparts = finode.split('.')
+                        if finparts:
+                            parts = finparts + parts
+                    ipath = '.'.join(parts)
+
+            if not ipath.startswith('.'): # not reconciled so do relative substitutions
+                parts = ipath.split('.')
                 if parts[0] == 'framer':  #  relative addressing
                     if not self.frame:
                         raise excepting.ResolveError("ResolveError: Missing frame context"
@@ -299,6 +332,7 @@ class Act(object):
                                         " context to resolve relative pathname.", ipath, self,
                                                self.human, self.count)
                                 parts[3:4] = nameToPath(self.actor.name).lstrip('.').rstrip('.').split('.')
+
 
                 ipath = '.'.join(parts)
 
@@ -642,6 +676,10 @@ class Actor(object):
                     ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
             else:
                 ipath = '.'.join((inode.rstrip('.'), key))  # when ipath empty create default from key
+
+            if ipath.startswith('me.') or ipath == 'me':
+                raise ValueError("Invalid ipath '{0}', first part == 'me'".format(ipath))
+
             ioi = odict(ipath=ipath, ival=ival, iown=iown)
             iois[key] = ioi
 

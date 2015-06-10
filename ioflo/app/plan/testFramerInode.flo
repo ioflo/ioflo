@@ -3,10 +3,10 @@ house test
 init meta.test to value "test"
 init meta.spot to when "now" where "here"
 init meta.stuff to value "test2"
-init .cop.pit to value 4
-init .pop.cop.kit to value 5
+init .cop.pit to value 5
+init .pop.cop.kit to value 10
 init .top.cop.wit to value 15
-init .top.pop.cop.fit to value 10
+init .top.pop.cop.fit to value 20
 
 framer test be active first test0 via .top.
   frame timeout
@@ -16,6 +16,7 @@ framer test be active first test0 via .top.
       print "Hello World"
       do deed param at enter via cop
       do deed param at enter via .cop
+      put 1 into me.zop
       go next
 
     frame sub1 in timeout
@@ -96,6 +97,7 @@ framer sub be moot first start via main
   frame start
     do deed param at enter via cop
     do deed param at enter via .cop
+    put 2 into me.mop
     go next
 
   frame done
@@ -106,6 +108,7 @@ framer pub be moot first start
   frame start
     do deed param at enter via cop
     do deed param at enter via .cop
+    put 3 into me.rop
     go next
 
   frame done
@@ -116,6 +119,7 @@ framer cub be moot first start via pop
   frame start
     do deed param at enter via cop
     do deed param at enter via .cop
+    put 4 into me.nop
     go next
 
   frame done
@@ -126,6 +130,7 @@ framer bub be moot first start via .pop
   frame start
     do deed param at enter via cop
     do deed param at enter via .cop
+    put 6 into me.lop
     go next
 
   frame done
@@ -136,6 +141,7 @@ framer lub be moot first start via mine
   frame start
     do deed param at enter via cop
     do deed param at enter via .cop
+    put 7 into me.rop
     go next
 
   frame done
