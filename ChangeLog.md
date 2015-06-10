@@ -3,6 +3,15 @@ CHANGE LOG
 -------------------
 
 ---------
+201506XX
+---------
+v1.2.X
+
+Refactoring of httping classes to normalize interfaces
+Requester now accepts data dictionary that it automatically jsonifies on build
+
+
+---------
 20150608
 ---------
 v1.2.9
