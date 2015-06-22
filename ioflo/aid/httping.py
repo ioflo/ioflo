@@ -401,8 +401,12 @@ class Requester(object):
                 # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
                 body = body.encode('iso-8859-1')
             self.body = body
+        else:
+            self.body = b''
         if data is not None:
             self.data = data
+        else:
+            self.data = None
 
     def build(self,
               method=None,
