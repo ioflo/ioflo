@@ -498,21 +498,25 @@ class Actor(object):
     __slots__ = ('name', 'store', '_act')
 
     def __init__(self, name='', store=None, act=None, **kwa ):
-        """ Initialization method for instance.
-
-            Instance attributes
-                .name = name string for Actor variant in class Registry
-                .store = reference to shared data Store
-                ._act = reference to containing Act
         """
-        #super(Actor,self).__init__(**kwa) # in case of MRO
+        Initialization method for instance.
 
+        Instance attributes
+            .name = name string for Actor variant in class Registry
+            .store = reference to shared data Store
+            ._act = reference to containing Act
+            
+        If subclass has init need to call super
+        super(SubClassName, self).__init__(**kwa)
+        
+        """
         self.name = name
         if store is not None:
             if  not isinstance(store, storing.Store):
                 raise ValueError("Not store {0}".format(store))
             self.store = store
         self._act = act
+        
 
     def __call__(self, **kwa):
         """ run .action  """
