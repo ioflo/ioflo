@@ -19,6 +19,7 @@ from collections import deque
 import codecs
 import json
 import ssl
+import copy
 
 if sys.version > '3':
     from urllib.parse import urlsplit, quote, quote_plus
@@ -1738,7 +1739,7 @@ class Patron(object):
             if self.respondent.ended:
                 if not self.respondent.evented:
                     if self.request:  # use saved request attribute
-                        request = self.request
+                        request = copy.deepcopy(self.request)
                         request.update([
                                         ('host', self.requester.hostname),
                                         ('port', self.requester.port),
@@ -1777,6 +1778,9 @@ class Patron(object):
                         self.redirects.append(response)
                         self.redirect()
                     else:
+                        if self.redirects:
+                            response['redirects'] = copy.deepcopy(self.redirects)
+                        self.redirects = []
                         self.responses.append(response)
                         self.waited = False
                 self.respondent.makeParser()  #set up for next time
