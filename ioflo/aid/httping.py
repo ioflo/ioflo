@@ -1739,7 +1739,7 @@ class Patron(object):
             if self.respondent.ended:
                 if not self.respondent.evented:
                     if self.request:  # use saved request attribute
-                        request = copy.deepcopy(self.request)
+                        request = copy.copy(self.request)
                         request.update([
                                         ('host', self.requester.hostname),
                                         ('port', self.requester.port),
