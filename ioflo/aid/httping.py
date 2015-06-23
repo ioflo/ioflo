@@ -332,8 +332,7 @@ class Requester(object):
                  fragment=u'', #unicode
                  headers=None,
                  body=b'',
-                 data=None,
-                 qcode=True):
+                 data=None):
         """
         Initialize Instance
 
@@ -347,7 +346,6 @@ class Requester(object):
         headers = http request headers
         body = http request body
         data = dict to jsonify as body if provided
-        qcode = Boolean urlencode query args if True
         """
         self.hostname, self.port = normalizeHostPort(hostname, port, 80)
         self.scheme = scheme
@@ -361,8 +359,6 @@ class Requester(object):
             body = body.encode('iso-8859-1')
         self.body = body or b''
         self.data = data
-        self.qcode = True if qcode else False
-
         self.lines = []
         self.head = b""
         self.msg = b""
@@ -377,8 +373,7 @@ class Requester(object):
                fragment=None,
                headers=None,
                body=None,
-               data=None,
-               qcode=None):
+               data=None):
         """
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
@@ -410,8 +405,6 @@ class Requester(object):
             self.data = data
         else:
             self.data = None
-        if qcode is not None:
-            self.qcode = True if qcode else False
 
     def build(self,
               method=None,
@@ -420,8 +413,7 @@ class Requester(object):
               fragment=None,
               headers=None,
               body=None,
-              data=None,
-              qcode=None):
+              data=None):
         """
         Build and return request message
 
@@ -432,8 +424,7 @@ class Requester(object):
                     fragment=fragment,
                     headers=headers,
                     body=body,
-                    data=data,
-                    qcode=qcode)
+                    data=data)
         self.lines = []
 
         # need to check for proxy as the start line is different if proxied
@@ -478,8 +469,7 @@ class Requester(object):
 
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
         query = ';'.join(qargParts)
-        if self.qcode:
-            query = quote_plus(query, ';=')
+        query = quote_plus(query, ';=')
 
         fragment = pathSplits.fragment
         if fragment:
@@ -1432,7 +1422,6 @@ class Patron(object):
                  path=u'/',  # unicode
                  headers=None,
                  qargs=None,
-                 qcode=True,
                  fragment=u'',
                  body=b'',
                  data=None,
@@ -1464,7 +1453,6 @@ class Patron(object):
         path = http url path section in unicode
                path may include scheme and netloc which takes priority
         qargs = dict of http query args
-        qcode = Boolean urlencode query args if True
         fragment = http fragment
         headers = dict of http headers
         body = byte or binary array of request body bytes or bytearray
@@ -1587,8 +1575,7 @@ class Patron(object):
                                   qargs=qargs,
                                   fragment=fragment,
                                   body=body,
-                                  data=data,
-                                  qcode=qcode)
+                                  data=data)
         else:
             requester.reinit(hostname=self.connector.hostname,
                              port=self.connector.port,
@@ -1599,8 +1586,7 @@ class Patron(object):
                              fragment=fragment,
                              headers=headers,
                              body=body,
-                             data=data,
-                             qcode=qcode)
+                             data=data)
         self.requester = requester
 
         if respondent is None:
@@ -1751,7 +1737,7 @@ class Patron(object):
 
             if self.respondent.ended:
                 if not self.respondent.evented:
-                    if self.request:
+                    if self.request:  # use saved request attribute
                         request = self.request
                         request.update([
                                         ('host', self.requester.hostname),
