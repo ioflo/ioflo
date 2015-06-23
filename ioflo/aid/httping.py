@@ -332,7 +332,8 @@ class Requester(object):
                  fragment=u'', #unicode
                  headers=None,
                  body=b'',
-                 data=None):
+                 data=None,
+                 qcode=True):
         """
         Initialize Instance
 
@@ -346,6 +347,7 @@ class Requester(object):
         headers = http request headers
         body = http request body
         data = dict to jsonify as body if provided
+        qcode = Boolean urlencode query args if True
         """
         self.hostname, self.port = normalizeHostPort(hostname, port, 80)
         self.scheme = scheme
@@ -354,12 +356,12 @@ class Requester(object):
         self.qargs = qargs if qargs is not None else odict()
         self.fragment = fragment
         self.headers = headers or lodict()
-
         if body and isinstance(body, unicode):  # use default
             # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
             body = body.encode('iso-8859-1')
         self.body = body or b''
         self.data = data
+        self.qcode = True if qcode else False
 
         self.lines = []
         self.head = b""
@@ -375,7 +377,8 @@ class Requester(object):
                fragment=None,
                headers=None,
                body=None,
-               data=None):
+               data=None,
+               qcode=None):
         """
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
@@ -407,6 +410,8 @@ class Requester(object):
             self.data = data
         else:
             self.data = None
+        if qcode is not None:
+            self.qcode = True if qcode else False
 
     def build(self,
               method=None,
@@ -415,7 +420,8 @@ class Requester(object):
               fragment=None,
               headers=None,
               body=None,
-              data=None):
+              data=None,
+              qcode=None):
         """
         Build and return request message
 
@@ -426,7 +432,8 @@ class Requester(object):
                     fragment=fragment,
                     headers=headers,
                     body=body,
-                    data=data,)
+                    data=data,
+                    qcode=qcode)
         self.lines = []
 
         # need to check for proxy as the start line is different if proxied
@@ -471,7 +478,8 @@ class Requester(object):
 
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
         query = ';'.join(qargParts)
-        query = quote_plus(query, ';=')
+        if self.qcode:
+            query = quote_plus(query, ';=')
 
         fragment = pathSplits.fragment
         if fragment:
@@ -1424,8 +1432,10 @@ class Patron(object):
                  path=u'/',  # unicode
                  headers=None,
                  qargs=None,
+                 qcode=True,
                  fragment=u'',
                  body=b'',
+                 data=None,
                  msg=None,
                  dictify=None,
                  events=None,
@@ -1454,9 +1464,11 @@ class Patron(object):
         path = http url path section in unicode
                path may include scheme and netloc which takes priority
         qargs = dict of http query args
+        qcode = Boolean urlencode query args if True
         fragment = http fragment
         headers = dict of http headers
         body = byte or binary array of request body bytes or bytearray
+        data = dict of request body json if any
         msg = bytearray of response msg to parse
         dictify = Boolean flag If True attempt to convert body from json
         events = deque of events if any
@@ -1574,7 +1586,9 @@ class Patron(object):
                                   headers=headers,
                                   qargs=qargs,
                                   fragment=fragment,
-                                  body=body,)
+                                  body=body,
+                                  data=data,
+                                  qcode=qcode)
         else:
             requester.reinit(hostname=self.connector.hostname,
                              port=self.connector.port,
@@ -1584,7 +1598,9 @@ class Patron(object):
                              qargs=qargs,
                              fragment=fragment,
                              headers=headers,
-                             body=body)
+                             body=body,
+                             data=data,
+                             qcode=qcode)
         self.requester = requester
 
         if respondent is None:
