@@ -333,7 +333,8 @@ class Requester(object):
                  fragment=u'', #unicode
                  headers=None,
                  body=b'',
-                 data=None):
+                 data=None,
+                 form=None):
         """
         Initialize Instance
 
@@ -347,6 +348,7 @@ class Requester(object):
         headers = http request headers
         body = http request body
         data = dict to jsonify as body if provided
+        form = dict to url form encode as body if provided
         """
         self.hostname, self.port = normalizeHostPort(hostname, port, 80)
         self.scheme = scheme
@@ -360,6 +362,7 @@ class Requester(object):
             body = body.encode('iso-8859-1')
         self.body = body or b''
         self.data = data
+        self.form = form
         self.lines = []
         self.head = b""
         self.msg = b""
@@ -374,7 +377,8 @@ class Requester(object):
                fragment=None,
                headers=None,
                body=None,
-               data=None):
+               data=None,
+               form=None):
         """
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
@@ -406,6 +410,10 @@ class Requester(object):
             self.data = data
         else:
             self.data = None
+        if form is not None:
+            self.form = form
+        else:
+            self.form = None
 
     def build(self,
               method=None,
@@ -414,7 +422,8 @@ class Requester(object):
               fragment=None,
               headers=None,
               body=None,
-              data=None):
+              data=None,
+              form=None):
         """
         Build and return request message
 
@@ -425,7 +434,8 @@ class Requester(object):
                     fragment=fragment,
                     headers=headers,
                     body=body,
-                    data=data)
+                    data=data,
+                    form=form)
         self.lines = []
 
         # need to check for proxy as the start line is different if proxied
@@ -516,6 +526,12 @@ class Requester(object):
             if self.data is not None:
                 body = ns2b(json.dumps(self.data, separators=(',', ':')))
                 self.headers[u'content-type'] = u'application/json; charset=utf-8'
+            elif self.form is not None:
+                formParts = [u"{0}={1}".format(key, val) for key, val in self.form.items()]
+                form = u'&'.join(formParts)
+                form = quote_plus(form, '&=')
+                body = form.encode(encoding='iso-8859-1')
+                self.headers[u'content-type'] = u'application/x-www-form-urlencoded; charset=iso-8859-1'
             else:
                 body = self.body
 
@@ -1426,6 +1442,7 @@ class Patron(object):
                  fragment=u'',
                  body=b'',
                  data=None,
+                 form=None,
                  msg=None,
                  dictify=None,
                  events=None,
@@ -1458,6 +1475,7 @@ class Patron(object):
         headers = dict of http headers
         body = byte or binary array of request body bytes or bytearray
         data = dict of request body json if any
+        form = dict of request body form args if any
         msg = bytearray of response msg to parse
         dictify = Boolean flag If True attempt to convert body from json
         events = deque of events if any
@@ -1576,7 +1594,8 @@ class Patron(object):
                                   qargs=qargs,
                                   fragment=fragment,
                                   body=body,
-                                  data=data)
+                                  data=data,
+                                  form=form)
         else:
             requester.reinit(hostname=self.connector.hostname,
                              port=self.connector.port,
@@ -1587,7 +1606,8 @@ class Patron(object):
                              fragment=fragment,
                              headers=headers,
                              body=body,
-                             data=data)
+                             data=data,
+                             form=form)
         self.requester = requester
 
         if respondent is None:
@@ -1613,7 +1633,8 @@ class Patron(object):
                  fragment=None,
                  headers=None,
                  body=None,
-                 data=None):
+                 data=None,
+                 form=None):
         """
         Build and transmit request
         Add jsoned parameter
@@ -1626,7 +1647,8 @@ class Patron(object):
                                        fragment=fragment,
                                        headers=headers,
                                        body=body,
-                                       data=data)
+                                       data=data,
+                                       form=form)
         self.connector.tx(request)
         self.respondent.reinit(method=method)
 
@@ -1726,7 +1748,8 @@ class Patron(object):
                              fragment=request.get('fragment'),
                              headers=request.get('headers'),
                              body=request.get('body'),
-                             data=request.get('data'))
+                             data=request.get('data'),
+                             form=request.get('form'))
 
     def serviceResponse(self):
         """
@@ -1751,6 +1774,7 @@ class Patron(object):
                                         ('headers', self.requester.headers),
                                         ('body', self.requester.body),
                                         ('data', self.requester.data),
+                                        ('form', self.requester.form),
                                        ])
                         self.request = None
                     else:
@@ -1765,6 +1789,7 @@ class Patron(object):
                                          ('headers', self.requester.headers),
                                          ('body', self.requester.body),
                                          ('data', self.requester.data),
+                                         ('form', self.requester.form),
                                         ])
                     response = odict([('version', self.respondent.version),
                                       ('status', self.respondent.status),

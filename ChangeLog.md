@@ -1,6 +1,12 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+20150623
+---------
+v1.3.5
+
+added support for http url encoded form data in Requester and Patron
 
 ---------
 20150623
