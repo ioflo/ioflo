@@ -6,7 +6,8 @@ CHANGE LOG
 ---------
 v1.3.3
 
-
+Added redirects field to response returned when request is redirected in Patron
+Some bug fixes and minor changes to httping
 
 
 ---------
