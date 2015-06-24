@@ -74,6 +74,7 @@ house cloner
 
       frame R
          print R
+         put 0 into counter of framer
          aux orig3 as RCloneOrig3
          go next if done RCloneOrig3
 
@@ -105,6 +106,7 @@ house cloner
 
       frame D
          print D
+         put 0 into counter of framer
          aux orig5 as mine
          go next if done all
 
