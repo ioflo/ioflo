@@ -334,7 +334,7 @@ class Requester(object):
                  headers=None,
                  body=b'',
                  data=None,
-                 form=None):
+                 fargs=None):
         """
         Initialize Instance
 
@@ -348,7 +348,7 @@ class Requester(object):
         headers = http request headers
         body = http request body
         data = dict to jsonify as body if provided
-        form = dict to url form encode as body if provided
+        fargs = dict to url form encode as body if provided
         """
         self.hostname, self.port = normalizeHostPort(hostname, port, 80)
         self.scheme = scheme
@@ -362,7 +362,7 @@ class Requester(object):
             body = body.encode('iso-8859-1')
         self.body = body or b''
         self.data = data
-        self.form = form
+        self.fargs = fargs
         self.lines = []
         self.head = b""
         self.msg = b""
@@ -378,7 +378,7 @@ class Requester(object):
                headers=None,
                body=None,
                data=None,
-               form=None):
+               fargs=None):
         """
         Reinitialize anything that is not None
         This enables creating another request on a connection to the same host port
@@ -410,10 +410,10 @@ class Requester(object):
             self.data = data
         else:
             self.data = None
-        if form is not None:
-            self.form = form
+        if fargs is not None:
+            self.fargs = fargs
         else:
-            self.form = None
+            self.fargs = None
 
     def build(self,
               method=None,
@@ -423,7 +423,7 @@ class Requester(object):
               headers=None,
               body=None,
               data=None,
-              form=None):
+              fargs=None):
         """
         Build and return request message
 
@@ -435,7 +435,7 @@ class Requester(object):
                     headers=headers,
                     body=body,
                     data=data,
-                    form=form)
+                    fargs=fargs)
         self.lines = []
 
         # need to check for proxy as the start line is different if proxied
@@ -526,8 +526,8 @@ class Requester(object):
             if self.data is not None:
                 body = ns2b(json.dumps(self.data, separators=(',', ':')))
                 self.headers[u'content-type'] = u'application/json; charset=utf-8'
-            elif self.form is not None:
-                formParts = [u"{0}={1}".format(key, val) for key, val in self.form.items()]
+            elif self.fargs is not None:
+                formParts = [u"{0}={1}".format(key, val) for key, val in self.fargs.items()]
                 form = u'&'.join(formParts)
                 form = quote_plus(form, '&=')
                 body = form.encode(encoding='iso-8859-1')
@@ -1442,7 +1442,7 @@ class Patron(object):
                  fragment=u'',
                  body=b'',
                  data=None,
-                 form=None,
+                 fargs=None,
                  msg=None,
                  dictify=None,
                  events=None,
@@ -1475,7 +1475,7 @@ class Patron(object):
         headers = dict of http headers
         body = byte or binary array of request body bytes or bytearray
         data = dict of request body json if any
-        form = dict of request body form args if any
+        fargs = dict of request body form args if any
         msg = bytearray of response msg to parse
         dictify = Boolean flag If True attempt to convert body from json
         events = deque of events if any
@@ -1595,7 +1595,7 @@ class Patron(object):
                                   fragment=fragment,
                                   body=body,
                                   data=data,
-                                  form=form)
+                                  fargs=fargs)
         else:
             requester.reinit(hostname=self.connector.hostname,
                              port=self.connector.port,
@@ -1607,7 +1607,7 @@ class Patron(object):
                              headers=headers,
                              body=body,
                              data=data,
-                             form=form)
+                             fargs=fargs)
         self.requester = requester
 
         if respondent is None:
@@ -1634,7 +1634,7 @@ class Patron(object):
                  headers=None,
                  body=None,
                  data=None,
-                 form=None):
+                 fargs=None):
         """
         Build and transmit request
         Add jsoned parameter
@@ -1648,7 +1648,7 @@ class Patron(object):
                                        headers=headers,
                                        body=body,
                                        data=data,
-                                       form=form)
+                                       fargs=fargs)
         self.connector.tx(request)
         self.respondent.reinit(method=method)
 
@@ -1749,7 +1749,7 @@ class Patron(object):
                              headers=request.get('headers'),
                              body=request.get('body'),
                              data=request.get('data'),
-                             form=request.get('form'))
+                             fargs=request.get('fargs'))
 
     def serviceResponse(self):
         """
@@ -1774,7 +1774,7 @@ class Patron(object):
                                         ('headers', self.requester.headers),
                                         ('body', self.requester.body),
                                         ('data', self.requester.data),
-                                        ('form', self.requester.form),
+                                        ('fargs', self.requester.fargs),
                                        ])
                         self.request = None
                     else:
@@ -1789,7 +1789,7 @@ class Patron(object):
                                          ('headers', self.requester.headers),
                                          ('body', self.requester.body),
                                          ('data', self.requester.data),
-                                         ('form', self.requester.form),
+                                         ('fargs', self.requester.fargs),
                                         ])
                     response = odict([('version', self.respondent.version),
                                       ('status', self.respondent.status),

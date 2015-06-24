@@ -1,6 +1,14 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+20150624
+---------
+v1.3.6
+
+changed parameter to fargs for form args from form to be consistent with qargs
+
 ---------
 20150623
 ---------

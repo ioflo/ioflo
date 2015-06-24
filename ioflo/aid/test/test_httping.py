@@ -1655,7 +1655,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -1717,7 +1717,7 @@ class BasicTestCase(unittest.TestCase):
                                                 'headers': {'Accept': 'application/json'},
                                                 'body': b'',
                                                 'data': None,
-                                                'form': None,
+                                                'fargs': None,
                                                 }
                                     })
 
@@ -1831,7 +1831,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -1876,7 +1876,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -1991,7 +1991,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -2036,7 +2036,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -2136,7 +2136,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                          'mid': 1,
                                          'drop': '.stuff.reply'
                                         }
@@ -2184,7 +2184,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                          'mid': 2,
                                          'drop': '.puff.reply'
                                         }
@@ -2307,7 +2307,7 @@ class BasicTestCase(unittest.TestCase):
                                               'content-type': 'application/json; charset=utf-8'},
                                          'body': b'',
                                          'data': { 'first': 'John', 'last': 'Smith'},
-                                         'form': None,
+                                         'fargs': None,
                                          'mid': 1,
                                          'drop': '.stuff.reply'
                                         }
@@ -2356,7 +2356,7 @@ class BasicTestCase(unittest.TestCase):
                                               'content-type': 'application/json; charset=utf-8'},
                                          'body': b'',
                                          'data': { 'first': 'John', 'last': 'Smith'},
-                                         'form': None,
+                                         'fargs': None,
                                          'mid': 2,
                                          'drop': '.puff.reply'
                                         }
@@ -2735,7 +2735,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -2780,7 +2780,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -2898,7 +2898,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -2943,7 +2943,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -3061,7 +3061,7 @@ class BasicTestCase(unittest.TestCase):
                                                    'reason': 'Temporary Redirect',
                                                    'request': {'body': b'',
                                                                'data': None,
-                                                               'form': None,
+                                                               'fargs': None,
                                                                'fragment': '',
                                                                'headers': {'Accept': 'application/json'},
                                                                'host': '127.0.0.1',
@@ -3084,7 +3084,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -3228,7 +3228,7 @@ class BasicTestCase(unittest.TestCase):
                                                    'reason': 'Temporary Redirect',
                                                    'request': {'body': b'',
                                                                'data': None,
-                                                               'form': None,
+                                                               'fargs': None,
                                                                'fragment': '',
                                                                'headers': {'Accept': 'application/json'},
                                                                'host': '127.0.0.1',
@@ -3251,7 +3251,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
@@ -3425,7 +3425,7 @@ class BasicTestCase(unittest.TestCase):
                                                    'reason': 'Temporary Redirect',
                                                    'request': {'body': b'',
                                                                'data': None,
-                                                               'form': None,
+                                                               'fargs': None,
                                                                'fragment': '',
                                                                'headers': {'Accept': 'application/json'},
                                                                'host': 'localhost',
@@ -3448,7 +3448,7 @@ class BasicTestCase(unittest.TestCase):
                                              {'Accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
-                                         'form': None,
+                                         'fargs': None,
                                         }
                                     })
 
