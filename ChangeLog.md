@@ -3,6 +3,15 @@ CHANGE LOG
 -------------------
 
 ---------
+201507XX
+---------
+v1.3.X
+
+
+Fixed bug in httping processing chunked encoded responses
+
+
+---------
 20150624
 ---------
 v1.3.6
