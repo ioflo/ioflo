@@ -1198,11 +1198,11 @@ class Respondent(object):
         """
         Generator to parse next chunk
         Yields None If waiting for more bytes
-        Yields tuple (size, parms, trailers, chunk) Otherwise
+        Yields tuple (size, parms, trails, chunk) Otherwise
         Where:
             size is int size of the chunk
             parms is dict of chunk extension parameters
-            trailers is dict of chunk trailer headers (only on last chunk if any)
+            trails is dict of chunk trailer headers (only on last chunk if any)
             chunk is chunk if any or empty if not
 
         Chunked-Body   = *chunk
@@ -1221,7 +1221,7 @@ class Respondent(object):
         """
         size = 0
         parms = odict()
-        trailers = lodict()
+        trails = lodict()
         chunk = bytearray()
 
         lineParser = self.parseLine(eols=(CRLF, ), kind="chunk size line")
@@ -1253,13 +1253,13 @@ class Respondent(object):
                     leaderParser.close()
                     break
                 (yield None)
-            
+
             if lines:
                 #email Parser wants to see strings rather than bytes.
                 #So convert bytes to string
                 lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
                 hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
-                trailers.update(HeaderParser().parsestr(hstring).items())            
+                trails.update(HeaderParser().parsestr(hstring).items())
         else:
             while len(self.msg) < size:  # need more for chunk
                 (yield None)
@@ -1279,7 +1279,7 @@ class Respondent(object):
                 raise ValueError("Chunk end error. Expected empty got "
                          "'{0}' instead".format(line.decode('iso-8859-1')))
 
-        (yield (size, parms, trailers, chunk))
+        (yield (size, parms, trails, chunk))
         return
 
     def parseBody(self):
