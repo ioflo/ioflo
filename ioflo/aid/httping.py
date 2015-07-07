@@ -530,8 +530,8 @@ class Requester(object):
                 formParts = [u"{0}={1}".format(key, val) for key, val in self.fargs.items()]
                 form = u'&'.join(formParts)
                 form = quote_plus(form, '&=')
-                body = form.encode(encoding='iso-8859-1')
-                self.headers[u'content-type'] = u'application/x-www-form-urlencoded; charset=iso-8859-1'
+                body = form.encode(encoding='utf-8')
+                self.headers[u'content-type'] = u'application/x-www-form-urlencoded; charset=utf-8'
             else:
                 body = self.body
 
