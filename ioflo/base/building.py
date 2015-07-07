@@ -2539,7 +2539,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         if inode:
-            ioinits.update(inode=inode)  # qua argument takes precedence over others
+            ioinits.update(inode=inode)  # via argument takes precedence over others
         if name:
             inits['name'] = name
         act = acting.Act(   actor=kind,
