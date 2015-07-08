@@ -534,10 +534,12 @@ class Requester(object):
                                                             0xffffffffffff))
 
                     formParts = []
-                    # mime parts always start with -- 
+                    # mime parts always start with --
                     for key, val in  self.fargs.items():
                         formParts.append('\r\n--{0}\r\nContent-Disposition: '
-                                         'form-data; name="{1}"\r\n\r\n{2}'.format(boundary, key, val))
+                                         'form-data; name="{1}"\r\n'
+                                         'Content-Type: text/plain; charset=utf-8\r\n'
+                                         '\r\n{2}'.format(boundary, key, val))
                     formParts.append('\r\n--{0}--'.format(boundary))
                     form = "".join(formParts)
                     body = form.encode(encoding='utf-8')
