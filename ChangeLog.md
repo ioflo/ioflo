@@ -10,6 +10,8 @@ v1.3.X
 
 Fixed bug in httping processing chunked encoded responses
 Changed default encoding for x-www-form-urlencoded to utf-8
+Support for multipart/form-data for POST request forms
+
 
 
 ---------
