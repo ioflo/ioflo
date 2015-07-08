@@ -3,14 +3,14 @@ CHANGE LOG
 -------------------
 
 ---------
-201507XX
+20150708
 ---------
-v1.3.X
+v1.3.7
 
 
 Fixed bug in httping processing chunked encoded responses
 Changed default encoding for x-www-form-urlencoded to utf-8
-Support for multipart/form-data for POST request forms
+Support for multipart/form-data for POST request forms with utf-8
 
 
 
