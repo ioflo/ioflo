@@ -523,7 +523,89 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testNonBlockingRequestMultipart(self):
+        """
+        Test NonBlocking Http client
+        """
+        console.terse("{0}\n".format(self.testNonBlockingRequestMultipart.__doc__))
 
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        wireLogBeta = nonblocking.WireLog(buffify=True)
+        result = wireLogBeta.reopen()
+
+
+
+        eha = ('127.0.0.1', 8080)
+        beta = nonblocking.Outgoer(ha=eha, bufsize=131072)
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.accepted, False)
+        self.assertIs(beta.cutoff, False)
+
+        console.terse("Connecting beta to server ...\n")
+        while True:
+            beta.serviceConnect()
+            #alpha.serviceAccepts()
+            if beta.accepted:  # and beta.ca in alpha.ixes
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.accepted, True)
+        self.assertIs(beta.cutoff, False)
+        self.assertEqual(beta.ca, beta.cs.getsockname())
+        self.assertEqual(beta.ha, beta.cs.getpeername())
+        self.assertEqual(eha, beta.ha)
+
+
+        console.terse("{0}\n".format("Building Request ...\n"))
+        host = u'127.0.0.1'
+        port = 8080
+        method = u'POST'
+        path = u'/echo'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
+        headers = odict([(u'Accept', u'application/json'),
+                 (u'Content-Type', u'multipart/form-data')])
+        fargs = odict([("text",  "This is the life,\nIt is the best.\n"),
+                   ("html", "<html><body></body><html>")])
+        request =  httping.Requester(hostname=host,
+                                     port=port,
+                                     method=method,
+                                     path=path,
+                                     headers=headers)
+
+
+        msgOut = request.build(fargs=fargs)
+
+        beta.tx(msgOut)
+        while beta.txes or not beta.rxbs:
+            beta.serviceTxes()
+            beta.serviceAllRx()
+            time.sleep(0.05)
+        beta.serviceAllRx()
+
+        msgIn, index = beta.tailRxbs(0)
+
+        response = httping.Respondent(beta.rxbs, method=method)
+
+        while response.parser:
+            response.parse()
+
+        self.assertEqual(response.data, {'action': None,
+                                        'content': None,
+                                        'form': [['text', 'This is the life,\nIt is the best.\n'],
+                                                 ['html', '<html><body></body><html>']],
+                                        'query': {},
+                                        'url': 'http://127.0.0.1:8080/echo',
+                                        'verb': 'POST'}
+                                       )
+
+        self.assertEqual(len(beta.rxbs), 0)
+
+        #alpha.close()
+        beta.close()
+
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
 
 
 def runOne(test):
@@ -542,7 +624,8 @@ def runSome():
              'testNonBlockingRequestStream',
              'testNonBlockingRequestStreamFancy',
              'testNonBlockingRequestStreamFancyJson',
-             'testNonBlockingRequestStreamFirebase', ]
+             'testNonBlockingRequestStreamFirebase',
+             'testNonBlockingRequestMultipart']
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -566,4 +649,6 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testNonBlockingRequestStream')
     #runOne('testNonBlockingRequestStreamFancy')
     #runOne('testNonBlockingRequestStreamFancyJson')
-    runOne('testNonBlockingRequestStreamFirebase')
+    #runOne('testNonBlockingRequestStreamFirebase')
+    runOne('testNonBlockingRequestMultipart')
+

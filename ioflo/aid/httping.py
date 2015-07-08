@@ -20,6 +20,7 @@ import codecs
 import json
 import ssl
 import copy
+import random
 
 if sys.version > '3':
     from urllib.parse import urlsplit, quote, quote_plus
@@ -356,7 +357,7 @@ class Requester(object):
         self.path = path or u'/'
         self.qargs = qargs if qargs is not None else odict()
         self.fragment = fragment
-        self.headers = headers or lodict()
+        self.headers = lodict(headers) if headers else lodict()
         if body and isinstance(body, unicode):  # use default
             # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
             body = body.encode('iso-8859-1')
@@ -398,7 +399,7 @@ class Requester(object):
         if fragment is not None:
             self.fragment = fragment
         if headers is not None:
-            self.headers = headers
+            self.headers = lodict(headers)
         if body is not None:  # body should be bytes
             if isinstance(body, unicode):
                 # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
@@ -527,11 +528,26 @@ class Requester(object):
                 body = ns2b(json.dumps(self.data, separators=(',', ':')))
                 self.headers[u'content-type'] = u'application/json; charset=utf-8'
             elif self.fargs is not None:
-                formParts = [u"{0}={1}".format(key, val) for key, val in self.fargs.items()]
-                form = u'&'.join(formParts)
-                form = quote_plus(form, '&=')
-                body = form.encode(encoding='utf-8')
-                self.headers[u'content-type'] = u'application/x-www-form-urlencoded; charset=utf-8'
+                if ((u'content-type' in self.headers and
+                        self.headers[u'content-type'].startswith(u'multipart/form-data'))):
+                    boundary = '____________{0:012x}'.format(random.randint(123456789,
+                                                            0xffffffffffff))
+
+                    formParts = []
+                    # mime parts always start with -- 
+                    for key, val in  self.fargs.items():
+                        formParts.append('\r\n--{0}\r\nContent-Disposition: '
+                                         'form-data; name="{1}"\r\n\r\n{2}'.format(boundary, key, val))
+                    formParts.append('\r\n--{0}--'.format(boundary))
+                    form = "".join(formParts)
+                    body = form.encode(encoding='utf-8')
+                    self.headers[u'content-type'] = u'multipart/form-data; boundary={0}'.format(boundary)
+                else:
+                    formParts = [u"{0}={1}".format(key, val) for key, val in self.fargs.items()]
+                    form = u'&'.join(formParts)
+                    form = quote_plus(form, '&=')
+                    body = form.encode(encoding='utf-8')
+                    self.headers[u'content-type'] = u'application/x-www-form-urlencoded; charset=utf-8'
             else:
                 body = self.body
 

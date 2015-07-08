@@ -1652,7 +1652,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -1714,7 +1714,7 @@ class BasicTestCase(unittest.TestCase):
                                                 'path': '/echo',
                                                 'qargs': {'name': 'fame'},
                                                 'fragment': '',
-                                                'headers': {'Accept': 'application/json'},
+                                                'headers': {'accept': 'application/json'},
                                                 'body': b'',
                                                 'data': None,
                                                 'fargs': None,
@@ -1828,7 +1828,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -1873,7 +1873,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -1988,7 +1988,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -2033,7 +2033,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -2133,7 +2133,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -2181,7 +2181,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -2303,7 +2303,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json',
+                                             {'accept': 'application/json',
                                               'content-type': 'application/json; charset=utf-8'},
                                          'body': b'',
                                          'data': { 'first': 'John', 'last': 'Smith'},
@@ -2352,7 +2352,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json',
+                                             {'accept': 'application/json',
                                               'content-type': 'application/json; charset=utf-8'},
                                          'body': b'',
                                          'data': { 'first': 'John', 'last': 'Smith'},
@@ -2732,7 +2732,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -2777,7 +2777,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -2895,7 +2895,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -2940,7 +2940,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -3063,7 +3063,7 @@ class BasicTestCase(unittest.TestCase):
                                                                'data': None,
                                                                'fargs': None,
                                                                'fragment': '',
-                                                               'headers': {'Accept': 'application/json'},
+                                                               'headers': {'accept': 'application/json'},
                                                                'host': '127.0.0.1',
                                                                'method': 'GET',
                                                                'path': '/echo',
@@ -3081,7 +3081,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -3230,7 +3230,7 @@ class BasicTestCase(unittest.TestCase):
                                                                'data': None,
                                                                'fargs': None,
                                                                'fragment': '',
-                                                               'headers': {'Accept': 'application/json'},
+                                                               'headers': {'accept': 'application/json'},
                                                                'host': '127.0.0.1',
                                                                'method': 'GET',
                                                                'path': '/echo',
@@ -3248,7 +3248,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -3427,7 +3427,7 @@ class BasicTestCase(unittest.TestCase):
                                                                'data': None,
                                                                'fargs': None,
                                                                'fragment': '',
-                                                               'headers': {'Accept': 'application/json'},
+                                                               'headers': {'accept': 'application/json'},
                                                                'host': 'localhost',
                                                                'method': 'GET',
                                                                'path': '/echo',
@@ -3445,7 +3445,7 @@ class BasicTestCase(unittest.TestCase):
                                          'qargs': {'name': 'fame'},
                                          'fragment': '',
                                          'headers':
-                                             {'Accept': 'application/json'},
+                                             {'accept': 'application/json'},
                                          'body': b'',
                                          'data': None,
                                          'fargs': None,
@@ -3459,6 +3459,37 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogGamma.close()
         wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testMultiPartForm(self):
+        """
+        Test multipart form for Requester
+        """
+        console.terse("{0}\n".format(self.testMultiPartForm.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        console.terse("{0}\n".format("Building Request ...\n"))
+        host = u'127.0.0.1'
+        port = 6101
+        method = u'POST'
+        path = u'/echo?name=fame'
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
+        headers = odict([(u'Accept', u'application/json'),
+                         (u'Content-Type', u'multipart/form-data')])
+        fargs = odict([("text",  "This is the life,\nIt is the best.\n"),
+                       ("html", "<html><body></body><html>")])
+        request =  httping.Requester(hostname=host,
+                                     port=port,
+                                     method=method,
+                                     path=path,
+                                     headers=headers)
+        msgOut = request.build(fargs=fargs)
+
+        self.assertTrue(b'Content-Disposition: form-data; name="text"\r\nThis is the life,\nIt is the best.\n\r\n' in msgOut)
+        self.assertTrue(b'Content-Disposition: form-data; name="html"\r\n<html><body></body><html>\r\n' in msgOut)
+        self.assertTrue(request.head.startswith(b'POST /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 233\r\nAccept: application/json\r\nContent-Type: multipart/form-data; boundary='))
+
         console.reinit(verbosity=console.Wordage.concise)
 
 
@@ -3495,6 +3526,7 @@ def runSome():
              'testPatronRedirectSimple',
              'testPatronRedirectComplex',
              'testPatronRedirectComplexSecure',
+             'testMultiPartForm',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -3514,7 +3546,7 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testPatronRequestEcho')
+    #runOne('testMultiPartForm')
     #runOne('testPatronPipelineEchoJson')
     #runOne('testPatronPipelineEchoSimplePathTrack')
     #runOne('testPatronPipelineStream')
