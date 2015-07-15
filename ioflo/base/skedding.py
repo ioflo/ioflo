@@ -18,7 +18,7 @@ console = getConsole()
 from .odicting import odict
 from .globaling import *
 
-from . import aiding
+from ..aid import aiding
 from . import excepting
 from . import registering
 from . import storing

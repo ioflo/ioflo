@@ -13,7 +13,7 @@ import inspect
 
 from .globaling import *
 from .odicting import odict
-from . import aiding
+from ..aid import aiding
 from . import excepting
 from . import registering
 from . import storing

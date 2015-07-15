@@ -13,7 +13,7 @@ import inspect
 from ....base.odicting import odict
 from ....base.globaling import *
 
-from ....base import aiding
+from ....aid import aiding
 
 from ....base import storing
 from ....base import deeding

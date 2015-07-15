@@ -15,7 +15,7 @@ from .odicting import odict
 from . import excepting
 from . import registering
 
-from .aiding import nameToPath
+from ..aid.aiding import nameToPath
 
 from .consoling import getConsole
 console = getConsole()

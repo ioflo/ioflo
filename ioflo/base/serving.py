@@ -15,7 +15,7 @@ from collections import deque
 from .odicting import odict
 from .globaling import *
 
-from . import aiding
+from ..aid import aiding
 #from .aiding import b
 from . import tasking
 

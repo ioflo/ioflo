@@ -9,7 +9,7 @@ from .globaling import *
 from .odicting import odict
 
 from . import excepting
-from .aiding import reverseCamel
+from ..aid.aiding import reverseCamel
 
 from .consoling import getConsole
 console = getConsole()

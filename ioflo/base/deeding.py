@@ -13,7 +13,7 @@ import copy
 
 from .globaling import *
 from .odicting import odict
-from . import aiding
+from ..aid import aiding
 from . import excepting
 from . import registering
 from . import storing
@@ -22,7 +22,8 @@ from . import acting
 from .consoling import getConsole
 console = getConsole()
 
-from .aiding import nonStringIterable, just, nameToPath
+from ..aid.metaing import nonStringIterable
+from ..aid.aiding import  just, nameToPath
 
 def deedify(name,
             base=None,

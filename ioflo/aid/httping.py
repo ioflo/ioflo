@@ -40,7 +40,7 @@ from .sixing import *
 from ..base.odicting import odict, lodict
 from ..base import excepting
 from ..base import storing
-from ..base import aiding
+from . import aiding
 from .nonblocking import Outgoer, OutgoerTls
 
 from ..base.consoling import getConsole

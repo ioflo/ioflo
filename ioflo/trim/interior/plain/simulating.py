@@ -14,7 +14,7 @@ import random
 
 from ....base.globaling import *
 from ....base.odicting import odict
-from ....base import aiding
+from ....aid import aiding
 from ....base import deeding
 
 from ....base.consoling import getConsole

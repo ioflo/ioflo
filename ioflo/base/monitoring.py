@@ -7,7 +7,7 @@
 
 from .globaling import *
 
-from . import aiding
+from ..aid import aiding
 from . import excepting
 from . import tasking
 

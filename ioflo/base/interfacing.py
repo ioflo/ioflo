@@ -17,7 +17,7 @@ from collections import deque #double ended que, pronounced deck
 
 from .globaling import *
 
-from . import aiding
+from ..aid import aiding
 from . import excepting
 
 from .consoling import getConsole

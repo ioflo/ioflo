@@ -17,8 +17,8 @@ except ImportError: #python 3 zip is same as izip
 from .globaling import *
 from .odicting import odict
 
-from . import aiding
-from .aiding import nonStringIterable, nameToPath
+from ..aid.metaing import metaclassify, nonStringIterable
+from ..aid.aiding import nameToPath
 from . import excepting
 from . import registering
 from . import storing
@@ -485,7 +485,7 @@ def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=Non
         return inner
     return implicit
 
-@aiding.metaclassify(registering.RegisterType) # python2or3 compatible
+@metaclassify(registering.RegisterType) # python2or3 compatible
 class Actor(object):
     """ Actor Base Class
         Has Actor specific Registry of classes
@@ -505,10 +505,10 @@ class Actor(object):
             .name = name string for Actor variant in class Registry
             .store = reference to shared data Store
             ._act = reference to containing Act
-            
+
         If subclass has init need to call super
         super(SubClassName, self).__init__(**kwa)
-        
+
         """
         self.name = name
         if store is not None:
@@ -516,7 +516,7 @@ class Actor(object):
                 raise ValueError("Not store {0}".format(store))
             self.store = store
         self._act = act
-        
+
 
     def __call__(self, **kwa):
         """ run .action  """

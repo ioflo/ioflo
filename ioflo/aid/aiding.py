@@ -16,8 +16,8 @@ import time
 import struct
 import re
 import string
-from collections import deque, Iterable, Sequence
-from abc import ABCMeta
+from collections import deque
+
 
 try:
     import simplejson as json
@@ -30,97 +30,13 @@ except ImportError:
     pass
 
 # Import ioflo libs
-from .globaling import *
-from .odicting import odict
-from . import excepting
+from ..base.globaling import *
+from ..base.odicting import odict
+from ..base import excepting
 
-from .consoling import getConsole
+from ..base.consoling import getConsole
 console = getConsole()
 
-
-def metaclassify(metaclass):
-    """
-    Class decorator for creating a class with a metaclass.
-    This enables the same syntax to work in both python2 and python3
-    python3 does not support
-        class name(object):
-            __metaclass__ mymetaclass
-    python2 does not support
-        class name(metaclass=mymetaclass):
-
-    Borrowed from six.py add_metaclass decorator
-
-    Usage:
-    @metaclassify(Meta)
-    class MyClass(object):
-        pass
-    That code produces a class equivalent to:
-
-    on Python 3
-    class MyClass(object, metaclass=Meta):
-        pass
-
-    on Python 2
-    class MyClass(object):
-        __metaclass__ = MyMeta
-    """
-    def wrapper(cls):
-        originals = cls.__dict__.copy()
-        originals.pop('__dict__', None)
-        originals.pop('__weakref__', None)
-        for slots_var in originals.get('__slots__', ()):
-            originals.pop(slots_var)
-        return metaclass(cls.__name__, cls.__bases__, originals)
-    return wrapper
-
-@metaclassify(ABCMeta)
-class NonStringIterable:
-    """ Allows isinstance check for iterable that is not a string
-    """
-    #__metaclass__ = ABCMeta
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is NonStringIterable:
-            if (not issubclass(C, basestring) and issubclass(C, Iterable)):
-                return True
-        return NotImplemented
-
-@metaclassify(ABCMeta)
-class NonStringSequence:
-    """ Allows isinstance check for sequence that is not a string
-    """
-    #__metaclass__ = ABCMeta
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is NonStringSequence:
-            if (not issubclass(C, basestring) and issubclass(C, Sequence)):
-                return True
-        return NotImplemented
-
-def nonStringIterable(obj):
-    """
-    Returns True if obj is non-string iterable, False otherwise
-
-    Future proof way that is compatible with both Python3 and Python2 to check
-    for non string iterables.
-    Assumes in Python3 that, basestring = (str, bytes)
-
-    Faster way that is less future proof
-    return (hasattr(x, '__iter__') and not isinstance(x, basestring))
-    """
-    return (not isinstance(obj, basestring) and isinstance(obj, Iterable))
-
-def nonStringSequence(obj):
-    """
-    Returns True if obj is non-string sequence, False otherwise
-
-    Future proof way that is compatible with both Python3 and Python2 to check
-    for non string sequences.
-    Assumes in Python3 that, basestring = (str, bytes)
-    """
-    return (not isinstance(obj, basestring) and isinstance(obj, Sequence) )
 
 class Timer(object):
     """ Class to manage real elaspsed time.  needs time module
@@ -422,15 +338,15 @@ class StoreTimer(object):
 
 #Utility Functions
 
-def TotalSeconds(td):
+def totalSeconds(td):
     """ Compute total seconds for datetime.timedelta object
         needed for python 2.6
     """
     return ((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6)
 
-totalSeconds = TotalSeconds
+TotalSeconds = totalSeconds
 
-def ReverseCamel(name, lower=True):
+def reverseCamel(name, lower=True):
     """ Returns camel case reverse of name.
         case change boundaries are the sections which are reversed.
         If lower is True then the initial letter in the reversed name is lower case
@@ -453,9 +369,9 @@ def ReverseCamel(name, lower=True):
         name = "".join([part.capitalize() for part in parts])
     return name
 
-reverseCamel = ReverseCamel
+ReverseCamel = reverseCamel
 
-def NameToPath(name):
+def nameToPath(name):
     """ Converts camel case name into full node path where uppercase letters denote
         intermediate nodes in path. Node path ends in dot '.'
 
@@ -473,7 +389,7 @@ def NameToPath(name):
     path = ''.join(pathParts)
     return path
 
-nameToPath = NameToPath
+NameToPath = nameToPath
 
 def Repack(n, seq, default=None):
     """ Repacks seq into a generator of len n and returns the generator.
@@ -514,7 +430,7 @@ def Repack(n, seq, default=None):
 repack = Repack #alias
 
 
-def Just(n, seq, default=None):
+def just(n, seq, default=None):
     """ Returns a generator of just the first n elements of seq and substitutes
         default (None) for any missing elements. This guarantees that a generator of exactly
         n elements is returned. This is to enable unpacking into n varaibles
@@ -542,7 +458,7 @@ def Just(n, seq, default=None):
     for _i in range(n):
         yield next(it, default)
 
-just = Just #alias
+Just = just #alias
 
 # Faster to use precompiled versions in globaling
 def IsPath(s):
