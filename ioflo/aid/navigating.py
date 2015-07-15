@@ -15,9 +15,9 @@ from ..base import excepting
 from ..base.consoling import getConsole
 console = getConsole()
 
-TWOPI = 2.0 * math.pi # two times pi
-DEGTORAD = math.pi / 180.0 # r = DEGTORAD * d
-RADTODEG = 180.0 / math.pi # d = RADTODEG * r
+TWOPI = 2.0 * math.pi  # two times pi
+DEGTORAD = math.pi / 180.0  # r = DEGTORAD * d
+RADTODEG = 180.0 / math.pi  # d = RADTODEG * r
 
 def Sign(x):
     """Calculates the sign of a number and returns

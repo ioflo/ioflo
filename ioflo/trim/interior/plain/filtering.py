@@ -14,6 +14,7 @@ from ....base.odicting import odict
 from ....base.globaling import *
 
 from ....aid import aiding
+from ....aid.navigating import DEGTORAD, RADTODEG
 from ....base import deeding
 
 from ....base.consoling import getConsole

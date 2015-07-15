@@ -11,11 +11,6 @@ from ..aid.sixing import *  # Python2to3 support
 
 #Globals
 #Constant Definitions
-TIME1970 = long(2208988800) #offset secs between SNTP epoch=1900 & unix epoch=1970
-TWOPI = 2.0 * math.pi # two times pi
-DEGTORAD = math.pi / 180.0 # r = DEGTORAD * d
-RADTODEG = 180.0 / math.pi # d = RADTODEG * r
-
 
 #FlowScript build reporting indentations
 INDENT_ADD = '      '
