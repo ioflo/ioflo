@@ -13,7 +13,7 @@ from ....aid.sixing import *
 from ....base.odicting import odict
 from ....base.globaling import *
 
-from ....aid import aiding, navigating
+from ....aid import aiding, navigating, blending
 
 from ....base import storing
 from ....base import deeding
@@ -158,7 +158,7 @@ class ControllerPid(deeding.DeedLapse):
         es = self.es.value
         ae =  self.lapse * (e + pe)/2.0 #use average error over time lapse
         #update errorSum filter only when small error and small error rate
-        es += ae * aiding.Blend0(ae,0.0, 3.0) * aiding.Blend0(er,0.0, 0.1)
+        es += ae * blending.blend0(ae,0.0, 3.0) * blending.blend0(er,0.0, 0.1)
         es = min(self.parm.data.esmax,max(self.parm.data.esmin,es)) #hard limit so no windup
         self.es.value = es
 

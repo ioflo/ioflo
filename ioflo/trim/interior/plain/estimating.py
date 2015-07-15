@@ -15,7 +15,7 @@ from ....aid.sixing import *
 from ....base.odicting import odict
 from ....base.globaling import *
 
-from ....aid import aiding, navigating
+from ....aid import aiding, navigating, blending
 from ....aid.navigating import DEGTORAD, RADTODEG
 from ....base import deeding
 
@@ -252,8 +252,8 @@ class EstimatorPositionNfl(deeding.DeedLapse):
             upsilon = self.parm.data.upsilon
             scale = self.parm.data.scale
 
-            nDelta = nError * aiding.Blend1(nError, upsilon, scale)
-            eDelta = eError * aiding.Blend1(eError, upsilon, scale)
+            nDelta = nError * blending.blend1(nError, upsilon, scale)
+            eDelta = eError * blending.blend1(eError, upsilon, scale)
 
             north += nDelta #make correction to dr disp
             east += eDelta #make correction to dr disp
