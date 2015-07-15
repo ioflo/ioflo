@@ -35,7 +35,7 @@ from email.parser import HeaderParser
 
 # Import ioflo libs
 from .sixing import *
-from ..base.odicting import odict, lodict
+from .odicting import odict, lodict
 from ..base import excepting
 from ..base import storing
 from . import aiding

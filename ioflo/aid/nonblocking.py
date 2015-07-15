@@ -20,7 +20,7 @@ except ImportError:
 # Import ioflo libs
 from .sixing import *
 from ..base.globaling import *
-from ..base.odicting import odict
+from .odicting import odict
 from ..base import excepting
 from ..base import storing
 from ..aid.timing import StoreTimer

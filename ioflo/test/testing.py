@@ -18,7 +18,7 @@ import importlib
 from ..base.consoling import getConsole
 console = getConsole()
 
-from ..base.odicting import odict
+from ..aid.odicting import odict
 
 from ..base import globaling
 from ..base import storing

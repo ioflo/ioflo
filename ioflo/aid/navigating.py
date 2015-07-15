@@ -9,7 +9,7 @@ import math
 
 # Import ioflo libs
 from .sixing import *
-from ..base.odicting import odict
+from .odicting import odict
 from ..base import excepting
 
 from ..base.consoling import getConsole

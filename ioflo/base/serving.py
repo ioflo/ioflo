@@ -12,7 +12,7 @@ import io
 from collections import deque
 
 from ..aid.sixing import *
-from .odicting import odict
+from ..aid.odicting import odict
 from .globaling import *
 
 from ..aid import aiding, nonblocking

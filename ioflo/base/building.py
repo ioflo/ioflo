@@ -17,7 +17,7 @@ except ImportError: #python 3 zip is same as izip
     izip = zip
 
 from ..aid.sixing import *
-from .odicting import odict
+from ..aid.odicting import odict
 from .globaling import *
 
 from . import excepting

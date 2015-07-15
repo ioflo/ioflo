@@ -9,7 +9,7 @@ from collections import deque
 import inspect
 
 from ..aid.sixing import *
-from .odicting import odict
+from ..aid.odicting import odict
 from .globaling import *
 
 from . import deeding

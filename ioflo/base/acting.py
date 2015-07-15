@@ -16,7 +16,7 @@ except ImportError: #python 3 zip is same as izip
 
 from ..aid.sixing import *
 from .globaling import *
-from .odicting import odict
+from ..aid.odicting import odict
 
 from ..aid.metaing import metaclassify, nonStringIterable
 from ..aid.aiding import nameToPath

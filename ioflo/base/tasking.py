@@ -6,7 +6,7 @@
 
 from ..aid.sixing import *
 from .globaling import *
-from .odicting import odict
+from ..aid.odicting import odict
 from . import excepting
 from . import registering
 from . import storing

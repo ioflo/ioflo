@@ -13,7 +13,7 @@ import copy
 
 from ..aid.sixing import *
 from .globaling import *
-from .odicting import odict
+from ..aid.odicting import odict
 from ..aid import aiding
 from . import excepting
 from . import registering
