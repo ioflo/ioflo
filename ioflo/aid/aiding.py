@@ -1515,7 +1515,7 @@ def CRC64(inpkt) :
 
 crc64 = CRC64 # alias
 
-def Ocfn(filename, openMode = 'r+', binary=False):
+def ocfn(filename, openMode = 'r+', binary=False):
     """Atomically open or create file from filename.
 
        If file already exists, Then open file using openMode
@@ -1538,7 +1538,7 @@ def Ocfn(filename, openMode = 'r+', binary=False):
             raise
     return newfile
 
-ocfn = Ocfn # alias
+Ocfn = ocfn # alias
 
 def Load(file = ""):
     """Loads object from pickled file, returns object"""
@@ -1602,8 +1602,3 @@ def LoadJson(filename = ""):
 
 loadJson = LoadJson
 
-
-# Temporary import of nonblocking io classes which were moved to nonblocking.py
-# import via aiding is deprecated and these imports will be removed in the future
-
-from .nonblocking import SerialNb, ConsoleNb, SocketUdpNb, SocketUxdNb, WinMailslotNb
