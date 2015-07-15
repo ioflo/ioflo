@@ -9,11 +9,11 @@ import struct
 from collections import deque
 import inspect
 
-
+from ....aid.sixing import *
 from ....base.odicting import odict
 from ....base.globaling import *
 
-from ....aid import aiding
+from ....aid import aiding, navigating
 
 from ....base import storing
 from ....base import deeding
@@ -146,7 +146,7 @@ class ControllerPid(deeding.DeedLapse):
         pe = self.e.value #prior error
         # update error, unwrap error if setpoint wraps
         #error = input - self.rsp but may wrap so wan't shortest error if wraps
-        e = aiding.Wrap2(angle = (input - rsp), wrap = self.parm.data.wrap)
+        e = navigating.Wrap2(angle = (input - rsp), wrap = self.parm.data.wrap)
         self.e.value = e
 
         if self.parm.data.calcRate: #calculate error rate with time derivative

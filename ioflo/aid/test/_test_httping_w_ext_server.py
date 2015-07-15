@@ -34,6 +34,7 @@ except ImportError:
     import json
 
 # Import ioflo libs
+from ioflo.aid.sixing import *
 from ioflo.base.globaling import *
 from ioflo.base.odicting import odict
 #from ioflo.test import testing

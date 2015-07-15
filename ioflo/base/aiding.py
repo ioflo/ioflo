@@ -9,13 +9,8 @@ from __future__ import division
 # Backwards compatibility for now
 # In future users should import from ioflo.aid.aiding not here
 from ..aid.aiding import  reverseCamel,  \
-     nameToPath, Repack, just, IsPath, IsIdentifier, IsIdentPub, Sign, Delta, Wrap2, \
-     MoveByHSD, MoveToHSD, RotateFSToNE, RotateNEToFS, AlongCrossTrack, CrabSpeed, \
-     CrossProduct3D, DotProduct, PerpProduct2D, DistancePointToTrack2D, SpheroidLLLLToDNDE,  \
-     SphereLLLLToDNDE, SphereLLByDNDEToLL, SphereLLbyRBtoLL, SphereLLLLToRB, \
-     RBToDNDE, DNDEToRB, DegMinToFracDeg, FracDegToDegMin, FracDegToHuman,  \
-     HumanLatToFracDeg, HumanLonToFracDeg, HumanToFracDeg, HumanLLToFracDeg, \
-     Midpoint, Endpoint, Blend0, Blend1, Blend2, Blend3, packByte, unpackByte,  \
+     nameToPath, Repack, just, IsPath, IsIdentifier, IsIdentPub, \
+     Blend0, Blend1, Blend2, Blend3, packByte, unpackByte,  \
      Hexize, Binize, Denary2BinaryStr, Dec2BinStr, PrintHex, PrintDecimal, CRC16, \
      CRC64, ocfn, Load, Dump, DumpJson, LoadJson
 
@@ -29,3 +24,11 @@ from ..aid.metaing import metaclassify, NonStringIterable, NonStringSequence, no
 # In future users should import from ioflo.aid.nonblocking not here
 from .nonblocking import SerialNb, ConsoleNb, SocketUdpNb, SocketUxdNb, WinMailslotNb
 
+# In future users should import from ioflo.aid.navigating not here
+from .navigating import Sign, Delta, Wrap2, \
+    MoveByHSD, MoveToHSD, RotateFSToNE, RotateNEToFS, AlongCrossTrack, CrabSpeed, \
+    CrossProduct3D, DotProduct, PerpProduct2D, DistancePointToTrack2D, SpheroidLLLLToDNDE,  \
+    SphereLLLLToDNDE, SphereLLByDNDEToLL, SphereLLbyRBtoLL, SphereLLLLToRB, \
+    RBToDNDE, DNDEToRB, DegMinToFracDeg, FracDegToDegMin, FracDegToHuman,  \
+    HumanLatToFracDeg, HumanLonToFracDeg, HumanToFracDeg, HumanLLToFracDeg, \
+    Midpoint, Endpoint

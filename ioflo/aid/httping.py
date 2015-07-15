@@ -5,9 +5,7 @@ nonblocking http classes
 
 
 """
-#print("module {0}".format(__name__))
-
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 
 import sys

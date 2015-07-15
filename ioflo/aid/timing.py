@@ -1,19 +1,20 @@
 """aiding.py constants and basic functions
 
 """
-#print("module {0}".format(__name__))
-
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 
 import time
 
 
 # Import ioflo libs
+from .sixing import *
 from ..base import excepting
 
 from ..base.consoling import getConsole
 console = getConsole()
+
+TIME1970 = long(2208988800) #offset secs between SNTP epoch=1900 & unix epoch=1970
 
 def totalSeconds(td):
     """ Compute total seconds for datetime.timedelta object

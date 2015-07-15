@@ -2,9 +2,7 @@
 nonblocking.py
 
 """
-#print("module {0}".format(__name__))
-
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 import sys
 import os
@@ -20,6 +18,7 @@ except ImportError:
     pass
 
 # Import ioflo libs
+from .sixing import *
 from ..base.globaling import *
 from ..base.odicting import odict
 from ..base import excepting

@@ -9,11 +9,11 @@ import struct
 from collections import deque
 import inspect
 
-
+from ....aid.sixing import *
 from ....base.odicting import odict
 from ....base.globaling import *
 
-from ....aid import aiding
+from ....aid import aiding, navigating
 from ....base import deeding
 
 from ....base.consoling import getConsole
@@ -109,7 +109,7 @@ class DetectorPositionBox(deeding.Deed):
             parms = dict(track = 0.0, width = 1000, length = 10000,
                          north = 0.0, east = 0.0, turn = 45.0)
 
-        parms['turn'] = abs(aiding.Wrap2(parms['turn']))
+        parms['turn'] = abs(navigating.Wrap2(parms['turn']))
         self.parm.create(**parms)
 
         turnleft = self.parm.data.track - self.parm.data.turn
@@ -126,8 +126,8 @@ class DetectorPositionBox(deeding.Deed):
            and rotated about center bottom by -track
         """
         #compute turns
-        turnleft = aiding.Wrap2(self.parm.data.track - self.parm.data.turn)
-        turnright = aiding.Wrap2(self.parm.data.track + self.parm.data.turn)
+        turnleft = navigating.Wrap2(self.parm.data.track - self.parm.data.turn)
+        turnright = navigating.Wrap2(self.parm.data.track + self.parm.data.turn)
 
         self.output.update(turnleft = turnleft, turnright = turnright)
 
@@ -146,7 +146,7 @@ class DetectorPositionBox(deeding.Deed):
         pn = pn - cbn
         pe = pe - cbe
         #rotate vehicle position to box by - track
-        pn, pe = aiding.RotateFSToNE(heading = -track, forward = pn, starboard = pe)
+        pn, pe = navigating.RotateFSToNE(heading = -track, forward = pn, starboard = pe)
 
         #compute side tests
         self.output.update(inside = True)  #default inside until shown outside

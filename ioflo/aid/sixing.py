@@ -2,7 +2,7 @@
 Python 2 to 3 supporting definitions
 
 """
-#print("module {0}".format(__name__))
+from __future__ import absolute_import, division, print_function
 
 import sys
 

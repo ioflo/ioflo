@@ -11,11 +11,11 @@ from collections import deque
 import inspect
 
 
-
+from ....aid.sixing import *
 from ....base.odicting import odict
 from ....base.globaling import *
 
-from ....aid import aiding
+from ....aid import aiding, navigating
 from ....base import deeding
 
 from ....base.consoling import getConsole
@@ -211,7 +211,7 @@ class EstimatorPositionNfl(deeding.DeedLapse):
             #use nlfLapse here because we may update position even when no dvl update
             dvlForward = self.dvlVelocity.data.forward * nlfLapse #make distance
             dvlStarboard = self.dvlVelocity.data.starboard * nlfLapse #make distance
-            nDisp, eDisp = aiding.RotateFSToNE(heading, dvlForward, dvlStarboard)
+            nDisp, eDisp = navigating.RotateFSToNE(heading, dvlForward, dvlStarboard)
 
             self.parm.data.dvlStamp = self.stamp #update dvl last used Stamp
 
@@ -264,7 +264,7 @@ class EstimatorPositionNfl(deeding.DeedLapse):
 
             gpsLapse = self.stamp - self.parm.data.gpsPosStamp
 
-            fDelta, sDelta = aiding.RotateNEToFS(heading, nDelta, eDelta)
+            fDelta, sDelta = navigating.RotateNEToFS(heading, nDelta, eDelta)
             gain = self.parm.data.gain
 
             fBias = (1.0 - gain) * fBias + gain * fDelta/gpsLapse

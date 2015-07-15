@@ -18,6 +18,7 @@ import shutil
 import socket
 import errno
 
+from ioflo.aid.sixing import *
 from ioflo.base.globaling import *
 #from ioflo.test import testing
 from ioflo.base.consoling import getConsole

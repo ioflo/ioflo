@@ -11,10 +11,10 @@ from collections import deque
 import random
 
 
-
+from ....aid.sixing import *
 from ....base.globaling import *
 from ....base.odicting import odict
-from ....aid import aiding
+from ....aid import aiding, navigating
 from ....base import deeding
 
 from ....base.consoling import getConsole
@@ -272,7 +272,7 @@ class SimulatorMotionUuv(deeding.DeedLapse):
         #average heading over time lapse to calc position change must avg before wrap around
         headAvg = (heading + headingLast)/2.0
         #don't remember why want heading to be [0, 360] instead of [-180, 180]
-        #if the latter we could use aiding.Wrap2()
+        #if the latter we could use navigating.Wrap2()
         heading %= 360.0 #mod 360 to wrap aound
         if (heading < 0.0): #if negative make equiv positive
             heading += 360.0
@@ -300,7 +300,7 @@ class SimulatorMotionUuv(deeding.DeedLapse):
 
         self.position.update(north = north + deltaNorth, east = east + deltaEast)
 
-        lat, lon = aiding.SphereLLByDNDEToLL(self.location.data.lat,self.location.data.lon,deltaNorth,deltaEast)
+        lat, lon = navigating.SphereLLByDNDEToLL(self.location.data.lat,self.location.data.lon,deltaNorth,deltaEast)
         self.location.update(lat = lat, lon = lon)
 
     def _expose(self):
@@ -478,7 +478,7 @@ class SimulatorMotionUsv(deeding.DeedLapse):
         #average heading over time lapse to calc position change must avg before wrap around
         headAvg = (heading + headingLast)/2.0
         #don't remember why want heading to be [0, 360] instead of [-180, 180]
-        #if the latter we could use aiding.Wrap2()
+        #if the latter we could use navigating.Wrap2()
         heading %= 360.0 #mod 360 to wrap around
         if (heading < 0.0): #if negative make equiv positive
             heading += 360.0
@@ -821,7 +821,7 @@ class SimulatorSensorDvl(deeding.DeedLapse):
         asigma = self.parm.data.altSigma
 
         #transform to body forward starboard
-        cf, cs = aiding.RotateNEToFS(heading, cn, ce)
+        cf, cs = navigating.RotateNEToFS(heading, cn, ce)
         vf = speed + cf
         vs = cs
 
@@ -836,7 +836,7 @@ class SimulatorSensorDvl(deeding.DeedLapse):
         noise = min(vsigma3, max(-vsigma3, random.gauss(0.0, vsigma)))
         cf += noise
         cs += noise
-        cn, ce = aiding.RotateFSToNE(heading, cf, cs)
+        cn, ce = navigating.RotateFSToNE(heading, cf, cs)
 
         asigma3 = asigma * 3.0
         noise = min(asigma3, max(-asigma3, random.gauss(0.0, asigma)))
@@ -1088,7 +1088,7 @@ class SimulatorSalinityLinear(deeding.DeedLapse):
         shift = self.parm.data.shift
 
         #generate distance of vehicle from center track
-        d = aiding.DistancePointToTrack2D([east,north],track, [pe,pn])
+        d = navigating.DistancePointToTrack2D([east,north],track, [pe,pn])
         #shift center pos to right so shift d neg to left
         d -= (self.depth.value - layer) * shift
         d = max(- width/2.0, min( width/2.0, d)) #saturate
@@ -1218,7 +1218,7 @@ class SimulatorSalinitySinusoid(deeding.DeedLapse):
         width = self.parm.data.width #spacial width of salinity front spread
 
         #generate signed distance of vehicle from center track (positive left)
-        d = aiding.DistancePointToTrack2D([east,north],track, [pe,pn])
+        d = navigating.DistancePointToTrack2D([east,north],track, [pe,pn])
 
         d = max(- width/2.0, min( width/2.0, d)) #saturate
 
@@ -1362,7 +1362,7 @@ class SimulatorGradient(deeding.DeedLapse):
         duct = self. parm.data.duct #Type of variation of output with depth in depth
 
         #horizontal distance of vehicle from center track
-        dh = aiding.DistancePointToTrack2D([east,north],track, [pe,pn])
+        dh = navigating.DistancePointToTrack2D([east,north],track, [pe,pn])
         #vertical distance from layer (pos below)
         dv = self.depth.value - layer
 

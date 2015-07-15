@@ -15,6 +15,7 @@ import time
 import copy
 from collections import deque #double ended que, pronounced deck
 
+from ..aid.sixing import *
 from .globaling import *
 
 from ..aid import aiding
