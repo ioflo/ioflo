@@ -8,7 +8,7 @@ from __future__ import division
 
 # Backwards compatibility for now
 # In future users should import from ioflo.aid.aiding not here
-from ..aid.aiding import Timer, MonoTimer, StoreTimer, totalSeconds, reverseCamel,  \
+from ..aid.aiding import  reverseCamel,  \
      nameToPath, Repack, just, IsPath, IsIdentifier, IsIdentPub, Sign, Delta, Wrap2, \
      MoveByHSD, MoveToHSD, RotateFSToNE, RotateNEToFS, AlongCrossTrack, CrabSpeed, \
      CrossProduct3D, DotProduct, PerpProduct2D, DistancePointToTrack2D, SpheroidLLLLToDNDE,  \
@@ -18,6 +18,9 @@ from ..aid.aiding import Timer, MonoTimer, StoreTimer, totalSeconds, reverseCame
      Midpoint, Endpoint, Blend0, Blend1, Blend2, Blend3, packByte, unpackByte,  \
      Hexize, Binize, Denary2BinaryStr, Dec2BinStr, PrintHex, PrintDecimal, CRC16, \
      CRC64, ocfn, Load, Dump, DumpJson, LoadJson
+
+# In future users should import from ioflo.aid.timing not here
+from ..aid.timing import Timer, MonoTimer, StoreTimer, totalSeconds
 
 # In future users should import from ioflo.aid.metaing not here
 from ..aid.metaing import metaclassify, NonStringIterable, NonStringSequence, nonStringIterable, \

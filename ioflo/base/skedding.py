@@ -18,7 +18,7 @@ console = getConsole()
 from .odicting import odict
 from .globaling import *
 
-from ..aid import aiding
+from ..aid import timing
 from . import excepting
 from . import registering
 from . import storing
@@ -127,8 +127,8 @@ class Skedder(object):
         self.stamp = float(abs(stamp))
         #real time or sim time mode
         self.real = True if real else False
-        self.timer = aiding.MonoTimer(duration = self.period, retro=retro)
-        self.elapsed = aiding.MonoTimer(retro=retro)
+        self.timer = timing.MonoTimer(duration = self.period, retro=retro)
+        self.elapsed = timing.MonoTimer(retro=retro)
 
         self.filepath = os.path.abspath(filepath)
         self.plan = os.path.split(self.filepath)[1]

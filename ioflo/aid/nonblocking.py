@@ -24,7 +24,7 @@ from ..base.globaling import *
 from ..base.odicting import odict
 from ..base import excepting
 from ..base import storing
-from ..aid.aiding import StoreTimer
+from ..aid.timing import StoreTimer
 
 
 from ..base.consoling import getConsole

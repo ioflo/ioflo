@@ -40,7 +40,7 @@ from ioflo.base.odicting import odict
 
 from ioflo.aid import nonblocking
 from ioflo.aid import httping
-from ioflo.aid.aiding import Timer
+from ioflo.aid.timing import Timer
 
 from ioflo.base.consoling import getConsole
 console = getConsole()
