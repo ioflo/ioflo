@@ -5,7 +5,7 @@
 #print("Package at {0}".format(__path__[0]))
 import importlib
 
-__all__ = ['globaling', 'aiding', 'excepting', 'interfacing',
+__all__ = ['globaling', 'excepting', 'interfacing',
            'registering', 'storing', 'skedding',
            'tasking', 'framing', 'logging', 'serving', 'monitoring',
            'acting', 'poking', 'goaling', 'needing', 'traiting',
