@@ -1,6 +1,19 @@
 ------------------
 CHANGE LOG
 -------------------
+---------
+201507XX
+---------
+v1.3.X
+
+Refactored base.aiding to aid.aiding and then split out groups of utility
+functions into metaing, navigating, timing, blending
+
+use sixing for 2to3 in more places
+Some other refactoring
+
+Use of ioflo.base.aiding is deprecated. Use ioflo.aid.aiding. In the future
+base.aiding will be removed.
 
 ---------
 20150708
