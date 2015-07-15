@@ -483,8 +483,8 @@ class modict(odict):
         Exceptions are suppressed and result in the default value being set
         """
         try:
-            val = self[key]
-            return kind(val[-1]) if kind else val
+            val = super(modict, self).__getitem__(key)
+            return kind(val[-1]) if kind else val[-1]
         except Exception:
             self.append(key, default)
         return default

@@ -57,6 +57,12 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(x.items(), [('a', 6)])
         self.assertEqual(x.listitems(), [('a', [5, 6])] )
 
+        y = x.setdefault("a", 10)
+        self.assertEqual(y, 6)
+        z = x.setdefault("b", 1)
+        self.assertEqual(z, 1)
+        self.assertEqual(x.listitems(), [('a', [5, 6]), ('b', [1])])
+
 
 
 
