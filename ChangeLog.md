@@ -2,9 +2,9 @@
 CHANGE LOG
 -------------------
 ---------
-201507XX
+20150715
 ---------
-v1.3.X
+v1.3.8
 
 Refactored base.aiding to aid.aiding and then split out groups of utility
 functions into metaing, navigating, timing, blending
@@ -14,6 +14,12 @@ Some other refactoring
 
 Use of ioflo.base.aiding is deprecated. Use ioflo.aid.aiding. In the future
 base.aiding will be removed.
+
+Move odicting and osetting to aid.  base.odicting base.osetting references still
+exist by are deprecated use aid.odicting aid.osetting
+
+added modict (multiple valued odict) class to odicting
+
 
 ---------
 20150708
