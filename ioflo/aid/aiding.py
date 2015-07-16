@@ -82,7 +82,7 @@ def nameToPath(name):
 
 NameToPath = nameToPath
 
-def Repack(n, seq, default=None):
+def repack(n, seq, default=None):
     """ Repacks seq into a generator of len n and returns the generator.
         The purpose is to enable unpacking into n variables.
         The first n-1 elements of seq are returned as the first n-1 elements of the
@@ -118,7 +118,7 @@ def Repack(n, seq, default=None):
         yield next(it, default)
     yield tuple(it)
 
-repack = Repack #alias
+Repack = repack #alias
 
 
 def just(n, seq, default=None):
@@ -152,7 +152,7 @@ def just(n, seq, default=None):
 Just = just #alias
 
 # Faster to use precompiled versions in globaling
-def IsPath(s):
+def isPath(s):
     """Returns True if string s is valid Store path name
        Returns False otherwise
 
@@ -216,7 +216,9 @@ def IsPath(s):
     else:
         return False
 
-def IsIdentifier(s):
+IsPath = isPath
+
+def isIdentifier(s):
     """Returns True if string s is valid python identifier (variable, attribute etc)
        Returns False otherwise
 
@@ -249,6 +251,8 @@ def IsIdentifier(s):
     else:
         return False
 
+IsIdentifier = isIdentifier
+
 def IsIdentPub(s):
     """Returns True if string s is valid python public identifier,
        that is, an identifier that does not start with an underscore
@@ -259,7 +263,7 @@ def IsIdentPub(s):
     else:
         return False
 
-def PackByte(fmt = b'8', fields = [0x0000]):
+def packByte(fmt = b'8', fields = [0x0000]):
     """Packs fields sequence into one byte using fmt string.
 
        Each fields element is a bit field and each
@@ -310,9 +314,9 @@ def PackByte(fmt = b'8', fields = [0x0000]):
 
     return byte
 
-packByte = PackByte # alias
+PackByte = packByte # alias
 
-def UnpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
+def unpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
     """unpacks source byte into tuple of bit fields given by fmt string.
 
        Each char of fmt is a bit field length.
@@ -363,9 +367,9 @@ def UnpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
 
     return tuple(fields) #convert to tuple
 
-unpackByte = UnpackByte # alias
+UnpackByte = unpackByte # alias
 
-def Hexize(s = b''):
+def hexize(s = b''):
     """Converts bytes s into hex format
        Where each char (byte) in bytes s is expanded into the 2 charater hex
        equivalent of the decimal value of each byte
@@ -376,9 +380,9 @@ def Hexize(s = b''):
         h += ("%02x" % ord(s[i:i+1]))
     return h
 
-hexize = Hexize # alias
+Hexize = hexize # alias
 
-def Binize(h = ''):
+def binize(h = ''):
     """Converts string h from hex format into the binary equivalent bytes by
        compressing every two hex characters into 1 byte that is the binary equivalent
        If h does not have an even number of characters then a 0 is first prepended
@@ -401,9 +405,9 @@ def Binize(h = ''):
 
     return p
 
-binize = Binize # alias
+Binize = binize # alias
 
-def Denary2BinaryStr(n, l = 8):
+def denary2BinaryStr(n, l = 8):
     """ Convert denary integer n to binary string bs, left pad to length l"""
     bs = ''
     if n < 0:  raise ValueError("must be a positive integer")
@@ -413,15 +417,15 @@ def Denary2BinaryStr(n, l = 8):
         n = n >> 1
     return bs.rjust(l,'0')
 
-denary2BinaryStr = Denary2BinaryStr # alias
+Denary2BinaryStr = denary2BinaryStr # alias
 
-def Dec2BinStr(n, count=24):
+def dec2BinStr(n, count=24):
     """ returns the binary formated string of integer n, using count number of digits"""
     return "".join([str((n >> y) & 1) for y in range(count-1, -1, -1)])
 
-dec2BinStr = Dec2BinStr # alias
+Dec2BinStr = dec2BinStr # alias
 
-def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
+def printHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
     """prints elements of bytes string s in hex notation.
 
        chunk is number of bytes per chunk
@@ -465,9 +469,9 @@ def PrintHex(s, chunk = 0, chunks = 0, silent = False, separator = '.'):
 
     return ps
 
-printHex = PrintHex # alias
+PrintHex = printHex # alias
 
-def PrintDecimal(s):
+def printDecimal(s):
     """prints elements of string s in decimal notation.
 
     """
@@ -477,9 +481,9 @@ def PrintDecimal(s):
     ps = ps[0:-1] #strip trailing .
     print(ps)
 
-printDecimal = PrintDecimal # alias
+PrintDecimal = printDecimal # alias
 
-def CRC16(inpkt):
+def crc16(inpkt):
     """ Returns 16 bit crc or inpkt packed binary string
         compatible with ANSI 709.1 and 852
         inpkt is bytes in python3 or str in python2
@@ -509,9 +513,9 @@ def CRC16(inpkt):
     crc = crc ^ 0xffff
     return struct.pack("!H",crc )
 
-crc16 = CRC16 # alias
+CRC16 = Crc16 = crc16 # alias
 
-def CRC64(inpkt) :
+def crc64(inpkt) :
     """ Returns 64 bit crc of inpkt binary packed string inpkt
         inpkt is bytes in python3 or str in python2
         returns tuple of two 32 bit numbers for top and bottom of 64 bit crc
@@ -550,7 +554,7 @@ def CRC64(inpkt) :
     crcbot = crcbot ^ 0xffffffff
     return (crctop, crcbot)
 
-crc64 = CRC64 # alias
+CRC64 = Crc64 = crc64 # alias
 
 def ocfn(filename, openMode = 'r+', binary=False):
     """Atomically open or create file from filename.
@@ -577,7 +581,7 @@ def ocfn(filename, openMode = 'r+', binary=False):
 
 Ocfn = ocfn # alias
 
-def Load(file = ""):
+def load(file = ""):
     """Loads object from pickled file, returns object"""
 
     if not file:
@@ -589,9 +593,9 @@ def Load(file = ""):
     f.close()
     return it
 
-load = Load
+Load = load
 
-def Dump(it = None, file = ""):
+def dump(it = None, file = ""):
     """Pickles  it object to file"""
 
     if not it:
@@ -606,9 +610,9 @@ def Dump(it = None, file = ""):
     p.dump(it)
     f.close()
 
-dump = Dump
+Dump = dump
 
-def DumpJson(it = None, filename = "", indent=2):
+def dumpJson(it = None, filename = "", indent=2):
     """Jsonifys it and dumps it to filename"""
     if not it:
         raise ValueError("No object to Dump: {0}".format(it))
@@ -621,9 +625,9 @@ def DumpJson(it = None, filename = "", indent=2):
         f.flush()
         os.fsync(f.fileno())
 
-dumpJson = DumpJson
+DumpJson = dumpJson
 
-def LoadJson(filename = ""):
+def loadJson(filename = ""):
     """ Loads json object from filename, returns unjsoned object"""
     if not filename:
         raise ParameterError("Empty filename to load.")
@@ -637,5 +641,5 @@ def LoadJson(filename = ""):
             return None
         return it
 
-loadJson = LoadJson
+LoadJson = loadJson
 
