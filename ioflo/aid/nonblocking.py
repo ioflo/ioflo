@@ -341,8 +341,7 @@ class SerialNb(object):
                                     timeout=0,
                                     writeTimeout=0)
         self.serial.nonblocking()
-        self.serial.opened = True
-
+        self.opened = True
 
     def reopen(self):
         """
@@ -402,7 +401,6 @@ class Driver(object):
                  uid=0,
                  port=None,
                  speed=9600,
-                 canonical=False,
                  echo=False,
                  bs=1024 ):
         """
@@ -442,7 +440,6 @@ class Driver(object):
                                    echo=echo,
                                    bs=bs)
         self.txes = deque()  # deque of data to send
-        self.rxes = deque()  # deque of data received
         self.rxbs = bytearray()  # byte array of data recieved
 
     def serviceReceives(self):
@@ -450,10 +447,10 @@ class Driver(object):
         Service receives until no more
         """
         while self.device.opened:
-            data = self.device.receive()
+            data = self.device.receive()  # bytes
             if not data:
                 break
-            self.rxes.append(data)
+            self.rxbs.extend(data)
 
     def serviceReceiveOnce(self):
         '''
@@ -462,36 +459,36 @@ class Driver(object):
         if self.device.opened:
             data = self.device.receive()
             if data:
-                self.rxes.append(data)
+                self.rxbs.extend(data)
 
     def clearRxbs(self):
         """
         Clear .rxbs
         """
-        self.rxbs = bytearray()
+        del self.rxbs[:]
 
-    def serviceRxes(self):
+    def scan(self, start):
         """
-        Pop off all rxes and append to .rxbs
+        Returns offset of given start byte in self.rxbs
+        Returns None if start is not given or not found
+        If strip then remove any bytes before offset
         """
-        while self.rxes:
-            self.rxbs.extend(self.rxes.popleft())
+        offset = self.rxbs.find(start)
+        if offset < 0:
+            return None
+        return offset
 
-    def serviceAllRx(self):
+    def strip(self, start):
         """
-        Service all rx services, service recieves and service rxes
+        Strip leading bytes before first occurance of start byte
+        Returns True if start byte found False otherwise
         """
-        self.serviceReceives()
-        self.serviceRxes()
+        offset = self.scan(start=start)
+        if offset is None:
+            return False
 
-    def catRxes(self):
-        """
-        Pop off all rxes and concatenate into single byte string and return
-        This is instead of servicesRxes which appends the .rxes to .rxbs
-        """
-        rx = b''.join(list(self.rxes))
-        self.rxes.clear()
-        return rx
+        del self.rxbs[:offset]
+        return True
 
     def tx(self, data):
         '''
@@ -503,14 +500,12 @@ class Driver(object):
         """
         Service transmits
         """
-        while self.txes and self.device.fd:
+        while self.txes and self.device.opened:
             data = self.txes.popleft()
             count = self.device.send(data)
             if count < len(data):  # put back unsent portion
                 self.txes.appendleft(data[count:])
                 break  # try again later
-
-
 
 
 class WireLog(object):
