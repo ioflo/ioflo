@@ -478,18 +478,6 @@ class Driver(object):
             return None
         return offset
 
-    def strip(self, start):
-        """
-        Strip leading bytes before first occurance of start byte
-        Returns True if start byte found False otherwise
-        """
-        offset = self.scan(start=start)
-        if offset is None:
-            return False
-
-        del self.rxbs[:offset]
-        return True
-
     def tx(self, data):
         '''
         Queue data onto .txes
