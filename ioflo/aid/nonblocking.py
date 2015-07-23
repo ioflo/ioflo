@@ -126,23 +126,21 @@ class DeviceNb(object):
     Needs os module
     """
 
-    def __init__(self, port=None, speed=9600, echo=False, bs=1024):
+    def __init__(self, port=None, speed=9600, bs=1024):
         """
         Initialization method for instance.
 
         port = serial device port path string
         speed = serial port speed in bps
-        echo = echo sends True or False
         bs = buffer size for reads
         """
         self.fd = None #serial device port file descriptor, must be opened first
         self.port = port or os.ctermid() #default to console
         self.speed = speed or 9600
-        self.echo = True if echo else False
         self.bs = bs or 1024
         self.opened = False
 
-    def open(self, port=None, speed=None, echo=None, bs=None):
+    def open(self, port=None, speed=None, bs=None):
         """
         Opens fd on serial port in non blocking mode.
 
@@ -193,8 +191,6 @@ class DeviceNb(object):
             self.port = port
         if speed is not None:
             self.speed = speed
-        if echo is not None:
-            self.echo = True if echo else False
         if bs is not None:
             self.bs = bs
 
@@ -212,10 +208,7 @@ class DeviceNb(object):
 
             settings[lflag] = (settings[lflag] & ~termios.ICANON)
 
-            if self.echo:
-                settings[lflag] = (settings[lflag] | termios.ECHO) # echo
-            else:
-                settings[lflag] = (settings[lflag] & ~termios.ECHO) # no echo
+            settings[lflag] = (settings[lflag] & ~termios.ECHO) # no echo
 
             #ignore carriage returns on input
             #settings[iflag] = (settings[iflag] | (termios.IGNCR)) #ignore cr
@@ -300,13 +293,12 @@ class SerialNb(object):
     Needs os module
     """
 
-    def __init__(self, port=None, speed=9600, echo=False, bs=1024):
+    def __init__(self, port=None, speed=9600, bs=1024):
         """
         Initialization method for instance.
 
         port = serial device port path string
         speed = serial port speed in bps
-        echo = echo sends True or False
         bs = buffer size for reads
 
 
@@ -314,11 +306,10 @@ class SerialNb(object):
         self.serial = None  # Serial instance
         self.port = port or os.ctermid() #default to console
         self.speed = speed or 9600
-        self.echo = True if echo else False
         self.bs = bs or 1024
         self.opened = False
 
-    def open(self, port=None, speed=None, echo=None, bs=None):
+    def open(self, port=None, speed=None, bs=None):
         """
         Opens fd on serial port in non blocking mode.
 
@@ -330,8 +321,6 @@ class SerialNb(object):
             self.port = port
         if speed is not None:
             self.speed = speed
-        if echo is not None:
-            self.echo = True if echo else False
         if bs is not None:
             self.bs = bs
 
@@ -401,7 +390,6 @@ class Driver(object):
                  uid=0,
                  port=None,
                  speed=9600,
-                 echo=False,
                  bs=1024 ):
         """
         Initialization method for instance.
@@ -412,7 +400,6 @@ class Driver(object):
             port = serial device port path string
             speed = serial port speed in bps
             canonical = canonical mode True or False
-            echo = echo sends True or False
             bs = buffer size for reads
 
         Attributes:
@@ -420,7 +407,6 @@ class Driver(object):
            uid = unique identifier for driver
            device = serial device nonblocking
            txes = deque of data bytes to send
-           rxes = deque of data bytes received
            rxbs = bytearray of data bytes received
 
         """
@@ -431,16 +417,14 @@ class Driver(object):
             import serial
             self.device = SerialNb(port=port,
                                    speed=speed,
-                                   echo=echo,
                                    bs=bs)
 
         except importError:
             self.device = DeviceNb(port=port,
                                    speed=speed,
-                                   echo=echo,
                                    bs=bs)
         self.txes = deque()  # deque of data to send
-        self.rxbs = bytearray()  # byte array of data recieved
+        self.rxbs = bytearray()  # byte array of data received
 
     def serviceReceives(self):
         """
@@ -483,17 +467,33 @@ class Driver(object):
         Queue data onto .txes
         '''
         self.txes.append(data)
+        
+    def _serviceOneTx(self):
+        """
+        Handle one tx data
+        """
+        data = self.txes.popleft()
+        count = self.device.send(data)
+        if count < len(data):  # put back unsent portion
+            self.txes.appendleft(data[count:])
+            return False  # blocked
+        return True  # send more
 
     def serviceTxes(self):
         """
-        Service transmits
+        Service txes data
         """
         while self.txes and self.device.opened:
-            data = self.txes.popleft()
-            count = self.device.send(data)
-            if count < len(data):  # put back unsent portion
-                self.txes.appendleft(data[count:])
-                break  # try again later
+            again = self._serviceOneTx()
+            if not again:
+                break  # blocked try again later
+            
+    def serviceTxOnce(self):
+        '''
+        Service one data on the .txes deque to send through device
+        '''
+        if self.txes and self.device.opened:
+            self._handleOneTx()  
 
 
 class WireLog(object):
