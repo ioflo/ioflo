@@ -21,10 +21,10 @@ import copy
 import random
 
 if sys.version > '3':
-    from urllib.parse import urlsplit, quote, quote_plus, unquote
+    from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
 else:
     from urlparse import urlsplit
-    from urllib import quote, quote_plus, unquote
+    from urllib import quote, quote_plus, unquote, unquote_plus
 
 try:
     import simplejson as json
@@ -1687,7 +1687,7 @@ class Patron(object):
         """
         if self.redirects:
             redirect = self.redirects[-1]
-            location = redirect['headers'].get('location')
+            location = unquote(redirect['headers'].get('location'))  # need to fix this
             splits = urlsplit(location)
             hostname = splits.hostname
             port = splits.port
@@ -1700,7 +1700,7 @@ class Patron(object):
                 secured = False # non tls socket connection
                 defaultPort = 80
             hostname, port = normalizeHostPort(hostname, port=port, defaultPort=defaultPort)
-            path = unquote(splits.path)
+            path = splits.path
             query = splits.query
             fragment = splits.fragment
 
