@@ -539,7 +539,7 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        path = u'/fancy?idify=true;multiply=true'
+        path = u'/fancy?idify=true&multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(hostname=host,
@@ -549,7 +549,7 @@ class BasicTestCase(unittest.TestCase):
                                      headers=headers)
         msgOut = request.build()
         lines = [
-                   b'GET /fancy?idify=true;multiply=true HTTP/1.1',
+                   b'GET /fancy?idify=true&multiply=true HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
                    b'Accept-Encoding: identity',
                    b'Accept: application/json',
@@ -559,7 +559,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true&multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -691,7 +691,7 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        path = u'/fancy?idify=true;multiply=true'
+        path = u'/fancy?idify=true&multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(hostname=host,
@@ -702,7 +702,7 @@ class BasicTestCase(unittest.TestCase):
 
         msgOut = request.build()
         lines = [
-                   b'GET /fancy?idify=true;multiply=true HTTP/1.1',
+                   b'GET /fancy?idify=true&multiply=true HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
                    b'Accept-Encoding: identity',
                    b'Accept: application/json',
@@ -712,7 +712,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true&multiply=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -855,7 +855,7 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        path = u'/fancy?idify=true;jsonify=true'
+        path = u'/fancy?idify=true&jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(hostname=host,
@@ -865,7 +865,7 @@ class BasicTestCase(unittest.TestCase):
                                          headers=headers)
         msgOut = request.build()
         lines = [
-            b'GET /fancy?idify=true;jsonify=true HTTP/1.1',
+            b'GET /fancy?idify=true&jsonify=true HTTP/1.1',
             b'Host: 127.0.0.1:6061',
             b'Accept-Encoding: identity',
             b'Accept: application/json',
@@ -875,7 +875,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true&jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")
@@ -1012,7 +1012,7 @@ class BasicTestCase(unittest.TestCase):
         host = u'127.0.0.1'
         port = 6061
         method = u'GET'
-        path = u'/fancy?idify=true;jsonify=true'
+        path = u'/fancy?idify=true&jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
         request =  httping.Requester(hostname=host,
@@ -1022,7 +1022,7 @@ class BasicTestCase(unittest.TestCase):
                                          headers=headers)
         msgOut = request.build()
         lines = [
-            b'GET /fancy?idify=true;jsonify=true HTTP/1.1',
+            b'GET /fancy?idify=true&jsonify=true HTTP/1.1',
             b'Host: 127.0.0.1:6061',
             b'Accept-Encoding: identity',
             b'Accept: application/json',
@@ -1032,7 +1032,7 @@ class BasicTestCase(unittest.TestCase):
         for i, line in enumerate(lines):
             self.assertEqual(line, request.lines[i])
 
-        self.assertEqual(request.head, b'GET /fancy?idify=true;jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(request.head, b'GET /fancy?idify=true&jsonify=true HTTP/1.1\r\nHost: 127.0.0.1:6061\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
         self.assertEqual(msgOut, request.head)
 
         console.terse("Beta requests to Alpha\n")

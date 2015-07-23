@@ -21,10 +21,10 @@ import copy
 import random
 
 if sys.version > '3':
-    from urllib.parse import urlsplit, quote, quote_plus
+    from urllib.parse import urlsplit, quote, quote_plus, unquote
 else:
     from urlparse import urlsplit
-    from urllib import quote, quote_plus
+    from urllib import quote, quote_plus, unquote
 
 try:
     import simplejson as json
@@ -478,8 +478,8 @@ class Requester(object):
                     self.qargs[key] = val
 
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
-        query = ';'.join(qargParts)
-        query = quote_plus(query, ';=')
+        query = '&'.join(qargParts)
+        query = quote_plus(query, '&;=')
 
         fragment = pathSplits.fragment
         if fragment:
@@ -1700,7 +1700,7 @@ class Patron(object):
                 secured = False # non tls socket connection
                 defaultPort = 80
             hostname, port = normalizeHostPort(hostname, port=port, defaultPort=defaultPort)
-            path = splits.path
+            path = unquote(splits.path)
             query = splits.query
             fragment = splits.fragment
 
@@ -1799,11 +1799,11 @@ class Patron(object):
                                         ('method', self.requester.method),
                                         ('path', self.requester.path),
                                         ('fragment', self.requester.fragment),
-                                        ('qargs', self.requester.qargs),
-                                        ('headers', self.requester.headers),
+                                        ('qargs', copy.copy(self.requester.qargs)),
+                                        ('headers', copy.copy(self.requester.headers)),
                                         ('body', self.requester.body),
                                         ('data', self.requester.data),
-                                        ('fargs', self.requester.fargs),
+                                        ('fargs', copy.copy(self.requester.fargs)),
                                        ])
                         self.request = None
                     else:
@@ -1814,26 +1814,26 @@ class Patron(object):
                                          ('method', self.requester.method),
                                          ('path', self.requester.path),
                                          ('fragment', self.requester.fragment),
-                                         ('qargs', self.requester.qargs),
-                                         ('headers', self.requester.headers),
+                                         ('qargs', copy.copy(self.requester.qargs)),
+                                         ('headers', copy.copy(self.requester.headers)),
                                          ('body', self.requester.body),
                                          ('data', self.requester.data),
-                                         ('fargs', self.requester.fargs),
+                                         ('fargs', copy.copy(self.requester.fargs)),
                                         ])
                     response = odict([('version', self.respondent.version),
                                       ('status', self.respondent.status),
                                       ('reason', self.respondent.reason),
-                                      ('headers', self.respondent.headers),
+                                      ('headers', copy.copy(self.respondent.headers)),
                                       ('body', self.respondent.body),
                                       ('data', self.respondent.data),
                                       ('request', request),
                                      ])
                     if self.respondent.redirectable and self.respondent.redirectant:
-                        self.redirects.append(response)
+                        self.redirects.append(copy.copy(response))
                         self.redirect()
                     else:
                         if self.redirects:
-                            response['redirects'] = copy.deepcopy(self.redirects)
+                            response['redirects'] = copy.copy(self.redirects)
                         self.redirects = []
                         self.responses.append(response)
                         self.waited = False
