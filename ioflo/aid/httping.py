@@ -1758,6 +1758,7 @@ class Patron(object):
                     if queryPart:
                         if '=' in queryPart:
                             key, val = queryPart.split('=', 1)
+                            val = unquote(val)
                         else:
                             key = queryPart
                             val = True
