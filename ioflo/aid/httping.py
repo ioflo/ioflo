@@ -479,7 +479,7 @@ class Requester(object):
 
         qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
         query = '&'.join(qargParts)
-        query = quote_plus(query, '&;=')
+        query = quote_plus(query, '&;=%')
 
         fragment = pathSplits.fragment
         if fragment:
@@ -1688,6 +1688,14 @@ class Patron(object):
         if self.redirects:
             redirect = self.redirects[-1]
             location = redirect['headers'].get('location')
+            i = location.find("?")
+            if i > -1:
+                tmpPath = location[:i]
+                tmpArgs = location[i:]
+                tmpPath=unquote(tmpPath)
+                location = tmpPath + tmpArgs
+            else:
+                location=unquote(location)            
             splits = urlsplit(location)
             hostname = splits.hostname
             port = splits.port
