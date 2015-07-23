@@ -472,16 +472,16 @@ class Requester(object):
                 if queryPart:
                     if '=' in queryPart:
                         key, val = queryPart.split('=', 1)
+                        val = unquote(val)
                     else:
                         key = queryPart
                         val = True
                     self.qargs[key] = val
 
-        qargParts = [u"{0}={1}".format(quote_plus(key), quote_plus(val))
+        qargParts = [u"{0}={1}".format(key, quote_plus(val))
                                        for key, val in self.qargs.items()]
         query = '&'.join(qargParts)
         #query = quote_plus(query, '&;=')
-        #query = quote_plus(query)
 
         fragment = pathSplits.fragment
         if fragment:
