@@ -471,15 +471,16 @@ class Requester(object):
             for queryPart in querySplits:  # this prevents duplicates even if desired
                 if queryPart:
                     if '=' in queryPart:
-                        key, val = queryPart.split('=')
+                        key, val = queryPart.split('=', 1)
                     else:
                         key = queryPart
                         val = True
                     self.qargs[key] = val
 
-        qargParts = [u"{0}={1}".format(key, val) for key, val in self.qargs.items()]
+        qargParts = [u"{0}={1}".format(quote_plus(key), quote_plus(val))
+                                       for key, val in self.qargs.items()]
         query = '&'.join(qargParts)
-        query = quote_plus(query, '&;=')
+        #query = quote_plus(query, '&;=')
 
         fragment = pathSplits.fragment
         if fragment:
@@ -1750,7 +1751,7 @@ class Patron(object):
                 for queryPart in querySplits:  # this prevents duplicates even if desired
                     if queryPart:
                         if '=' in queryPart:
-                            key, val = queryPart.split('=')
+                            key, val = queryPart.split('=', 1)
                         else:
                             key = queryPart
                             val = True

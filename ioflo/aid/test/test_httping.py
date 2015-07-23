@@ -11,6 +11,12 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 
+if sys.version > '3':
+    from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
+else:
+    from urlparse import urlsplit
+    from urllib import quote, quote_plus, unquote, unquote_plus
+
 import os
 import time
 import tempfile
@@ -3493,6 +3499,52 @@ class BasicTestCase(unittest.TestCase):
 
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testQueryQuoting(self):
+        """
+        Test agorithm for parsing and reassembling query
+        """
+        console.terse("{0}\n".format(self.testQueryQuoting.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        location = u'https%3A%2F%2Fapi.twitter.com%2F1.1%2Faccount%2Fverify_credentials.json?oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack%3D'
+        location = unquote(location)
+        self.assertEqual(location, u'https://api.twitter.com/1.1/account/verify_credentials.json?oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack=')
+
+        splits = urlsplit(location)
+        query = splits.query
+        self.assertEqual(query, u'oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack=')
+        querySplits = query.split(u'&')
+        self.assertEqual(querySplits, [u'oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU',
+                                        u'oauth_nonce=eb616fe02004000',
+                                        u'oauth_signature_method=HMAC-SHA1',
+                                        u'oauth_timestamp=1437580412',
+                                        u'oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD',
+                                        u'oauth_version=1.0',
+                                        u'oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack='])
+        qargs = odict()
+        for queryPart in querySplits:  # this prevents duplicates even if desired
+            if queryPart:
+                if '=' in queryPart:
+                    key, val = queryPart.split('=', 1)
+                else:
+                    key = queryPart
+                    val = True
+                qargs[key] = val
+
+        self.assertEqual(qargs, {u'oauth_consumer_key': u'meWtb1jEOCQciCgqheqiQoU',
+                                 u'oauth_nonce': u'eb616fe02004000',
+                                 u'oauth_signature_method': u'HMAC-SHA1',
+                                 u'oauth_timestamp': u'1437580412',
+                                 u'oauth_token': u'1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD',
+                                 u'oauth_version': u'1.0', u'oauth_signature':
+                                 u'KBD3DdNVZBjyOd0fqQ9X17ack='})
+        qargParts = [u"{0}={1}".format(quote_plus(key), quote_plus(val))
+                     for key, val in qargs.items()]
+        newQuery = '&'.join(qargParts)
+        self.assertEqual(newQuery, u'oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack%3D')
+
+
+        console.reinit(verbosity=console.Wordage.concise)
 
 def runOne(test):
     '''
@@ -3528,6 +3580,7 @@ def runSome():
              'testPatronRedirectComplex',
              'testPatronRedirectComplexSecure',
              'testMultiPartForm',
+             'testQueryQuoting',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -3554,3 +3607,4 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testPatronPipelineEchoSimpleSecure')
     #runOne('testPatronSecurePipelineEcho')
     #runOne('testPatronRedirectSimple')
+    #runOne('testQueryQuoting')
