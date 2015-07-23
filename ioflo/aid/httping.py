@@ -1687,7 +1687,7 @@ class Patron(object):
         """
         if self.redirects:
             redirect = self.redirects[-1]
-            location = unquote(redirect['headers'].get('location'))  # need to fix this
+            location = unquote(redirect['headers'].get('location'))  # need to test this
             splits = urlsplit(location)
             hostname = splits.hostname
             port = splits.port
