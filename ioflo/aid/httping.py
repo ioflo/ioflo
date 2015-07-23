@@ -481,6 +481,7 @@ class Requester(object):
                                        for key, val in self.qargs.items()]
         query = '&'.join(qargParts)
         #query = quote_plus(query, '&;=')
+        #query = quote_plus(query)
 
         fragment = pathSplits.fragment
         if fragment:
