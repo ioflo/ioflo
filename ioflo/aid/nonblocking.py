@@ -493,7 +493,7 @@ class Driver(object):
         Service one data on the .txes deque to send through device
         '''
         if self.txes and self.device.opened:
-            self._handleOneTx()  
+            self._serviceOneTx()  
 
 
 class WireLog(object):

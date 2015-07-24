@@ -475,7 +475,7 @@ class Requester(object):
                         val = unquote(val)
                     else:
                         key = queryPart
-                        val = True
+                        val = u'true'
                     self.qargs[key] = val
 
         qargParts = [u"{0}={1}".format(key, quote_plus(val))
@@ -1761,7 +1761,7 @@ class Patron(object):
                             val = unquote(val)
                         else:
                             key = queryPart
-                            val = True
+                            val = u'true'
                         qargs[key] = val
 
             self.transmit(method=method, path=path, qargs=qargs, fragment=fragment)
