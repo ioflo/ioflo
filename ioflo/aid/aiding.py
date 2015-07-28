@@ -369,21 +369,58 @@ def unpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
 
 UnpackByte = unpackByte # alias
 
-def hexize(s = b''):
-    """Converts bytes s into hex format
-       Where each char (byte) in bytes s is expanded into the 2 charater hex
+def hexize(b=b''):
+    """Converts bytes string b into hex format unicode string h
+       Where each char (byte) in bytes b is expanded into the 2 charater hex
        equivalent of the decimal value of each byte
-       returns the expanded hex version of the bytes as string
+       returns the expanded hex version of the bytes as unicode string
     """
-    h = ''
-    for i in range(len(s)):
-        h += ("%02x" % ord(s[i:i+1]))
+    h = u''
+    for i in range(len(b)):
+        h += "{0:02x}".format(ord(b[i:i+1]))
     return h
 
 Hexize = hexize # alias
 
-def binize(h = ''):
-    """Converts string h from hex format into the binary equivalent bytes by
+def binize(h=u''):
+    """Converts string h from hex format into the binary equivalent bytes string by
+       compressing every two hex characters into 1 byte that is the binary equivalent
+       If h does not have an even number of characters then a 0 is first prepended
+       to h
+       returns the packed binary  version of the string as a bytes string
+    """
+    #remove any non hex characters, any char that is not in '0123456789ABCDEF'
+    hh = h #make copy so iteration not change
+    for c in hh:
+        if c not in string.hexdigits:
+            h = h.replace(c,'') #delete characters
+
+    if len(h) % 2: #odd number of characters
+        h = u'0' + h #prepend a zero to make even number
+
+    b = b''
+    for i in xrange(0, len(h), 2):
+        s = h[i:i+2]
+        b = b + struct.pack('!B', int(s, 16))
+
+    return b
+
+Binize = binize # alias
+
+def hexify(b=bytearray([])):
+    """Converts byte array b into into unicode string in hex format
+       Where each char (byte) in bytearray b is expanded into the 2 charater hex
+       equivalent of the decimal value of each byte
+       returns the expanded hex version of the bytes as unicode string
+    """
+    b = bytearray(b)  # just in case bytes
+    h = u''
+    for byte in b:
+        h += "{0:02x}".format(byte)
+    return h
+
+def binify(h=u''):
+    """Converts string h from hex format into the binary equivalent bytearray
        compressing every two hex characters into 1 byte that is the binary equivalent
        If h does not have an even number of characters then a 0 is first prepended
        to h
@@ -394,18 +431,13 @@ def binize(h = ''):
     for c in hh:
         if c not in string.hexdigits:
             h = h.replace(c,'') #delete characters
-
     if len(h) % 2: #odd number of characters
-        h = '0' + h #prepend a zero to make even number
-
-    p = ''
-    for i in xrange(0,len(h),2):
+        h = u'0' + h #prepend a zero to make even number
+    b = bytearray([])
+    for i in xrange(0, len(h), 2):
         s = h[i:i+2]
-        p = p + struct.pack('!B',int(s,16))
-
-    return p
-
-Binize = binize # alias
+        b.append(int(s, 16))
+    return b
 
 def denary2BinaryStr(n, l = 8):
     """ Convert denary integer n to binary string bs, left pad to length l"""
