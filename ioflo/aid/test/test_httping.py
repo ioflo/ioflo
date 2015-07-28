@@ -3546,7 +3546,7 @@ class BasicTestCase(unittest.TestCase):
                                  u'oauth_token': u'1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD',
                                  u'oauth_version': u'1.0', u'oauth_signature':
                                  u'KBD3DdNVZBjyOd0fqQ9X17ack='})
-        qargParts = [u"{0}={1}".format(key, quote_plus(val))
+        qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
                      for key, val in qargs.items()]
         newQuery = '&'.join(qargParts)
         self.assertEqual(newQuery, u'oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack%3D')
