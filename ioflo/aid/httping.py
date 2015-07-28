@@ -478,7 +478,7 @@ class Requester(object):
                         val = u'true'
                     self.qargs[key] = val
 
-        qargParts = [u"{0}={1}".format(key, quote_plus(val))
+        qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
                                        for key, val in self.qargs.items()]
         query = '&'.join(qargParts)
 
