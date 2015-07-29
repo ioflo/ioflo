@@ -77,11 +77,11 @@ class BasicTestCase(unittest.TestCase):
         b = aiding.bytify(n, 2)
         self.assertEqual(b, bytearray([1, 2, 3]))
 
-    def testPackify(self):
+    def testPackifyUnpackify(self):
         """
         Test the packbits
         """
-        console.terse("{0}\n".format(self.testPackify.__doc__))
+        console.terse("{0}\n".format(self.testPackifyUnpackify.__doc__))
 
         fmt = u'3211'
         fields = [6, 2, True, False]
@@ -111,6 +111,34 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(aiding.binize(aiding.unbytify(packed), size*8), '101001011110000001000001')
         # 0xa5e040
 
+        fmt = u'3211'
+        packed = bytearray([212])
+        fields = aiding.unpackify(fmt=fmt, b=packed, boolean=True)
+        self.assertEqual(fields, (6, 2, True, False, False))
+        fields = aiding.unpackify(fmt=fmt, b=packed, boolean=False)
+        self.assertEqual(fields, (6, 2, 1, 0, 0))
+
+        fmt = u''
+        packed = bytearray([])
+        fields = aiding.unpackify(fmt=fmt, b=packed)
+        self.assertEqual(fields, tuple())
+
+        fmt = u'31'
+        packed = [0xb0]
+        fields = aiding.unpackify(fmt=fmt, b=packed)
+        self.assertEqual(fields, (5, 1, 0))
+
+        fmt = u'431'
+        packed = [0x0b]
+        fields = aiding.unpackify(fmt=fmt, b=packed)
+        self.assertEqual(fields, (0, 5, 1))
+
+        fmt = u'8673'
+        packed = bytearray([0xa5, 0xe0, 0x41])
+        fields = aiding.unpackify(fmt=fmt, b=packed)
+        self.assertEqual(fields, (0xA5, 0x38, 0x08, 0x01))
+
+
 def runOne(test):
     '''
     Unittest Runner
@@ -125,7 +153,7 @@ def runSome():
     names = [
              'testBinizeUnbinize',
              'testIntifyBytify',
-             'testPackify',
+             'testPackifyUnpackify',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

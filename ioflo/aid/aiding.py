@@ -338,7 +338,6 @@ def unhexify(h=u''):
         b.append(int(s, 16))
     return b
 
-
 def bytify(n=0, size=3):
     """
     Returns bytearray of size bytes equivalent of integer n that is left zero padded
@@ -365,7 +364,7 @@ def unbytify(b=bytearray([])):
         n += b.pop()
     return n
 
-def packify(fmt = u'8', fields = [0x00], size=1):
+def packify(fmt=u'8', fields=[0x00], size=1):
     """
     Packs fields sequence of bit fields into bytearray of size bytes using fmt string.
 
@@ -413,6 +412,65 @@ def packify(fmt = u'8', fields = [0x00], size=1):
         bfp -= bfl #adjust bit field position for next element
 
     return bytify(packed, size)
+
+def unpackify(fmt=u'11111111', b=bytearray([0x00]), boolean=False):
+    """
+    Returns tuple of unsigned int bit field values that are unpacked from the
+    bytearray b according to fmt string. b maybe integer iterator
+
+    Each char of fmt is the length of the associated bit field.
+    returns unsigned fields values.
+
+    Assumes network big endian so first fmt is high order bits.
+    Format string is number of bits per bit field
+    If boolean parameter is True then return boolean values for
+       bit fields of length 1
+
+    if sum of number of bits in fmt less than 8 * len(b) then remaining
+    bits are returned as additional field in result.
+
+    if sum of number of bits in fmt greater 8 * len(b) returns exception
+
+    example:
+    unpackify(u"1322", bytearray([0xc3]), False) returns (1, 4, 0, 3)
+    unpackify(u"1322", 0xc3, True) returns (True, 4, 0, 3)
+    """
+    b = bytearray(b)
+    size = len(b)
+    fields = []  # list of bit fields
+    bfp = 8 * size  # bit field position
+    bu = 0  # bits used
+    n = unbytify(b)  # unsigned int equivalent of b
+
+    for i, bfmt in enumerate(fmt):
+        bfl = int(bfmt)
+        bu += bfl
+
+        if not (0 < bu <= (size * 8)):
+            raise ValueError("Total bit field lengths in fmt not >0 and < {0}".format(size * 8))
+
+        mask = (2**bfl - 1) << (bfp - bfl)  # make mask
+        bits = n & mask  # mask off other bits
+        bits >>= (bfp - bfl)  # right shift to low order bits
+        if bfl == 1 and boolean: #convert to boolean
+            if bits:
+                bits = True
+            else:
+                bits = False
+        fields.append(bits) #assign to fields list
+        bfp -= bfl #adjust bit field position for next element
+
+    if bfp != 0:  # remaining bits
+        bfl = bfp
+        mask = (2**bfl - 1) # make mask
+        bits = n & mask  # mask off other bits
+        if bfl == 1 and boolean: #convert to boolean
+            if bits:
+                bits = True
+            else:
+                bits = False
+        fields.append(bits) #assign to fields list
+    return tuple(fields) #convert to tuple
 
 def packByte(fmt = b'8', fields = [0x00]):
     """Packs fields sequence into one byte using fmt string.
