@@ -60,8 +60,6 @@ def reverseCamel(name, lower=True):
         name = "".join([part.capitalize() for part in parts])
     return name
 
-ReverseCamel = reverseCamel
-
 def nameToPath(name):
     """ Converts camel case name into full node path where uppercase letters denote
         intermediate nodes in path. Node path ends in dot '.'
@@ -79,8 +77,6 @@ def nameToPath(name):
     pathParts.append('.')
     path = ''.join(pathParts)
     return path
-
-NameToPath = nameToPath
 
 def repack(n, seq, default=None):
     """ Repacks seq into a generator of len n and returns the generator.
@@ -118,9 +114,6 @@ def repack(n, seq, default=None):
         yield next(it, default)
     yield tuple(it)
 
-Repack = repack #alias
-
-
 def just(n, seq, default=None):
     """ Returns a generator of just the first n elements of seq and substitutes
         default (None) for any missing elements. This guarantees that a generator of exactly
@@ -148,8 +141,6 @@ def just(n, seq, default=None):
     it = iter(seq)
     for _i in range(n):
         yield next(it, default)
-
-Just = just #alias
 
 # Faster to use precompiled versions in globaling
 def isPath(s):
@@ -216,8 +207,6 @@ def isPath(s):
     else:
         return False
 
-IsPath = isPath
-
 def isIdentifier(s):
     """Returns True if string s is valid python identifier (variable, attribute etc)
        Returns False otherwise
@@ -251,9 +240,7 @@ def isIdentifier(s):
     else:
         return False
 
-IsIdentifier = isIdentifier
-
-def IsIdentPub(s):
+def isIdentPub(s):
     """Returns True if string s is valid python public identifier,
        that is, an identifier that does not start with an underscore
        Returns False otherwise
@@ -263,7 +250,171 @@ def IsIdentPub(s):
     else:
         return False
 
-def packByte(fmt = b'8', fields = [0x0000]):
+def binize(n=0, size=8):
+    """
+    Returns the expanded binary unicode string equivalent of integer n,
+    left zero padded using size number of bits
+
+    example binize(11, 4) returns u'1011'
+    """
+    return "".join([str((n >> y) & 1) for y in range(size-1, -1, -1)])
+
+def unbinize(u=u''):
+    """
+    Returns integer n equivalent of binary unicode string u
+
+    example: unbinize(u'1011') returns 11
+    """
+    n = 0
+    for bit in u:
+        n <<= 1
+        n |= 1 if int(bit) else 0
+    return n
+
+def hexize(b=b''):
+    """
+    Returns the expanded hex unicode string equivalent of the bytes string b
+    Converts bytes string  b into the unicode hex format equivalent
+    Where each byte in bytes b is expanded into the 2 charater hex
+    equivalent
+    """
+    h = u''
+    for i in range(len(b)):
+        h += "{0:02x}".format(ord(b[i:i+1]))
+    return h
+
+def unhexize(h=u''):
+    """
+    Returns the packed bytes string version of the unicode hex string h
+    Converts unicode string h in hex format into  bytes string by compressing
+    every two hex characters into 1 byte that is the binary equivalent
+    If h does not have an even number of characters then a 0 is first prepended to h
+
+    """
+    #remove any non hex characters, any char that is not in '0123456789ABCDEF'
+    hh = h  # make copy so iteration not change
+    for c in hh:
+        if c not in string.hexdigits:
+            h = h.replace(c,'') #delete characters
+
+    if len(h) % 2: #odd number of characters
+        h = u'0' + h #prepend a zero to make even number
+
+    b = b''
+    for i in xrange(0, len(h), 2):
+        s = h[i:i+2]
+        b = b + struct.pack('!B', int(s, 16))
+
+    return b
+
+def hexify(b=bytearray([])):
+    """
+    Returns the unicode string hex equivalent of the bytearray b
+    Converts byte in b into into the two character unicode string hex equivalent
+    """
+    b = bytearray(b)  # just in case bytes
+    h = u''
+    for byte in b:
+        h += "{0:02x}".format(byte)
+    return h
+
+def unhexify(h=u''):
+    """
+    Returns the packed binary bytearray equivalent of the unicode hex string h
+    version of the string as bytes
+    Where every two hex characters in h are compressed into one byte binary equivalent
+    If h does not have an even number of characters then a '0' is first prependedto h
+    """
+    #remove any non hex characters, any char that is not in '0123456789ABCDEF'
+    hh = h #make copy so iteration not change
+    for c in hh:
+        if c not in string.hexdigits:
+            h = h.replace(c,'') #delete characters
+    if len(h) % 2: #odd number of characters
+        h = u'0' + h #prepend a zero to make even number
+    b = bytearray([])
+    for i in xrange(0, len(h), 2):
+        s = h[i:i+2]
+        b.append(int(s, 16))
+    return b
+
+
+def bytify(n=0, size=3):
+    """
+    Returns bytearray of size bytes equivalent of integer n that is left zero padded
+    to at least size bytes
+    """
+    b = bytearray([])
+    count = 0
+    while n or (count < size):
+        b.insert(0, n & 0xFF)
+        count += 1
+        n >>=  8
+    return b
+
+def unbytify(b=bytearray([])):
+    """
+    Returns unsigned integer equivalent of bytearray b
+    b may be any iterable of ints including bytes or list of ints
+    """
+    b = bytearray(b)
+    b.reverse()
+    n = 0
+    while b:
+        n <<= 8
+        n += b.pop()
+    return n
+
+def packify(fmt = u'8', fields = [0x00], size=1):
+    """
+    Packs fields sequence of bit fields into bytearray of size bytes using fmt string.
+
+    Each fields element is a bit field and each char in fmt is the corresponding
+    bit field length.
+    Assumes unsigned fields values.
+    Assumes network big endian so first fields element is high order bits.
+    Each char in format string is number of bits for the associated bit field
+    Fields with length of 1 are treated as has having boolean truthy field values
+       that is,   nonzero is True and packs as a 1
+    for 2+ length bit fields the field element is truncated
+    to the number of low order bits in the bit field
+    if sum of number of bits in fmt less than size bytes the remaining bits are zero padded
+    if sum of number of bits in fmt greater than size bytes returns exception
+    to pad just use 0 value in source field.
+    example
+    packify("1322",(True,4,0,3)). returns bytearry(0xc3)
+    """
+    if abs(int(size)) != size:
+        raise ValueError("Invalid size={0}. Not positive integer.".format(size))
+
+    packed = 0
+    bfp = 8 * size  # bit field position
+    bu = 0  # bits used
+
+    for i, bfmt in enumerate(fmt):
+        bits = 0x00
+        bfl = int(bfmt)
+        bu += bfl
+
+        if not (0 < bu <= (size * 8)):
+            raise ValueError("Total bit field lengths in fmt not >0 and < {0}".format(size * 8))
+
+        if bfl == 1:
+            if fields[i]:
+                bits = 0x01
+            else:
+                bits = 0x00
+        else:
+            bits = fields[i] & (2**bfl - 1)  # bit-and mask out high order bits
+
+        bits <<= (bfp - bfl) #shift left to bit position less bit field size
+
+        packed |= bits  # bit-or in bits
+        bfp -= bfl #adjust bit field position for next element
+
+    return bytify(packed, size)
+
+def packByte(fmt = b'8', fields = [0x00]):
     """Packs fields sequence into one byte using fmt string.
 
        Each fields element is a bit field and each
@@ -271,13 +422,13 @@ def packByte(fmt = b'8', fields = [0x0000]):
        Assumes unsigned fields values.
        Assumes network big endian so first fields element is high order bits.
        Format string is number of bits per bit field
-       Fields with length of 1 are treated as has having boolean field values
+       Fields with length of 1 are treated as has having boolean truthy field values
           that is,   nonzero is True and packs as a 1
        for 2-8 length bit fields the field element is truncated
        to the number of low order bits in the bit field
        if sum of number of bits in fmt less than 8 last bits are padded
        if sum of number of bits in fmt greater than 8 returns exception
-       to pad just use 0 value in source.
+       to pad just use 0 value in source field.
        example
        PackByte("1322",(True,4,0,3)). returns 0xc3
     """
@@ -288,7 +439,7 @@ def packByte(fmt = b'8', fields = [0x0000]):
 
     for i in range(len(fmt)):
         bits = 0x00
-        bfl = int(fmt[i:i+1])
+        bfl = int(fmt[i:i+1])  # slice returns bytes not byte so int works
 
         if not (0 < bfl <= 8):
             raise ValueError("Bit field length in fmt must be > 0 and <= 8")
@@ -343,7 +494,7 @@ def unpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
     byte &= 0xff #get low order byte
 
     for i in range(len(fmt)):
-        bfl = int(fmt[i:i+1])
+        bfl = int(fmt[i:i+1])  # slice returns bytes not byte so int works
 
         if not (0 < bfl <= 8):
             raise ValueError("Bit field length in fmt must be > 0 and <= 8")
@@ -369,78 +520,10 @@ def unpackByte(fmt = b'11111111', byte = 0x00, boolean = True):
 
 UnpackByte = unpackByte # alias
 
-def hexize(b=b''):
-    """Converts bytes string b into hex format unicode string h
-       Where each char (byte) in bytes b is expanded into the 2 charater hex
-       equivalent of the decimal value of each byte
-       returns the expanded hex version of the bytes as unicode string
+def denary2BinaryStr(n, l=8):
     """
-    h = u''
-    for i in range(len(b)):
-        h += "{0:02x}".format(ord(b[i:i+1]))
-    return h
-
-Hexize = hexize # alias
-
-def binize(h=u''):
-    """Converts string h from hex format into the binary equivalent bytes string by
-       compressing every two hex characters into 1 byte that is the binary equivalent
-       If h does not have an even number of characters then a 0 is first prepended
-       to h
-       returns the packed binary  version of the string as a bytes string
+    Convert denary integer n to binary string bs, left pad to length l
     """
-    #remove any non hex characters, any char that is not in '0123456789ABCDEF'
-    hh = h #make copy so iteration not change
-    for c in hh:
-        if c not in string.hexdigits:
-            h = h.replace(c,'') #delete characters
-
-    if len(h) % 2: #odd number of characters
-        h = u'0' + h #prepend a zero to make even number
-
-    b = b''
-    for i in xrange(0, len(h), 2):
-        s = h[i:i+2]
-        b = b + struct.pack('!B', int(s, 16))
-
-    return b
-
-Binize = binize # alias
-
-def hexify(b=bytearray([])):
-    """Converts byte array b into into unicode string in hex format
-       Where each char (byte) in bytearray b is expanded into the 2 charater hex
-       equivalent of the decimal value of each byte
-       returns the expanded hex version of the bytes as unicode string
-    """
-    b = bytearray(b)  # just in case bytes
-    h = u''
-    for byte in b:
-        h += "{0:02x}".format(byte)
-    return h
-
-def binify(h=u''):
-    """Converts string h from hex format into the binary equivalent bytearray
-       compressing every two hex characters into 1 byte that is the binary equivalent
-       If h does not have an even number of characters then a 0 is first prepended
-       to h
-       returns the packed binary  version of the string as bytes
-    """
-    #remove any non hex characters, any char that is not in '0123456789ABCDEF'
-    hh = h #make copy so iteration not change
-    for c in hh:
-        if c not in string.hexdigits:
-            h = h.replace(c,'') #delete characters
-    if len(h) % 2: #odd number of characters
-        h = u'0' + h #prepend a zero to make even number
-    b = bytearray([])
-    for i in xrange(0, len(h), 2):
-        s = h[i:i+2]
-        b.append(int(s, 16))
-    return b
-
-def denary2BinaryStr(n, l = 8):
-    """ Convert denary integer n to binary string bs, left pad to length l"""
     bs = ''
     if n < 0:  raise ValueError("must be a positive integer")
     if n == 0: return '0'

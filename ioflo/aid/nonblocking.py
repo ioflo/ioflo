@@ -477,6 +477,7 @@ class Driver(object):
         if count < len(data):  # put back unsent portion
             self.txes.appendleft(data[count:])
             return False  # blocked
+        console.profuse("{0}: Sent: {1}\n".format(self.name, data))
         return True  # send more
 
     def serviceTxes(self):

@@ -9,9 +9,9 @@ from __future__ import division
 # Backwards compatibility for now
 # In future users should import from ioflo.aid.aiding not here
 from ..aid.aiding import  reverseCamel,  \
-     nameToPath, Repack, just, IsPath, IsIdentifier, IsIdentPub, \
+     nameToPath, repack, just, isPath, isIdentifier, isIdentPub, \
      packByte, unpackByte,  \
-     Hexize, Binize, Denary2BinaryStr, Dec2BinStr, PrintHex, PrintDecimal, CRC16, \
+     hexize, unhexize, Denary2BinaryStr, Dec2BinStr, PrintHex, PrintDecimal, CRC16, \
      CRC64, ocfn, Load, Dump, DumpJson, LoadJson
 
 # In future users should import from ioflo.aid.timing not here
