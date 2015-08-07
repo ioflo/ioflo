@@ -390,7 +390,8 @@ class Driver(object):
                  uid=0,
                  port=None,
                  speed=9600,
-                 bs=1024 ):
+                 bs=1024,
+                 server=None):
         """
         Initialization method for instance.
 
@@ -401,11 +402,12 @@ class Driver(object):
             speed = serial port speed in bps
             canonical = canonical mode True or False
             bs = buffer size for reads
+            server = serial port device server if any
 
         Attributes:
            name = user friendly name for driver
            uid = unique identifier for driver
-           device = serial device nonblocking
+           server = serial device server nonblocking
            txes = deque of data bytes to send
            rxbs = bytearray of data bytes received
 
@@ -413,16 +415,20 @@ class Driver(object):
         self.name = name
         self.uid = uid
 
-        try:
-            import serial
-            self.device = SerialNb(port=port,
-                                   speed=speed,
-                                   bs=bs)
+        if not server:
+            try:
+                import serial
+                self.server = SerialNb(port=port,
+                                       speed=speed,
+                                       bs=bs)
 
-        except importError:
-            self.device = DeviceNb(port=port,
-                                   speed=speed,
-                                   bs=bs)
+            except importError:
+                self.server = DeviceNb(port=port,
+                                       speed=speed,
+                                       bs=bs)
+        else:
+            self.server = server
+
         self.txes = deque()  # deque of data to send
         self.rxbs = bytearray()  # byte array of data received
 
@@ -430,8 +436,8 @@ class Driver(object):
         """
         Service receives until no more
         """
-        while self.device.opened:
-            data = self.device.receive()  # bytes
+        while self.server.opened:
+            data = self.server.receive()  # bytes
             if not data:
                 break
             self.rxbs.extend(data)
@@ -440,8 +446,8 @@ class Driver(object):
         '''
         Retrieve from server only one reception
         '''
-        if self.device.opened:
-            data = self.device.receive()
+        if self.server.opened:
+            data = self.server.receive()
             if data:
                 self.rxbs.extend(data)
 
@@ -467,13 +473,13 @@ class Driver(object):
         Queue data onto .txes
         '''
         self.txes.append(data)
-        
+
     def _serviceOneTx(self):
         """
         Handle one tx data
         """
         data = self.txes.popleft()
-        count = self.device.send(data)
+        count = self.server.send(data)
         if count < len(data):  # put back unsent portion
             self.txes.appendleft(data[count:])
             return False  # blocked
@@ -484,17 +490,17 @@ class Driver(object):
         """
         Service txes data
         """
-        while self.txes and self.device.opened:
+        while self.txes and self.server.opened:
             again = self._serviceOneTx()
             if not again:
                 break  # blocked try again later
-            
+
     def serviceTxOnce(self):
         '''
         Service one data on the .txes deque to send through device
         '''
-        if self.txes and self.device.opened:
-            self._serviceOneTx()  
+        if self.txes and self.server.opened:
+            self._serviceOneTx()
 
 
 class WireLog(object):
