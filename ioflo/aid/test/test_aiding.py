@@ -5,6 +5,7 @@ Unit Test Template
 from __future__ import absolute_import, division, print_function
 
 import sys
+import datetime
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -13,6 +14,7 @@ else:
 import os
 
 from ioflo.aid.sixing import *
+from ioflo.aid.odicting import odict
 from ioflo.test import testing
 from ioflo.base.consoling import getConsole
 console = getConsole()
@@ -43,6 +45,70 @@ class BasicTestCase(unittest.TestCase):
         Call super if override so House Framer and Frame are torn down correctly
         """
         super(BasicTestCase, self).tearDown()
+
+    def testTagify(self):
+        """
+        Test tagify function
+        """
+        console.terse("{0}\n".format(self.testTagify.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        tag = aiding.tagify()
+        self.assertEqual(tag, u'')
+
+        tag = aiding.tagify(head='exchange')
+        self.assertEqual(tag, 'exchange')
+
+        tag = aiding.tagify(head='exchange', tail='completed')
+        self.assertEqual(tag, 'exchange.completed')
+
+        tag = aiding.tagify(head='exchange', tail=['process', 'started'])
+        self.assertEqual(tag, 'exchange.process.started')
+
+        tag = aiding.tagify(head='exchange', tail=['process', 'started'], sep='/')
+        self.assertEqual(tag, 'exchange/process/started')
+
+        tag = aiding.tagify(tail=['process', 'started'])
+        self.assertEqual(tag, 'process.started')
+
+        console.reinit(verbosity=console.Wordage.concise)
+
+    def testEventify(self):
+        """
+        Test eventify function
+        """
+        console.terse("{0}\n".format(self.testEventify.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        dt = datetime.datetime.utcnow()
+        stamp = dt.isoformat()
+
+        event = aiding.eventify('hello')
+        self.assertEqual(event['tag'], 'hello')
+        self.assertEqual(event['data'], {})
+        #"YYYY-MM-DDTHH:MM:SS.mmmmmm"
+        tdt = datetime.datetime.strptime(event['stamp'], "%Y-%m-%dT%H:%M:%S.%f")
+        self.assertGreater(tdt, dt)
+
+        event = aiding.eventify(tag=aiding.tagify(head='exchange', tail='started'),
+                                stamp=stamp)
+        self.assertEqual(event['tag'], 'exchange.started' )
+        self.assertEqual(event['stamp'], stamp )
+
+        event = aiding.eventify(tag=aiding.tagify(tail='started', head='exchange'),
+                                stamp=stamp,
+                                data = odict(name='John'))
+        self.assertEqual(event['tag'], 'exchange.started')
+        self.assertEqual(event['stamp'], stamp)
+        self.assertEqual(event['data'], {'name':  'John',})
+
+        stamp = '2015-08-10T19:26:47.194736'
+        event = aiding.eventify(tag='process.started', stamp=stamp, data={'name': 'Jill',})
+        self.assertEqual(event, {'tag': 'process.started',
+                                 'stamp': '2015-08-10T19:26:47.194736',
+                                 'data': {'name': 'Jill',},})
+
+        console.reinit(verbosity=console.Wordage.concise)
 
     def testBinizeUnbinize(self):
         """
@@ -151,6 +217,8 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = [
+             'testTagify',
+             'testEventify',
              'testBinizeUnbinize',
              'testIntifyBytify',
              'testPackifyUnpackify',
