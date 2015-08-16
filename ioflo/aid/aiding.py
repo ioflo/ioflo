@@ -269,17 +269,21 @@ def tagify(tail=u'', head=u'', sep=u'.'):
         parts.append(tail)
     return sep.join([part for part in parts if part])
 
-def eventify(tag, data=None, stamp=None):
+def eventify(tag, data=None, stamp=None, uid=None):
     """
     Returns new event with tag and  current timestamp and data if any
     Timestamp is iso 8601
     YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
+    Adds uid field if provided
     """
-    return ( odict([(u'tag', tag),
+    event = odict([(u'tag', tag),
                     (u'stamp', stamp if stamp is not None else
                          datetime.datetime.utcnow().isoformat()),
                     (u'data', data if data is not None else odict())
-                   ]) )
+                   ])
+    if uid is not None:
+        event['uid'] = uid
+    return event
 
 
 def binize(n=0, size=8):

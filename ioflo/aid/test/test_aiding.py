@@ -108,6 +108,12 @@ class BasicTestCase(unittest.TestCase):
                                  'stamp': '2015-08-10T19:26:47.194736',
                                  'data': {'name': 'Jill',},})
 
+        event = aiding.eventify(tag="with uid", stamp=stamp, uid="abcde")
+        self.assertEqual(event, {'data': {},
+                                'stamp': '2015-08-10T19:26:47.194736',
+                                'tag': 'with uid',
+                                'uid': 'abcde'})
+
         console.reinit(verbosity=console.Wordage.concise)
 
     def testBinizeUnbinize(self):

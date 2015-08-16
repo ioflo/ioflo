@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 
 import time
+import random
 
 
 # Import ioflo libs
@@ -23,6 +24,41 @@ def totalSeconds(td):
     return ((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6)
 
 TotalSeconds = totalSeconds
+
+def tuid(stamp=None):
+    """
+    Returns lexocographically sortable TUID  (Time Unique Identifier)
+    that as hex formated string of length 24
+    stamp is float time since unix epoch (1970-1-1) as in time.time()
+    If stamp not provided uses current system time UTC
+
+    Format of of TUID is hex string of form stamphex_randombyteshex
+    Example:
+    '0000014ddf1f2f9c_5e36738'
+
+    Stamp is time since unix epoch (1970-1-1) in milliseconds, for example
+        1422658890197
+
+    Unix time is 32 bit integer in seconds which rolls over on 2038-1-19
+    To represent unix epoch in seconds need at least 32 bits
+    To represent unix epoch in microseconds use 64 bits (8 bytes, 16 hex characters)
+
+    Adding separator character adds 1 hex char for 17 hex digits
+    Adding 7 hex char of random data brings the total to 24 hex bytes
+
+    28 bits (3.5 bytes, 7 hex characters) the random bytes or 24 characters total
+
+    16 chars (8 bytes) stamp + 1 char underscore + 7 chars (3.5 bytes) random =
+        24 chars (12 bytes)
+
+    Uses random.SystemRandom which is crytographically random
+    """
+    stamp = stamp if stamp is not None else time.mktime(time.gmtime())
+    stamp = int(stamp * 1000000)
+    stamp = "{0:016x}".format(stamp)[-16:]
+    randomized = random.SystemRandom().randint(0, 0xFFFFFFF)
+    randomized = "{0:07x}".format(randomized)[-7:]
+    return ("{0}_{1}".format(stamp, randomized))
 
 
 class Timer(object):
