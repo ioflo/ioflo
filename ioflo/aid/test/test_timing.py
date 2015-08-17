@@ -46,21 +46,21 @@ class BasicTestCase(unittest.TestCase):
         """
         super(BasicTestCase, self).tearDown()
 
-    def testTuid(self):
+    def testTuuid(self):
         """
-        Test TUID generation
+        Test TUUID generation
         """
-        console.terse("{0}\n".format(self.testTuid.__doc__))
+        console.terse("{0}\n".format(self.testTuuid.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        tuid = timing.tuid()
+        tuid = timing.tuuid()
         self.assertEqual(len(tuid), 24)
         stamp, sep, randomized = tuid.rpartition('_')
         self.assertEqual(sep, '_')
         self.assertEqual(len(stamp), 16)
         self.assertEqual(len(randomized), 7)
 
-        tuid =  timing.tuid(9)
+        tuid =  timing.tuuid(9)
         self.assertEqual(len(tuid), 24)
         stamp, sep, randomized = tuid.rpartition('_')
         self.assertEqual(sep, '_')
@@ -83,7 +83,7 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = [
-             'testTuid',
+             'testTuuid',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

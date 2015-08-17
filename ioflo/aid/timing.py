@@ -25,14 +25,14 @@ def totalSeconds(td):
 
 TotalSeconds = totalSeconds
 
-def tuid(stamp=None):
+def tuuid(stamp=None):
     """
-    Returns lexocographically sortable TUID  (Time Unique Identifier)
+    Returns lexocographically sortable TUUID  (Time Universal Unique Identifier)
     that as hex formated string of length 24
     stamp is float time since unix epoch (1970-1-1) as in time.time()
     If stamp not provided uses current system time UTC
 
-    Format of of TUID is hex string of form stamphex_randombyteshex
+    Format of of TUUID is hex string of form stamphex_randombyteshex
     Example:
     '0000014ddf1f2f9c_5e36738'
 
