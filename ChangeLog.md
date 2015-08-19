@@ -1,6 +1,19 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+20150819
+---------
+v1.3.9
+
+Added support for serial driver stack for higher level serial protocol nonblocking
+on top of raw nonblocking serial port
+
+Added some utility functions
+
+
+
 ---------
 20150715
 ---------
