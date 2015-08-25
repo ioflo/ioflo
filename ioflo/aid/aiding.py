@@ -403,12 +403,11 @@ def unbytify(b=bytearray([])):
 def packify(fmt=u'8', fields=[0x00], size=1):
     """
     Packs fields sequence of bit fields into bytearray of size bytes using fmt string.
+    Each space separated field of fmt is the length of the associated bit field
 
-    Each fields element is a bit field and each char in fmt is the corresponding
-    bit field length.
     Assumes unsigned fields values.
     Assumes network big endian so first fields element is high order bits.
-    Each char in format string is number of bits for the associated bit field
+    Each field in format string is number of bits for the associated bit field
     Fields with length of 1 are treated as has having boolean truthy field values
        that is,   nonzero is True and packs as a 1
     for 2+ length bit fields the field element is truncated
@@ -426,7 +425,7 @@ def packify(fmt=u'8', fields=[0x00], size=1):
     bfp = 8 * size  # bit field position
     bu = 0  # bits used
 
-    for i, bfmt in enumerate(fmt):
+    for i, bfmt in enumerate(fmt.split()):
         bits = 0x00
         bfl = int(bfmt)
         bu += bfl
@@ -449,12 +448,12 @@ def packify(fmt=u'8', fields=[0x00], size=1):
 
     return bytify(packed, size)
 
-def unpackify(fmt=u'11111111', b=bytearray([0x00]), boolean=False):
+def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False):
     """
     Returns tuple of unsigned int bit field values that are unpacked from the
     bytearray b according to fmt string. b maybe integer iterator
 
-    Each char of fmt is the length of the associated bit field.
+    Each space separated field of fmt is the length of the associated bit field.
     returns unsigned fields values.
 
     Assumes network big endian so first fmt is high order bits.
@@ -478,7 +477,7 @@ def unpackify(fmt=u'11111111', b=bytearray([0x00]), boolean=False):
     bu = 0  # bits used
     n = unbytify(b)  # unsigned int equivalent of b
 
-    for i, bfmt in enumerate(fmt):
+    for i, bfmt in enumerate(fmt.split()):
         bfl = int(bfmt)
         bu += bfl
 

@@ -155,7 +155,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPackifyUnpackify.__doc__))
 
-        fmt = u'3211'
+        fmt = u'3 2 1 1'
         fields = [6, 2, True, False]
         size = 1
         packed = aiding.packify(fmt=fmt, fields=fields, size=size)
@@ -168,14 +168,14 @@ class BasicTestCase(unittest.TestCase):
         packed = aiding.packify(fmt=fmt, fields=fields, size=size)
         self.assertEqual(packed, bytearray([]))
 
-        fmt = u'31'
+        fmt = u'3 1'
         fields = [5, True]
         size = 1
         packed = aiding.packify(fmt=fmt, fields=fields, size=size)
         self.assertEqual(packed, bytearray([0xb0]))
         self.assertEqual(aiding.binize(aiding.unbytify(packed), size*8), '10110000')
 
-        fmt = u'8673'
+        fmt = u'8 6 7 3'
         fields = [0xA5, 0x38, 0x08, 0x01]
         size = 3
         packed = aiding.packify(fmt=fmt, fields=fields, size=size)
@@ -183,7 +183,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(aiding.binize(aiding.unbytify(packed), size*8), '101001011110000001000001')
         # 0xa5e040
 
-        fmt = u'3211'
+        fmt = u'3 2 1 1'
         packed = bytearray([212])
         fields = aiding.unpackify(fmt=fmt, b=packed, boolean=True)
         self.assertEqual(fields, (6, 2, True, False, False))
@@ -195,17 +195,17 @@ class BasicTestCase(unittest.TestCase):
         fields = aiding.unpackify(fmt=fmt, b=packed)
         self.assertEqual(fields, tuple())
 
-        fmt = u'31'
+        fmt = u'3 1'
         packed = [0xb0]
         fields = aiding.unpackify(fmt=fmt, b=packed)
         self.assertEqual(fields, (5, 1, 0))
 
-        fmt = u'431'
+        fmt = u'4 3 1'
         packed = [0x0b]
         fields = aiding.unpackify(fmt=fmt, b=packed)
         self.assertEqual(fields, (0, 5, 1))
 
-        fmt = u'8673'
+        fmt = u'8 6 7 3'
         packed = bytearray([0xa5, 0xe0, 0x41])
         fields = aiding.unpackify(fmt=fmt, b=packed)
         self.assertEqual(fields, (0xA5, 0x38, 0x08, 0x01))
