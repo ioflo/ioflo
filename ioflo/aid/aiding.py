@@ -416,7 +416,7 @@ def packify(fmt=u'8', fields=[0x00], size=1):
     if sum of number of bits in fmt greater than size bytes returns exception
     to pad just use 0 value in source field.
     example
-    packify("1322",(True,4,0,3)). returns bytearry(0xc3)
+    packify("1 3 2 2", (True, 4, 0, 3)). returns bytearry([0xc3])
     """
     if abs(int(size)) != size:
         raise ValueError("Invalid size={0}. Not positive integer.".format(size))
@@ -467,8 +467,8 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False):
     if sum of number of bits in fmt greater 8 * len(b) returns exception
 
     example:
-    unpackify(u"1322", bytearray([0xc3]), False) returns (1, 4, 0, 3)
-    unpackify(u"1322", 0xc3, True) returns (True, 4, 0, 3)
+    unpackify(u"1 3 2 2", bytearray([0xc3]), False) returns (1, 4, 0, 3)
+    unpackify(u"1 3 2 2", 0xc3, True) returns (True, 4, 0, 3)
     """
     b = bytearray(b)
     size = len(b)
