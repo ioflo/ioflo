@@ -212,73 +212,7 @@ class LineTooLong(HTTPException):
                                      % (MAX_LINE_SIZE, kind))
 
 
-# these are here for potential backwards compatibility
-# currently unused
 
-class NotConnected(HTTPException):
-    pass
-
-class UnknownTransferEncoding(HTTPException):
-    pass
-
-class UnimplementedFileMode(HTTPException):
-    pass
-
-class IncompleteRead(HTTPException):
-    def __init__(self, partial, expected=None):
-        self.args = partial,
-        self.partial = partial
-        self.expected = expected
-    def __repr__(self):
-        if self.expected is not None:
-            e = ', %i more expected' % self.expected
-        else:
-            e = ''
-        return 'IncompleteRead(%i bytes read%s)' % (len(self.partial), e)
-    def __str__(self):
-        return repr(self)
-
-class ImproperConnectionState(HTTPException):
-    pass
-
-class CannotSendRequest(ImproperConnectionState):
-    pass
-
-class CannotSendHeader(ImproperConnectionState):
-    pass
-
-class ResponseNotReady(ImproperConnectionState):
-    pass
-
-class WaitLine(HTTPException):
-    def __init__(self, kind, actual, index):
-        self.args = (kind, actual, index)
-        self.kind = kind
-        self.actual = actual
-        self.index = index
-
-    def __repr__(self):
-        emsg = ("Waited parsing {0}. Line end still missing after {1} bytes "
-            "past {2}".formate(self.kind, self.actual, self.index))
-        return emsg
-
-    def __str__(self):
-        return repr(self)
-
-class WaitContent(HTTPException):
-    def __init__(self, actual, expected, index):
-        self.args = (actual, expected, index)
-        self.actual = actual
-        self.expected = expected
-        self.index = index
-
-    def __repr__(self):
-        emsg = ("Waited need more bytes. Line end missing after {0} bytes "
-            "past {1} while parsing {2}".formate(self.count, self.index, self.kind))
-        return emsg
-
-    def __str__(self):
-        return repr(self)
 
 # Utility functions
 

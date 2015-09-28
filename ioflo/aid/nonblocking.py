@@ -13,6 +13,12 @@ import io
 import platform
 from collections import deque
 
+
+try:
+    import ssl
+except ImportError:
+    pass
+
 try:
     import win32file
 except ImportError:
@@ -1078,6 +1084,69 @@ class WinMailslotNb(object):
 
         return result
 
+
+def initServerContext(context=None,
+                      version=None,
+                      certify=None,
+                      keypath=None,
+                      certpath=None,
+                      cafilepath=None
+                      ):
+    """
+    Initialize and return context for TLS Server
+    IF context is None THEN create a context
+
+    IF version is None THEN create context using ssl library default
+    ELSE create context with version
+
+    If certify is not None then use certify value provided Otherwise use default
+
+    context = context object for tls/ssl If None use default
+    version = ssl version If None use default
+    certify = cert requirement If None use default
+              ssl.CERT_NONE = 0
+              ssl.CERT_OPTIONAL = 1
+              ssl.CERT_REQUIRED = 2
+    keypath = pathname of local server side PKI private key file path
+              If given apply to context
+    certpath = pathname of local server side PKI public cert file path
+              If given apply to context
+    cafilepath = Cert Authority file path to use to verify client cert
+              If given apply to context
+    """
+    if context is None:  # create context
+        if not version:  # use default context
+            context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            context.verify_mode = certify if certify is not None else ssl.CERT_REQUIRED
+
+        else:  # create context with specified protocol version
+            context = ssl.SSLContext(version)
+            # disable bad protocols versions
+            context.options |= ssl.OP_NO_SSLv2
+            context.options |= ssl.OP_NO_SSLv3
+            # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
+            context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
+            # Prefer the server's ciphers by default fro stronger encryption
+            context.options |= getattr(ssl._ssl, "OP_CIPHER_SERVER_PREFERENCE", 0)
+            # Use single use keys in order to improve forward secrecy
+            context.options |= getattr(ssl._ssl, "OP_SINGLE_DH_USE", 0)
+            context.options |= getattr(ssl._ssl, "OP_SINGLE_ECDH_USE", 0)
+            # disallow ciphers with known vulnerabilities
+            context.set_ciphers(ssl._RESTRICTED_SERVER_CIPHERS)
+            context.verify_mode = certify if certify is not None else ssl.CERT_REQUIRED
+
+        if cafilepath:
+            context.load_verify_locations(cafile=cafilepath,
+                                          capath=None,
+                                          cadata=None)
+        elif context.verify_mode != ssl.CERT_NONE:
+            context.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
+
+        if keypath or certpath:
+            context.load_cert_chain(certfile=certpath, keyfile=keypath)
+    return context
+
+
 class Outgoer(object):
     """
     Nonblocking TCP Socket Client Class.
@@ -1487,6 +1556,233 @@ class Outgoer(object):
 ClientSocketTcpNb = Client = Outgoer  # aliases
 
 
+class OutgoerTls(Outgoer):
+    """
+    Outgoer with Nonblocking TLS/SSL support
+    Nonblocking TCP Socket Client Class.
+    """
+    def __init__(self,
+                 context=None,
+                 version=None,
+                 certify=None,
+                 hostify=None,
+                 certedhost="",
+                 keypath=None,
+                 certpath=None,
+                 cafilepath=None,
+                 **kwa):
+        """
+        Initialization method for instance.
+
+        IF no context THEN create one
+
+        IF no version THEN create using library default
+
+        IF certify is not None then use certify else use default
+
+        IF hostify is not none the use hostify else use default
+
+        context = context object for tls/ssl If None use default
+        version = ssl version If None use default
+        certify = cert requirement If None use default
+                  ssl.CERT_NONE = 0
+                  ssl.CERT_OPTIONAL = 1
+                  ssl.CERT_REQUIRED = 2
+        keypath = pathname of local client side PKI private key file path
+                  If given apply to context
+        certpath = pathname of local client side PKI public cert file path
+                  If given apply to context
+        cafilepath = Cert Authority file path to use to verify server cert
+                  If given apply to context
+        hostify = verify server hostName If None use default
+        certedhost = server's certificate common name (hostname) to check against
+        """
+        super(OutgoerTls, self).__init__(**kwa)
+
+        self._connected = False  # attributed supporting connected property
+
+        if context is None:  # create context
+            if not version:  # use default context
+                context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+                hostify = hostify if hostify is not None else context.check_hostname
+                context.check_hostname = hostify
+                certify = certify if certify is not None else context.verify_mode
+                context.verify_mode = certify
+
+            else:  # create context with specified protocol version
+                context = ssl.SSLContext(version)
+                # disable bad protocols versions
+                context.options |= ssl.OP_NO_SSLv2
+                context.options |= ssl.OP_NO_SSLv3
+                # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
+                context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
+                context.verify_mode = certify = ssl.CERT_REQUIRED if certify is None else certify
+                context.check_hostname = hostify = True if hostify else False
+
+        self.context = context
+        self.certedhost = certedhost or self.hostname
+
+        if cafilepath:
+            context.load_verify_locations(cafile=cafilepath,
+                                          capath=None,
+                                          cadata=None)
+        elif context.verify_mode != ssl.CERT_NONE:
+            context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+
+        if keypath or certpath:
+            context.load_cert_chain(certfile=certpath, keyfile=keypath)
+
+        if hostify and certify == ssl.CERT_NONE:
+            raise ValueError("Check Hostname needs a SSL context with "
+                             "either CERT_OPTIONAL or CERT_REQUIRED")
+
+    @property
+    def connected(self):
+        '''
+        Property that returns connected state of TCP socket
+        TLS tcp is connected when accepted and handshake completed
+        '''
+        return self._connected
+
+    @connected.setter
+    def connected(self, value):
+        '''
+        setter for connected property
+        '''
+        self._connected = value
+
+    def shutclose(self):
+        """
+        Shutdown and close connected socket .cs
+        """
+        if self.cs:
+            self.shutdown()
+            self.cs.close()  #close socket
+            self.cs = None
+            self.accepted = False
+            self.connected = False
+
+    close = shutclose  # alias
+
+    def wrap(self):
+        """
+        Wrap socket .cs in ssl context
+        """
+        self.cs = self.context.wrap_socket(self.cs,
+                                           server_side=False,
+                                           do_handshake_on_connect=False,
+                                           server_hostname=self.certedhost)
+
+    def handshake(self):
+        """
+        Attempt nonblocking ssl handshake to .ha
+        Returns True if successful
+        Returns False if not so try again later
+        """
+        try:
+            self.cs.do_handshake()
+        except ssl.SSLError as ex:
+            if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                return False
+            elif ex.errno in (ssl.SSL_ERROR_EOF, ):
+                self.shutclose()
+                raise   # should give up here nicely
+            else:
+                self.shutclose()
+                raise
+        except OSError as ex:
+            self.shutclose()
+            if ex.errno in (errno.ECONNABORTED, ):
+                raise  # should give up here nicely
+            raise
+        except Exception as ex:
+            self.shutclose()
+            raise
+
+        self.connected = True
+        return True
+
+    def connect(self):
+        """
+        Attempt nonblocking connect to .ha
+        Returns True if successful
+        Returns False if not so try again later
+        Connected when both accepted connection and TLS handshake complete
+        """
+        if not self.accepted:
+            self.accept()
+
+            if self.accepted:  # only do this once immediately after accepted
+                if not self.certedhost:
+                    self.certedhost = self.ha[0]
+                self.wrap()
+
+        if self.accepted and not self.connected:
+            self.handshake()
+
+        return self.connected
+
+    def receive(self):
+        """
+        Perform non blocking receive from connected socket .cs
+
+        If no data then returns None
+        If connection closed then returns ''
+        Otherwise returns data
+        """
+        try:
+            data = self.cs.recv(self.bs)
+        except ssl.SSLError as ex:
+            if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                return None
+            else:
+                emsg = ("SSLError = {0}: OutgoerTLS at {1} receiving"
+                        " from {2}\n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                raise  # re-raise
+
+        if data:  # connection open
+            if console._verbosity >= console.Wordage.profuse:  # faster to check
+                cmsg = ("\nOutgoer at {0}, received from {1}:\n------------\n"
+                           "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
+                console.profuse(cmsg)
+
+            if self.wlog:  # log over the wire rx
+                self.wlog.writeRx(self.ha, data)
+        else:  # data empty so connection closed on other end
+            self.cutoff = True
+
+        return data
+
+    def send(self, data):
+        """
+        Perform non blocking send on connected socket .cs.
+        Return number of bytes sent
+
+        data is string in python2 and bytes in python3
+        """
+        try:
+            result = self.cs.send(data) #result is number of bytes sent
+        except ssl.SSLError as ex:
+            result = 0
+            if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                emsg = ("socket.error = {0}: OutgoerTLS at {1} while sending "
+                        "to {2} \n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                raise
+
+        if result:
+            if console._verbosity >=  console.Wordage.profuse:
+                cmsg = ("\nOutgoer at {0}, sent {1} bytes to {2}:\n------------\n"
+                        "{3}\n".format(self.ca, result, self.ha, data[:result].decode('UTF-8')))
+                console.profuse(cmsg)
+
+            if self.wlog:
+                self.wlog.writeTx(self.ha, data[:result])
+
+        return result
+
+
 class Incomer(object):
     """
     Manager class for incoming nonblocking TCP connections.
@@ -1705,6 +2001,174 @@ class Incomer(object):
                 break  # try again later
 
 
+class IncomerTls(Incomer):
+    """
+    Incomer with Nonblocking TLS/SSL support
+    Manager class for incoming nonblocking TCP connections.
+    """
+    def __init__(self,
+                 context=None,
+                 version=None,
+                 certify=None,
+                 keypath=None,
+                 certpath=None,
+                 cafilepath=None,
+                 **kwa):
+
+        """
+        Initialization method for instance.
+        context = context object for tls/ssl If None use default
+        version = ssl version If None use default
+        certify = cert requirement If None use default
+                  ssl.CERT_NONE = 0
+                  ssl.CERT_OPTIONAL = 1
+                  ssl.CERT_REQUIRED = 2
+        keypath = pathname of local server side PKI private key file path
+                  If given apply to context
+        certpath = pathname of local server side PKI public cert file path
+                  If given apply to context
+        cafilepath = Cert Authority file path to use to verify client cert
+                  If given apply to context
+        """
+        super(IncomerTls, self).__init__(**kwa)
+
+        self.connected = False  # True once ssl handshake completed
+
+        self.context = initServerContext(context=context,
+                                    version=version,
+                                    certify=certify,
+                                    keypath=keypath,
+                                    certpath=certpath,
+                                    cafilepath=cafilepath
+                                  )
+        self.wrap()
+
+    def shutclose(self):
+        """
+        Shutdown and close connected socket .cs
+        """
+        if self.cs:
+            self.shutdown()
+            self.cs.close()  #close socket
+            self.cs = None
+            self.connected = False
+
+    close = shutclose  # alias
+
+    def wrap(self):
+        """
+        Wrap socket .cs in ssl context
+        """
+        self.cs = self.context.wrap_socket(self.cs,
+                                           server_side=True,
+                                           do_handshake_on_connect=False)
+
+    def handshake(self):
+        """
+        Attempt nonblocking ssl handshake to .ha
+        Returns True if successful
+        Returns False if not so try again later
+        """
+        try:
+            self.cs.do_handshake()
+        except ssl.SSLError as ex:
+            if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                return False
+            elif ex.errno in (ssl.SSL_ERROR_EOF, ):
+                self.shutclose()
+                raise   # should give up here nicely
+            else:
+                self.shutclose()
+                raise
+        except OSError as ex:
+            self.shutclose()
+            if ex.errno in (errno.ECONNABORTED, ):
+                raise  # should give up here nicely
+            raise
+        except Exception as ex:
+            self.shutclose()
+            raise
+
+        self.connected = True
+        return True
+
+    def serviceHandshake(self):
+        """
+        Service connection and handshake attempt
+        If not already accepted and handshaked  Then
+             make nonblocking attempt
+        Returns .handshaked
+        """
+        if not self.connected:
+            self.handshake()
+
+        return self.connected
+
+    def receive(self):
+        """
+        Perform non blocking receive on connected socket .cs
+
+        If no data then returns None
+        If connection closed then returns ''
+        Otherwise returns data
+
+        data is string in python2 and bytes in python3
+        """
+        try:
+            data = self.cs.recv(self.bs)
+        except ssl.SSLError as ex:
+            if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                return None
+            else:
+                emsg = ("SSLError = {0}: IncomerTLS at {1} while receiving"
+                        " from {2}\n".format(ex, self.ha, self.ca))
+                console.profuse(emsg)
+                raise  # re-raise
+
+        if data:  # connection open
+            if console._verbosity >= console.Wordage.profuse:  # faster to check
+                cmsg = ("Incomer at {0} received from {1}\n"
+                       "{2}\n".format(self.ha, self.ca, data.decode("UTF-8")))
+                console.profuse(cmsg)
+
+            if self.wlog:  # log over the wire rx
+                self.wlog.writeRx(self.ca, data)
+
+        else:  # data empty so connection closed on other end
+            self.cutoff = True
+
+        return data
+
+    def send(self, data):
+        """
+        Perform non blocking send on connected socket .cs.
+        Return number of bytes sent
+
+        data is string in python2 and bytes in python3
+        """
+        try:
+            result = self.cs.send(data) #result is number of bytes sent
+        except ssl.SSLError as ex:
+            result = 0
+            if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                emsg = ("SSLError = {0}: IncomerTLS at {1} while "
+                        "sending to {2}\n".format(ex, self.ha, self.ca))
+                console.profuse(emsg)
+                raise
+
+        if result:
+            if console._verbosity >=  console.Wordage.profuse:
+                cmsg = ("Incomer at {0} sent to {1}, {2} bytes\n"
+                        "{3}\n".format(self.ha, self.ha , result,
+                                       data[:result].decode('UTF-8')))
+                console.profuse(cmsg)
+
+            if self.wlog:
+                self.wlog.writeTx(self.ca, data[:result])
+
+        return result
+
+
 class Acceptor(object):
     """
     Nonblocking TCP Socket Acceptor Class.
@@ -1841,6 +2305,7 @@ class Acceptor(object):
             if not cs:
                 break
             self.axes.append((cs, ca))
+
 
 class Server(Acceptor):
     """
@@ -1997,6 +2462,95 @@ class Server(Acceptor):
 
 ServerSocketTcpNb = Server  # alias
 
+
+class ServerTls(Server):
+    """
+    Server with Nonblocking TLS/SSL support
+    Nonblocking TCP Socket Server Class.
+    Listen socket for incoming TCP connections
+    IncomerTLS sockets for accepted connections
+    """
+    def __init__(self,
+                 context=None,
+                 version=None,
+                 certify=None,
+                 keypath=None,
+                 certpath=None,
+                 cafilepath=None,
+                 **kwa):
+        """
+        Initialization method for instance.
+        """
+        super(ServerTls, self).__init__(**kwa)
+
+        self.cxes = odict()  # accepted incoming connections, IncomerTLS instances
+
+        self.context = context
+        self.version = version
+        self.certify = certify
+        self.keypath = keypath
+        self.certpath = certpath
+        self.cafilepath = cafilepath
+
+        self.context = initServerContext(context=context,
+                                         version=version,
+                                         certify=certify,
+                                         keypath=keypath,
+                                         certpath=certpath,
+                                         cafilepath=cafilepath
+                                        )
+
+    def serviceAxes(self):
+        """
+        Service accepteds
+
+        For each new accepted connection create IncomerTLS and add to .cxes
+        Not Handshaked
+        """
+        self.serviceAccepts()  # populate .axes
+        while self.axes:
+            cs, ca = self.axes.popleft()
+            if ca != cs.getpeername() or self.eha != cs.getsockname():
+                raise ValueError("Accepted socket host addresses malformed for "
+                                 "peer ha {0} != {1}, ca {2} != {3}\n".format(
+                                     self.ha, cs.getsockname(), ca, cs.getpeername()))
+            incomer = IncomerTls(ha=cs.getsockname(),
+                                 bs=self.bs,
+                                 ca=cs.getpeername(),
+                                 cs=cs,
+                                 wlog=self.wlog,
+                                 context=self.context,
+                                 version=self.version,
+                                 certify=self.certify,
+                                 keypath=self.keypath,
+                                 certpath=self.certpath,
+                                 cafilepath=self.cafilepath,
+                                )
+
+            self.cxes[ca] = incomer
+
+    def serviceCxes(self):
+        """
+        Service handshakes for every incomer in .cxes
+        If successful move to .ixes
+        """
+        for ca, cx in self.cxes.items():
+            if cx.serviceHandshake():
+                self.ixes[ca] = cx
+                del self.cxes[ca]
+
+    def serviceConnects(self):
+        """
+        Service accept and handshake attempts
+        If not already accepted and handshaked  Then
+             make nonblocking attempt
+        For each successful handshaked add to .ixes
+        Returns handshakeds
+        """
+        self.serviceAxes()
+        self.serviceCxes()
+
+
 class Peer(Server):
     """
     Nonblocking TCP Socket Peer Class.
@@ -2013,566 +2567,3 @@ class Peer(Server):
 
 PeerSocketTcpNb = Peer  # alias
 
-
-try:
-    import ssl
-except ImportError:
-    pass
-else:
-
-    def initServerContext(context=None,
-                    version=None,
-                    certify=None,
-                    keypath=None,
-                    certpath=None,
-                    cafilepath=None
-                    ):
-        """
-        Initialize and return context for TLS Server
-        IF context is None THEN create a context
-
-        IF version is None THEN create context using ssl library default
-        ELSE create context with version
-
-        If certify is not None then use certify value provided Otherwise use default
-
-        context = context object for tls/ssl If None use default
-        version = ssl version If None use default
-        certify = cert requirement If None use default
-                  ssl.CERT_NONE = 0
-                  ssl.CERT_OPTIONAL = 1
-                  ssl.CERT_REQUIRED = 2
-        keypath = pathname of local server side PKI private key file path
-                  If given apply to context
-        certpath = pathname of local server side PKI public cert file path
-                  If given apply to context
-        cafilepath = Cert Authority file path to use to verify client cert
-                  If given apply to context
-        """
-        if context is None:  # create context
-            if not version:  # use default context
-                context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-                context.verify_mode = certify if certify is not None else ssl.CERT_REQUIRED
-
-            else:  # create context with specified protocol version
-                context = ssl.SSLContext(version)
-                # disable bad protocols versions
-                context.options |= ssl.OP_NO_SSLv2
-                context.options |= ssl.OP_NO_SSLv3
-                # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
-                context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
-                # Prefer the server's ciphers by default fro stronger encryption
-                context.options |= getattr(ssl._ssl, "OP_CIPHER_SERVER_PREFERENCE", 0)
-                # Use single use keys in order to improve forward secrecy
-                context.options |= getattr(ssl._ssl, "OP_SINGLE_DH_USE", 0)
-                context.options |= getattr(ssl._ssl, "OP_SINGLE_ECDH_USE", 0)
-                # disallow ciphers with known vulnerabilities
-                context.set_ciphers(ssl._RESTRICTED_SERVER_CIPHERS)
-                context.verify_mode = certify if certify is not None else ssl.CERT_REQUIRED
-
-            if cafilepath:
-                context.load_verify_locations(cafile=cafilepath,
-                                              capath=None,
-                                              cadata=None)
-            elif context.verify_mode != ssl.CERT_NONE:
-                context.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
-
-            if keypath or certpath:
-                context.load_cert_chain(certfile=certpath, keyfile=keypath)
-        return context
-
-
-    class OutgoerTls(Outgoer):
-        """
-        Outgoer with Nonblocking TLS/SSL support
-        Nonblocking TCP Socket Client Class.
-        """
-        def __init__(self,
-                     context=None,
-                     version=None,
-                     certify=None,
-                     hostify=None,
-                     certedhost="",
-                     keypath=None,
-                     certpath=None,
-                     cafilepath=None,
-                     **kwa):
-            """
-            Initialization method for instance.
-
-            IF no context THEN create one
-
-            IF no version THEN create using library default
-
-            IF certify is not None then use certify else use default
-
-            IF hostify is not none the use hostify else use default
-
-            context = context object for tls/ssl If None use default
-            version = ssl version If None use default
-            certify = cert requirement If None use default
-                      ssl.CERT_NONE = 0
-                      ssl.CERT_OPTIONAL = 1
-                      ssl.CERT_REQUIRED = 2
-            keypath = pathname of local client side PKI private key file path
-                      If given apply to context
-            certpath = pathname of local client side PKI public cert file path
-                      If given apply to context
-            cafilepath = Cert Authority file path to use to verify server cert
-                      If given apply to context
-            hostify = verify server hostName If None use default
-            certedhost = server's certificate common name (hostname) to check against
-            """
-            super(OutgoerTls, self).__init__(**kwa)
-
-            self._connected = False  # attributed supporting connected property
-
-            if context is None:  # create context
-                if not version:  # use default context
-                    context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-                    hostify = hostify if hostify is not None else context.check_hostname
-                    context.check_hostname = hostify
-                    certify = certify if certify is not None else context.verify_mode
-                    context.verify_mode = certify
-
-                else:  # create context with specified protocol version
-                    context = ssl.SSLContext(version)
-                    # disable bad protocols versions
-                    context.options |= ssl.OP_NO_SSLv2
-                    context.options |= ssl.OP_NO_SSLv3
-                    # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
-                    context.options |= getattr(ssl._ssl, "OP_NO_COMPRESSION", 0)
-                    context.verify_mode = certify = ssl.CERT_REQUIRED if certify is None else certify
-                    context.check_hostname = hostify = True if hostify else False
-
-            self.context = context
-            self.certedhost = certedhost or self.hostname
-
-            if cafilepath:
-                context.load_verify_locations(cafile=cafilepath,
-                                              capath=None,
-                                              cadata=None)
-            elif context.verify_mode != ssl.CERT_NONE:
-                context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
-
-            if keypath or certpath:
-                context.load_cert_chain(certfile=certpath, keyfile=keypath)
-
-            if hostify and certify == ssl.CERT_NONE:
-                raise ValueError("Check Hostname needs a SSL context with "
-                                 "either CERT_OPTIONAL or CERT_REQUIRED")
-
-        @property
-        def connected(self):
-            '''
-            Property that returns connected state of TCP socket
-            TLS tcp is connected when accepted and handshake completed
-            '''
-            return self._connected
-
-        @connected.setter
-        def connected(self, value):
-            '''
-            setter for connected property
-            '''
-            self._connected = value
-
-        def shutclose(self):
-            """
-            Shutdown and close connected socket .cs
-            """
-            if self.cs:
-                self.shutdown()
-                self.cs.close()  #close socket
-                self.cs = None
-                self.accepted = False
-                self.connected = False
-
-        close = shutclose  # alias
-
-        def wrap(self):
-            """
-            Wrap socket .cs in ssl context
-            """
-            self.cs = self.context.wrap_socket(self.cs,
-                                               server_side=False,
-                                               do_handshake_on_connect=False,
-                                               server_hostname=self.certedhost)
-
-        def handshake(self):
-            """
-            Attempt nonblocking ssl handshake to .ha
-            Returns True if successful
-            Returns False if not so try again later
-            """
-            try:
-                self.cs.do_handshake()
-            except ssl.SSLError as ex:
-                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                    return False
-                elif ex.errno in (ssl.SSL_ERROR_EOF, ):
-                    self.shutclose()
-                    raise   # should give up here nicely
-                else:
-                    self.shutclose()
-                    raise
-            except OSError as ex:
-                self.shutclose()
-                if ex.errno in (errno.ECONNABORTED, ):
-                    raise  # should give up here nicely
-                raise
-            except Exception as ex:
-                self.shutclose()
-                raise
-
-            self.connected = True
-            return True
-
-        def connect(self):
-            """
-            Attempt nonblocking connect to .ha
-            Returns True if successful
-            Returns False if not so try again later
-            Connected when both accepted connection and TLS handshake complete
-            """
-            if not self.accepted:
-                self.accept()
-
-                if self.accepted:  # only do this once immediately after accepted
-                    if not self.certedhost:
-                        self.certedhost = self.ha[0]
-                    self.wrap()
-
-            if self.accepted and not self.connected:
-                self.handshake()
-
-            return self.connected
-
-
-        #def serviceConnect(self):
-            #"""
-            #Service connection and handshake attempt
-            #If not already accepted and handshaked  Then
-                 #make nonblocking attempt
-            #Returns .handshaked
-            #"""
-            #if not self.connected:
-                #self.connect()
-
-            #return self.connected
-
-        def receive(self):
-            """
-            Perform non blocking receive from connected socket .cs
-
-            If no data then returns None
-            If connection closed then returns ''
-            Otherwise returns data
-            """
-            try:
-                data = self.cs.recv(self.bs)
-            except ssl.SSLError as ex:
-                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                    return None
-                else:
-                    emsg = ("SSLError = {0}: OutgoerTLS at {1} receiving"
-                            " from {2}\n".format(ex, self.ca, self.ha))
-                    console.profuse(emsg)
-                    raise  # re-raise
-
-            if data:  # connection open
-                if console._verbosity >= console.Wordage.profuse:  # faster to check
-                    cmsg = ("\nOutgoer at {0}, received from {1}:\n------------\n"
-                               "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
-                    console.profuse(cmsg)
-
-                if self.wlog:  # log over the wire rx
-                    self.wlog.writeRx(self.ha, data)
-            else:  # data empty so connection closed on other end
-                self.cutoff = True
-
-            return data
-
-        def send(self, data):
-            """
-            Perform non blocking send on connected socket .cs.
-            Return number of bytes sent
-
-            data is string in python2 and bytes in python3
-            """
-            try:
-                result = self.cs.send(data) #result is number of bytes sent
-            except ssl.SSLError as ex:
-                result = 0
-                if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                    emsg = ("socket.error = {0}: OutgoerTLS at {1} while sending "
-                            "to {2} \n".format(ex, self.ca, self.ha))
-                    console.profuse(emsg)
-                    raise
-
-            if result:
-                if console._verbosity >=  console.Wordage.profuse:
-                    cmsg = ("\nOutgoer at {0}, sent {1} bytes to {2}:\n------------\n"
-                            "{3}\n".format(self.ca, result, self.ha, data[:result].decode('UTF-8')))
-                    console.profuse(cmsg)
-
-                if self.wlog:
-                    self.wlog.writeTx(self.ha, data[:result])
-
-            return result
-
-
-    class IncomerTls(Incomer):
-        """
-        Incomer with Nonblocking TLS/SSL support
-        Manager class for incoming nonblocking TCP connections.
-        """
-        def __init__(self,
-                     context=None,
-                     version=None,
-                     certify=None,
-                     keypath=None,
-                     certpath=None,
-                     cafilepath=None,
-                     **kwa):
-
-            """
-            Initialization method for instance.
-            context = context object for tls/ssl If None use default
-            version = ssl version If None use default
-            certify = cert requirement If None use default
-                      ssl.CERT_NONE = 0
-                      ssl.CERT_OPTIONAL = 1
-                      ssl.CERT_REQUIRED = 2
-            keypath = pathname of local server side PKI private key file path
-                      If given apply to context
-            certpath = pathname of local server side PKI public cert file path
-                      If given apply to context
-            cafilepath = Cert Authority file path to use to verify client cert
-                      If given apply to context
-            """
-            super(IncomerTls, self).__init__(**kwa)
-
-            self.connected = False  # True once ssl handshake completed
-
-            self.context = initServerContext(context=context,
-                                        version=version,
-                                        certify=certify,
-                                        keypath=keypath,
-                                        certpath=certpath,
-                                        cafilepath=cafilepath
-                                      )
-            self.wrap()
-
-        def shutclose(self):
-            """
-            Shutdown and close connected socket .cs
-            """
-            if self.cs:
-                self.shutdown()
-                self.cs.close()  #close socket
-                self.cs = None
-                self.connected = False
-
-        close = shutclose  # alias
-
-        def wrap(self):
-            """
-            Wrap socket .cs in ssl context
-            """
-            self.cs = self.context.wrap_socket(self.cs,
-                                               server_side=True,
-                                               do_handshake_on_connect=False)
-
-        def handshake(self):
-            """
-            Attempt nonblocking ssl handshake to .ha
-            Returns True if successful
-            Returns False if not so try again later
-            """
-            try:
-                self.cs.do_handshake()
-            except ssl.SSLError as ex:
-                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                    return False
-                elif ex.errno in (ssl.SSL_ERROR_EOF, ):
-                    self.shutclose()
-                    raise   # should give up here nicely
-                else:
-                    self.shutclose()
-                    raise
-            except OSError as ex:
-                self.shutclose()
-                if ex.errno in (errno.ECONNABORTED, ):
-                    raise  # should give up here nicely
-                raise
-            except Exception as ex:
-                self.shutclose()
-                raise
-
-            self.connected = True
-            return True
-
-        def serviceHandshake(self):
-            """
-            Service connection and handshake attempt
-            If not already accepted and handshaked  Then
-                 make nonblocking attempt
-            Returns .handshaked
-            """
-            if not self.connected:
-                self.handshake()
-
-            return self.connected
-
-        def receive(self):
-            """
-            Perform non blocking receive on connected socket .cs
-
-            If no data then returns None
-            If connection closed then returns ''
-            Otherwise returns data
-
-            data is string in python2 and bytes in python3
-            """
-            try:
-                data = self.cs.recv(self.bs)
-            except ssl.SSLError as ex:
-                if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                    return None
-                else:
-                    emsg = ("SSLError = {0}: IncomerTLS at {1} while receiving"
-                            " from {2}\n".format(ex, self.ha, self.ca))
-                    console.profuse(emsg)
-                    raise  # re-raise
-
-            if data:  # connection open
-                if console._verbosity >= console.Wordage.profuse:  # faster to check
-                    cmsg = ("Incomer at {0} received from {1}\n"
-                           "{2}\n".format(self.ha, self.ca, data.decode("UTF-8")))
-                    console.profuse(cmsg)
-
-                if self.wlog:  # log over the wire rx
-                    self.wlog.writeRx(self.ca, data)
-
-            else:  # data empty so connection closed on other end
-                self.cutoff = True
-
-            return data
-
-        def send(self, data):
-            """
-            Perform non blocking send on connected socket .cs.
-            Return number of bytes sent
-
-            data is string in python2 and bytes in python3
-            """
-            try:
-                result = self.cs.send(data) #result is number of bytes sent
-            except ssl.SSLError as ex:
-                result = 0
-                if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                    emsg = ("SSLError = {0}: IncomerTLS at {1} while "
-                            "sending to {2}\n".format(ex, self.ha, self.ca))
-                    console.profuse(emsg)
-                    raise
-
-            if result:
-                if console._verbosity >=  console.Wordage.profuse:
-                    cmsg = ("Incomer at {0} sent to {1}, {2} bytes\n"
-                            "{3}\n".format(self.ha, self.ha , result,
-                                           data[:result].decode('UTF-8')))
-                    console.profuse(cmsg)
-
-                if self.wlog:
-                    self.wlog.writeTx(self.ca, data[:result])
-
-            return result
-
-
-    class ServerTls(Server):
-        """
-        Server with Nonblocking TLS/SSL support
-        Nonblocking TCP Socket Server Class.
-        Listen socket for incoming TCP connections
-        IncomerTLS sockets for accepted connections
-        """
-        def __init__(self,
-                     context=None,
-                     version=None,
-                     certify=None,
-                     keypath=None,
-                     certpath=None,
-                     cafilepath=None,
-                     **kwa):
-            """
-            Initialization method for instance.
-            """
-            super(ServerTls, self).__init__(**kwa)
-
-            self.cxes = odict()  # accepted incoming connections, IncomerTLS instances
-
-            self.context = context
-            self.version = version
-            self.certify = certify
-            self.keypath = keypath
-            self.certpath = certpath
-            self.cafilepath = cafilepath
-
-            self.context = initServerContext(context=context,
-                                             version=version,
-                                             certify=certify,
-                                             keypath=keypath,
-                                             certpath=certpath,
-                                             cafilepath=cafilepath
-                                            )
-
-        def serviceAxes(self):
-            """
-            Service accepteds
-
-            For each new accepted connection create IncomerTLS and add to .cxes
-            Not Handshaked
-            """
-            self.serviceAccepts()  # populate .axes
-            while self.axes:
-                cs, ca = self.axes.popleft()
-                if ca != cs.getpeername() or self.eha != cs.getsockname():
-                    raise ValueError("Accepted socket host addresses malformed for "
-                                     "peer ha {0} != {1}, ca {2} != {3}\n".format(
-                                         self.ha, cs.getsockname(), ca, cs.getpeername()))
-                incomer = IncomerTls(ha=cs.getsockname(),
-                                     bs=self.bs,
-                                     ca=cs.getpeername(),
-                                     cs=cs,
-                                     wlog=self.wlog,
-                                     context=self.context,
-                                     version=self.version,
-                                     certify=self.certify,
-                                     keypath=self.keypath,
-                                     certpath=self.certpath,
-                                     cafilepath=self.cafilepath,
-                                    )
-
-                self.cxes[ca] = incomer
-
-        def serviceCxes(self):
-            """
-            Service handshakes for every incomer in .cxes
-            If successful move to .ixes
-            """
-            for ca, cx in self.cxes.items():
-                if cx.serviceHandshake():
-                    self.ixes[ca] = cx
-                    del self.cxes[ca]
-
-        def serviceConnects(self):
-            """
-            Service accept and handshake attempts
-            If not already accepted and handshaked  Then
-                 make nonblocking attempt
-            For each successful handshaked add to .ixes
-            Returns handshakeds
-            """
-            self.serviceAxes()
-            self.serviceCxes()
