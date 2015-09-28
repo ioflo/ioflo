@@ -1776,6 +1776,8 @@ class Incomer(object):
     """
     Manager class for incoming nonblocking TCP connections.
     """
+    Timeout = 1.0  # timeout in seconds
+
     def __init__(self,
                  name=u'',
                  uid=0,
@@ -1783,7 +1785,9 @@ class Incomer(object):
                  bs=None,
                  ca=None,
                  cs=None,
-                 wlog=None):
+                 wlog=None,
+                 store=None,
+                 timeout=None):
 
         """
         Initialization method for instance.
@@ -1793,6 +1797,8 @@ class Incomer(object):
         ca = virtual host address duple (host, port) far side of connection
         cs = connection socket object
         wlog = WireLog object if any
+        store = data store reference
+        timeout = timeout for .timer
         """
         self.name = name
         self.uid = uid
@@ -1806,6 +1812,9 @@ class Incomer(object):
         self.rxbs = bytearray()  # bytearray of data received
         if self.cs:
             self.cs.setblocking(0)  # linux does not preserve blocking from accept
+        self.store = store or storing.Store(stamp=0.0)
+        self.timeout = timeout if timeout is not None else self.Timeout
+        self.timer = StoreTimer(self.store, duration=self.timeout)
 
     def shutdown(self, how=socket.SHUT_RDWR):
         """
@@ -2153,7 +2162,9 @@ class Acceptor(object):
     Nonblocking TCP Socket Acceptor Class.
     Listen socket for incoming TCP connections
     """
+
     def __init__(self,
+                 name=u'',
                  ha=None,
                  host=u'',
                  port=56000,
@@ -2162,14 +2173,15 @@ class Acceptor(object):
                  wlog=None):
         """
         Initialization method for instance.
-
+        name = user friendly name string for Acceptor
         ha = host address duple (host, port) for listen socket
         host = host address for listen socket, '' means any interface on host
         port = socket port for listen socket
-        eha = external destination address for incoming connections
+        eha = external destination address for incoming connections used in tls
         bufsize = buffer size
         wlog = WireLog object if any
         """
+        self.name = name
         self.ha = ha or (host, port)  # ha = host address
         eha = eha or self.ha
         if eha:
@@ -2292,11 +2304,22 @@ class Server(Acceptor):
     Listen socket for incoming TCP connections
     Incomer sockets for accepted connections
     """
-    def __init__(self, **kwa):
+    Timeout = 1.0  # timeout in seconds
+
+    def __init__(self,
+                 store=None,
+                 timeout=None,
+                 **kwa):
         """
         Initialization method for instance.
+
+        store = data store reference if any
+        timeout = default timeout for incoming connections
         """
         super(Server, self).__init__(**kwa)
+        self.store = store or storing.Store(stamp=0.0)
+        self.timeout = timeout if timeout is not None else self.Timeout
+
         self.ixes = odict()  # ready to rx tx incoming connections, Incomer instances
 
     def serviceAxes(self):
@@ -2317,7 +2340,9 @@ class Server(Acceptor):
                               bs=self.bs,
                               ca=cs.getpeername(),
                               cs=cs,
-                              wlog=self.wlog)
+                              wlog=self.wlog,
+                              store=self.store,
+                              timeout=self.timeout)
             if ca in self.ixes and self.ixes[ca] is not incomer:
                 self.shutdownIx[ca]
             self.ixes[ca] = incomer
@@ -2482,6 +2507,8 @@ class ServerTls(Server):
                                  ca=cs.getpeername(),
                                  cs=cs,
                                  wlog=self.wlog,
+                                 store=self.store,
+                                 timeout=self.timeout,
                                  context=self.context,
                                  version=self.version,
                                  certify=self.certify,

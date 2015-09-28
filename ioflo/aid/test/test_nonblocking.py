@@ -439,17 +439,19 @@ class BasicTestCase(unittest.TestCase):
         wireLog = nonblocking.WireLog(path=logDirpath)
         result = wireLog.reopen(prefix='alpha', midfix='6101')
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog)
+        store = storing.Store(stamp=0.0)
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog, store=store)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.Client(ha=alpha.eha, bufsize=131072)
+        beta = nonblocking.Client(ha=alpha.eha, bufsize=131072, store=store)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
-        gamma = nonblocking.Client(ha=alpha.eha, bufsize=131072)
+        gamma = nonblocking.Client(ha=alpha.eha, bufsize=131072, store=store)
         self.assertIs(gamma.reopen(), True)
         self.assertIs(gamma.accepted, False)
         self.assertIs(gamma.connected, False)
@@ -844,11 +846,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = nonblocking.WireLog(buffify=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        store = storing.Store(stamp=0.0)
+
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha, store=store)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta, store=store)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -1135,8 +1139,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
 
-
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha, store=store)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))

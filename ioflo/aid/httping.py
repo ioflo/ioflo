@@ -39,7 +39,7 @@ from .odicting import odict, lodict
 from ..base import excepting
 from ..base import storing
 from . import aiding
-from .nonblocking import Outgoer, OutgoerTls
+from .nonblocking import Outgoer, OutgoerTls, Server, ServerTls
 
 from ..base.consoling import getConsole
 console = getConsole()
@@ -1830,9 +1830,10 @@ class Patron(object):
 
 
 
-class Responder(object):
+class Requestent(object):
     """
-    Nonblocking HTTP Server Response class
+    Nonblocking HTTP Server Requestent class
+    Parses request
     """
     Retry = 100  # retry timeout in milliseconds if evented
 
@@ -2423,4 +2424,151 @@ class Responder(object):
             if result is not None:
                 self.parser.close()
                 self.parser = None
+
+
+class Valet(object):
+    """
+    Valet class nonblocking HTTP server connection manager
+    """
+    def __init__(self,
+                 servant=None,
+                 store=None,
+                 name='',
+                 bufsize=8096,
+                 wlog=None,
+                 ha=None,
+                 host=u'',
+                 port=None,
+                 eha=None,
+                 scheme=u'',
+                 events=None,
+                 requests=None,
+                 responses=None,
+                 **kwa):
+        """
+        Initialization method for instance.
+        servant = instance of Server or ServerTls or None
+        responder = instance of Responder or None
+
+        if either of servant, or responder instances are not provided (None)
+        some or all of these parameters will be used for initialization
+
+        name = user friendly name for servant
+        bufsize = buffer size
+        wlog = WireLog instance if any
+        ha = host address duple (host, port) for local servant listen socket
+        host = host address for local servant listen socket, '' means any interface on host
+        port = socket port for local servant listen socket
+        eha = external destination address for incoming connections used in TLS
+        scheme = http scheme u'http' or u'https' or empty
+        events = deque of events if any
+        requests = deque of requests if any each request is dict
+        responses = deque of responses if any each response is dict
+        """
+        # .requests is deque of dicts of request data
+        self.requests = requests if requests is not None else deque()
+        # .responses is deque of dicts of response data
+        self.responses = responses if responses is not None else deque()
+        # .events is deque of dicts of response server sent event data
+        self.events = events if events is not None else deque()
+        self.store = store or storing.Store(stamp=0.0)
+
+        ha = ha or (host, port)  # ha = host address takes precendence over host, port
+
+        if servant:
+            if isinstance(servant, ServerTls):
+                if scheme and scheme != u'https':
+                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
+                secured = True
+                scheme = u'https'
+                defaultPort = 443
+            elif isinstance(servant, Server):
+                if scheme and scheme != u'http':
+                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
+                secured = False
+                scheme = 'http'
+                defaultPort = 80
+            else:
+                raise ValueError("Invalid servant type {0}".format(type(servant)))
+        else:
+            scheme = u'https' if scheme == u'https' else u'http'
+            if scheme == u'https':
+                secured = True  # use tls socket connection
+                defaultPort = 443
+            else:
+                secured = False # non tls socket connection
+                defaultPort = 80
+
+        host, port = ha
+        port = port or  defaultPort  # if port not specified
+        ha = (host, port)
+
+        if servant:
+            if servant.ha != ha:
+                ValueError("Provided ha '{0}:{1}' incompatible with servant".format(ha[0], ha[1]))
+            # at some point may want to support changing the ha of provided servant
+        else:
+            if secured:
+                servant = ServerTls(store=self.store,
+                                       name=name,
+                                       ha=ha,
+                                       eha=eha,
+                                       bufsize=bufsize,
+                                       wlog=wlog,
+                                       **kwa)
+            else:
+                servant = Server(store=self.store,
+                                 name=name,
+                                 ha=ha,
+                                 eha=eha,
+                                 bufsize=bufsize,
+                                 wlog=wlog,
+                                 **kwa)
+
+
+        self.secured = secured
+        self.servant = servant
+
+
+    def serviceRequests(self):
+        """
+        Service requests deque of incoming requests
+        """
+        pass
+
+
+    def serviceResponses(self):
+        """
+        Service responses deque of outgoing responses
+        """
+        pass
+
+    def serviceAllTx(self):
+        """
+        service the tx side of response
+        """
+        self.serviceResponses()
+        self.servent.serviceTxes()
+
+    def serviceAllRx(self):
+        """
+        service the tx side of response
+        """
+        #self.servent.serviceRxes()
+        self.serviceRequests()
+
+    def serviceAllTx(self):
+        """
+        service the tx side of response
+        """
+        self.serviceResponses()
+        self.servent.serviceTxes()
+
+    def serviceAll(self):
+        """
+        Service request response
+        """
+        self.serviceAllRx()
+        self.serviceAllTx()
+
 

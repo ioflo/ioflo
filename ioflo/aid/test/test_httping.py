@@ -2384,10 +2384,15 @@ class BasicTestCase(unittest.TestCase):
 
         console.reinit(verbosity=console.Wordage.profuse)
 
+        store = storing.Store(stamp=0.0)
+
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = nonblocking.Server(port = 6101,
+                                   bufsize=131072,
+                                   wlog=wireLogAlpha,
+                                   store=store)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
@@ -2399,7 +2404,6 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
 
-        store = storing.Store(stamp=0.0)
 
         beta = httping.Patron(bufsize=131072,
                                  wlog=wireLogBeta,
@@ -3554,6 +3558,140 @@ class BasicTestCase(unittest.TestCase):
 
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testValetServiceEcho(self):
+        """
+        Test Valet service request response of echo non blocking
+        """
+        console.terse("{0}\n".format(self.testValetServiceEcho.__doc__))
+
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        store = storing.Store(stamp=0.0)
+
+        console.terse("{0}\n".format("Building Valet ...\n"))
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = httping.Valet(port = 6101,
+                              bufsize=131072,
+                              wlog=wireLogAlpha,
+                              store=store)
+        self.assertIs(alpha.servant.reopen(), True)
+        self.assertEqual(alpha.servant.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Patron ...\n"))
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+        host = alpha.servant.eha[0]
+        port = alpha.servant.eha[1]
+        method = u'GET'
+        path = u'/echo?name=fame'
+        headers = odict([(u'Accept', u'application/json')])
+
+        beta = httping.Patron(bufsize=131072,
+                              wlog=wireLogBeta,
+                              store=store,
+                              hostname=host,
+                              port=port,
+                              method=method,
+                              path=path,
+                              headers=headers,
+                              )
+
+        self.assertIs(beta.connector.reopen(), True)
+        self.assertIs(beta.connector.accepted, False)
+        self.assertIs(beta.connector.connected, False)
+        self.assertIs(beta.connector.cutoff, False)
+
+        console.terse("Connecting patron beta to valet alpha ...\n")
+        while True:
+            beta.connector.serviceConnect()
+            alpha.servant.serviceConnects()
+            if beta.connector.connected and beta.connector.ca in alpha.servant.ixes:
+                break
+            time.sleep(0.05)
+
+        self.assertIs(beta.connector.accepted, True)
+        self.assertIs(beta.connector.connected, True)
+        self.assertIs(beta.connector.cutoff, False)
+        self.assertEqual(beta.connector.ca, beta.connector.cs.getsockname())
+        self.assertEqual(beta.connector.ha, beta.connector.cs.getpeername())
+        self.assertEqual(alpha.servant.eha, beta.connector.ha)
+
+        ixBeta = alpha.servant.ixes[beta.connector.ca]
+        self.assertIsNotNone(ixBeta.ca)
+        self.assertIsNotNone(ixBeta.cs)
+        self.assertEqual(ixBeta.cs.getsockname(), beta.connector.cs.getpeername())
+        self.assertEqual(ixBeta.cs.getpeername(), beta.connector.cs.getsockname())
+        self.assertEqual(ixBeta.ca, beta.connector.ca)
+        self.assertEqual(ixBeta.ha, beta.connector.ha)
+
+        beta.transmit()
+
+        lines = [
+                   b'GET /echo?name=fame HTTP/1.1',
+                   b'Host: 127.0.0.1:6101',
+                   b'Accept-Encoding: identity',
+                   b'Accept: application/json',
+                   b'',
+                   b'',
+                ]
+        for i, line in enumerate(lines):
+            self.assertEqual(line, beta.requester.lines[i])
+
+        msgOut = beta.connector.txes[0]
+        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
+
+        console.terse("Beta requests to Alpha\n")
+        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
+
+        while beta.connector.txes and not ixBeta.rxbs :
+            beta.serviceAll()
+            time.sleep(0.05)
+            alpha.servant.serviceAllRxAllIx()
+            time.sleep(0.05)
+        msgIn = bytes(ixBeta.rxbs)
+        self.assertEqual(msgIn, msgOut)
+        ixBeta.clearRxbs()
+
+        console.terse("Alpha responds to Beta\n")
+        console.terse("Beta processes response \n")
+        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
+        ixBeta.tx(msgOut)
+        while ixBeta.txes or not beta.respondent.ended:
+            alpha.servant.serviceTxesAllIx()
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+
+        self.assertEqual(len(beta.connector.rxbs), 0)
+        self.assertIs(beta.waited, False)
+        self.assertIs(beta.respondent.ended, True)
+        self.assertEqual(len(beta.responses), 1)
+
+        self.assertEqual(bytes(beta.respondent.body), b'')
+        self.assertEqual(beta.respondent.data, {'action': None,
+                                         'content': None,
+                                         'query': {'name': 'fame'},
+                                         'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                         'verb': 'GET'}
+                         )
+        self.assertEqual(len(beta.connector.rxbs), 0)
+        self.assertEqual(beta.respondent.headers.items(), [('content-length', '122'),
+                                                    ('content-type', 'application/json'),
+                                                    ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                                                    ('server', 'IoBook.local')])
+
+        alpha.servant.close()
+        beta.connector.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+        console.reinit(verbosity=console.Wordage.concise)
+
+
 def runOne(test):
     '''
     Unittest Runner
@@ -3589,6 +3727,7 @@ def runSome():
              'testPatronRedirectComplexSecure',
              'testMultiPartForm',
              'testQueryQuoting',
+             'testValetServiceEcho',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -3608,11 +3747,4 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testMultiPartForm')
-    #runOne('testPatronPipelineEchoJson')
-    #runOne('testPatronPipelineEchoSimplePathTrack')
-    #runOne('testPatronPipelineStream')
-    #runOne('testPatronPipelineEchoSimpleSecure')
-    #runOne('testPatronSecurePipelineEcho')
-    #runOne('testPatronRedirectSimple')
-    #runOne('testQueryQuoting')
+    #runOne('testValetServiceEcho')
