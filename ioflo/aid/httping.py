@@ -212,8 +212,6 @@ class LineTooLong(HTTPException):
                                      % (MAX_LINE_SIZE, kind))
 
 
-
-
 # Utility functions
 
 def normalizeHostPort(host, port=None, defaultPort=80):
@@ -251,7 +249,7 @@ def normalizeHostPort(host, port=None, defaultPort=80):
 
 class Requester(object):
     """
-    Nonblocking HTTP Request class
+    Nonblocking HTTP Client Request class
     """
     HttpVersionString = HTTP_11_VERSION_STRING  # http version string
     Port = HTTP_PORT  # default port
@@ -573,9 +571,24 @@ def parseBom(raw, bom=codecs.BOM_UTF8):
         (yield None)  # not enough bytes yet
     return
 
+def parseHeaderLines(lines):
+    """
+    Returns lodict of unicode strings of parsed header lines from lines list
+    Each line is a bytes or bytearray
+    Converts to unicode strings
+    """
+    headers = lodict()
+    for line in lines:
+        if not line:
+            continue
+        line = line.decode('iso-8859-1')  # convert to unicode string
+        key, value = line.split(': ', 1)
+        headers[key] = value
+    return headers
+
 class EventSource(object):
     """
-    Server Sent Event Stream parser
+    Server Sent Event Stream Client parser
     """
     Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
 
@@ -792,7 +805,7 @@ class EventSource(object):
 
 class Respondent(object):
     """
-    Nonblocking HTTP Response class
+    Nonblocking HTTP Client Response class
     """
     Retry = 100  # retry timeout in milliseconds if evented
 
@@ -1081,9 +1094,10 @@ class Respondent(object):
         if lines:
             #email Parser wants to see strings rather than bytes.
             #So convert bytes to string
-            lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
-            hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
-            self.headers.update(HeaderParser().parsestr(hstring).items())
+            #lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
+            #hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
+            #self.headers.update(HeaderParser().parsestr(hstring).items())
+            self.headers.update(parseHeaderLines(lines))
 
         # are we using the chunked-style of transfer encoding?
         transferEncoding = self.headers.get("transfer-encoding")
@@ -1208,9 +1222,10 @@ class Respondent(object):
             if lines:
                 #email Parser wants to see strings rather than bytes.
                 #So convert bytes to string
-                lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
-                hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
-                trails.update(HeaderParser().parsestr(hstring).items())
+                #lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
+                #hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
+                #trails.update(HeaderParser().parsestr(hstring).items())
+                self.trails.update(parseHeaderLines(lines))
         else:
             while len(self.msg) < size:  # need more for chunk
                 (yield None)
@@ -1812,3 +1827,600 @@ class Patron(object):
 
         self.serviceAllTx()
         self.serviceResponse()
+
+
+
+class Responder(object):
+    """
+    Nonblocking HTTP Server Response class
+    """
+    Retry = 100  # retry timeout in milliseconds if evented
+
+    def __init__(self,
+                 msg=None,
+                 method=u'GET',
+                 redirects=None,
+                 redirectable=True,
+                 dictify=None,
+                 events=None,
+                 retry=None,
+                 leid=None,
+                 wlog=None,):
+        """
+        Initialize Instance
+        msg must be bytearray
+
+        msg = bytearray of response msg to parse
+        method = request method verb
+        dictify = Boolean flag If True attempt to convert json body
+        redirects = list of redirects if any
+        redirectable = Boolean allow redirects
+        events = deque of events if any
+        retry = retry timeout in seconds if any if evented
+        leid = last event id if any if evented
+        wlog = WireLog instance if any
+        """
+        self.msg = msg if msg is not None else bytearray()
+        self.method = method.upper() if method else u'GET'
+        self.dictify = True if dictify else False  # convert body json
+        self.redirects = redirects if redirects is not None else []
+        self.redirectable = True if redirectable else False
+        self.events = events if events is not None else deque()
+        self.retry = retry if retry is not None else self.Retry  # retry timeout in milliseconds if evented
+        self.leid = None  # non None if evented with event ids sent
+        self.wlog = wlog
+
+        self.parser = None  # response parser generator
+        self.eventSource = None  # EventSource instance when .evented
+
+        self.headers = None
+        self.body = bytearray()  # body data bytearray
+        self.text = u''  # body decoded as unicode string
+        self.data = None  # content dict deserialized from body json
+        self.parms = None  # chunked encoding extension parameters
+        self.trails = None  # chunked encoding trailing headers
+
+        self.version = None # HTTP-Version from status line
+        self.status = None  # Status-Code from status line
+        self.reason = None  # Reason-Phrase from status line
+
+        self.length = None     # content length of body in response
+
+        self.chunked = None    # is transfer encoding "chunked" being used?
+        self.evented = None   # are server sent events being used
+        self.jsoned = None    # is content application/json
+        self.encoding = 'ISO-8859-1'  # encoding charset if provided else default
+
+        self.persisted = None   # persist connection until server closes
+        self.headed = None    # head completely parsed
+        self.redirectant = None  # Boolean True if received redirect status, need to redirect
+        self.redirected = None  # attempted a redirection
+        self.bodied =  None   # body completely parsed
+        self.ended = None     # response from server has ended no more remaining
+        self.closed = None  # True when connection closed
+
+        self.makeParser(msg=msg)
+
+    def reinit(self,
+               msg=None,
+               method=u'GET',
+               dictify=None,
+               redirectable=None):
+        """
+        Reinitialize Instance
+        msg must be bytearray
+
+        msg = bytearray of response msg to parse
+        method = request method verb
+        dictify = Boolean flag If True attempt to convert json body
+
+        """
+        if msg is not None:
+            self.msg = msg
+        if method is not None:
+            self.method = method.upper()
+        if dictify is not None:
+            self.dictify = True if dictify else False
+        if redirectable is not None:
+            self.redirectable = True if redirectable else False
+
+    def close(self):
+        """
+        Assign True to .closed
+        """
+        self.closed = True
+        if self.eventSource:  # assign True to .eventSource.closed
+            self.eventSource.close()
+
+    def parseStatus(self, line):
+        """
+        Parse the status line from the response
+        """
+        line = line.decode("iso-8859-1")
+        if not line:
+            # Presumably, the server closed the connection before
+            # sending a valid response.
+            raise BadStatusLine(line)
+
+        # python2 split does not support maxsplit keyword arg
+        version, status, reason = aiding.repack(3, line.split(), default = u'')
+        reason = u" ".join(reason)
+
+        if not version.startswith("HTTP/"):
+            raise BadStatusLine(line)
+
+        # The status code is a three-digit number
+        try:
+            status = int(status)
+            if status < 100 or status > 999:
+                raise BadStatusLine(line)
+        except ValueError:
+            raise BadStatusLine(line)
+        return (version, status, reason)
+
+    def checkPersisted(self):
+        """
+        Checks headers to determine if connection should be kept open until
+        server closes it
+        Sets the .persisted flag
+        """
+        connection = self.headers.get("connection")  # check connection header
+        if self.version == 11:  # rules for http v1.1
+            self.persisted = True  # connections default to persisted
+            # An HTTP/1.1 proxy is assumed to stay open unless
+            # explicitly closed.
+            connection = self.headers.get("connection")
+            if connection and "close" in connection.lower():
+                self.persisted = False
+
+            # non-chunked but persistent connections should have non None for
+            # content-length Otherwise assume not persisted
+            elif (not self.chunked and self.length is None):
+                self.persisted = False
+
+        elif self.version == 10:
+            self.persisted = False  # connections default to non-persisted
+            # Some HTTP/1.0 implementations have support for persistent
+            # connections, using rules different than HTTP/1.1.
+
+            if self.evented:  # server sent events
+                self.persisted = True
+
+            # For older HTTP, Keep-Alive indicates persistent connection.
+            elif self.headers.get("keep-alive"):
+                self.persisted = True
+
+            # At least Akamai returns a "Connection: Keep-Alive" header,
+            # which was supposed to be sent by the client.
+            elif connection and "keep-alive" in connection.lower():
+                self.persisted = True
+
+            else:  # Proxy-Connection is a netscape hack.
+                proxy = self.headers.get("proxy-connection")
+                if proxy and "keep-alive" in proxy.lower():
+                    self.persisted = True
+
+    def parseLine(self, eols=(CRLF, ), kind="header line"):
+        """
+        Generator to parse  http line from self.msg
+        Each line demarcated by one of eols
+        Yields None If waiting for more to parse
+        Yields line Otherwise
+
+        Raise error if eol not found before  MAX_LINE_SIZE
+        """
+        while True:
+            for eol in eols:  # loop over eols unless found
+                index = self.msg.find(eol)  # not found index == -1
+                if index >= 0:
+                    break
+
+            if index < 0:  # not found
+                if len(self.msg) > MAX_LINE_SIZE:
+                    raise LineTooLong(kind)
+                else:
+                    (yield None)  # more data needed not done parsing header
+                    continue
+
+            if index > MAX_LINE_SIZE:  # found but line too long
+                raise LineTooLong(kind)
+
+            line = self.msg[:index]
+            index += len(eol)  # strip eol
+            del self.msg[:index] # remove used bytes
+            (yield line)
+        return
+
+    def parseLeader(self, eols=(CRLF, LF), kind="leader header line"):
+        """
+        Generator to parse entire leader of header lines from self.msg
+        Each line demarcated by one of eols
+        Yields None If more to parse
+        Yields lines Otherwise as indicated by empty line
+
+        Raise error if eol not found before  MAX_LINE_SIZE
+        """
+        lines = []
+        while True:  # loop until entire heading indicated by empty line
+            for eol in eols:  # loop over eols unless found
+                index = self.msg.find(eol)  # not found index == -1
+                if index >= 0:
+                    break
+
+            if index < 0:  # not found
+                if len(self.msg) > MAX_LINE_SIZE:
+                    raise LineTooLong(kind)
+                else:
+                    (yield None)  # more data needed not done parsing header
+                    continue
+
+            if index > MAX_LINE_SIZE:  # found but line too long
+                raise LineTooLong(kind)
+
+            line = self.msg[:index]
+            index += len(eol)  # strip eol
+            del self.msg[:index] # remove used bytes
+            lines.append(line)
+
+            if len(lines) > MAX_HEADERS:
+                raise HTTPException("got more than {0} headers".format(MAX_HEADERS))
+
+            if not line:  # empty line so entire heading done
+                (yield lines) # heading done
+        return
+
+    def parseHead(self):
+        """
+        Generator to parse headers in heading of .msg
+        Yields None if more to parse
+        Yields True if done parsing
+        """
+        if self.headed:
+            return  # already parsed the head
+
+        # create generator
+        lineParser = self.parseLine(eols=(CRLF, LF), kind="status line")
+        while True:  # parse until we get a non-100 status
+            line = next(lineParser)
+            if line is None:
+                (yield None)
+                continue
+            lineParser.close()  # close generator
+
+            version, status, reason = self.parseStatus(line)
+            if status != CONTINUE:  # 100 continue (with request or ignore)
+                break
+
+            leaderParser = self.parseLeader(eols=(CRLF, LF), kind="continue header line")
+            while True:
+                lines = next(leaderParser)
+                if lines is not None:
+                    leaderParser.close()
+                    break
+                (yield None)
+
+        self.code = self.status = status
+        self.reason = reason.strip()
+        if version in ("HTTP/1.0", "HTTP/0.9"):
+            # Some servers might still return "0.9", treat it as 1.0 anyway
+            self.version = 10
+        elif version.startswith("HTTP/1."):
+            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
+        else:
+            raise UnknownProtocol(version)
+
+        leaderParser = self.parseLeader(eols=(CRLF, LF), kind="leader header line")
+        while True:
+            lines = next(leaderParser)
+            if lines is not None:
+                leaderParser.close()
+                break
+            (yield None)
+
+        self.headers = lodict()
+        if lines:
+            #email Parser wants to see strings rather than bytes.
+            #So convert bytes to string
+            #lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
+            #hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
+            #self.headers.update(HeaderParser().parsestr(hstring).items())
+            self.headers.update(parseHeaderLines(lines))
+
+        # are we using the chunked-style of transfer encoding?
+        transferEncoding = self.headers.get("transfer-encoding")
+        if transferEncoding and transferEncoding.lower() == "chunked":
+            self.chunked = True
+        else:
+            self.chunked = False
+
+        # NOTE: RFC 2616, S4.4, #3 says ignore if transfer-encoding is "chunked"
+        contentLength = self.headers.get("content-length")
+        if contentLength and not self.chunked:
+            try:
+                self.length = int(contentLength)
+            except ValueError:
+                self.length = None
+            else:
+                if self.length < 0:  # ignore nonsensical negative lengths
+                    self.length = None
+        else:
+            self.length = None
+
+        # does the body have a fixed length? (of zero)
+        if ((self.status == NO_CONTENT or self.status == NOT_MODIFIED) or
+                (100 <= self.status < 200) or      # 1xx codes
+                (self.method == "HEAD")):
+            self.length = 0
+
+        contentType = self.headers.get("content-type")
+        if contentType:
+            if u';' in contentType: # should also parse out charset for decoding
+                contentType, sep, encoding = contentType.rpartition(u';')
+                if encoding:
+                    self.encoding = encoding
+
+            if 'text/event-stream' in contentType.lower():
+                self.evented = True
+                self.eventSource = EventSource(raw=self.body,
+                                           events=self.events,
+                                           dictify=self.dictify)
+            else:
+                self.evented = False
+
+            if 'application/json' in contentType.lower():
+                self.jsoned = True
+            else:
+                self.jsoned = False
+
+        # Should connection be kept open until server closes
+        self.checkPersisted()  # sets .persisted
+
+        if self.status in (MULTIPLE_CHOICES,
+                           MOVED_PERMANENTLY,
+                           FOUND,
+                           SEE_OTHER,
+                           TEMPORARY_REDIRECT):
+            self.redirectant = True
+
+        self.headed = True
+        yield True
+        return
+
+    def parseChunk(self):  # reading transfer encoded
+        """
+        Generator to parse next chunk
+        Yields None If waiting for more bytes
+        Yields tuple (size, parms, trails, chunk) Otherwise
+        Where:
+            size is int size of the chunk
+            parms is dict of chunk extension parameters
+            trails is dict of chunk trailer headers (only on last chunk if any)
+            chunk is chunk if any or empty if not
+
+        Chunked-Body   = *chunk
+                    last-chunk
+                    trailer
+                    CRLF
+        chunk          = chunk-size [ chunk-extension ] CRLF
+                         chunk-data CRLF
+        chunk-size     = 1*HEX
+        last-chunk     = 1*("0") [ chunk-extension ] CRLF
+        chunk-extension= *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
+        chunk-ext-name = token
+        chunk-ext-val  = token | quoted-string
+        chunk-data     = chunk-size(OCTET)
+        trailer        = *(entity-header CRLF)
+        """
+        size = 0
+        parms = odict()
+        trails = lodict()
+        chunk = bytearray()
+
+        lineParser = self.parseLine(eols=(CRLF, ), kind="chunk size line")
+        while True:
+            line = next(lineParser)
+            if line is not None:
+                lineParser.close()  # close generator
+                break
+            (yield None)
+
+        size, sep, exts = line.partition(b';')
+        try:
+            size = int(size.strip().decode('ascii'), 16)
+        except ValueError:  # bad size
+            raise
+
+        if exts:  # parse extensions parameters
+            exts = exts.split(b';')
+            for ext in exts:
+                ext = ext.strip()
+                name, sep, value = ext.partition(b'=')
+                parms[name.strip()] = value.strip() or None
+
+        if size == 0:  # last chunk so parse trailing headers
+            leaderParser = self.parseLeader(eols=(CRLF, LF), kind="trailer header line")
+            while True:
+                lines = next(leaderParser)
+                if lines is not None:
+                    leaderParser.close()
+                    break
+                (yield None)
+
+            if lines:
+                #email Parser wants to see strings rather than bytes.
+                #So convert bytes to string
+                #lines.extend((bytearray(b''), bytearray(b'')))  # add blank line for HeaderParser
+                #hstring = bytearray(CRLF).join(lines).decode('iso-8859-1')
+                #trails.update(HeaderParser().parsestr(hstring).items())
+                self.trails.update(parseHeaderLines(lines))
+        else:
+            while len(self.msg) < size:  # need more for chunk
+                (yield None)
+
+            chunk = self.msg[:size]
+            del self.msg[:size]  # remove used bytes
+
+            lineParser = self.parseLine(eols=(CRLF, ), kind="chunk end line")
+            while True:
+                line = next(lineParser)
+                if line is not None:
+                    lineParser.close()  # close generator
+                    break
+                (yield None)
+
+            if line:  # not empty so raise error
+                raise ValueError("Chunk end error. Expected empty got "
+                         "'{0}' instead".format(line.decode('iso-8859-1')))
+
+        (yield (size, parms, trails, chunk))
+        return
+
+    def parseBody(self):
+        """
+        Parse body
+        """
+        if self.bodied:
+            return  # already parsed the body
+
+        if self.length and self.length < 0:
+            raise ValueError("Invalid content length of {0}".format(self.length))
+
+        del self.body[:]  # self.body.clear() clear body python2 bytearrays don't clear
+
+        if self.chunked:  # chunked takes precedence over length
+            self.parms = odict()
+            while True:  # parse all chunks here
+                chunkParser = self.parseChunk()
+                while True:  # parse another chunk
+                    result = next(chunkParser)
+                    if result is not None:
+                        chunkParser.close()
+                        break
+                    (yield None)
+
+                size, parms, trails, chunk = result
+
+                if parms:  # chunk extension parms
+                    self.parms.update(parms)
+
+                if size:  # size non zero so append chunk but keep iterating
+                    self.body.extend(chunk)
+                    if self.evented:
+                        self.eventSource.parse()  # parse events here
+                        if (self.eventSource.retry is not None and
+                                self.retry != self.eventSource.retry):
+                            self.retry = self.eventSource.retry
+                        if (self.eventSource.leid is not None and
+                                self.leid != self.eventSource.leid):
+                            self.leid = self.eventSource.leid
+
+                    if self.closed:  # no more data so finish
+                        chunkParser.close()
+                        break
+
+                else:  # last chunk when empty chunk so done
+                    if trails:
+                        self.trails = trails
+                    chunkParser.close()
+                    break
+
+        elif self.length != None:  # known content length
+            while len(self.msg) < self.length:
+                (yield None)
+
+            self.body = self.msg[:self.length]
+            del self.msg[:self.length]
+
+        else:  # unknown content length so parse forever until closed
+            while True:
+                if self.msg:
+                    self.body.extend(self.msg[:])
+                    del self.msg[:]  # python2 bytearrays dont have clear self.msg.clear()
+
+                if self.evented:
+                    self.eventSource.parse()  # parse events here
+                    if (self.eventSource.retry is not None and
+                            self.retry != self.eventSource.retry):
+                        self.retry = self.eventSource.retry
+                    if (self.eventSource.leid is not None and
+                            self.leid != self.eventSource.leid):
+                        self.leid = self.eventSource.leid
+
+                if self.closed:  # no more data so finish
+                    break
+
+                (yield None)
+
+
+        if self.jsoned or self.dictify:  # attempt to deserialize json
+            try:
+                self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
+            except ValueError as ex:
+                self.data = None
+            else:  # valid json so clear out body
+                del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
+
+        self.bodied = True
+        # convert body to data based on content-type, and .dictify flag
+        # only gets to here if finite content length (not streaming or streaming ends)
+
+        (yield True)
+        return
+
+    def parseResponse(self):
+        """
+        Generator to parse response bytearray.
+        Parses msg if not None
+        Otherwise parse .msg
+        """
+        self.headed = False
+        self.bodied = False
+        self.ended = False
+        self.closed = False
+
+        headParser = self.parseHead()
+        while True:
+            result = next(headParser)
+            if result is not None:
+                headParser.close()
+                break
+            (yield None)
+
+        bodyParser = self.parseBody()
+        while True:
+            result = next(bodyParser)
+            if result is not None:
+                bodyParser.close()
+                break
+            (yield None)
+
+        self.ended = True
+        (yield True)
+        return
+
+    def makeParser(self, msg=None):
+        """
+        Make response parser generator and assign to .parser
+        Assign msg to .msg If provided
+        """
+        if msg:
+            self.msg = msg
+
+        self.parser = self.parseResponse()  # make generator
+
+
+    def parse(self):
+        """
+        Service the response parsing
+        must call .makeParser to setup parser
+        When done parsing,
+           .parser is None
+           .ended is True
+
+        """
+        if self.parser:
+            result = next(self.parser)
+            if result is not None:
+                self.parser.close()
+                self.parser = None
+

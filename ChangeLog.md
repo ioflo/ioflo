@@ -7,6 +7,10 @@ CHANGE LOG
 
 Changed interface to packify unpackify
 
+Some refactoring of nonblocking tcp classes to remove unneeded extra deque
+stage on input
+
+Refactor header parsing of http responses
 
 ---------
 20150819
