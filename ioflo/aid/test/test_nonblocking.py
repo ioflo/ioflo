@@ -883,7 +883,7 @@ class BasicTestCase(unittest.TestCase):
         while not msgIn and beta.txes:
             beta.serviceTxes()
             alpha.serviceReceivesAllIx()
-            msgIn += ixBeta.catRxes()
+            msgIn += ixBeta.catRxbs()
             time.sleep(0.05)
         self.assertEqual(msgOut, msgIn)
 
@@ -896,7 +896,7 @@ class BasicTestCase(unittest.TestCase):
         while len(msgIn) < len(msgOut1 + msgOut2):
             beta.serviceTxes()
             alpha.serviceReceivesAllIx()
-            msgIn += ixBeta.catRxes()
+            msgIn += ixBeta.catRxbs()
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOut1 + msgOut2)
@@ -918,7 +918,7 @@ class BasicTestCase(unittest.TestCase):
             beta.serviceTxes()
             time.sleep(0.05)
             alpha.serviceReceivesAllIx()
-            msgIn += ixBeta.catRxes()
+            msgIn += ixBeta.catRxbs()
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOutBig)
@@ -930,7 +930,7 @@ class BasicTestCase(unittest.TestCase):
         while len(msgIn) < len(msgOut):
             alpha.serviceTxesAllIx()
             beta.serviceReceives()
-            msgIn += beta.catRxes()
+            msgIn += beta.catRxbs()
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOut)
@@ -942,7 +942,7 @@ class BasicTestCase(unittest.TestCase):
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
             beta.serviceReceives()
-            msgIn += beta.catRxes()
+            msgIn += beta.catRxbs()
             time.sleep(0.05)
 
         self.assertEqual(msgIn, msgOutBig)

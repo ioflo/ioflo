@@ -1194,9 +1194,7 @@ class Outgoer(object):
         self._accepted = False  # attribute to support accepted property
         self.cutoff = False  # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
-        self.rxes = deque()  # deque of data received
         self.rxbs = bytearray()  # byte array of data recieved
-
         self.store = store or storing.Store(stamp=0.0)
         self.timeout = timeout if timeout is not None else self.Timeout
         self.timer = StoreTimer(self.store, duration=self.timeout)
@@ -1457,7 +1455,7 @@ class Outgoer(object):
             data = self.receive()
             if not data:
                 break
-            self.rxes.append(data)
+            self.rxbs.extend(data)
 
     def serviceReceiveOnce(self):
         '''
@@ -1466,13 +1464,21 @@ class Outgoer(object):
         if self.connected and not self.cutoff:
             data = self.receive()
             if data:
-                self.rxes.append(data)
+                self.rxbs.extend(data)
 
     def clearRxbs(self):
         """
         Clear .rxbs
         """
-        self.rxbs = bytearray()
+        del self.rxbs[:]
+
+    def catRxbs(self):
+        """
+        Return copy and clear .rxbs
+        """
+        rx = self.rxbs[:]
+        self.clearRxbs()
+        return rx
 
     def tailRxbs(self, index):
         """
@@ -1482,28 +1488,11 @@ class Outgoer(object):
         """
         return (bytes(self.rxbs[index:]), len(self.rxbs))
 
-    def serviceRxes(self):
-        """
-        Pop off all rxes and append to .rxbs
-        """
-        while self.rxes:
-            self.rxbs.extend(self.rxes.popleft())
-
     def serviceAllRx(self):
         """
         Service all rx services, service recieves and service rxes
         """
         self.serviceReceives()
-        self.serviceRxes()
-
-    def catRxes(self):
-        """
-        Pop off all rxes and concatenate into single byte string and return
-        This is instead of servicesRxes which appends the .rxes to .rxbs
-        """
-        rx = b''.join(list(self.rxes))
-        self.rxes.clear()
-        return rx
 
     def send(self, data):
         """
@@ -1814,7 +1803,6 @@ class Incomer(object):
         self.wlog = wlog
         self.cutoff = False # True when detect connection closed on far side
         self.txes = deque()  # deque of data to send
-        self.rxes = deque() # deque of data received
         self.rxbs = bytearray()  # bytearray of data received
         if self.cs:
             self.cs.setblocking(0)  # linux does not preserve blocking from accept
@@ -1903,7 +1891,7 @@ class Incomer(object):
             data = self.receive()
             if not data:
                 break
-            self.rxes.append(data)
+            self.rxbs.extend(data)
 
     def serviceReceiveOnce(self):
         '''
@@ -1912,13 +1900,21 @@ class Incomer(object):
         if not self.cutoff:
             data = self.receive()
             if data:
-                self.rxes.append(data)
+                self.rxbs.extend(data)
 
     def clearRxbs(self):
         """
         Clear .rxbs
         """
-        self.rxbs = bytearray()
+        del self.rxbs[:]
+
+    def catRxbs(self):
+        """
+        Return copy and clear .rxbs
+        """
+        rx = self.rxbs[:]
+        self.clearRxbs()
+        return rx
 
     def tailRxbs(self, index):
         """
@@ -1928,28 +1924,11 @@ class Incomer(object):
         """
         return (bytes(self.rxbs[index:]), len(self.rxbs))
 
-    def serviceRxes(self):
-        """
-        Pop off all rxes and append to .rxbs
-        """
-        while self.rxes:
-            self.rxbs.extend(self.rxes.popleft())
-
     def serviceAllRx(self):
         """
         Service all rx services, service recieves and service rxes
         """
         self.serviceReceives()
-        self.serviceRxes()
-
-    def catRxes(self):
-        """
-        Pop off all rxes and concatenate into single byte string and return
-        This is instead of servicesRxes which appends the .rxes to .rxbs
-        """
-        rx = b''.join(list(self.rxes))
-        self.rxes.clear()
-        return rx
 
     def send(self, data):
         """
@@ -2396,14 +2375,14 @@ class Server(Acceptor):
             self.ixes[ca].shutclose()
         del self.ixes[ca]
 
-    def serviceRxesIx(self, ca):
+    def catRxbsIx(self, ca):
         """
-        Service rxes for incomer by connection address ca
+        Return  copy and clear rxbs for incomer given by connection address ca
         """
         if ca not in self.ixes:
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
-        self.ixes[ca].serviceRxes()
+        return (self.ixes[ca].catRxbs())
 
     def serviceRxIx(self, ca):
         """
@@ -2413,15 +2392,6 @@ class Server(Acceptor):
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
         self.ixes[ca].serviceRx()
-
-    def catRxesIx(self, ca):
-        """
-        Return concatenated rxes for incomer given by connection address ca
-        """
-        if ca not in self.ixes:
-            emsg = "Invalid connection address '{0}'".format(ca)
-            raise ValueError(emsg)
-        return (self.ixes[ca].catRxes())
 
     def transmitIx(self, data, ca):
         '''
@@ -2438,13 +2408,6 @@ class Server(Acceptor):
         """
         for ix in self.ixes.values():
             ix.serviceReceives()
-
-    def serviceRxesAllIx(self):
-        """
-        Service rxes for all incomers in .ixes
-        """
-        for ix in self.ixes.values():
-            ix.serviceRxes()
 
     def serviceAllRxAllIx(self):
         """
