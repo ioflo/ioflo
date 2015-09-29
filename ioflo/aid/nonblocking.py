@@ -1488,12 +1488,6 @@ class Outgoer(object):
         """
         return (bytes(self.rxbs[index:]), len(self.rxbs))
 
-    def serviceAllRx(self):
-        """
-        Service all rx services, service recieves and service rxes
-        """
-        self.serviceReceives()
-
     def send(self, data):
         """
         Perform non blocking send on connected socket .cs.
@@ -1932,12 +1926,6 @@ class Incomer(object):
         also the length of .rxbs to be used to update index
         """
         return (bytes(self.rxbs[index:]), len(self.rxbs))
-
-    def serviceAllRx(self):
-        """
-        Service all rx services, service recieves and service rxes
-        """
-        self.serviceReceives()
 
     def send(self, data):
         """
@@ -2423,14 +2411,21 @@ class Server(Acceptor):
             raise ValueError(emsg)
         return (self.ixes[ca].catRxbs())
 
-    def serviceRxIx(self, ca):
+    def serviceReceivesIx(self, ca):
         """
-        Service rx for incomer by connection address ca
+        Service receives for incomer by connection address ca
         """
         if ca not in self.ixes:
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
-        self.ixes[ca].serviceRx()
+        self.ixes[ca].serviceReceives()
+
+    def serviceReceivesAllIx(self):
+        """
+        Service receives for all incomers in .ixes
+        """
+        for ix in self.ixes.values():
+            ix.serviceReceives()
 
     def transmitIx(self, data, ca):
         '''
@@ -2441,26 +2436,20 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].tx(data)
 
-    def serviceReceivesAllIx(self):
-        """
-        Service receives for all incomers in .ixes
-        """
-        for ix in self.ixes.values():
-            ix.serviceReceives()
-
-    def serviceAllRxAllIx(self):
-        """
-        Service rxes for all incomers in .ixes
-        """
-        for ix in self.ixes.values():
-            ix.serviceAllRx()
-
     def serviceTxesAllIx(self):
         """
         Service transmits for all incomers in .ixes
         """
         for ix in self.ixes.values():
             ix.serviceTxes()
+
+    def serviceAll(self):
+        """
+        Service connects and service receives and txes for all ix.
+        """
+        self.serviceConnects()
+        self.serviceReceivesAllIx()
+        self.serviceTxesAllIx()
 
 ServerSocketTcpNb = Server  # alias
 

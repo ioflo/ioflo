@@ -149,7 +149,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -161,7 +161,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -271,7 +271,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -292,7 +292,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -314,7 +314,7 @@ class BasicTestCase(unittest.TestCase):
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -422,7 +422,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -443,7 +443,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -465,7 +465,7 @@ class BasicTestCase(unittest.TestCase):
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -573,7 +573,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -594,7 +594,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -616,7 +616,7 @@ class BasicTestCase(unittest.TestCase):
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -726,7 +726,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -747,7 +747,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -780,7 +780,7 @@ class BasicTestCase(unittest.TestCase):
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -889,7 +889,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -910,7 +910,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -937,7 +937,7 @@ class BasicTestCase(unittest.TestCase):
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -1046,7 +1046,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1067,7 +1067,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1095,7 +1095,7 @@ class BasicTestCase(unittest.TestCase):
         while response.parser and not timer.expired:
             alpha.serviceTxesAllIx()
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -1235,7 +1235,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.txes and not ixBeta.rxbs :
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1247,7 +1247,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1364,7 +1364,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.connector.txes and not ixBeta.rxbs :
             beta.connector.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1376,7 +1376,7 @@ class BasicTestCase(unittest.TestCase):
         while ixBeta.txes or not beta.connector.rxbs:
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.connector.serviceAllRx()
+            beta.connector.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.connector.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1494,7 +1494,7 @@ class BasicTestCase(unittest.TestCase):
         while beta.connector.txes and not ixBeta.rxbs :
             beta.serviceAll()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1613,7 +1613,7 @@ class BasicTestCase(unittest.TestCase):
         while (beta.requests or beta.connector.txes) and not ixBeta.rxbs :
             beta.serviceAll()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n'
@@ -1677,7 +1677,7 @@ class BasicTestCase(unittest.TestCase):
         while ( beta.requests or beta.connector.txes) and not ixBeta.rxbs :
             beta.serviceAll()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         msgOut = b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n'
@@ -1741,7 +1741,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -1900,7 +1900,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -2210,7 +2210,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -2463,7 +2463,7 @@ class BasicTestCase(unittest.TestCase):
             beta.serviceAll()
             time.sleep(0.05)
             beta.connector.store.advanceStamp(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
             beta.connector.store.advanceStamp(0.05)
 
@@ -2561,7 +2561,7 @@ class BasicTestCase(unittest.TestCase):
             beta.serviceAll()
             time.sleep(0.05)
             beta.connector.store.advanceStamp(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
             beta.connector.store.advanceStamp(0.05)
 
@@ -2624,7 +2624,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -2971,7 +2971,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -3115,7 +3115,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -3134,7 +3134,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -3282,7 +3282,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -3301,7 +3301,7 @@ class BasicTestCase(unittest.TestCase):
         """
         server.serviceConnects()
         if server.ixes:
-            server.serviceAllRxAllIx()
+            server.serviceReceivesAllIx()
 
             ixClient = server.ixes.values()[0]
             msgIn = bytes(ixClient.rxbs)
@@ -3558,6 +3558,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.reinit(verbosity=console.Wordage.concise)
 
+
     def testValetServiceEcho(self):
         """
         Test Valet service request response of echo non blocking
@@ -3583,106 +3584,49 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format("Building Patron ...\n"))
         wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
-        host = alpha.servant.eha[0]
-        port = alpha.servant.eha[1]
-        method = u'GET'
-        path = u'/echo?name=fame'
-        headers = odict([(u'Accept', u'application/json')])
+
+        path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
         beta = httping.Patron(bufsize=131072,
-                              wlog=wireLogBeta,
-                              store=store,
-                              hostname=host,
-                              port=port,
-                              method=method,
-                              path=path,
-                              headers=headers,
-                              )
+                                     wlog=wireLogBeta,
+                                     store=store,
+                                     path=path,
+                                     reconnectable=True,
+                                     )
 
         self.assertIs(beta.connector.reopen(), True)
         self.assertIs(beta.connector.accepted, False)
         self.assertIs(beta.connector.connected, False)
         self.assertIs(beta.connector.cutoff, False)
 
-        console.terse("Connecting patron beta to valet alpha ...\n")
-        while True:
-            beta.connector.serviceConnect()
-            alpha.servant.serviceConnects()
-            if beta.connector.connected and beta.connector.ca in alpha.servant.ixes:
-                break
+        request = odict([('method', u'GET'),
+                         ('path', u'/echo?name=fame'),
+                         ('qargs', odict()),
+                         ('fragment', u''),
+                         ('headers', odict([('Accept', 'application/json')])),
+                        ])
+
+        beta.requests.append(request)
+
+        while (not alpha.servant.ixes or beta.requests or beta.connector.txes):
+            alpha.serviceAll()
+            time.sleep(0.05)
+            beta.serviceAll()
             time.sleep(0.05)
 
         self.assertIs(beta.connector.accepted, True)
         self.assertIs(beta.connector.connected, True)
         self.assertIs(beta.connector.cutoff, False)
-        self.assertEqual(beta.connector.ca, beta.connector.cs.getsockname())
-        self.assertEqual(beta.connector.ha, beta.connector.cs.getpeername())
-        self.assertEqual(alpha.servant.eha, beta.connector.ha)
 
-        ixBeta = alpha.servant.ixes[beta.connector.ca]
-        self.assertIsNotNone(ixBeta.ca)
-        self.assertIsNotNone(ixBeta.cs)
-        self.assertEqual(ixBeta.cs.getsockname(), beta.connector.cs.getpeername())
-        self.assertEqual(ixBeta.cs.getpeername(), beta.connector.cs.getsockname())
-        self.assertEqual(ixBeta.ca, beta.connector.ca)
-        self.assertEqual(ixBeta.ha, beta.connector.ha)
+        self.assertEqual(len(alpha.servant.ixes), 1)
 
-        beta.transmit()
 
-        lines = [
-                   b'GET /echo?name=fame HTTP/1.1',
-                   b'Host: 127.0.0.1:6101',
-                   b'Accept-Encoding: identity',
-                   b'Accept: application/json',
-                   b'',
-                   b'',
-                ]
-        for i, line in enumerate(lines):
-            self.assertEqual(line, beta.requester.lines[i])
+        #self.assertEqual(len(beta.connector.rxbs), 0)
+        #self.assertIs(beta.waited, False)
+        #self.assertIs(beta.respondent.ended, True)
 
-        msgOut = beta.connector.txes[0]
-        self.assertEqual(beta.requester.head, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
-        self.assertEqual(msgOut, b'GET /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nAccept: application/json\r\n\r\n')
-
-        console.terse("Beta requests to Alpha\n")
-        console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
-
-        while beta.connector.txes and not ixBeta.rxbs :
-            beta.serviceAll()
-            time.sleep(0.05)
-            alpha.servant.serviceAllRxAllIx()
-            time.sleep(0.05)
-        msgIn = bytes(ixBeta.rxbs)
-        self.assertEqual(msgIn, msgOut)
-        ixBeta.clearRxbs()
-
-        console.terse("Alpha responds to Beta\n")
-        console.terse("Beta processes response \n")
-        msgOut = b'HTTP/1.1 200 OK\r\nContent-Length: 122\r\nContent-Type: application/json\r\nDate: Thu, 30 Apr 2015 19:37:17 GMT\r\nServer: IoBook.local\r\n\r\n{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'
-        ixBeta.tx(msgOut)
-        while ixBeta.txes or not beta.respondent.ended:
-            alpha.servant.serviceTxesAllIx()
-            time.sleep(0.05)
-            beta.serviceAll()
-            time.sleep(0.05)
-
-        self.assertEqual(len(beta.connector.rxbs), 0)
-        self.assertIs(beta.waited, False)
-        self.assertIs(beta.respondent.ended, True)
-        self.assertEqual(len(beta.responses), 1)
-
-        self.assertEqual(bytes(beta.respondent.body), b'')
-        self.assertEqual(beta.respondent.data, {'action': None,
-                                         'content': None,
-                                         'query': {'name': 'fame'},
-                                         'url': 'http://127.0.0.1:8080/echo?name=fame',
-                                         'verb': 'GET'}
-                         )
-        self.assertEqual(len(beta.connector.rxbs), 0)
-        self.assertEqual(beta.respondent.headers.items(), [('content-length', '122'),
-                                                    ('content-type', 'application/json'),
-                                                    ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
-                                                    ('server', 'IoBook.local')])
+        #self.assertEqual(len(beta.responses), 1)
+        #response = beta.responses.popleft()
 
         alpha.servant.closeAll()
         beta.connector.close()
@@ -3690,6 +3634,8 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
+
+
 
 
 def runOne(test):
@@ -3745,6 +3691,6 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
-    #runOne('testValetServiceEcho')
+    runOne('testValetServiceEcho')

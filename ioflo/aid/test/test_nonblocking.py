@@ -1026,7 +1026,7 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while not ixBeta.rxbs and beta.txes:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1039,7 +1039,7 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut2)
         while len(ixBeta.rxbs) < len(msgOut1 + msgOut2):
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn, index = ixBeta.tailRxbs(index)
         self.assertEqual(msgIn, msgOut1 + msgOut2)
@@ -1060,7 +1060,7 @@ class BasicTestCase(unittest.TestCase):
         while len(ixBeta.rxbs) < len(msgOutBig):
             beta.serviceTxes()
             time.sleep(0.05)
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         ixBeta.clearRxbs()
@@ -1071,7 +1071,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.tx(msgOut)
         while len(beta.rxbs) < len(msgOut):
             alpha.serviceTxesAllIx()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         beta.clearRxbs()
@@ -1082,7 +1082,7 @@ class BasicTestCase(unittest.TestCase):
         while len(beta.rxbs) < len(msgOutBig):
             alpha.serviceTxesAllIx()
             time.sleep(0.05)
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
         msgIn = bytes(beta.rxbs)
         beta.clearRxbs()
@@ -1173,7 +1173,7 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while not ixBeta.rxbs and beta.txes:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.05)
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1277,13 +1277,13 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while True:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.01)
             if not beta.txes and ixBeta.rxbs:
                 break
 
         time.sleep(0.05)
-        alpha.serviceAllRxAllIx()
+        alpha.serviceReceivesAllIx()
 
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1294,7 +1294,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
             if not ixBeta.txes and beta.rxbs:
                 break
@@ -1406,13 +1406,13 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while True:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.01)
             if not beta.txes and ixBeta.rxbs:
                 break
 
         time.sleep(0.05)
-        alpha.serviceAllRxAllIx()
+        alpha.serviceReceivesAllIx()
 
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1423,7 +1423,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
             if not ixBeta.txes and beta.rxbs:
                 break
@@ -1535,13 +1535,13 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while True:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.01)
             if not beta.txes and ixBeta.rxbs:
                 break
 
         time.sleep(0.05)
-        alpha.serviceAllRxAllIx()
+        alpha.serviceReceivesAllIx()
 
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1552,7 +1552,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
             if not ixBeta.txes and beta.rxbs:
                 break
@@ -1664,13 +1664,13 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while True:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.01)
             if not beta.txes and ixBeta.rxbs:
                 break
 
         time.sleep(0.05)
-        alpha.serviceAllRxAllIx()
+        alpha.serviceReceivesAllIx()
 
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1681,7 +1681,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
             if not ixBeta.txes and beta.rxbs:
                 break
@@ -1793,13 +1793,13 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while True:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.01)
             if not beta.txes and ixBeta.rxbs:
                 break
 
         time.sleep(0.05)
-        alpha.serviceAllRxAllIx()
+        alpha.serviceReceivesAllIx()
 
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1810,7 +1810,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
             if not ixBeta.txes and beta.rxbs:
                 break
@@ -1922,13 +1922,13 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while True:
             beta.serviceTxes()
-            alpha.serviceAllRxAllIx()
+            alpha.serviceReceivesAllIx()
             time.sleep(0.01)
             if not beta.txes and ixBeta.rxbs:
                 break
 
         time.sleep(0.05)
-        alpha.serviceAllRxAllIx()
+        alpha.serviceReceivesAllIx()
 
         msgIn = bytes(ixBeta.rxbs)
         self.assertEqual(msgIn, msgOut)
@@ -1939,7 +1939,7 @@ class BasicTestCase(unittest.TestCase):
         ixBeta.tx(msgOut)
         while True:
             alpha.serviceTxesAllIx()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
             if not ixBeta.txes and beta.rxbs:
                 break

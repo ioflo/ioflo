@@ -189,9 +189,9 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
-        beta.serviceAllRx()
+        beta.serviceReceives()
 
         msgIn, index = beta.tailRxbs(0)
         self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "path": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
@@ -275,9 +275,9 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
-        beta.serviceAllRx()
+        beta.serviceReceives()
 
         msgIn, index = beta.tailRxbs(0)
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
@@ -288,7 +288,7 @@ class BasicTestCase(unittest.TestCase):
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -383,9 +383,9 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
-        beta.serviceAllRx()
+        beta.serviceReceives()
 
         msgIn, index = beta.tailRxbs(0)
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
@@ -396,7 +396,7 @@ class BasicTestCase(unittest.TestCase):
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -485,9 +485,9 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
-        beta.serviceAllRx()
+        beta.serviceReceives()
 
         msgIn, index = beta.tailRxbs(0)
 
@@ -500,7 +500,7 @@ class BasicTestCase(unittest.TestCase):
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
             response.parse()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.01)
 
         if response.parser:
@@ -580,9 +580,9 @@ class BasicTestCase(unittest.TestCase):
         beta.tx(msgOut)
         while beta.txes or not beta.rxbs:
             beta.serviceTxes()
-            beta.serviceAllRx()
+            beta.serviceReceives()
             time.sleep(0.05)
-        beta.serviceAllRx()
+        beta.serviceReceives()
 
         msgIn, index = beta.tailRxbs(0)
 
