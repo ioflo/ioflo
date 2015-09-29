@@ -2521,7 +2521,7 @@ class BasicTestCase(unittest.TestCase):
 
         # alpha's ixBeta connection shutdown prematurely
         console.terse("Disconnecting server so beta must auto reconnect ...\n")
-        alpha.shutcloseIx(beta.connector.ca)
+        alpha.closeIx(beta.connector.ca)
         alpha.removeIx(beta.connector.ca)
         while True:
             beta.serviceAll()
@@ -3684,7 +3684,7 @@ class BasicTestCase(unittest.TestCase):
                                                     ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
                                                     ('server', 'IoBook.local')])
 
-        alpha.servant.close()
+        alpha.servant.closeAll()
         beta.connector.close()
 
         wireLogAlpha.close()

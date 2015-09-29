@@ -2380,14 +2380,28 @@ class Server(Acceptor):
             raise ValueError(emsg)
         self.ixes[ca].shutdownReceive()
 
-    def shutcloseIx(self, ca):
+    def closeIx(self, ca):
         """
         Shutdown and close incomer given by connection address ca
         """
         if ca not in self.ixes:
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
-        self.ixes[ca].shutclose()
+        self.ixes[ca].close()
+
+    def closeAllIx(self):
+        """
+        Shutdown and close all incomer connections
+        """
+        for ix in self.ixes.values():
+            ix.close()
+
+    def closeAll(self):
+        """
+        Close all sockets
+        """
+        self.close()
+        self.closeAllIx()
 
     def removeIx(self, ca, shutclose=True):
         """
