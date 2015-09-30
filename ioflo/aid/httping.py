@@ -177,6 +177,9 @@ responses = {
     511: 'Network Authentication Required',
 }
 
+METHODS = (u'GET', u'HEAD', u'PUT', u'PATCH', u'POST', u'DELETE',
+           u'OPTIONS', u'TRACE', u'CONNECT' )
+
 # maximal amount of data to read at one time in _safe_read
 MAXAMOUNT = 1048576
 
@@ -205,6 +208,13 @@ class BadStatusLine(HTTPException):
         self.args = line,
         self.line = line
 
+class BadStartLine(BadStatusLine):
+    pass
+
+class BadMethod(HTTPException):
+    def __init__(self, method):
+        self.args = method,
+        self.method = method
 
 class LineTooLong(HTTPException):
     def __init__(self, kind):
@@ -321,6 +331,92 @@ def parseLeader(raw, eols=(CRLF, LF), kind="leader header line", headers=None):
             (yield headers) # leader done
     return
 
+def parseChunk(raw):  # reading transfer encoded raw
+    """
+    Generator to parse next chunk from raw bytearray
+    Consumes used portions of raw
+    Yields None If waiting for more bytes
+    Yields tuple (size, parms, trails, chunk) Otherwise
+    Where:
+        size is int size of the chunk
+        parms is dict of chunk extension parameters
+        trails is dict of chunk trailer headers (only on last chunk if any)
+        chunk is chunk if any or empty if not
+
+    Chunked-Body   = *chunk
+                last-chunk
+                trailer
+                CRLF
+    chunk          = chunk-size [ chunk-extension ] CRLF
+                     chunk-data CRLF
+    chunk-size     = 1*HEX
+    last-chunk     = 1*("0") [ chunk-extension ] CRLF
+    chunk-extension= *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
+    chunk-ext-name = token
+    chunk-ext-val  = token | quoted-string
+    chunk-data     = chunk-size(OCTET)
+    trailer        = *(entity-header CRLF)
+    """
+    size = 0
+    parms = odict()
+    trails = lodict()
+    chunk = bytearray()
+
+    lineParser = parseLine(raw=raw, eols=(CRLF, ), kind="chunk size line")
+    while True:
+        line = next(lineParser)
+        if line is not None:
+            lineParser.close()  # close generator
+            break
+        (yield None)
+
+    size, sep, exts = line.partition(b';')
+    try:
+        size = int(size.strip().decode('ascii'), 16)
+    except ValueError:  # bad size
+        raise
+
+    if exts:  # parse extensions parameters
+        exts = exts.split(b';')
+        for ext in exts:
+            ext = ext.strip()
+            name, sep, value = ext.partition(b'=')
+            parms[name.strip()] = value.strip() or None
+
+    if size == 0:  # last chunk so parse trailing headers if any
+        leaderParser = parseLeader(raw=raw,
+                                   eols=(CRLF, LF),
+                                   kind="trailer header line")
+        while True:
+            headers = next(leaderParser)
+            if headers is not None:
+                leaderParser.close()
+                break
+            (yield None)
+        trails.update(headers)
+
+    else:
+        while len(raw) < size:  # need more for chunk
+            (yield None)
+
+        chunk = raw[:size]
+        del raw[:size]  # remove used bytes
+
+        lineParser = parseLine(raw=raw, eols=(CRLF, ), kind="chunk end line")
+        while True:
+            line = next(lineParser)
+            if line is not None:
+                lineParser.close()  # close generator
+                break
+            (yield None)
+
+        if line:  # not empty so raise error
+            raise ValueError("Chunk end error. Expected empty got "
+                     "'{0}' instead".format(line.decode('iso-8859-1')))
+
+    (yield (size, parms, trails, chunk))
+    return
+
 def parseBom(raw, bom=codecs.BOM_UTF8):
     """
     Generator to parse bom from raw bytearray
@@ -341,17 +437,14 @@ def parseBom(raw, bom=codecs.BOM_UTF8):
         (yield None)  # not enough bytes yet
     return
 
-def parseStatus(line):
+def parseStatusLine(line):
     """
-    Parse the status line
+    Parse the response status line
     """
     line = line.decode("iso-8859-1")
     if not line:
-        # Presumably, the connection closed before
-        # sending a valid message.
-        raise BadStatusLine(line)
+        raise BadStatusLine(line) # connection closed before sending valid msg
 
-    # python2 split does not support maxsplit keyword arg
     version, status, reason = aiding.repack(3, line.split(), default = u'')
     reason = u" ".join(reason)
 
@@ -366,6 +459,24 @@ def parseStatus(line):
     except ValueError:
         raise BadStatusLine(line)
     return (version, status, reason)
+
+def parseRequestLine(line):
+    """
+    Parse the request start line
+    """
+    line = line.decode("iso-8859-1")
+    if not line:
+        raise BadStartLine(line)  # connection closed before sending valid msg
+
+    method, path, version = aiding.repack(3, line.split(), default = u'')
+
+    if not version.startswith("HTTP/"):
+        raise UnkownProtocol(version)
+
+    if method not in METHODS:
+        raise BadMethod(method)
+
+    return (method, path, version)
 
 
 #  Class Definitions
@@ -1022,7 +1133,7 @@ class Respondent(object):
                 continue
             lineParser.close()  # close generator
 
-            version, status, reason = parseStatus(line)
+            version, status, reason = parseStatusLine(line)
             if status != CONTINUE:  # 100 continue (with request or ignore)
                 break
 
@@ -1117,91 +1228,6 @@ class Respondent(object):
         yield True
         return
 
-    def parseChunk(self):  # reading transfer encoded
-        """
-        Generator to parse next chunk
-        Yields None If waiting for more bytes
-        Yields tuple (size, parms, trails, chunk) Otherwise
-        Where:
-            size is int size of the chunk
-            parms is dict of chunk extension parameters
-            trails is dict of chunk trailer headers (only on last chunk if any)
-            chunk is chunk if any or empty if not
-
-        Chunked-Body   = *chunk
-                    last-chunk
-                    trailer
-                    CRLF
-        chunk          = chunk-size [ chunk-extension ] CRLF
-                         chunk-data CRLF
-        chunk-size     = 1*HEX
-        last-chunk     = 1*("0") [ chunk-extension ] CRLF
-        chunk-extension= *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
-        chunk-ext-name = token
-        chunk-ext-val  = token | quoted-string
-        chunk-data     = chunk-size(OCTET)
-        trailer        = *(entity-header CRLF)
-        """
-        size = 0
-        parms = odict()
-        trails = lodict()
-        chunk = bytearray()
-
-        lineParser = parseLine(raw=self.msg, eols=(CRLF, ), kind="chunk size line")
-        while True:
-            line = next(lineParser)
-            if line is not None:
-                lineParser.close()  # close generator
-                break
-            (yield None)
-
-        size, sep, exts = line.partition(b';')
-        try:
-            size = int(size.strip().decode('ascii'), 16)
-        except ValueError:  # bad size
-            raise
-
-        if exts:  # parse extensions parameters
-            exts = exts.split(b';')
-            for ext in exts:
-                ext = ext.strip()
-                name, sep, value = ext.partition(b'=')
-                parms[name.strip()] = value.strip() or None
-
-        if size == 0:  # last chunk so parse trailing headers if any
-            leaderParser = parseLeader(raw=self.msg,
-                                       eols=(CRLF, LF),
-                                       kind="trailer header line")
-            while True:
-                headers = next(leaderParser)
-                if headers is not None:
-                    leaderParser.close()
-                    break
-                (yield None)
-            trails.update(headers)
-
-        else:
-            while len(self.msg) < size:  # need more for chunk
-                (yield None)
-
-            chunk = self.msg[:size]
-            del self.msg[:size]  # remove used bytes
-
-            lineParser = parseLine(raw=self.msg, eols=(CRLF, ), kind="chunk end line")
-            while True:
-                line = next(lineParser)
-                if line is not None:
-                    lineParser.close()  # close generator
-                    break
-                (yield None)
-
-            if line:  # not empty so raise error
-                raise ValueError("Chunk end error. Expected empty got "
-                         "'{0}' instead".format(line.decode('iso-8859-1')))
-
-        (yield (size, parms, trails, chunk))
-        return
-
     def parseBody(self):
         """
         Parse body
@@ -1217,7 +1243,7 @@ class Respondent(object):
         if self.chunked:  # chunked takes precedence over length
             self.parms = odict()
             while True:  # parse all chunks here
-                chunkParser = self.parseChunk()
+                chunkParser = parseChunk(raw=self.msg)
                 while True:  # parse another chunk
                     result = next(chunkParser)
                     if result is not None:
@@ -1278,7 +1304,9 @@ class Respondent(object):
 
                 (yield None)
 
-
+        # convert body to data based on content-type, and .dictify flag
+        # only gets to here once content length has become finite
+        # closed, not chunked/streamed, or chunking/streaming has ended
         if self.jsoned or self.dictify:  # attempt to deserialize json
             try:
                 self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
@@ -1288,9 +1316,6 @@ class Respondent(object):
                 del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
 
         self.bodied = True
-        # convert body to data based on content-type, and .dictify flag
-        # only gets to here if finite content length (not streaming or streaming ends)
-
         (yield True)
         return
 
@@ -1334,7 +1359,6 @@ class Respondent(object):
             self.msg = msg
 
         self.parser = self.parseResponse()  # make generator
-
 
     def parse(self):
         """
@@ -1783,7 +1807,6 @@ class Patron(object):
         self.serviceResponse()
 
 
-
 class Requestant(object):
     """
     Nonblocking HTTP Server Requestant class
@@ -1828,7 +1851,7 @@ class Requestant(object):
         self.jsoned = None    # is content application/json
         self.encoding = 'ISO-8859-1'  # encoding charset if provided else default
 
-        self.persisted = None   # persist connection until server closes
+        self.persisted = None   # persist connection until client closes
         self.headed = None    # head completely parsed
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
@@ -1859,44 +1882,26 @@ class Requestant(object):
     def checkPersisted(self):
         """
         Checks headers to determine if connection should be kept open until
-        server closes it
+        client closes it
         Sets the .persisted flag
         """
         connection = self.headers.get("connection")  # check connection header
         if self.version == 11:  # rules for http v1.1
             self.persisted = True  # connections default to persisted
-            # An HTTP/1.1 proxy is assumed to stay open unless
-            # explicitly closed.
             connection = self.headers.get("connection")
             if connection and "close" in connection.lower():
-                self.persisted = False
+                self.persisted = False  # unless connection set to close.
 
             # non-chunked but persistent connections should have non None for
             # content-length Otherwise assume not persisted
             elif (not self.chunked and self.length is None):
                 self.persisted = False
 
-        elif self.version == 10:
+        elif self.version == 10:  # rules for http v1.0
             self.persisted = False  # connections default to non-persisted
-            # Some HTTP/1.0 implementations have support for persistent
-            # connections, using rules different than HTTP/1.1.
-
-            if self.evented:  # server sent events
+            # HTTP/1.0  Connection: keep-alive indicates persistent connection.
+            if connection and "keep-alive" in connection.lower():
                 self.persisted = True
-
-            # For older HTTP, Keep-Alive indicates persistent connection.
-            elif self.headers.get("keep-alive"):
-                self.persisted = True
-
-            # At least Akamai returns a "Connection: Keep-Alive" header,
-            # which was supposed to be sent by the client.
-            elif connection and "keep-alive" in connection.lower():
-                self.persisted = True
-
-            else:  # Proxy-Connection is a netscape hack.
-                proxy = self.headers.get("proxy-connection")
-                if proxy and "keep-alive" in proxy.lower():
-                    self.persisted = True
 
     def parseHead(self):
         """
@@ -1911,36 +1916,26 @@ class Requestant(object):
 
         # create generator
         lineParser = parseLine(raw=self.msg, eols=(CRLF, LF), kind="status line")
-        while True:  # parse until we get a non-100 status
+        while True:  # parse until we get full start line
             line = next(lineParser)
             if line is None:
                 (yield None)
                 continue
             lineParser.close()  # close generator
+            break
 
-            version, status, reason = parseStatus(line)
-            if status != CONTINUE:  # 100 continue (with request or ignore)
-                break
+        method, path, version = parseRequestLine(line)
 
-            leaderParser = parseLeader(raw=self.msg,
-                                            eols=(CRLF, LF),
-                                            kind="continue header line")
-            while True:
-                headers = next(leaderParser)
-                if headers is not None:
-                    leaderParser.close()
-                    break
-                (yield None)
+        self.method = method
+        self.path = path.strip()
 
-        self.code = self.status = status
-        self.reason = reason.strip()
-        if version in ("HTTP/1.0", "HTTP/0.9"):
-            # Some servers might still return "0.9", treat it as 1.0 anyway
-            self.version = 10
-        elif version.startswith("HTTP/1."):
-            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
-        else:
+        if not version.startswith(u"HTTP/1."):
             raise UnknownProtocol(version)
+
+        if version.startswith(u"HTTP/1.0"):
+            self.version = 10
+        else:
+            self.version = 11  # use HTTP/1.1 code for HTTP/1.x where x>=1
 
         leaderParser = parseLeader(raw=self.msg,
                                    eols=(CRLF, LF),
@@ -1973,12 +1968,6 @@ class Requestant(object):
         else:
             self.length = None
 
-        # does the body have a fixed length? (of zero)
-        if ((self.status == NO_CONTENT or self.status == NOT_MODIFIED) or
-                (100 <= self.status < 200) or      # 1xx codes
-                (self.method == "HEAD")):
-            self.length = 0
-
         contentType = self.headers.get("content-type")
         if contentType:
             if u';' in contentType: # should also parse out charset for decoding
@@ -1986,116 +1975,16 @@ class Requestant(object):
                 if encoding:
                     self.encoding = encoding
 
-            if 'text/event-stream' in contentType.lower():
-                self.evented = True
-                self.eventSource = EventSource(raw=self.body,
-                                           events=self.events,
-                                           dictify=self.dictify)
-            else:
-                self.evented = False
-
             if 'application/json' in contentType.lower():
                 self.jsoned = True
             else:
                 self.jsoned = False
 
-        # Should connection be kept open until server closes
+        # Should connection be kept open until client closes
         self.checkPersisted()  # sets .persisted
-
-        if self.status in (MULTIPLE_CHOICES,
-                           MOVED_PERMANENTLY,
-                           FOUND,
-                           SEE_OTHER,
-                           TEMPORARY_REDIRECT):
-            self.redirectant = True
 
         self.headed = True
         yield True
-        return
-
-    def parseChunk(self):  # reading transfer encoded
-        """
-        Generator to parse next chunk
-        Yields None If waiting for more bytes
-        Yields tuple (size, parms, trails, chunk) Otherwise
-        Where:
-            size is int size of the chunk
-            parms is dict of chunk extension parameters
-            trails is dict of chunk trailer headers (only on last chunk if any)
-            chunk is chunk if any or empty if not
-
-        Chunked-Body   = *chunk
-                    last-chunk
-                    trailer
-                    CRLF
-        chunk          = chunk-size [ chunk-extension ] CRLF
-                         chunk-data CRLF
-        chunk-size     = 1*HEX
-        last-chunk     = 1*("0") [ chunk-extension ] CRLF
-        chunk-extension= *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
-        chunk-ext-name = token
-        chunk-ext-val  = token | quoted-string
-        chunk-data     = chunk-size(OCTET)
-        trailer        = *(entity-header CRLF)
-        """
-        size = 0
-        parms = odict()
-        trails = lodict()
-        chunk = bytearray()
-
-        lineParser = parseLine(raw=self.msg, eols=(CRLF, ), kind="chunk size line")
-        while True:
-            line = next(lineParser)
-            if line is not None:
-                lineParser.close()  # close generator
-                break
-            (yield None)
-
-        size, sep, exts = line.partition(b';')
-        try:
-            size = int(size.strip().decode('ascii'), 16)
-        except ValueError:  # bad size
-            raise
-
-        if exts:  # parse extensions parameters
-            exts = exts.split(b';')
-            for ext in exts:
-                ext = ext.strip()
-                name, sep, value = ext.partition(b'=')
-                parms[name.strip()] = value.strip() or None
-
-        if size == 0:  # last chunk so parse trailing headers if any
-            leaderParser = parseLeader(raw=self.msg,
-                                       eols=(CRLF, LF),
-                                       kind="trailer header line")
-            while True:
-                headers = next(leaderParser)
-                if headers is not None:
-                    leaderParser.close()
-                    break
-                (yield None)
-            trails.update(headers)
-
-        else:
-            while len(self.msg) < size:  # need more for chunk
-                (yield None)
-
-            chunk = self.msg[:size]
-            del self.msg[:size]  # remove used bytes
-
-            lineParser = parseLine(raw=self.msg, eols=(CRLF, ), kind="chunk end line")
-            while True:
-                line = next(lineParser)
-                if line is not None:
-                    lineParser.close()  # close generator
-                    break
-                (yield None)
-
-            if line:  # not empty so raise error
-                raise ValueError("Chunk end error. Expected empty got "
-                         "'{0}' instead".format(line.decode('iso-8859-1')))
-
-        (yield (size, parms, trails, chunk))
         return
 
     def parseBody(self):
@@ -2113,7 +2002,7 @@ class Requestant(object):
         if self.chunked:  # chunked takes precedence over length
             self.parms = odict()
             while True:  # parse all chunks here
-                chunkParser = self.parseChunk()
+                chunkParser = parseChunk(raw=self.msg)
                 while True:  # parse another chunk
                     result = next(chunkParser)
                     if result is not None:
@@ -2128,14 +2017,6 @@ class Requestant(object):
 
                 if size:  # size non zero so append chunk but keep iterating
                     self.body.extend(chunk)
-                    if self.evented:
-                        self.eventSource.parse()  # parse events here
-                        if (self.eventSource.retry is not None and
-                                self.retry != self.eventSource.retry):
-                            self.retry = self.eventSource.retry
-                        if (self.eventSource.leid is not None and
-                                self.leid != self.eventSource.leid):
-                            self.leid = self.eventSource.leid
 
                     if self.closed:  # no more data so finish
                         chunkParser.close()
@@ -2160,21 +2041,14 @@ class Requestant(object):
                     self.body.extend(self.msg[:])
                     del self.msg[:]  # python2 bytearrays dont have clear self.msg.clear()
 
-                if self.evented:
-                    self.eventSource.parse()  # parse events here
-                    if (self.eventSource.retry is not None and
-                            self.retry != self.eventSource.retry):
-                        self.retry = self.eventSource.retry
-                    if (self.eventSource.leid is not None and
-                            self.leid != self.eventSource.leid):
-                        self.leid = self.eventSource.leid
-
                 if self.closed:  # no more data so finish
                     break
 
                 (yield None)
 
-
+        # convert body to data based on content-type, and .dictify flag
+        # only gets to here once content length has become finite
+        # closed or not chunked or chunking has ended
         if self.jsoned or self.dictify:  # attempt to deserialize json
             try:
                 self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
@@ -2184,15 +2058,12 @@ class Requestant(object):
                 del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
 
         self.bodied = True
-        # convert body to data based on content-type, and .dictify flag
-        # only gets to here if finite content length (not streaming or streaming ends)
-
         (yield True)
         return
 
-    def parseResponse(self):
+    def parseRequest(self):
         """
-        Generator to parse response bytearray.
+        Generator to parse request bytearray.
         Parses msg if not None
         Otherwise parse .msg
         """
@@ -2229,8 +2100,7 @@ class Requestant(object):
         if msg:
             self.msg = msg
 
-        self.parser = self.parseResponse()  # make generator
-
+        self.parser = self.parseRequest()  # make generator
 
     def parse(self):
         """
