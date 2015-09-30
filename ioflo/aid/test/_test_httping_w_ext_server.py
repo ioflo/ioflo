@@ -197,7 +197,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "path": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
         #response = httping.HttpResponseNb(msgIn, method=method, path=path)
-        response = httping.Respondent(beta.rxbs, method=method, path=path)
+        response = httping.Respondent(msg=beta.rxbs, method=method, path=path)
 
         while response.parser:
             response.parse()
@@ -283,7 +283,7 @@ class BasicTestCase(unittest.TestCase):
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
         #response = httping.HttpResponseNb(msgIn, method=method, path=path)
-        response = httping.Respondent(beta.rxbs, method=method,  wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method,  wlog=wireLogBeta)
 
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
@@ -391,7 +391,7 @@ class BasicTestCase(unittest.TestCase):
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
         #response = httping.HttpResponseNb(msgIn, method=method, path=path)
-        response = httping.Respondent(beta.rxbs, method=method, path=path,  wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method, path=path,  wlog=wireLogBeta)
 
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
@@ -491,7 +491,7 @@ class BasicTestCase(unittest.TestCase):
 
         msgIn, index = beta.tailRxbs(0)
 
-        response = httping.Respondent(beta.rxbs,
+        response = httping.Respondent(msg=beta.rxbs,
                                           method=method,
                                           path=path,
                                           wlog=wireLogBeta,
@@ -586,7 +586,7 @@ class BasicTestCase(unittest.TestCase):
 
         msgIn, index = beta.tailRxbs(0)
 
-        response = httping.Respondent(beta.rxbs, method=method)
+        response = httping.Respondent(msg=beta.rxbs, method=method)
 
         while response.parser:
             response.parse()

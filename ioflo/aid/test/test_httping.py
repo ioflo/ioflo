@@ -167,7 +167,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs, method=method)
+        response = httping.Respondent(msg=beta.rxbs, method=method)
         while response.parser:
             response.parse()
 
@@ -298,7 +298,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs, method=method)
+        response = httping.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
                     b'retry: 1000\n\n',
@@ -449,7 +449,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs, method=method, wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method, wlog=wireLogBeta)
 
         lines =  [
                     b'd\r\nretry: 1000\n\n\r\n',
@@ -600,7 +600,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs, method=method, wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method, wlog=wireLogBeta)
 
         lines =  [
             b'retry: 1000\n\n',
@@ -753,7 +753,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs, method=method, wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method, wlog=wireLogBeta)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -916,7 +916,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs,
+        response = httping.Respondent(msg=beta.rxbs,
                                       method=method,
                                       dictify=True,
                                       wlog=wireLogBeta,
@@ -1073,7 +1073,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs,
+        response = httping.Respondent(msg=beta.rxbs,
                                       method=method,
                                       dictify=True,
                                       wlog=wireLogBeta,)
@@ -1253,7 +1253,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(beta.rxbs, method=method)
+        response = httping.Respondent(msg=beta.rxbs, method=method)
         while response.parser:
             response.parse()
 
@@ -3691,6 +3691,6 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    #runSome()#only run some
+    runSome()#only run some
 
-    runOne('testValetServiceEcho')
+    #runOne('testValetServiceEcho')

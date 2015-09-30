@@ -750,8 +750,6 @@ class Requester(object):
         return (name + b': ' + value)
 
 
-
-
 class EventSource(object):
     """
     Server Sent Event Stream Client parser
@@ -969,105 +967,213 @@ class EventSource(object):
                 self.parser = None
 
 
-class Respondent(object):
+class Parsery(object):
     """
-    Nonblocking HTTP Client Response class
+    Base class for objects that parse HTTP messages
     """
-    Retry = 100  # retry timeout in milliseconds if evented
-
     def __init__(self,
                  msg=None,
-                 method=u'GET',
-                 redirects=None,
-                 redirectable=True,
+                 wlog=None,
                  dictify=None,
-                 events=None,
-                 retry=None,
-                 leid=None,
-                 wlog=None,):
+                 method=u'GET'):
         """
         Initialize Instance
-        msg must be bytearray
-
-        msg = bytearray of response msg to parse
-        method = request method verb
-        dictify = Boolean flag If True attempt to convert json body
-        redirects = list of redirects if any
-        redirectable = Boolean allow redirects
-        events = deque of events if any
-        retry = retry timeout in seconds if any if evented
-        leid = last event id if any if evented
+        msg = bytearray of request msg to parse
         wlog = WireLog instance if any
+        dictify = True If should attempt to convert body to json
+        method = method of associated request
         """
         self.msg = msg if msg is not None else bytearray()
-        self.method = method.upper() if method else u'GET'
-        self.dictify = True if dictify else False  # convert body json
-        self.redirects = redirects if redirects is not None else []
-        self.redirectable = True if redirectable else False
-        self.events = events if events is not None else deque()
-        self.retry = retry if retry is not None else self.Retry  # retry timeout in milliseconds if evented
-        self.leid = None  # non None if evented with event ids sent
         self.wlog = wlog
-
+        self.dictify = True if dictify else False  # convert body json
         self.parser = None  # response parser generator
-        self.eventSource = None  # EventSource instance when .evented
-
-        self.headers = None
-        self.body = bytearray()  # body data bytearray
-        self.text = u''  # body decoded as unicode string
-        self.data = None  # content dict deserialized from body json
-        self.parms = None  # chunked encoding extension parameters
-        self.trails = None  # chunked encoding trailing headers
-
         self.version = None # HTTP-Version from status line
-        self.status = None  # Status-Code from status line
-        self.reason = None  # Reason-Phrase from status line
-
-        self.length = None     # content length of body in response
-
+        self.length = None     # content length of body in request
         self.chunked = None    # is transfer encoding "chunked" being used?
-        self.evented = None   # are server sent events being used
         self.jsoned = None    # is content application/json
         self.encoding = 'ISO-8859-1'  # encoding charset if provided else default
-
-        self.persisted = None   # persist connection until server closes
+        self.persisted = None   # persist connection until client closes
         self.headed = None    # head completely parsed
-        self.redirectant = None  # Boolean True if received redirect status, need to redirect
-        self.redirected = None  # attempted a redirection
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
         self.closed = None  # True when connection closed
 
-        self.makeParser(msg=msg)
+        self.headers = None
+        self.parms = None  # chunked encoding extension parameters
+        self.trails = None  # chunked encoding trailing headers
+        self.body = bytearray()  # body data bytearray
+        self.text = u''  # body decoded as unicode string
+        self.data = None  # content dict deserialized from body json
+        self.method = method.upper() if method else u'GET'
+
+        self.makeParser(msg=msg)  # assigns self.msg
 
     def reinit(self,
                msg=None,
-               method=u'GET',
                dictify=None,
-               redirectable=None):
+               method=u'GET'):
         """
         Reinitialize Instance
-        msg must be bytearray
-
-        msg = bytearray of response msg to parse
-        method = request method verb
+        msg = bytearray of request msg to parse
         dictify = Boolean flag If True attempt to convert json body
-
+        method = method verb of associated request
         """
         if msg is not None:
             self.msg = msg
-        if method is not None:
-            self.method = method.upper()
         if dictify is not None:
             self.dictify = True if dictify else False
-        if redirectable is not None:
-            self.redirectable = True if redirectable else False
+        if method is not None:
+            self.method = method.upper()
 
     def close(self):
         """
         Assign True to .closed
         """
         self.closed = True
+
+    def checkPersisted(self):
+        """
+        Checks headers to determine if connection should be kept open until
+        client closes it
+        Sets the .persisted flag
+        """
+        self.persisted = False
+
+    def parseHead(self):
+        """
+        Generator to parse headers in heading of .msg
+        Yields None if more to parse
+        Yields True if done parsing
+        """
+        if self.headed:
+            return  # already parsed the head
+        self.headers = lodict()
+        self.checkPersisted()  # sets .persisted
+        self.headed = True
+        yield True
+        return
+
+    def parseBody(self):
+        """
+        Parse body
+        """
+        if self.bodied:
+            return  # already parsed the body
+        self.bodied = True
+        (yield True)
+        return
+
+    def parseMessage(self):
+        """
+        Generator to parse message bytearray.
+        Parses msg if not None
+        Otherwise parse .msg
+        """
+        self.headed = False
+        self.bodied = False
+        self.ended = False
+        self.closed = False
+
+        headParser = self.parseHead()
+        while True:
+            result = next(headParser)
+            if result is not None:
+                headParser.close()
+                break
+            (yield None)
+
+        bodyParser = self.parseBody()
+        while True:
+            result = next(bodyParser)
+            if result is not None:
+                bodyParser.close()
+                break
+            (yield None)
+
+        self.ended = True
+        (yield True)
+        return
+
+    def makeParser(self, msg=None):
+        """
+        Make message parser generator and assign to .parser
+        Assign msg to .msg If provided
+        """
+        if msg:
+            self.msg = msg
+        self.parser = self.parseMessage()  # make generator
+
+    def parse(self):
+        """
+        Service the message parsing
+        must call .makeParser to setup parser
+        When done parsing,
+           .parser is None
+           .ended is True
+        """
+        if self.parser:
+            result = next(self.parser)
+            if result is not None:
+                self.parser.close()
+                self.parser = None
+
+
+class Respondent(Parsery):
+    """
+    Nonblocking HTTP Client Response class
+    """
+    Retry = 100  # retry timeout in milliseconds if evented
+
+    def __init__(self,
+                 redirects=None,
+                 redirectable=True,
+                 events=None,
+                 retry=None,
+                 leid=None,
+                 **kwa):
+        """
+        Initialize Instance:
+
+        redirects = list of redirects if any
+        redirectable = Boolean allow redirects
+        events = deque of events if any
+        retry = retry timeout in seconds if any if evented
+        leid = last event id if any if evented
+        """
+        super(Respondent, self).__init__(**kwa)
+
+        self.status = None  # Status-Code from status line
+        self.reason = None  # Reason-Phrase from status line
+
+        self.redirectant = None  # Boolean True if received redirect status, need to redirect
+        self.redirected = None  # attempted a redirection
+        self.redirects = redirects if redirects is not None else []
+        self.redirectable = True if redirectable else False
+
+        self.evented = None   # are server sent events being used
+        self.events = events if events is not None else deque()
+        self.retry = retry if retry is not None else self.Retry  # retry timeout in milliseconds if evented
+        self.leid = None  # non None if evented with event ids sent
+        self.eventSource = None  # EventSource instance when .evented
+
+    def reinit(self,
+               redirectable=None,
+               **kwa):
+        """
+        Reinitialize Instance
+        See super class
+        dictify = Boolean flag If True attempt to convert json body
+        """
+        super(Respondent, self).reinit(**kwa)
+        if redirectable is not None:
+            self.redirectable = True if redirectable else False
+
+    def close(self):
+        """
+        Assign True to .closed
+        Close event source
+        """
+        super(Respondent, self).close()
         if self.eventSource:  # assign True to .eventSource.closed
             self.eventSource.close()
 
@@ -1318,62 +1424,6 @@ class Respondent(object):
         self.bodied = True
         (yield True)
         return
-
-    def parseResponse(self):
-        """
-        Generator to parse response bytearray.
-        Parses msg if not None
-        Otherwise parse .msg
-        """
-        self.headed = False
-        self.bodied = False
-        self.ended = False
-        self.closed = False
-
-        headParser = self.parseHead()
-        while True:
-            result = next(headParser)
-            if result is not None:
-                headParser.close()
-                break
-            (yield None)
-
-        bodyParser = self.parseBody()
-        while True:
-            result = next(bodyParser)
-            if result is not None:
-                bodyParser.close()
-                break
-            (yield None)
-
-        self.ended = True
-        (yield True)
-        return
-
-    def makeParser(self, msg=None):
-        """
-        Make response parser generator and assign to .parser
-        Assign msg to .msg If provided
-        """
-        if msg:
-            self.msg = msg
-
-        self.parser = self.parseResponse()  # make generator
-
-    def parse(self):
-        """
-        Service the response parsing
-        must call .makeParser to setup parser
-        When done parsing,
-           .parser is None
-           .ended is True
-
-        """
-        if self.parser:
-            result = next(self.parser)
-            if result is not None:
-                self.parser.close()
-                self.parser = None
 
 
 class Patron(object):
@@ -1807,77 +1857,19 @@ class Patron(object):
         self.serviceResponse()
 
 
-class Requestant(object):
+class Requestant(Parsery):
     """
     Nonblocking HTTP Server Requestant class
     Parses request msg
     """
-    Retry = 100  # retry timeout in milliseconds if evented
 
-    def __init__(self,
-                 msg=None,
-                 wlog=None,
-                 dictify=None):
+    def __init__(self, **kwa):
         """
         Initialize Instance
-        msg must be bytearray
-
-        msg = bytearray of request msg to parse
-        wlog = WireLog instance if any
-        dictify = True If should attempt to convert body to json
-        """
-        self.msg = msg if msg is not None else bytearray()
-        self.wlog = wlog
-        self.dictify = True if dictify else False  # convert body json
-
-        self.method = u'GET'
-        self.leid = None  # non None if evented with event ids sent
-
-        self.parser = None  # response parser generator
-
-        self.headers = None
-        self.body = bytearray()  # body data bytearray
-        self.text = u''  # body decoded as unicode string
-        self.data = None  # content dict deserialized from body json
-
-        self.version = None # HTTP-Version from status line
-        self.status = None  # Status-Code from status line
-        self.reason = None  # Reason-Phrase from status line
-
-        self.length = None     # content length of body in request
-
-        self.chunked = None    # is transfer encoding "chunked" being used?
-        self.evented = None   # are server sent events being used
-        self.jsoned = None    # is content application/json
-        self.encoding = 'ISO-8859-1'  # encoding charset if provided else default
-
-        self.persisted = None   # persist connection until client closes
-        self.headed = None    # head completely parsed
-        self.bodied =  None   # body completely parsed
-        self.ended = None     # response from server has ended no more remaining
-        self.closed = None  # True when connection closed
-
-        self.makeParser(msg=msg)
-
-    def reinit(self,
-               msg=None,
-               dictify=None):
-        """
-        Reinitialize Instance
-        msg = bytearray of request msg to parse
-        dictify = Boolean flag If True attempt to convert json body
 
         """
-        if msg is not None:
-            self.msg = msg
-        if dictify is not None:
-            self.dictify = True if dictify else False
-
-    def close(self):
-        """
-        Assign True to .closed
-        """
-        self.closed = True
+        super(Requestant, self).__init__(**kwa)
+        self.path = u''
 
     def checkPersisted(self):
         """
@@ -2060,62 +2052,6 @@ class Requestant(object):
         self.bodied = True
         (yield True)
         return
-
-    def parseRequest(self):
-        """
-        Generator to parse request bytearray.
-        Parses msg if not None
-        Otherwise parse .msg
-        """
-        self.headed = False
-        self.bodied = False
-        self.ended = False
-        self.closed = False
-
-        headParser = self.parseHead()
-        while True:
-            result = next(headParser)
-            if result is not None:
-                headParser.close()
-                break
-            (yield None)
-
-        bodyParser = self.parseBody()
-        while True:
-            result = next(bodyParser)
-            if result is not None:
-                bodyParser.close()
-                break
-            (yield None)
-
-        self.ended = True
-        (yield True)
-        return
-
-    def makeParser(self, msg=None):
-        """
-        Make response parser generator and assign to .parser
-        Assign msg to .msg If provided
-        """
-        if msg:
-            self.msg = msg
-
-        self.parser = self.parseRequest()  # make generator
-
-    def parse(self):
-        """
-        Service the response parsing
-        must call .makeParser to setup parser
-        When done parsing,
-           .parser is None
-           .ended is True
-
-        """
-        if self.parser:
-            result = next(self.parser)
-            if result is not None:
-                self.parser.close()
-                self.parser = None
 
 
 class Valet(object):
