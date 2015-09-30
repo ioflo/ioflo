@@ -468,7 +468,7 @@ def parseRequestLine(line):
     if not line:
         raise BadStartLine(line)  # connection closed before sending valid msg
 
-    method, path, version = aiding.repack(3, line.split(), default = u'')
+    method, path, version, extra = aiding.repack(4, line.split(), default = u'')
 
     if not version.startswith("HTTP/"):
         raise UnkownProtocol(version)
@@ -967,7 +967,7 @@ class EventSource(object):
                 self.parser = None
 
 
-class Parsery(object):
+class Parsent(object):
     """
     Base class for objects that parse HTTP messages
     """
@@ -1006,7 +1006,7 @@ class Parsery(object):
         self.data = None  # content dict deserialized from body json
         self.method = method.upper() if method else u'GET'
 
-        self.makeParser(msg=msg)  # assigns self.msg
+        self.makeParser()  # assigns self.msg
 
     def reinit(self,
                msg=None,
@@ -1099,7 +1099,7 @@ class Parsery(object):
         Make message parser generator and assign to .parser
         Assign msg to .msg If provided
         """
-        if msg:
+        if msg is not None:
             self.msg = msg
         self.parser = self.parseMessage()  # make generator
 
@@ -1118,7 +1118,7 @@ class Parsery(object):
                 self.parser = None
 
 
-class Respondent(Parsery):
+class Respondent(Parsent):
     """
     Nonblocking HTTP Client Response class
     """
@@ -1460,6 +1460,8 @@ class Patron(object):
                  **kwa):
         """
         Initialization method for instance.
+        kwa needed to pass other init parameters to connector
+
         connector = instance of Outgoer or OutgoerTls or None
         requester = instance of Requester or None
         respondent = instance of Respondent or None
@@ -1857,7 +1859,7 @@ class Patron(object):
         self.serviceResponse()
 
 
-class Requestant(Parsery):
+class Requestant(Parsent):
     """
     Nonblocking HTTP Server Requestant class
     Parses request msg
@@ -2069,13 +2071,14 @@ class Valet(object):
                  port=None,
                  eha=None,
                  scheme=u'',
+                 dictify=False,
                  **kwa):
         """
         Initialization method for instance.
         servant = instance of Server or ServerTls or None
-        responder = instance of Responder or None
+        kwa needed to pass additional parameters to servant
 
-        if either of servant, or responder instances are not provided (None)
+        if servantinstances are not provided (None)
         some or all of these parameters will be used for initialization
 
         name = user friendly name for servant
@@ -2086,15 +2089,16 @@ class Valet(object):
         port = socket port for local servant listen socket
         eha = external destination address for incoming connections used in TLS
         scheme = http scheme u'http' or u'https' or empty
-        requestants = odict of Requestant instances keyed by ca
-        responders = odict of Responder instances keyed by ca
+        dictify = Boolean flag If True attempt to convert body from json for requestants
+
         """
         self.store = store or storing.Store(stamp=0.0)
+        self.wlog = wlog
+        self.dictify = True if dictify else False  # for requestants
+
         self.requestants = odict()
-        self.responder = odict()
 
         ha = ha or (host, port)  # ha = host address takes precendence over host, port
-
         if servant:
             if isinstance(servant, ServerTls):
                 if scheme and scheme != u'https':
@@ -2127,15 +2131,15 @@ class Valet(object):
             if servant.ha != ha:
                 ValueError("Provided ha '{0}:{1}' incompatible with servant".format(ha[0], ha[1]))
             # at some point may want to support changing the ha of provided servant
-        else:
+        else:  # what about timeouts for servant connections
             if secured:
                 servant = ServerTls(store=self.store,
-                                       name=name,
-                                       ha=ha,
-                                       eha=eha,
-                                       bufsize=bufsize,
-                                       wlog=wlog,
-                                       **kwa)
+                                    name=name,
+                                    ha=ha,
+                                    eha=eha,
+                                    bufsize=bufsize,
+                                    wlog=wlog,
+                                    **kwa)
             else:
                 servant = Server(store=self.store,
                                  name=name,
@@ -2149,6 +2153,18 @@ class Valet(object):
         self.secured = secured
         self.servant = servant
 
+    def idle(self):
+        """
+        Returns True if no connections have requests in process
+        Useful for debugging
+        """
+        idle = True
+        for requestant in self.requestants.values():
+            if not requestant.ended:
+                idle = False
+                break
+        return idle
+
     def serviceConnects(self):
         """
         Service new connections
@@ -2158,17 +2174,28 @@ class Valet(object):
         self.servant.serviceConnects()
         for ca, ix in self.servant.ixes.items():
             if ca not in self.requestants:
-                requestant = Requestant()
+                self.requestants[ca] = Requestant(msg=ix.rxbs,
+                                                  wlog=self.wlog,
+                                                  dictify=self.dictify)
+
+        # check for timeouts on connections
 
 
     def serviceRequests(self):
         """
         Service requests deque of incoming requests
         """
-        #for
-        #requestant.parse()
-        #if requestant.ended:
-            #requestant.makeParser()  #set up for next time
+        for requestant in self.requestants.values():
+            requestant.parse()
+            if requestant.ended:
+                # Pass to wsgi here
+                console.concise("Parsed Request:\n{0} {1} {2}\n"
+                                "{3}\n{4}\n".format(requestant.method,
+                                                    requestant.path,
+                                                    requestant.version,
+                                                    requestant.headers,
+                                                    requestant.body))
+                requestant.makeParser()  #set up for next time
 
     def serviceResponses(self):
         """
@@ -2196,7 +2223,7 @@ class Valet(object):
         """
         Service request response
         """
-        self.servant.serviceConnects()
+        self.serviceConnects()
         self.serviceAllRx()
         self.serviceAllTx()
 

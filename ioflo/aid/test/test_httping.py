@@ -3603,12 +3603,14 @@ class BasicTestCase(unittest.TestCase):
                          ('path', u'/echo?name=fame'),
                          ('qargs', odict()),
                          ('fragment', u''),
-                         ('headers', odict([('Accept', 'application/json')])),
+                         ('headers', odict([('Accept', 'application/json'),
+                                            ('Content-Length', 0)])),
                         ])
 
         beta.requests.append(request)
 
-        while (not alpha.servant.ixes or beta.requests or beta.connector.txes):
+        while (beta.requests or beta.connector.txes or
+               not alpha.servant.ixes or not alpha.idle()):
             alpha.serviceAll()
             time.sleep(0.05)
             beta.serviceAll()
@@ -3619,6 +3621,14 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connector.cutoff, False)
 
         self.assertEqual(len(alpha.servant.ixes), 1)
+        self.assertEqual(len(alpha.requestants), 1)
+        requestant = alpha.requestants.values()[0]
+        self.assertEqual(requestant.method, request['method'])
+        self.assertEqual(requestant.path, request['path'])
+        self.assertEqual(requestant.headers, {'accept': 'application/json',
+                                                'accept-encoding': 'identity',
+                                                'content-length': '0',
+                                                'host': 'localhost:6101'})
 
 
         #self.assertEqual(len(beta.connector.rxbs), 0)
