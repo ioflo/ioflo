@@ -1259,7 +1259,7 @@ class Respondent(Parsent):
         lineParser = parseLine(raw=self.msg, eols=(CRLF, LF), kind="status line")
         while True:  # parse until we get a non-100 status
             if self.closed:  # connection closed prematurely
-                raise PrematureClosure("Connection closed unexpectedly while parsing start line")
+                raise PrematureClosure("Connection closed unexpectedly while parsing response start line")
 
             line = next(lineParser)
             if line is None:
@@ -1276,7 +1276,7 @@ class Respondent(Parsent):
                                             kind="continue header line")
             while True:
                 if self.closed:  # connection closed prematurely
-                    raise PrematureClosure("Connection closed unexpectedly while parsing header")
+                    raise PrematureClosure("Connection closed unexpectedly while parsing response header")
                 headers = next(leaderParser)
                 if headers is not None:
                     leaderParser.close()
@@ -1298,7 +1298,7 @@ class Respondent(Parsent):
                                    kind="leader header line")
         while True:
             if self.closed:  # connection closed prematurely
-                raise PrematureClosure("Connection closed unexpectedly while parsing header")
+                raise PrematureClosure("Connection closed unexpectedly while parsing response header")
             headers = next(leaderParser)
             if headers is not None:
                 leaderParser.close()
@@ -1384,7 +1384,7 @@ class Respondent(Parsent):
                 chunkParser = parseChunk(raw=self.msg)
                 while True:  # parse another chunk
                     if self.closed:  # connection closed prematurely
-                        raise PrematureClosure("Connection closed unexpectedly while parsing body chunk")
+                        raise PrematureClosure("Connection closed unexpectedly while parsing response body chunk")
                     result = next(chunkParser)
                     if result is not None:
                         chunkParser.close()
@@ -1420,7 +1420,7 @@ class Respondent(Parsent):
         elif self.length != None:  # known content length
             while len(self.msg) < self.length:
                 if self.closed:  # connection closed prematurely
-                    raise PrematureClosure("Connection closed unexpectedly while parsing body")
+                    raise PrematureClosure("Connection closed unexpectedly while parsing response body")
                 (yield None)
 
             self.body = self.msg[:self.length]
@@ -1957,6 +1957,9 @@ class Requestant(Parsent):
         # create generator
         lineParser = parseLine(raw=self.msg, eols=(CRLF, LF), kind="status line")
         while True:  # parse until we get full start line
+            if self.closed:  # connection closed prematurely
+                raise PrematureClosure("Connection closed unexpectedly while parsing request start line")
+
             line = next(lineParser)
             if line is None:
                 (yield None)
@@ -1981,6 +1984,9 @@ class Requestant(Parsent):
                                    eols=(CRLF, LF),
                                    kind="leader header line")
         while True:
+            if self.closed:  # connection closed prematurely
+                raise PrematureClosure("Connection closed unexpectedly while parsing request header")
+
             headers = next(leaderParser)
             if headers is not None:
                 leaderParser.close()
@@ -2042,6 +2048,9 @@ class Requestant(Parsent):
         if self.chunked:  # chunked takes precedence over length
             self.parms = odict()
             while True:  # parse all chunks here
+                if self.closed:  # connection closed prematurely
+                    raise PrematureClosure("Connection closed unexpectedly while parsing request body chunk")
+
                 chunkParser = parseChunk(raw=self.msg)
                 while True:  # parse another chunk
                     result = next(chunkParser)
@@ -2070,6 +2079,9 @@ class Requestant(Parsent):
 
         elif self.length != None:  # known content length
             while len(self.msg) < self.length:
+                if self.closed:  # connection closed prematurely
+                    raise PrematureClosure("Connection closed unexpectedly while parsing request body")
+
                 (yield None)
 
             self.body = self.msg[:self.length]
