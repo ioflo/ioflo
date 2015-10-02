@@ -699,29 +699,8 @@ class Requester(object):
             raise  ValueError("Already open connection attempt to change hostname  "
                                   " to '{0}'".format(hostname))
 
-
-        #query = pathSplits.query
-        #if query:
-            #if u';' in query:
-                #querySplits = query.split(u';')
-            #elif u'&' in query:
-                #querySplits = query.split(u'&')
-            #else:
-                #querySplits = [query]
-            #for queryPart in querySplits:  # this prevents duplicates even if desired
-                #if queryPart:
-                    #if '=' in queryPart:
-                        #key, val = queryPart.split('=', 1)
-                        #val = unquote(val)
-                    #else:
-                        #key = queryPart
-                        #val = u'true'
-                    #self.qargs[key] = val
-
-        #qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
-                                       #for key, val in self.qargs.items()]
-        #query = '&'.join(qargParts)
-        self.qargs, query = updateQargsQuery(self.qargs, pathSplits.query)
+        query = pathSplits.query
+        self.qargs, query = updateQargsQuery(self.qargs, query)
 
         fragment = pathSplits.fragment
         if fragment:
@@ -1644,23 +1623,6 @@ class Patron(object):
 
         query = splits.query  # is query in original path
         qargs = qargs or odict()
-        #if query:
-            #if u';' in query:
-                #querySplits = query.split(u';')
-            #elif u'&' in query:
-                #querySplits = query.split(u'&')
-            #else:
-                #querySplits = [query]
-
-            #for queryPart in querySplits:  # this prevents duplicates even if desired
-                #if queryPart:
-                    #if '=' in queryPart:
-                        #key, val = queryPart.split('=')
-                    #else:
-                        #key = queryPart
-                        #val = True
-                    #qargs[key] = val
-
         qargs, query = updateQargsQuery(qargs, query)
 
         fragment = splits.fragment or fragment  # fragment in path prioritized
@@ -1798,23 +1760,6 @@ class Patron(object):
                                        method=method)
 
             qargs = odict()
-            #if query:
-                #if u';' in query:
-                    #querySplits = query.split(u';')
-                #elif u'&' in query:
-                    #querySplits = query.split(u'&')
-                #else:
-                    #querySplits = [query]
-                #for queryPart in querySplits:  # this prevents duplicates even if desired
-                    #if queryPart:
-                        #if '=' in queryPart:
-                            #key, val = queryPart.split('=', 1)
-                            #val = unquote(val)
-                        #else:
-                            #key = queryPart
-                            #val = u'true'
-                        #qargs[key] = val
-
             qargs, query = updateQargsQuery(qargs, query)
 
             self.transmit(method=method, path=path, qargs=qargs, fragment=fragment)
@@ -2389,10 +2334,25 @@ class Valet(object):
                                                     requestant.body))
         data = odict()
         data['method'] = requestant.method
-        data['path'] = requestant.path
+
+        pathSplits = urlsplit(unquote(requestant.path))
+        path = pathSplits.path
+        data['path'] = path
+
+        query = pathSplits.query
+        qargs = odict()
+        qargs, query = updateQargsQuery(qargs, query)
+        data['qargs'] = qargs
+
+        fragment = pathSplits.fragment
+        data['fragment'] = fragment
         data['version'] = requestant.version
         data['headers'] = requestant.headers
-        data['body'] = requestant.body
+        data['body'] = requestant.body.decode('utf-8')
+        data['data'] = requestant.data
+
+        return(responder.build(status=200, data=data ))
+
 
 
     def serviceConnects(self):
@@ -2431,12 +2391,14 @@ class Valet(object):
                                                     requestant.headers,
                                                     requestant.body))
                 if ca not in self.responders:
-                    responder = self.responders[ca] = Responder(hostname=self.servant.eha)
+                    hostname = "{0}:{1}".format(*self.servant.eha)
+                    responder = self.responders[ca] = Responder(hostname=hostname)
                 else:
                     responder = self.responders[ca]
                     responder.reinit()
 
-                self.respond(requestant, responder)
+                msg = self.respond(requestant, responder)
+                self.servant.ixes[ca].tx(msg)
                 requestant.makeParser()  #set up for next time
 
     def serviceResponders(self):
