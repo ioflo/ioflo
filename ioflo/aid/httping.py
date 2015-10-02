@@ -274,6 +274,40 @@ def normalizeHostPort(host, port=None, defaultPort=80):
 
     return (host, port)
 
+def updateQargsQuery(qargs=None, query=u'',):
+    """
+    Returns duple of updated (qargs, query)
+    Where qargs parameter is odict of query arguments and query parameter is query string
+    The returned qargs is updated with query string arguments
+    and the returned query string is generated from the updated qargs
+    If provided, qargs may have additional fields not in query string
+    This allows combining query args from two sources, a dict and a string
+    """
+    if qargs == None:
+        qargs = odict()
+
+    if query:
+        if u';' in query:
+            querySplits = query.split(u';')
+        elif u'&' in query:
+            querySplits = query.split(u'&')
+        else:
+            querySplits = [query]
+        for queryPart in querySplits:  # this prevents duplicates even if desired
+            if queryPart:
+                if '=' in queryPart:
+                    key, val = queryPart.split('=', 1)
+                    val = unquote(val)
+                else:
+                    key = queryPart
+                    val = u'true'
+                qargs[key] = val
+
+    qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
+                                   for key, val in qargs.items()]
+    query = '&'.join(qargParts)
+    return (qargs, query)
+
 def packHeader(name, *values):
     """
     Format and return a request header line.
@@ -666,27 +700,28 @@ class Requester(object):
                                   " to '{0}'".format(hostname))
 
 
-        query = pathSplits.query
-        if query:
-            if u';' in query:
-                querySplits = query.split(u';')
-            elif u'&' in query:
-                querySplits = query.split(u'&')
-            else:
-                querySplits = [query]
-            for queryPart in querySplits:  # this prevents duplicates even if desired
-                if queryPart:
-                    if '=' in queryPart:
-                        key, val = queryPart.split('=', 1)
-                        val = unquote(val)
-                    else:
-                        key = queryPart
-                        val = u'true'
-                    self.qargs[key] = val
+        #query = pathSplits.query
+        #if query:
+            #if u';' in query:
+                #querySplits = query.split(u';')
+            #elif u'&' in query:
+                #querySplits = query.split(u'&')
+            #else:
+                #querySplits = [query]
+            #for queryPart in querySplits:  # this prevents duplicates even if desired
+                #if queryPart:
+                    #if '=' in queryPart:
+                        #key, val = queryPart.split('=', 1)
+                        #val = unquote(val)
+                    #else:
+                        #key = queryPart
+                        #val = u'true'
+                    #self.qargs[key] = val
 
-        qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
-                                       for key, val in self.qargs.items()]
-        query = '&'.join(qargParts)
+        #qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
+                                       #for key, val in self.qargs.items()]
+        #query = '&'.join(qargParts)
+        self.qargs, query = updateQargsQuery(self.qargs, pathSplits.query)
 
         fragment = pathSplits.fragment
         if fragment:
@@ -1609,22 +1644,24 @@ class Patron(object):
 
         query = splits.query  # is query in original path
         qargs = qargs or odict()
-        if query:
-            if u';' in query:
-                querySplits = query.split(u';')
-            elif u'&' in query:
-                querySplits = query.split(u'&')
-            else:
-                querySplits = [query]
+        #if query:
+            #if u';' in query:
+                #querySplits = query.split(u';')
+            #elif u'&' in query:
+                #querySplits = query.split(u'&')
+            #else:
+                #querySplits = [query]
 
-            for queryPart in querySplits:  # this prevents duplicates even if desired
-                if queryPart:
-                    if '=' in queryPart:
-                        key, val = queryPart.split('=')
-                    else:
-                        key = queryPart
-                        val = True
-                    qargs[key] = val
+            #for queryPart in querySplits:  # this prevents duplicates even if desired
+                #if queryPart:
+                    #if '=' in queryPart:
+                        #key, val = queryPart.split('=')
+                    #else:
+                        #key = queryPart
+                        #val = True
+                    #qargs[key] = val
+
+        qargs, query = updateQargsQuery(qargs, query)
 
         fragment = splits.fragment or fragment  # fragment in path prioritized
 
@@ -1761,22 +1798,24 @@ class Patron(object):
                                        method=method)
 
             qargs = odict()
-            if query:
-                if u';' in query:
-                    querySplits = query.split(u';')
-                elif u'&' in query:
-                    querySplits = query.split(u'&')
-                else:
-                    querySplits = [query]
-                for queryPart in querySplits:  # this prevents duplicates even if desired
-                    if queryPart:
-                        if '=' in queryPart:
-                            key, val = queryPart.split('=', 1)
-                            val = unquote(val)
-                        else:
-                            key = queryPart
-                            val = u'true'
-                        qargs[key] = val
+            #if query:
+                #if u';' in query:
+                    #querySplits = query.split(u';')
+                #elif u'&' in query:
+                    #querySplits = query.split(u'&')
+                #else:
+                    #querySplits = [query]
+                #for queryPart in querySplits:  # this prevents duplicates even if desired
+                    #if queryPart:
+                        #if '=' in queryPart:
+                            #key, val = queryPart.split('=', 1)
+                            #val = unquote(val)
+                        #else:
+                            #key = queryPart
+                            #val = u'true'
+                        #qargs[key] = val
+
+            qargs, query = updateQargsQuery(qargs, query)
 
             self.transmit(method=method, path=path, qargs=qargs, fragment=fragment)
 
@@ -2339,7 +2378,8 @@ class Valet(object):
 
     def respond(self, requestant, responder):
         """
-        respond to request
+        Respond to request  Override in subclass
+        Echo request
         """
         console.concise("Responding to Request:\n{0} {1} {2}\n"
                                 "{3}\n{4}\n".format(requestant.method,
@@ -2347,6 +2387,13 @@ class Valet(object):
                                                     requestant.version,
                                                     requestant.headers,
                                                     requestant.body))
+        data = odict()
+        data['method'] = requestant.method
+        data['path'] = requestant.path
+        data['version'] = requestant.version
+        data['headers'] = requestant.headers
+        data['body'] = requestant.body
+
 
     def serviceConnects(self):
         """
@@ -2369,7 +2416,13 @@ class Valet(object):
         Service pending requestants
         """
         for ca, requestant in self.requestants.items():
-            requestant.parse()
+            try:
+                requestant.parse()
+            except HTTPException as ex:
+                requestant.errored = True
+                requestant.error = str(ex)
+                requestant.ended = True
+
             if requestant.ended:
                 console.concise("Parsed Request:\n{0} {1} {2}\n"
                                 "{3}\n{4}\n".format(requestant.method,

@@ -3586,8 +3586,8 @@ class BasicTestCase(unittest.TestCase):
                                  u'oauth_signature_method': u'HMAC-SHA1',
                                  u'oauth_timestamp': u'1437580412',
                                  u'oauth_token': u'1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD',
-                                 u'oauth_version': u'1.0', u'oauth_signature':
-                                 u'KBD3DdNVZBjyOd0fqQ9X17ack='})
+                                 u'oauth_version': u'1.0',
+                                 u'oauth_signature': u'KBD3DdNVZBjyOd0fqQ9X17ack='})
         qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
                      for key, val in qargs.items()]
         newQuery = '&'.join(qargParts)
