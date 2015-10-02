@@ -1365,7 +1365,7 @@ class Respondent(Parsent):
 
         del self.body[:]  # self.body.clear() clear body python2 bytearrays don't clear
 
-        if self.chunked:  # chunked takes precedence over length
+        if self.chunked:  # content-length is ignored if chunked
             self.parms = odict()
             while True:  # parse all chunks here
                 chunkParser = parseChunk(raw=self.msg)
@@ -1857,14 +1857,18 @@ class Patron(object):
         """
         Service request response
         """
-        if self.connector.cutoff and self.connector.reconnectable:
-            if self.connector.timeout > 0.0 and self.connector.timer.expired:  # timed out
-                self.connector.reopen()
-                if self.respondent.evented:
-                    duration = float(self.respondent.retry) / 1000.0 # convert to seconds
-                else:
-                    duration = None  # reused current duration
-                self.connector.timer.restart(duration=duration)
+        if self.connector.cutoff:
+            if self.respondent:
+                self.respondent.close()  # close any pending or current response parsing
+
+            if self.connector.reconnectable:
+                if self.connector.timeout > 0.0 and self.connector.timer.expired:  # timed out
+                    self.connector.reopen()
+                    if self.respondent.evented:
+                        duration = float(self.respondent.retry) / 1000.0 # convert to seconds
+                    else:
+                        duration = None  # reused current duration
+                    self.connector.timer.restart(duration=duration)
 
         if not self.connector.connected:
             self.connector.serviceConnect()
