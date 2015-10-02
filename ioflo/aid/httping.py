@@ -209,7 +209,7 @@ class BadStatusLine(HTTPException):
         self.args = line,
         self.line = line
 
-class BadStartLine(BadStatusLine):
+class BadRequestLine(BadStatusLine):
     pass
 
 class BadMethod(HTTPException):
@@ -222,6 +222,10 @@ class LineTooLong(HTTPException):
         HTTPException.__init__(self, "got more than %d bytes while parsing %s"
                                      % (MAX_LINE_SIZE, kind))
 
+class PrematureClosure(HTTPException):
+    def __init__(self, msg):
+        self.args = msg,
+        self.msg = msg
 
 # Utility functions
 
@@ -501,7 +505,7 @@ def parseRequestLine(line):
     """
     line = line.decode("iso-8859-1")
     if not line:
-        raise BadStartLine(line)  # connection closed before sending valid msg
+        raise BadRequestLine(line)  # connection closed before sending valid msg
 
     method, path, version, extra = aiding.repack(4, line.split(), default = u'')
 
@@ -1012,7 +1016,7 @@ class Parsent(object):
         self.ended = None     # response from server has ended no more remaining
         self.closed = None  # True when connection closed
         self.errored = False  # True when error occurs in response processing
-        self.error = None  # Error Exception instance or string
+        self.error = None  # Error Description String
 
         self.headers = None
         self.parms = None  # chunked encoding extension parameters
@@ -1034,9 +1038,6 @@ class Parsent(object):
         dictify = Boolean flag If True attempt to convert json body
         method = method verb of associated request
         """
-        self.errored = False
-        self.error = None
-
         if msg is not None:
             self.msg = msg
         if dictify is not None:
@@ -1046,9 +1047,10 @@ class Parsent(object):
 
     def close(self):
         """
-        Assign True to .closed
+        Assign True to .closed and close parser
         """
         self.closed = True
+
 
     def checkPersisted(self):
         """
@@ -1092,6 +1094,8 @@ class Parsent(object):
         self.bodied = False
         self.ended = False
         self.closed = False
+        self.errored = False
+        self.error = None
 
         headParser = self.parseHead()
         while True:
@@ -1120,6 +1124,8 @@ class Parsent(object):
         """
         if msg is not None:
             self.msg = msg
+        if self.parser:
+            self.parser.close()
         self.parser = self.parseMessage()  # make generator
 
     def parse(self):
@@ -1252,6 +1258,9 @@ class Respondent(Parsent):
         # create generator
         lineParser = parseLine(raw=self.msg, eols=(CRLF, LF), kind="status line")
         while True:  # parse until we get a non-100 status
+            if self.closed:  # connection closed prematurely
+                raise PrematureClosure("Connection closed unexpectedly while parsing start line")
+
             line = next(lineParser)
             if line is None:
                 (yield None)
@@ -1266,6 +1275,8 @@ class Respondent(Parsent):
                                             eols=(CRLF, LF),
                                             kind="continue header line")
             while True:
+                if self.closed:  # connection closed prematurely
+                    raise PrematureClosure("Connection closed unexpectedly while parsing header")
                 headers = next(leaderParser)
                 if headers is not None:
                     leaderParser.close()
@@ -1286,6 +1297,8 @@ class Respondent(Parsent):
                                    eols=(CRLF, LF),
                                    kind="leader header line")
         while True:
+            if self.closed:  # connection closed prematurely
+                raise PrematureClosure("Connection closed unexpectedly while parsing header")
             headers = next(leaderParser)
             if headers is not None:
                 leaderParser.close()
@@ -1370,6 +1383,8 @@ class Respondent(Parsent):
             while True:  # parse all chunks here
                 chunkParser = parseChunk(raw=self.msg)
                 while True:  # parse another chunk
+                    if self.closed:  # connection closed prematurely
+                        raise PrematureClosure("Connection closed unexpectedly while parsing body chunk")
                     result = next(chunkParser)
                     if result is not None:
                         chunkParser.close()
@@ -1404,6 +1419,8 @@ class Respondent(Parsent):
 
         elif self.length != None:  # known content length
             while len(self.msg) < self.length:
+                if self.closed:  # connection closed prematurely
+                    raise PrematureClosure("Connection closed unexpectedly while parsing body")
                 (yield None)
 
             self.body = self.msg[:self.length]
@@ -1791,7 +1808,12 @@ class Patron(object):
         """
         self.connector.serviceReceives()
         if self.waited:
-            self.respondent.parse()
+            try:
+                self.respondent.parse()
+            except HTTPException as ex:
+                self.respondent.errored = True
+                self.respondent.error = str(ex)
+                self.respondent.ended = True
 
             if self.respondent.ended:
                 if not self.respondent.evented:
