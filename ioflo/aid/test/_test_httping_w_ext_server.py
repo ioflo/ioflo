@@ -391,7 +391,7 @@ class BasicTestCase(unittest.TestCase):
         #self.assertTrue(msgIn.endswith(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
 
         #response = httping.HttpResponseNb(msgIn, method=method, path=path)
-        response = httping.Respondent(msg=beta.rxbs, method=method, path=path,  wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method, path=path)
 
         timer = Timer(duration=3.0)
         while response.parser and not timer.expired:
@@ -494,7 +494,6 @@ class BasicTestCase(unittest.TestCase):
         response = httping.Respondent(msg=beta.rxbs,
                                           method=method,
                                           path=path,
-                                          wlog=wireLogBeta,
                                           reconnectable=True)
 
         timer = Timer(duration=3.0)

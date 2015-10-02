@@ -449,7 +449,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method, wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
                     b'd\r\nretry: 1000\n\n\r\n',
@@ -600,7 +600,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method, wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
             b'retry: 1000\n\n',
@@ -753,7 +753,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method, wlog=wireLogBeta)
+        response = httping.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -919,7 +919,6 @@ class BasicTestCase(unittest.TestCase):
         response = httping.Respondent(msg=beta.rxbs,
                                       method=method,
                                       dictify=True,
-                                      wlog=wireLogBeta,
                                       )
 
         lines =  [
@@ -1075,8 +1074,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Beta processes response \n")
         response = httping.Respondent(msg=beta.rxbs,
                                       method=method,
-                                      dictify=True,
-                                      wlog=wireLogBeta,)
+                                      dictify=True)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -1650,6 +1648,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -1714,6 +1714,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request': {'host': '127.0.0.1',
                                                 'port': 6101,
                                                 'scheme': 'http',
@@ -1826,6 +1828,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -1871,6 +1875,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -1986,6 +1992,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2031,6 +2039,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2131,6 +2141,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2179,6 +2191,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2301,6 +2315,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2350,6 +2366,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2734,6 +2752,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2779,6 +2799,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2897,6 +2919,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -2942,6 +2966,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6101,
@@ -3063,6 +3089,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'redirects': [{'body': bytearray(b''),
                                                    'data': None,
                                                    'headers': {'access-control-allow-origin': '*',
@@ -3070,6 +3098,8 @@ class BasicTestCase(unittest.TestCase):
                                                                'content-type': 'text/plain',
                                                                'location': 'http://localhost:6101/redirect?name=fame'},
                                                    'reason': 'Temporary Redirect',
+                                                   'error': None,
+                                                   'errored': False,
                                                    'request': {'body': b'',
                                                                'data': None,
                                                                'fargs': None,
@@ -3230,6 +3260,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'redirects': [{'body': bytearray(b''),
                                                    'data': None,
                                                    'headers': {'access-control-allow-origin': '*',
@@ -3237,6 +3269,8 @@ class BasicTestCase(unittest.TestCase):
                                                                'content-type': 'text/plain',
                                                                'location': 'http://localhost:6103/redirect?name=fame'},
                                                    'reason': 'Temporary Redirect',
+                                                   'error': None,
+                                                   'errored': False,
                                                    'request': {'body': b'',
                                                                'data': None,
                                                                'fargs': None,
@@ -3427,6 +3461,8 @@ class BasicTestCase(unittest.TestCase):
                                              'query': {'name': 'fame'},
                                              'url': 'http://127.0.0.1:8080/echo?name=fame',
                                              'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
                                     'redirects': [{'body': bytearray(b''),
                                                    'data': None,
                                                    'headers': {'access-control-allow-origin': '*',
@@ -3434,6 +3470,8 @@ class BasicTestCase(unittest.TestCase):
                                                                'content-type': 'text/plain',
                                                                'location': 'https://localhost:6103/redirect?name=fame'},
                                                    'reason': 'Temporary Redirect',
+                                                   'error': None,
+                                                   'errored': False,
                                                    'request': {'body': b'',
                                                                'data': None,
                                                                'fargs': None,

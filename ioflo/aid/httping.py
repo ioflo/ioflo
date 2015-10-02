@@ -990,18 +990,15 @@ class Parsent(object):
     """
     def __init__(self,
                  msg=None,
-                 wlog=None,
                  dictify=None,
                  method=u'GET'):
         """
         Initialize Instance
         msg = bytearray of request msg to parse
-        wlog = WireLog instance if any
         dictify = True If should attempt to convert body to json
         method = method of associated request
         """
         self.msg = msg if msg is not None else bytearray()
-        self.wlog = wlog
         self.dictify = True if dictify else False  # convert body json
         self.parser = None  # response parser generator
         self.version = None # HTTP-Version from status line
@@ -1014,6 +1011,8 @@ class Parsent(object):
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
         self.closed = None  # True when connection closed
+        self.errored = False  # True when error occurs in response processing
+        self.error = None  # Error Exception instance or string
 
         self.headers = None
         self.parms = None  # chunked encoding extension parameters
@@ -1035,6 +1034,9 @@ class Parsent(object):
         dictify = Boolean flag If True attempt to convert json body
         method = method verb of associated request
         """
+        self.errored = False
+        self.error = None
+
         if msg is not None:
             self.msg = msg
         if dictify is not None:
@@ -1642,10 +1644,9 @@ class Patron(object):
                                     dictify=dictify,
                                     events=self.events,
                                     redirectable=redirectable,
-                                    redirects=self.redirects,
-                                    wlog=wlog,)
+                                    redirects=self.redirects)
         else:
-            # do we need to assign the events, redirects, wlog as well?
+            # do we need to assign the events, redirects also?
             respondent.reinit(msg=self.connector.rxbs,
                               method=method,
                               dictify=dictify,
@@ -1831,6 +1832,8 @@ class Patron(object):
                                       ('body', self.respondent.body),
                                       ('data', self.respondent.data),
                                       ('request', request),
+                                      ('errored', self.respondent.errored),
+                                      ('error', self.respondent.error),
                                      ])
                     if self.respondent.redirectable and self.respondent.redirectant:
                         self.redirects.append(copy.copy(response))
@@ -2227,6 +2230,7 @@ class Valet(object):
         self.dictify = True if dictify else False  # for requestants
 
         self.requestants = odict()
+        self.responders = odict()
 
         ha = ha or (host, port)  # ha = host address takes precendence over host, port
         if servant:
@@ -2295,6 +2299,17 @@ class Valet(object):
                 break
         return idle
 
+    def respond(self, requestant, responder):
+        """
+        respond to request
+        """
+        console.concise("Responding to Request:\n{0} {1} {2}\n"
+                                "{3}\n{4}\n".format(requestant.method,
+                                                    requestant.path,
+                                                    requestant.version,
+                                                    requestant.headers,
+                                                    requestant.body))
+
     def serviceConnects(self):
         """
         Service new connections
@@ -2305,31 +2320,37 @@ class Valet(object):
         for ca, ix in self.servant.ixes.items():
             if ca not in self.requestants:
                 self.requestants[ca] = Requestant(msg=ix.rxbs,
-                                                  wlog=self.wlog,
                                                   dictify=self.dictify)
 
         # check for timeouts on connections
 
 
-    def serviceRequests(self):
+
+    def serviceRequestants(self):
         """
-        Service requests deque of incoming requests
+        Service pending requestants
         """
-        for requestant in self.requestants.values():
+        for ca, requestant in self.requestants.items():
             requestant.parse()
             if requestant.ended:
-                # Pass to wsgi here
                 console.concise("Parsed Request:\n{0} {1} {2}\n"
                                 "{3}\n{4}\n".format(requestant.method,
                                                     requestant.path,
                                                     requestant.version,
                                                     requestant.headers,
                                                     requestant.body))
+                if ca not in self.responders:
+                    responder = self.responders[ca] = Responder(hostname=self.servant.eha)
+                else:
+                    responder = self.responders[ca]
+                    responder.reinit()
+
+                self.respond(requestant, responder)
                 requestant.makeParser()  #set up for next time
 
-    def serviceResponses(self):
+    def serviceResponders(self):
         """
-        Service responses deque of outgoing responses
+        Service pending responders
         """
         pass
 
@@ -2337,7 +2358,7 @@ class Valet(object):
         """
         service the tx side of response
         """
-        self.serviceResponses()
+        self.serviceResponders()
         self.servant.serviceTxesAllIx()
 
     def serviceAllRx(self):
@@ -2347,7 +2368,7 @@ class Valet(object):
         self.servant.serviceReceivesAllIx()
         #ixClient = server.ixes.values()[0]
         #msgIn = bytes(ixClient.rxbs)
-        self.serviceRequests()
+        self.serviceRequestants()
 
     def serviceAll(self):
         """
