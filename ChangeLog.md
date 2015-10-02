@@ -12,6 +12,10 @@ stage on input
 
 Refactor header parsing of http responses
 
+Requester is not subclass of Parsent
+Added .error and .errored attributes of Parsent so can report errors in processing
+or waiting
+
 ---------
 20150819
 ---------
