@@ -19,6 +19,7 @@ import json
 import ssl
 import copy
 import random
+import datetime
 
 if sys.version > '3':
     from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
@@ -125,7 +126,7 @@ NOT_EXTENDED = 510
 NETWORK_AUTHENTICATION_REQUIRED = 511
 
 # Mapping status codes to official W3C names
-responses = {
+STATUS_DESCRIPTIONS = {
     100: 'Continue',
     101: 'Switching Protocols',
 
@@ -224,6 +225,21 @@ class LineTooLong(HTTPException):
 
 # Utility functions
 
+def httpDate1123(dt):
+    """Return a string representation of a date according to RFC 1123
+    (HTTP/1.1).
+
+    The supplied date must be in UTC.
+    import datetime
+    httpDate1123(datetime.datetime.utcnow())
+    'Wed, 30 Sep 2015 14:29:18 GMT'
+    """
+    weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][dt.weekday()]
+    month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+             "Oct", "Nov", "Dec"][dt.month - 1]
+    return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (weekday, dt.day, month,
+        dt.year, dt.hour, dt.minute, dt.second)
+
 def normalizeHostPort(host, port=None, defaultPort=80):
     """
     Given hostname host which could also be netloc which includes port
@@ -253,6 +269,25 @@ def normalizeHostPort(host, port=None, defaultPort=80):
         raise InvalidURL("Nonnumeric port: '{0}'".format(port))
 
     return (host, port)
+
+def packHeader(name, *values):
+    """
+    Format and return a request header line.
+
+    For example: h.packHeader('Accept', 'text/html')
+    """
+    if isinstance(name, unicode):  # not bytes
+        name = name.encode('ascii')
+    name = name.title()
+    values = list(values)  # make copy
+    for i, value in enumerate(values):
+        if isinstance(value, unicode):
+            values[i] = value.encode('iso-8859-1')
+        elif isinstance(value, int):
+            values[i] = str(value).encode('ascii')
+    value = b', '.join(values)
+    value = value.lower()
+    return (name + b': ' + value)
 
 
 def parseLine(raw, eols=(CRLF, LF, CR ), kind="event line"):
@@ -528,8 +563,9 @@ class Requester(object):
         self.body = body or b''
         self.data = data
         self.fargs = fargs
-        self.lines = []
-        self.head = b""
+
+        self.lines = []  # keep around for testing
+        self.head = b""  # keep around for testing
         self.msg = b""
 
     def reinit(self,
@@ -679,12 +715,12 @@ class Requester(object):
             except UnicodeEncodeError:
                 value = value.encode("idna")
 
-            self.lines.append(self.packHeader('Host', value))
+            self.lines.append(packHeader('Host', value))
 
         # we only want a Content-Encoding of "identity" since we don't
         # support encodings such as x-gzip or x-deflate.
         if u'accept-encoding' not in self.headers:
-            self.lines.append(self.packHeader(u'Accept-Encoding', u'identity'))
+            self.lines.append(packHeader(u'Accept-Encoding', u'identity'))
 
         if self.method == u"GET":  # do not send body on GET
                 body = b''
@@ -719,35 +755,16 @@ class Requester(object):
                 body = self.body
 
         if body and (u'content-length' not in self.headers):
-            self.lines.append(self.packHeader(u'Content-Length', str(len(body))))
+            self.lines.append(packHeader(u'Content-Length', str(len(body))))
 
         for name, value in self.headers.items():
-            self.lines.append(self.packHeader(name, value))
+            self.lines.append(packHeader(name, value))
 
         self.lines.extend((b"", b""))
         self.head = CRLF.join(self.lines)  # b'/r/n'
 
         self.msg = self.head + body
         return self.msg
-
-    def packHeader(self, name, *values):
-        """
-        Format and return a request header line.
-
-        For example: h.packHeader('Accept', 'text/html')
-        """
-        if isinstance(name, unicode):  # not bytes
-            name = name.encode('ascii')
-        name = name.title()
-        values = list(values)  # make copy
-        for i, value in enumerate(values):
-            if isinstance(value, unicode):
-                values[i] = value.encode('iso-8859-1')
-            elif isinstance(value, int):
-                values[i] = str(value).encode('ascii')
-        value = b', '.join(values)
-        value = value.lower()
-        return (name + b': ' + value)
 
 
 class EventSource(object):
@@ -2054,6 +2071,119 @@ class Requestant(Parsent):
         self.bodied = True
         (yield True)
         return
+
+
+class Responder(object):
+    """
+    Nonblocking HTTP Server Response class
+
+    HTTP/1.1 200 OK\r\n
+    Content-Length: 122\r\n
+    Content-Type: application/json\r\n
+    Date: Thu, 30 Apr 2015 19:37:17 GMT\r\n
+    Server: IoBook.local\r\n\r\n
+    """
+    HttpVersionString = HTTP_11_VERSION_STRING  # http version string
+
+    def __init__(self,
+                 hostname=None,  # unicode
+                 status=200,  # integer
+                 headers=None,
+                 body=b'',
+                 data=None):
+        """
+        Initialize Instance
+        hostname = local server hostname for Server header
+        status = response status code
+        headers = http response headers
+        body = http response body
+        data = dict to jsonify as body if provided
+        """
+        self.hostname = hostname or socket.gethostname()
+        self.status = status
+        self.headers = lodict(headers) if headers else lodict()
+        if body and isinstance(body, unicode):  # use default
+            # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+            body = body.encode('iso-8859-1')
+        self.body = body or b''
+        self.data = data
+
+        self.lines = []  # for debugging
+        self.head = b""  # for debugging
+        self.msg = b""   # for debugging
+
+    def reinit(self,
+               status=None,  # integer
+               headers=None,
+               body=None,
+               data=None):
+        """
+        Reinitialize anything that is not None
+        This enables creating another response on a connection
+        """
+        if status is not None:
+            self.status = status
+        if headers is not None:
+            self.headers = lodict(headers)
+        if body is not None:  # body should be bytes
+            if isinstance(body, unicode):
+                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+                body = body.encode('iso-8859-1')
+            self.body = body
+        else:
+            self.body = b''
+        if data is not None:
+            self.data = data
+        else:
+            self.data = None
+
+    def build(self,
+              status=None,
+              headers=None,
+              body=None,
+              data=None):
+        """
+        Build and return response message
+
+        """
+        self.reinit(status=status,
+                    headers=headers,
+                    body=body,
+                    data=data)
+        self.lines = []
+
+        startLine = "{0} {1} {2}".format(self.HttpVersionString,
+                                         self.status,
+                                         STATUS_DESCRIPTIONS[self.status])
+        try:
+            startLine = startLine.encode('ascii')
+        except UnicodeEncodeError:
+            startLine = startLine.encode('idna')
+        self.lines.append(startLine)
+
+        if u'server' not in self.headers:  # create Server header
+            self.headers[u'host'] = self.hostname or socket.gethostname()
+
+        if u'date' not in self.headers:  # create Date header
+            self.headers[u'date'] = httpDate1123(datetime.datetime.utcnow())
+
+        if self.data is not None:
+            body = ns2b(json.dumps(self.data, separators=(',', ':')))
+            self.headers[u'content-type'] = u'application/json; charset=utf-8'
+        else:
+            body = self.body
+
+        if body and (u'content-length' not in self.headers):
+            self.lines.append(packHeader(u'Content-Length', str(len(body))))
+
+        for name, value in self.headers.items():
+            self.lines.append(packHeader(name, value))
+
+        self.lines.extend((b"", b""))
+        self.head = CRLF.join(self.lines)  # b'/r/n'
+
+        self.msg = self.head + body
+        return self.msg
 
 
 class Valet(object):
