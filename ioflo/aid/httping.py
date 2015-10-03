@@ -310,7 +310,7 @@ def updateQargsQuery(qargs=None, query=u'',):
 
 def packHeader(name, *values):
     """
-    Format and return a request header line.
+    Format and return a header line.
 
     For example: h.packHeader('Accept', 'text/html')
     """
@@ -324,7 +324,7 @@ def packHeader(name, *values):
         elif isinstance(value, int):
             values[i] = str(value).encode('ascii')
     value = b', '.join(values)
-    value = value.lower()
+    #value = value.lower()
     return (name + b': ' + value)
 
 
@@ -2199,7 +2199,7 @@ class Responder(object):
             body = self.body
 
         if body and (u'content-length' not in self.headers):
-            self.lines.append(packHeader(u'Content-Length', str(len(body))))
+            self.headers[u'content-length'] = str(len(body))
 
         for name, value in self.headers.items():
             self.lines.append(packHeader(name, value))
@@ -2352,8 +2352,6 @@ class Valet(object):
         data['data'] = requestant.data
 
         return(responder.build(status=200, data=data ))
-
-
 
     def serviceConnects(self):
         """

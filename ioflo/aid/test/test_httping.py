@@ -3647,7 +3647,7 @@ class BasicTestCase(unittest.TestCase):
 
         beta.requests.append(request)
 
-        while (beta.requests or beta.connector.txes or
+        while (beta.requests or beta.connector.txes or not beta.responses or
                not alpha.servant.ixes or not alpha.idle()):
             alpha.serviceAll()
             time.sleep(0.05)
@@ -3669,12 +3669,24 @@ class BasicTestCase(unittest.TestCase):
                                                 'host': 'localhost:6101'})
 
 
-        #self.assertEqual(len(beta.connector.rxbs), 0)
-        #self.assertIs(beta.waited, False)
-        #self.assertIs(beta.respondent.ended, True)
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response['data'],{'body': '',
+                                        'data': None,
+                                        'fragment': '',
+                                        'headers': {'accept': 'application/json',
+                                                    'accept-encoding': 'identity',
+                                                    'content-length': '0',
+                                                    'host': 'localhost:6101'},
+                                        'method': 'GET',
+                                        'path': '/echo',
+                                        'qargs': {'name': 'fame'},
+                                        'version': 11})
 
-        #self.assertEqual(len(beta.responses), 1)
-        #response = beta.responses.popleft()
+        self.assertEqual(len(alpha.responders), 1)
+        responder = alpha.responders.values()[0]
+        self.assertEqual(responder.status, response['status'])
+        self.assertEqual(responder.headers, response['headers'])
 
         alpha.servant.closeAll()
         beta.connector.close()
