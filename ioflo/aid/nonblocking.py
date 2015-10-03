@@ -1770,7 +1770,7 @@ class Incomer(object):
     """
     Manager class for incoming nonblocking TCP connections.
     """
-    Timeout = 1.0  # timeout in seconds
+    Timeout = 0.0  # timeout in seconds
 
     def __init__(self,
                  name=u'',

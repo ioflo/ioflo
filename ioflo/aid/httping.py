@@ -1855,13 +1855,6 @@ class Patron(object):
                         self.waited = False
                 self.respondent.makeParser()  #set up for next time
 
-    def serviceAllTx(self):
-        """
-        service the tx side of request
-        """
-        self.serviceRequests()
-        self.connector.serviceTxes()
-
     def serviceAll(self):
         """
         Service request response
@@ -1888,7 +1881,8 @@ class Patron(object):
                         self.transmit()  # rebuilds and queues up most recent http request here
                         self.connector.txes.rotate()  # ensure first request in txes
 
-        self.serviceAllTx()
+        self.serviceRequests()
+        self.connector.serviceTxes()
         self.serviceResponse()
 
 
