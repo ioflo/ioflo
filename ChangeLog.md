@@ -16,6 +16,9 @@ Requester is not subclass of Parsent
 Added .error and .errored attributes of Parsent so can report errors in processing
 or waiting
 
+Parsent close method now being called if connection closed prematurely
+
+
 ---------
 20150819
 ---------
