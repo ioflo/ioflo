@@ -3659,8 +3659,8 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connector.cutoff, False)
 
         self.assertEqual(len(alpha.servant.ixes), 1)
-        self.assertEqual(len(alpha.requestants), 1)
-        requestant = alpha.requestants.values()[0]
+        self.assertEqual(len(alpha.stewards), 1)
+        requestant = alpha.stewards.values()[0].requestant
         self.assertEqual(requestant.method, request['method'])
         self.assertEqual(requestant.path, request['path'])
         self.assertEqual(requestant.headers, {'accept': 'application/json',
@@ -3683,8 +3683,7 @@ class BasicTestCase(unittest.TestCase):
                                         'qargs': {'name': 'fame'},
                                         'version': 11})
 
-        self.assertEqual(len(alpha.responders), 1)
-        responder = alpha.responders.values()[0]
+        responder = alpha.stewards.values()[0].responder
         self.assertEqual(responder.status, response['status'])
         self.assertEqual(responder.headers, response['headers'])
 
@@ -3751,6 +3750,6 @@ if __name__ == '__main__' and __package__ is None:
 
     #runAll() #run all unittests
 
-    runSome()#only run some
+    #runSome()#only run some
 
-    #runOne('testValetServiceEcho')
+    runOne('testValetServiceEcho')

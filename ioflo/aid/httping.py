@@ -1110,22 +1110,25 @@ class Parsent(object):
         self.closed = False
         self.errored = False
         self.error = None
+        try:
+            headParser = self.parseHead()
+            while True:
+                result = next(headParser)
+                if result is not None:
+                    headParser.close()
+                    break
+                (yield None)
 
-        headParser = self.parseHead()
-        while True:
-            result = next(headParser)
-            if result is not None:
-                headParser.close()
-                break
-            (yield None)
-
-        bodyParser = self.parseBody()
-        while True:
-            result = next(bodyParser)
-            if result is not None:
-                bodyParser.close()
-                break
-            (yield None)
+            bodyParser = self.parseBody()
+            while True:
+                result = next(bodyParser)
+                if result is not None:
+                    bodyParser.close()
+                    break
+                (yield None)
+        except HTTPException as ex:
+            self.errored = True
+            self.error = str(ex)
 
         self.ended = True
         (yield True)
@@ -2111,6 +2114,7 @@ class Responder(object):
     HttpVersionString = HTTP_11_VERSION_STRING  # http version string
 
     def __init__(self,
+                 steward=None,
                  hostname=None,  # unicode
                  status=200,  # integer
                  headers=None,
@@ -2118,12 +2122,14 @@ class Responder(object):
                  data=None):
         """
         Initialize Instance
+        steward = managing Steward instance
         hostname = local server hostname for Server header
         status = response status code
         headers = http response headers
         body = http response body
         data = dict to jsonify as body if provided
         """
+        self.steward = steward
         self.hostname = hostname or socket.gethostname()
         self.status = status
         self.headers = lodict(headers) if headers else lodict()
@@ -2133,9 +2139,12 @@ class Responder(object):
         self.body = body or b''
         self.data = data
 
+        self.ended = False  # True if response generated completed
+
+        self.msg = b""  # for debugging
         self.lines = []  # for debugging
         self.head = b""  # for debugging
-        self.msg = b""   # for debugging
+
 
     def reinit(self,
                status=None,  # integer
@@ -2171,6 +2180,7 @@ class Responder(object):
         Build and return response message
 
         """
+        self.drained = False
         self.reinit(status=status,
                     headers=headers,
                     body=body,
@@ -2208,7 +2218,83 @@ class Responder(object):
         self.head = CRLF.join(self.lines)  # b'/r/n'
 
         self.msg = self.head + body
+        self.ended = True
         return self.msg
+
+
+class Steward(object):
+    """
+    Manages the associated requestant and responder for an incoming connection
+    """
+    def __init__(self,
+                 incomer,
+                 requestant=None,
+                 responder=None,
+                 dictify=False,
+                 hostname=u''):
+        """
+        incomer = Incomer instance for connection
+        requestant = Requestant instance for connection
+        responder = Responder instance for connection
+        dictify = True if attempt to dictify request body
+        """
+        self.incomer = incomer
+        if requestant is None:
+            requestant = Requestant(msg=self.incomer.rxbs,
+                                    dictify=dictify)
+        self.requestant = requestant
+
+        if responder is None:
+            responder = Responder(steward=self,
+                                  hostname=hostname)
+        self.responder = responder
+        self.waited = False  # True if waiting for reponse to finish
+        self.msg = b""  # outgoing msg bytes
+
+    def respond(self):
+        """
+        Respond to request  Override in subclass
+        Echo request
+        """
+        console.concise("Responding to Request:\n{0} {1} {2}\n"
+                                "{3}\n{4}\n".format(self.requestant.method,
+                                                    self.requestant.path,
+                                                    self.requestant.version,
+                                                    self.requestant.headers,
+                                                    self.requestant.body))
+        data = odict()
+        data['method'] = self.requestant.method
+
+        pathSplits = urlsplit(unquote(self.requestant.path))
+        path = pathSplits.path
+        data['path'] = path
+
+        query = pathSplits.query
+        qargs = odict()
+        qargs, query = updateQargsQuery(qargs, query)
+        data['qargs'] = qargs
+
+        fragment = pathSplits.fragment
+        data['fragment'] = fragment
+        data['version'] = self.requestant.version
+        data['headers'] = copy.copy(self.requestant.headers)  # make copy
+        data['body'] = self.requestant.body.decode('utf-8')
+        data['data'] = copy.copy(self.requestant.data)  # make copy
+
+        msg = self.responder.build(status=200, data=data)
+        self.incomer.tx(msg)
+        self.waited = not self.responder.ended
+
+    def pour(self):
+        """
+        Run generator to stream response message
+
+        """
+
+        # putnext generator here
+
+        if self.responder.ended:
+            self.waited = False
 
 
 class Valet(object):
@@ -2218,6 +2304,7 @@ class Valet(object):
     def __init__(self,
                  servant=None,
                  store=None,
+                 stewards=None,
                  name='',
                  bufsize=8096,
                  wlog=None,
@@ -2231,6 +2318,8 @@ class Valet(object):
         """
         Initialization method for instance.
         servant = instance of Server or ServerTls or None
+        store = Datastore for timers
+        stewards = odict of Steward instances
         kwa needed to pass additional parameters to servant
 
         if servantinstances are not provided (None)
@@ -2248,11 +2337,8 @@ class Valet(object):
 
         """
         self.store = store or storing.Store(stamp=0.0)
-        self.wlog = wlog
-        self.dictify = True if dictify else False  # for requestants
-
-        self.requestants = odict()
-        self.responders = odict()
+        self.stewards = stewards if stewards is not None else odict()
+        self.dictify = True if dictify else False  # for stewards
 
         ha = ha or (host, port)  # ha = host address takes precendence over host, port
         if servant:
@@ -2315,95 +2401,50 @@ class Valet(object):
         Useful for debugging
         """
         idle = True
-        for requestant in self.requestants.values():
-            if not requestant.ended:
+        for steward in self.stewards.values():
+            if not steward.requestant.ended:
                 idle = False
                 break
         return idle
 
-    def respond(self, requestant, responder):
-        """
-        Respond to request  Override in subclass
-        Echo request
-        """
-        console.concise("Responding to Request:\n{0} {1} {2}\n"
-                                "{3}\n{4}\n".format(requestant.method,
-                                                    requestant.path,
-                                                    requestant.version,
-                                                    requestant.headers,
-                                                    requestant.body))
-        data = odict()
-        data['method'] = requestant.method
-
-        pathSplits = urlsplit(unquote(requestant.path))
-        path = pathSplits.path
-        data['path'] = path
-
-        query = pathSplits.query
-        qargs = odict()
-        qargs, query = updateQargsQuery(qargs, query)
-        data['qargs'] = qargs
-
-        fragment = pathSplits.fragment
-        data['fragment'] = fragment
-        data['version'] = requestant.version
-        data['headers'] = requestant.headers
-        data['body'] = requestant.body.decode('utf-8')
-        data['data'] = requestant.data
-
-        return(responder.build(status=200, data=data ))
-
     def serviceConnects(self):
         """
-        Service new connections
+        Service new incoming connections
         Create requestants
         Timeout stale connections
         """
         self.servant.serviceConnects()
         for ca, ix in self.servant.ixes.items():
-            if ca not in self.requestants:
-                self.requestants[ca] = Requestant(msg=ix.rxbs,
-                                                  dictify=self.dictify)
+            if ca not in self.stewards:
+                hostname = "{0}:{1}".format(*self.servant.eha)  # for responders
+                self.stewards[ca] = Steward(incomer=ix,
+                                            dictify=self.dictify,
+                                            hostname=hostname)
 
         # check for timeouts on connections
 
-
-
-    def serviceRequestants(self):
+    def serviceStewards(self):
         """
-        Service pending requestants
+        Service pending requestants and responders
         """
-        for ca, requestant in self.requestants.items():
-            try:
-                requestant.parse()
-            except HTTPException as ex:
-                requestant.errored = True
-                requestant.error = str(ex)
-                requestant.ended = True
+        for steward in self.stewards.values():
+            if not steward.waited:
+                steward.requestant.parse()
 
-            if requestant.ended:
-                console.concise("Parsed Request:\n{0} {1} {2}\n"
-                                "{3}\n{4}\n".format(requestant.method,
-                                                    requestant.path,
-                                                    requestant.version,
-                                                    requestant.headers,
-                                                    requestant.body))
-                if ca not in self.responders:
-                    hostname = "{0}:{1}".format(*self.servant.eha)
-                    responder = self.responders[ca] = Responder(hostname=hostname)
-                else:
-                    responder = self.responders[ca]
-                    responder.reinit()
+                if steward.requestant.ended:
+                    console.concise("Parsed Request:\n{0} {1} {2}\n"
+                                    "{3}\n{4}\n".format(steward.requestant.method,
+                                                        steward.requestant.path,
+                                                        steward.requestant.version,
+                                                        steward.requestant.headers,
+                                                        steward.requestant.body))
+                    steward.respond()
 
-                msg = self.respond(requestant, responder)
-                self.servant.ixes[ca].tx(msg)
-                requestant.makeParser()  #set up for next time
+            if steward.waited:
+                steward.pour()
 
-    def serviceResponders(self):
-        """
-        Service pending responders
-        """
-        pass
+            if not steward.waited and steward.requestant.ended:
+                steward.requestant.makeParser()  #set up for next time
 
     def serviceAllTx(self):
         """
@@ -2426,6 +2467,7 @@ class Valet(object):
         Service request response
         """
         self.serviceConnects()
-        self.serviceAllRx()
-        self.serviceAllTx()
+        self.servant.serviceReceivesAllIx()
+        self.serviceStewards()
+        self.servant.serviceTxesAllIx()
 
