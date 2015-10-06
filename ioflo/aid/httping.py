@@ -791,18 +791,18 @@ class EventSource(object):
     """
     Bom = codecs.BOM_UTF8 # utf-8 encoded bom b'\xef\xbb\xbf'
 
-    def __init__(self, raw=None, events=None, dictify=False):
+    def __init__(self, raw=None, events=None, dictable=False):
         """
         Initialize Instance
         raw must be bytearray
         IF events is not None then used passed in deque
             .events will be deque of event odicts
-        IF dictify then deserialize event data as json
+        IF dictable then deserialize event data as json
 
         """
         self.raw = raw if raw is not None else bytearray()
         self.events = events if events is not None else deque()
-        self.dictify = True if dictify else False
+        self.dictable = True if dictable else False
 
         self.parser = None
         self.leid = None  # last event id
@@ -864,7 +864,7 @@ class EventSource(object):
                 if parts:
                     edata = u'\n'.join(parts)
                 if edata:  # data so dispatch event by appending to .events
-                    if self.dictify:
+                    if self.dictable:
                         try:
                             ejson = json.loads(edata, encoding='utf-8', object_pairs_hook=odict)
                         except ValueError as ex:
@@ -1008,16 +1008,16 @@ class Parsent(object):
     """
     def __init__(self,
                  msg=None,
-                 dictify=None,
+                 dictable=None,
                  method=u'GET'):
         """
         Initialize Instance
         msg = bytearray of request msg to parse
-        dictify = True If should attempt to convert body to json
+        dictable = True If should attempt to convert body to json
         method = method of associated request
         """
         self.msg = msg if msg is not None else bytearray()
-        self.dictify = True if dictify else False  # convert body json
+        self.dictable = True if dictable else False  # convert body json
         self.parser = None  # response parser generator
         self.version = None # HTTP-Version from status line
         self.length = None     # content length of body in request
@@ -1044,18 +1044,18 @@ class Parsent(object):
 
     def reinit(self,
                msg=None,
-               dictify=None,
+               dictable=None,
                method=u'GET'):
         """
         Reinitialize Instance
         msg = bytearray of request msg to parse
-        dictify = Boolean flag If True attempt to convert json body
+        dictable = Boolean flag If True attempt to convert json body
         method = method verb of associated request
         """
         if msg is not None:
             self.msg = msg
-        if dictify is not None:
-            self.dictify = True if dictify else False
+        if dictable is not None:
+            self.dictable = True if dictable else False
         if method is not None:
             self.method = method.upper()
 
@@ -1204,7 +1204,7 @@ class Respondent(Parsent):
         """
         Reinitialize Instance
         See super class
-        dictify = Boolean flag If True attempt to convert json body
+        redirectable means allow redirection
         """
         super(Respondent, self).reinit(**kwa)
         if redirectable is not None:
@@ -1360,7 +1360,7 @@ class Respondent(Parsent):
                 self.evented = True
                 self.eventSource = EventSource(raw=self.body,
                                            events=self.events,
-                                           dictify=self.dictify)
+                                           dictable=self.dictable)
             else:
                 self.evented = False
 
@@ -1463,10 +1463,10 @@ class Respondent(Parsent):
 
                 (yield None)
 
-        # convert body to data based on content-type, and .dictify flag
+        # convert body to data based on content-type, and .dictable flag
         # only gets to here once content length has become finite
         # closed, not chunked/streamed, or chunking/streaming has ended
-        if self.jsoned or self.dictify:  # attempt to deserialize json
+        if self.jsoned or self.dictable:  # attempt to deserialize json
             try:
                 self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
             except ValueError as ex:
@@ -1504,6 +1504,7 @@ class Patron(object):
                  data=None,
                  fargs=None,
                  msg=None,
+                 dictable=None,
                  dictify=None,
                  events=None,
                  requests=None,
@@ -1539,7 +1540,8 @@ class Patron(object):
         data = dict of request body json if any
         fargs = dict of request body form args if any
         msg = bytearray of response msg to parse
-        dictify = Boolean flag If True attempt to convert body from json
+        dictable = Boolean flag If True attempt to convert body from json
+        dictify =alias for dictable for backwards compatibility
         events = deque of events if any
         requests = deque of requests if any each request is dict
         responses = deque of responses if any each response is dict
@@ -1657,10 +1659,11 @@ class Patron(object):
                              fargs=fargs)
         self.requester = requester
 
+        dictable = dictable or dictify
         if respondent is None:
             respondent = Respondent(msg=self.connector.rxbs,
                                     method=method,
-                                    dictify=dictify,
+                                    dictable=dictable,
                                     events=self.events,
                                     redirectable=redirectable,
                                     redirects=self.redirects)
@@ -1668,7 +1671,7 @@ class Patron(object):
             # do we need to assign the events, redirects also?
             respondent.reinit(msg=self.connector.rxbs,
                               method=method,
-                              dictify=dictify,
+                              dictable=dictable,
                               redirectable=redirectable)
         self.respondent = respondent
 
@@ -1899,6 +1902,7 @@ class Requestant(Parsent):
         """
         super(Requestant, self).__init__(**kwa)
         self.path = u''
+        self.changed = False  # True if msg changed on last parse iteration
 
     def checkPersisted(self):
         """
@@ -2079,10 +2083,10 @@ class Requestant(Parsent):
 
                 (yield None)
 
-        # convert body to data based on content-type, and .dictify flag
+        # convert body to data based on content-type, and .dictable flag
         # only gets to here once content length has become finite
         # closed or not chunked or chunking has ended
-        if self.jsoned or self.dictify:  # attempt to deserialize json
+        if self.jsoned or self.dictable:  # attempt to deserialize json body
             try:
                 self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
             except ValueError as ex:
@@ -2224,18 +2228,18 @@ class Steward(object):
                  incomer,
                  requestant=None,
                  responder=None,
-                 dictify=False,
+                 dictable=False,
                  hostname=u''):
         """
         incomer = Incomer instance for connection
         requestant = Requestant instance for connection
         responder = Responder instance for connection
-        dictify = True if attempt to dictify request body
+        dictable = True if should attempt to convert request body as json
         """
         self.incomer = incomer
         if requestant is None:
             requestant = Requestant(msg=self.incomer.rxbs,
-                                    dictify=dictify)
+                                    dictable=dictable)
         self.requestant = requestant
 
         if responder is None:
@@ -2244,6 +2248,12 @@ class Steward(object):
         self.responder = responder
         self.waited = False  # True if waiting for reponse to finish
         self.msg = b""  # outgoing msg bytes
+
+    def refresh(self):
+        """
+        Restart incomer timer
+        """
+        incomer.timer.restart()
 
     def respond(self):
         """
@@ -2289,12 +2299,16 @@ class Steward(object):
 
         if self.responder.ended:
             self.waited = False
+        else:
+            self.refresh()
 
 
 class Valet(object):
     """
     Valet class nonblocking HTTP server connection manager
     """
+    Timeout = 5.0  # default server connection timeout
+
     def __init__(self,
                  servant=None,
                  store=None,
@@ -2307,7 +2321,8 @@ class Valet(object):
                  port=None,
                  eha=None,
                  scheme=u'',
-                 dictify=False,
+                 dictable=False,
+                 timeout=None,
                  **kwa):
         """
         Initialization method for instance.
@@ -2327,12 +2342,13 @@ class Valet(object):
         port = socket port for local servant listen socket
         eha = external destination address for incoming connections used in TLS
         scheme = http scheme u'http' or u'https' or empty
-        dictify = Boolean flag If True attempt to convert body from json for requestants
+        dictable = Boolean flag If True attempt to convert body from json for requestants
 
         """
         self.store = store or storing.Store(stamp=0.0)
         self.stewards = stewards if stewards is not None else odict()
-        self.dictify = True if dictify else False  # for stewards
+        self.dictable = True if dictable else False  # for stewards
+        self.timeout = timeout if timeout is not None else self.Timeout
 
         ha = ha or (host, port)  # ha = host address takes precendence over host, port
         if servant:
@@ -2367,6 +2383,7 @@ class Valet(object):
             if servant.ha != ha:
                 ValueError("Provided ha '{0}:{1}' incompatible with servant".format(ha[0], ha[1]))
             # at some point may want to support changing the ha of provided servant
+
         else:  # what about timeouts for servant connections
             if secured:
                 servant = ServerTls(store=self.store,
@@ -2375,6 +2392,7 @@ class Valet(object):
                                     eha=eha,
                                     bufsize=bufsize,
                                     wlog=wlog,
+                                    timeout=self.timeout,
                                     **kwa)
             else:
                 servant = Server(store=self.store,
@@ -2383,6 +2401,7 @@ class Valet(object):
                                  eha=eha,
                                  bufsize=bufsize,
                                  wlog=wlog,
+                                 timeout=self.timeout,
                                  **kwa)
 
 
@@ -2401,6 +2420,13 @@ class Valet(object):
                 break
         return idle
 
+    def closeConnection(self, ca):
+        """
+        Close and remove connection and associated steward given by ca
+        """
+        self.servant.removeIx(ca)
+        del self.stewards[ca]
+
     def serviceConnects(self):
         """
         Service new incoming connections
@@ -2412,18 +2438,22 @@ class Valet(object):
             if ca not in self.stewards:
                 hostname = "{0}:{1}".format(*self.servant.eha)  # for responders
                 self.stewards[ca] = Steward(incomer=ix,
-                                            dictify=self.dictify,
+                                            dictable=self.dictable,
                                             hostname=hostname)
 
-        # check for timeouts on connections
+            if ix.timeout > 0.0 and ix.timer.expired:
+                self.closeConnection(ca)
+
 
     def serviceStewards(self):
         """
         Service pending requestants and responders
         """
-        for steward in self.stewards.values():
+        for ca, steward in self.stewards.items():
             if not steward.waited:
                 steward.requestant.parse()
+                if steward.requestant.changed:
+                    steward.refresh()
 
                 if steward.requestant.ended:
                     console.concise("Parsed Request:\n{0} {1} {2}\n"
@@ -2438,7 +2468,10 @@ class Valet(object):
                 steward.pour()
 
             if not steward.waited and steward.requestant.ended:
-                steward.requestant.makeParser()  #set up for next time
+                if steward.requestant.persisted:
+                    steward.requestant.makeParser()  #set up for next time
+                else:  # remove and close connection
+                    self.closeConnection(ca)
 
     def serviceAllTx(self):
         """

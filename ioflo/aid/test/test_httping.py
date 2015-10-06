@@ -918,7 +918,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Beta processes response \n")
         response = httping.Respondent(msg=beta.rxbs,
                                       method=method,
-                                      dictify=True,
+                                      dictable=True,
                                       )
 
         lines =  [
@@ -1074,7 +1074,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Beta processes response \n")
         response = httping.Respondent(msg=beta.rxbs,
                                       method=method,
-                                      dictify=True)
+                                      dictable=True)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -3593,9 +3593,7 @@ class BasicTestCase(unittest.TestCase):
         newQuery = '&'.join(qargParts)
         self.assertEqual(newQuery, u'oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack%3D')
 
-
         console.reinit(verbosity=console.Wordage.concise)
-
 
     def testValetServiceEcho(self):
         """
@@ -3693,8 +3691,6 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
-
-
 
 
 def runOne(test):
