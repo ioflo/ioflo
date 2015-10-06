@@ -316,7 +316,7 @@ def packHeader(name, *values):
     """
     if isinstance(name, unicode):  # not bytes
         name = name.encode('ascii')
-    name = name.title()
+    name = name.title()  # make title case
     values = list(values)  # make copy
     for i, value in enumerate(values):
         if isinstance(value, unicode):
@@ -324,7 +324,6 @@ def packHeader(name, *values):
         elif isinstance(value, int):
             values[i] = str(value).encode('ascii')
     value = b', '.join(values)
-    #value = value.lower()
     return (name + b': ' + value)
 
 
