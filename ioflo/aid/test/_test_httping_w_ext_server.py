@@ -202,6 +202,8 @@ class BasicTestCase(unittest.TestCase):
         while response.parser:
             response.parse()
 
+        response.dictify()
+
         self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
 
         self.assertEqual(len(beta.rxbs), 0)
@@ -294,6 +296,8 @@ class BasicTestCase(unittest.TestCase):
         if response.parser:
             response.parser.close()
             response.parser = None
+
+        response.dictify()
 
         #self.assertTrue(response.body.startswith(b'retry: 1000\n\ndata: START\n\ndata: 1\n\ndata: 2\n\ndata: 3\n\n'))
         self.assertEqual(response.eventSource.retry, 1000)
@@ -403,6 +407,8 @@ class BasicTestCase(unittest.TestCase):
             response.parser.close()
             response.parser = None
 
+        response.dictify()
+
         #self.assertTrue(response.body.startswith(b'retry: 1000\n\ndata: START\n\ndata: 1\n\ndata: 2\n\ndata: 3\n\n'))
         self.assertEqual(response.eventSource.retry, 1000)
         self.assertTrue(len(response.events) > 2)
@@ -506,6 +512,8 @@ class BasicTestCase(unittest.TestCase):
             response.parser.close()
             response.parser = None
 
+        response.dictify()
+
         self.assertEqual(response.eventSource.retry, 1000)
         self.assertTrue(len(response.events) > 2)
         event = response.events.popleft()
@@ -589,6 +597,8 @@ class BasicTestCase(unittest.TestCase):
 
         while response.parser:
             response.parse()
+
+        response.dictify()
 
         self.assertEqual(response.data, {'action': None,
                                         'content': None,

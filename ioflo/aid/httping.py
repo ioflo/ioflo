@@ -1158,6 +1158,22 @@ class Parsent(object):
                 self.parser.close()
                 self.parser = None
 
+    def dictify(self):
+        """
+        Attempt to convert body to dict data if .dictable or json content-type
+        """
+        # convert body to data based on content-type, and .dictable flag
+
+        if self.jsoned or self.dictable:  # attempt to deserialize json
+            try:
+                self.data = json.loads(self.body.decode('utf-8'),
+                                       encoding='utf-8',
+                                       object_pairs_hook=odict)
+            except ValueError as ex:
+                self.data = None
+            else:  # valid json so clear out body
+                del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
+
 
 class Respondent(Parsent):
     """
@@ -1462,16 +1478,8 @@ class Respondent(Parsent):
 
                 (yield None)
 
-        # convert body to data based on content-type, and .dictable flag
         # only gets to here once content length has become finite
         # closed, not chunked/streamed, or chunking/streaming has ended
-        if self.jsoned or self.dictable:  # attempt to deserialize json
-            try:
-                self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
-            except ValueError as ex:
-                self.data = None
-            else:  # valid json so clear out body
-                del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
 
         self.bodied = True
         (yield True)
@@ -1802,6 +1810,8 @@ class Patron(object):
                 self.respondent.ended = True
 
             if self.respondent.ended:
+                self.respondent.dictify()
+
                 if not self.respondent.evented:
                     if self.request:  # use saved request attribute
                         request = copy.copy(self.request)
@@ -2079,17 +2089,8 @@ class Requestant(Parsent):
 
                 (yield None)
 
-        # convert body to data based on content-type, and .dictable flag
         # only gets to here once content length has become finite
         # closed or not chunked or chunking has ended
-        if self.jsoned or self.dictable:  # attempt to deserialize json body
-            try:
-                self.data = json.loads(self.body.decode('utf-8'), encoding='utf-8', object_pairs_hook=odict)
-            except ValueError as ex:
-                self.data = None
-            else:  # valid json so clear out body
-                del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
-
         self.bodied = True
         (yield True)
         return
@@ -2448,10 +2449,12 @@ class Valet(object):
         for ca, steward in self.stewards.items():
             if not steward.waited:
                 steward.requestant.parse()
+
                 if steward.requestant.changed:
                     steward.refresh()
 
                 if steward.requestant.ended:
+                    steward.requestant.dictify()
                     console.concise("Parsed Request:\n{0} {1} {2}\n"
                                     "{3}\n{4}\n".format(steward.requestant.method,
                                                         steward.requestant.path,

@@ -171,6 +171,8 @@ class BasicTestCase(unittest.TestCase):
         while response.parser:
             response.parse()
 
+        response.dictify()
+
         #self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(bytes(response.body), b'')
         self.assertEqual(response.data, {'action': None,
@@ -320,6 +322,8 @@ class BasicTestCase(unittest.TestCase):
         if response.parser:
             response.parser.close()
             response.parser = None
+
+        response.dictify()
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
@@ -472,6 +476,8 @@ class BasicTestCase(unittest.TestCase):
             response.parser.close()
             response.parser = None
 
+        response.dictify()
+
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
         self.assertEqual(response.retry, response.eventSource.retry)
@@ -622,6 +628,8 @@ class BasicTestCase(unittest.TestCase):
         if response.parser:
             response.parser.close()
             response.parser = None
+
+        response.dictify()
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
@@ -786,6 +794,8 @@ class BasicTestCase(unittest.TestCase):
         if response.parser:
             response.parser.close()
             response.parser = None
+
+        response.dictify()
 
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
@@ -1100,6 +1110,8 @@ class BasicTestCase(unittest.TestCase):
             response.parser.close()
             response.parser = None
 
+        response.dictify()
+
         self.assertEqual(len(beta.rxbs), 0)
         self.assertEqual(response.eventSource.retry, 1000)
         self.assertEqual(response.retry, response.eventSource.retry)
@@ -1255,6 +1267,8 @@ class BasicTestCase(unittest.TestCase):
         while response.parser:
             response.parse()
 
+        response.dictify()
+
         #self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
         self.assertEqual(bytes(response.body), b'')
         self.assertEqual(response.data, {'action': None,
@@ -1383,6 +1397,8 @@ class BasicTestCase(unittest.TestCase):
 
         while beta.respondent.parser:
             beta.respondent.parse()
+
+        beta.respondent.dictify()
 
         self.assertEqual(bytes(beta.respondent.body), b'')
         self.assertEqual(beta.respondent.data, {'action': None,
