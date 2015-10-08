@@ -1504,7 +1504,6 @@ class Patron(object):
                  fargs=None,
                  msg=None,
                  dictable=None,
-                 dictify=None,
                  events=None,
                  requests=None,
                  responses=None,
@@ -1540,7 +1539,6 @@ class Patron(object):
         fargs = dict of request body form args if any
         msg = bytearray of response msg to parse
         dictable = Boolean flag If True attempt to convert body from json
-        dictify =alias for dictable for backwards compatibility
         events = deque of events if any
         requests = deque of requests if any each request is dict
         responses = deque of responses if any each response is dict
@@ -1658,7 +1656,6 @@ class Patron(object):
                              fargs=fargs)
         self.requester = requester
 
-        dictable = dictable or dictify
         if respondent is None:
             respondent = Respondent(msg=self.connector.rxbs,
                                     method=method,
