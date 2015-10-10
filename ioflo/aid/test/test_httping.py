@@ -3611,11 +3611,11 @@ class BasicTestCase(unittest.TestCase):
 
         console.reinit(verbosity=console.Wordage.concise)
 
-    def testValetServiceEcho(self):
+    def testPorterServiceEcho(self):
         """
-        Test Valet service request response of echo non blocking
+        Test Porter service request response of echo non blocking
         """
-        console.terse("{0}\n".format(self.testValetServiceEcho.__doc__))
+        console.terse("{0}\n".format(self.testPorterServiceEcho.__doc__))
 
         console.reinit(verbosity=console.Wordage.profuse)
 
@@ -3625,7 +3625,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = httping.Valet(port = 6101,
+        alpha = httping.Porter(port = 6101,
                               bufsize=131072,
                               wlog=wireLogAlpha,
                               store=store)
@@ -3744,7 +3744,7 @@ def runSome():
              'testPatronRedirectComplexSecure',
              'testMultiPartForm',
              'testQueryQuoting',
-             'testValetServiceEcho',
+             'testPorterServiceEcho',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

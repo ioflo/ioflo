@@ -2301,9 +2301,9 @@ class Steward(object):
             self.refresh()
 
 
-class Valet(object):
+class Porter(object):
     """
-    Valet class nonblocking HTTP server connection manager
+    Porter class nonblocking HTTP server
     """
     Timeout = 5.0  # default server connection timeout
 
@@ -2605,9 +2605,9 @@ class WsgiResponder(object):
         return self.msg
 
 
-class WsgiServer(object):
+class Valet(object):
     """
-    WSGI Server Class
+    Valet WSGI Server Class
     """
     Timeout = 5.0  # default server connection timeout
 
@@ -2742,22 +2742,23 @@ class WsgiServer(object):
         if ca in self.reqs:
             self.reqs[ca].makeParser()
 
-    def build(self, requestant):
+    def environ(self, requestant):
         """
         Returns wisgi environment dictionary for supplied requestant
         """
         data = modict()
+        hostname = "{0}".format(self.servant.eha[0])
 
         # Required CGI variables
-        data['REQUEST_METHOD']    = self.request_method    # GET
-        data['PATH_INFO']         = self.path              # /hello
-        data['SERVER_NAME']       = self.server_name       # localhost
-        data['SERVER_PORT']       = str(self.server_port)  # 8888
+        data['REQUEST_METHOD']    = requestant.method      # GET
+        data['PATH_INFO']         = requestant.path        # /hello
+        data['SERVER_NAME']       = hostname  # localhost
+        data['SERVER_PORT']       = str(self.servant.eha[1])  # 8888
 
 
         data['wsgi.version']      = (1, 0)
         data['wsgi.url_scheme']   = self.scheme
-        data['wsgi.input']        = StringIO.StringIO(self.request_data)
+        data['wsgi.input']        = io.BytesIO(requestant.body)
         data['wsgi.errors']       = sys.stderr
         data['wsgi.multithread']  = False
         data['wsgi.multiprocess'] = False
