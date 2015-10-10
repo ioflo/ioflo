@@ -36,7 +36,7 @@ from email.parser import HeaderParser
 
 # Import ioflo libs
 from .sixing import *
-from .odicting import odict, lodict
+from .odicting import odict, lodict, modict
 from ..base import excepting
 from ..base import storing
 from . import aiding
@@ -1093,6 +1093,7 @@ class Parsent(object):
         """
         if self.bodied:
             return  # already parsed the body
+        self.length = 0
         self.bodied = True
         (yield True)
         return
@@ -1480,7 +1481,7 @@ class Respondent(Parsent):
 
         # only gets to here once content length has become finite
         # closed, not chunked/streamed, or chunking/streaming has ended
-
+        self.length = len(self.body)
         self.bodied = True
         (yield True)
         return
@@ -2091,6 +2092,7 @@ class Requestant(Parsent):
 
         # only gets to here once content length has become finite
         # closed or not chunked or chunking has ended
+        self.length = len(self.body)
         self.bodied = True
         (yield True)
         return
@@ -2215,7 +2217,6 @@ class Responder(object):
         self.msg = self.head + body
         self.ended = True
         return self.msg
-
 
 class Steward(object):
     """
@@ -2441,7 +2442,6 @@ class Valet(object):
             if ix.timeout > 0.0 and ix.timer.expired:
                 self.closeConnection(ca)
 
-
     def serviceStewards(self):
         """
         Service pending requestants and responders
@@ -2472,22 +2472,6 @@ class Valet(object):
                 else:  # remove and close connection
                     self.closeConnection(ca)
 
-    def serviceAllTx(self):
-        """
-        service the tx side of response
-        """
-        self.serviceResponders()
-        self.servant.serviceTxesAllIx()
-
-    def serviceAllRx(self):
-        """
-        service the tx side of response
-        """
-        self.servant.serviceReceivesAllIx()
-        #ixClient = server.ixes.values()[0]
-        #msgIn = bytes(ixClient.rxbs)
-        self.serviceRequestants()
-
     def serviceAll(self):
         """
         Service request response
@@ -2495,5 +2479,362 @@ class Valet(object):
         self.serviceConnects()
         self.servant.serviceReceivesAllIx()
         self.serviceStewards()
+        self.servant.serviceTxesAllIx()
+
+
+
+class WsgiResponder(object):
+    """
+    Nonblocking HTTP WSGI Server Response class
+
+    HTTP/1.1 200 OK\r\n
+    Content-Length: 122\r\n
+    Content-Type: application/json\r\n
+    Date: Thu, 30 Apr 2015 19:37:17 GMT\r\n
+    Server: IoBook.local\r\n\r\n
+    """
+    HttpVersionString = HTTP_11_VERSION_STRING  # http version string
+
+    def __init__(self,
+                 steward=None,
+                 hostname=None,  # unicode
+                 status=200,  # integer
+                 headers=None,
+                 body=b'',
+                 data=None,
+                 **kwa):
+        """
+        Initialize Instance
+        steward = managing Steward instance
+        hostname = local server hostname for Server header
+        status = response status code
+        headers = http response headers
+        body = http response body
+        data = dict of environment data (repurposed from super class)
+        """
+        super(WsgiResponder, self).super()
+        self.steward = steward
+        self.hostname = hostname or socket.gethostname()
+        self.status = status
+        self.headers = lodict(headers) if headers else lodict()
+        if body and isinstance(body, unicode):  # use default
+            # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+            body = body.encode('iso-8859-1')
+        self.body = body or b''
+        self.data = data
+
+        self.ended = False  # True if response generated completed
+
+        self.msg = b""  # for debugging
+        self.lines = []  # for debugging
+        self.head = b""  # for debugging
+
+    def reinit(self,
+               status=None,  # integer
+               headers=None,
+               body=None,
+               data=None):
+        """
+        Reinitialize anything that is not None
+        This enables creating another response on a connection
+        """
+        if status is not None:
+            self.status = status
+        if headers is not None:
+            self.headers = lodict(headers)
+        if body is not None:  # body should be bytes
+            if isinstance(body, unicode):
+                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+                body = body.encode('iso-8859-1')
+            self.body = body
+        else:
+            self.body = b''
+        if data is not None:
+            self.data = data
+        else:
+            self.data = None
+
+    def build(self,
+              status=None,
+              headers=None,
+              body=None,
+              data=None):
+        """
+        Build and return response message
+
+        """
+        self.drained = False
+        self.reinit(status=status,
+                    headers=headers,
+                    body=body,
+                    data=data)
+        self.lines = []
+
+        startLine = "{0} {1} {2}".format(self.HttpVersionString,
+                                         self.status,
+                                         STATUS_DESCRIPTIONS[self.status])
+        try:
+            startLine = startLine.encode('ascii')
+        except UnicodeEncodeError:
+            startLine = startLine.encode('idna')
+        self.lines.append(startLine)
+
+        if u'server' not in self.headers:  # create Server header
+            self.headers[u'host'] = self.hostname or socket.gethostname()
+
+        if u'date' not in self.headers:  # create Date header
+            self.headers[u'date'] = httpDate1123(datetime.datetime.utcnow())
+
+        if self.data is not None:
+            body = ns2b(json.dumps(self.data, separators=(',', ':')))
+            self.headers[u'content-type'] = u'application/json; charset=utf-8'
+        else:
+            body = self.body
+
+        if body and (u'content-length' not in self.headers):
+            self.headers[u'content-length'] = str(len(body))
+
+        for name, value in self.headers.items():
+            self.lines.append(packHeader(name, value))
+
+        self.lines.extend((b"", b""))
+        self.head = CRLF.join(self.lines)  # b'/r/n'
+
+        self.msg = self.head + body
+        self.ended = True
+        return self.msg
+
+
+class WsgiServer(object):
+    """
+    WSGI Server Class
+    """
+    Timeout = 5.0  # default server connection timeout
+
+    def __init__(self,
+                 app=None,
+                 apps=None,
+                 reqs=None,
+                 servant=None,
+                 store=None,
+                 name='',
+                 bufsize=8096,
+                 wlog=None,
+                 ha=None,
+                 host=u'',
+                 port=None,
+                 eha=None,
+                 scheme=u'',
+                 timeout=None,
+                 **kwa):
+        """
+        Initialization method for instance.
+        app = wsgi application callable
+        apps = odict of running Wsgi Applications
+        reqs = odict of Requestant instances
+        servant = instance of Server or ServerTls or None
+        store = Datastore for timers
+
+        kwa needed to pass additional parameters to servant
+
+        if servantinstances are not provided (None)
+        some or all of these parameters will be used for initialization
+
+        name = user friendly name for servant
+        bufsize = buffer size
+        wlog = WireLog instance if any
+        ha = host address duple (host, port) for local servant listen socket
+        host = host address for local servant listen socket, '' means any interface on host
+        port = socket port for local servant listen socket
+        eha = external destination address for incoming connections used in TLS
+        scheme = http scheme u'http' or u'https' or empty
+
+        """
+        self.store = store or storing.Store(stamp=0.0)
+        self.reqs = reqs if reqs is not None else odict()
+        self.apps = apps if apps is not None else odict()
+        self.dictable = True if dictable else False  # for stewards
+        self.timeout = timeout if timeout is not None else self.Timeout
+
+        ha = ha or (host, port)  # ha = host address takes precendence over host, port
+        if servant:
+            if isinstance(servant, ServerTls):
+                if scheme and scheme != u'https':
+                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
+                secured = True
+                scheme = u'https'
+                defaultPort = 443
+            elif isinstance(servant, Server):
+                if scheme and scheme != u'http':
+                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
+                secured = False
+                scheme = 'http'
+                defaultPort = 80
+            else:
+                raise ValueError("Invalid servant type {0}".format(type(servant)))
+        else:
+            scheme = u'https' if scheme == u'https' else u'http'
+            if scheme == u'https':
+                secured = True  # use tls socket connection
+                defaultPort = 443
+            else:
+                secured = False # non tls socket connection
+                defaultPort = 80
+
+        self.scheme = scheme
+        host, port = ha
+        port = port or  defaultPort  # if port not specified
+        ha = (host, port)
+
+        if servant:
+            if servant.ha != ha:
+                ValueError("Provided ha '{0}:{1}' incompatible with servant".format(ha[0], ha[1]))
+            # at some point may want to support changing the ha of provided servant
+
+        else:  # what about timeouts for servant connections
+            if secured:
+                servant = ServerTls(store=self.store,
+                                    name=name,
+                                    ha=ha,
+                                    eha=eha,
+                                    bufsize=bufsize,
+                                    wlog=wlog,
+                                    timeout=self.timeout,
+                                    **kwa)
+            else:
+                servant = Server(store=self.store,
+                                 name=name,
+                                 ha=ha,
+                                 eha=eha,
+                                 bufsize=bufsize,
+                                 wlog=wlog,
+                                 timeout=self.timeout,
+                                 **kwa)
+
+
+        self.secured = secured
+        self.servant = servant
+
+    def idle(self):
+        """
+        Returns True if no connections have requests in process
+        Useful for debugging
+        """
+        idle = True
+        for requestant in self.reqs.values():
+            if not requestant.ended:
+                idle = False
+                break
+        return idle
+
+    def refreshIx(self, ca):
+        """
+        Restart incomer timer given by ca
+        """
+        if  ca in self.ixes:
+            self.ixes[ca].timer.restart()
+
+    def reuseReq(self, ca):
+        """
+        For requestant given by ca
+        Either remake parser or close connection
+        """
+        if ca in self.reqs:
+            self.reqs[ca].makeParser()
+
+    def build(self, requestant):
+        """
+        Returns wisgi environment dictionary for supplied requestant
+        """
+        data = modict()
+
+        # Required CGI variables
+        data['REQUEST_METHOD']    = self.request_method    # GET
+        data['PATH_INFO']         = self.path              # /hello
+        data['SERVER_NAME']       = self.server_name       # localhost
+        data['SERVER_PORT']       = str(self.server_port)  # 8888
+
+
+        data['wsgi.version']      = (1, 0)
+        data['wsgi.url_scheme']   = self.scheme
+        data['wsgi.input']        = StringIO.StringIO(self.request_data)
+        data['wsgi.errors']       = sys.stderr
+        data['wsgi.multithread']  = False
+        data['wsgi.multiprocess'] = False
+        data['wsgi.run_once']     = False
+
+
+
+    def closeConnection(self, ca):
+        """
+        Close and remove connection and associated steward given by ca
+        """
+        self.servant.removeIx(ca)
+        del self.reqs[ca]
+        del self.apps[ca]
+
+    def serviceConnects(self):
+        """
+        Service new incoming connections
+        Create requestants
+        Timeout stale connections
+        """
+        self.servant.serviceConnects()
+        for ca, ix in self.servant.ixes.items():
+            if ca not in self.stewards:
+                hostname = "{0}:{1}".format(*self.servant.eha)  # for responders
+                self.reqs[ca] = Requestant(msg=ix.rxbs)
+
+            if ix.timeout > 0.0 and ix.timer.expired:
+                self.closeConnection(ca)
+
+
+
+    def serviceReqs(self):
+        """
+        Service pending requestants
+        """
+        for ca, requestant in self.reqs.items():
+            if not requestant.ended:
+                requestant.parse()
+
+                if requestant.changed:
+                    self.refreshIx(ca)
+
+                if requestant.ended:
+                    console.concise("Parsed Request:\n{0} {1} {2}\n"
+                                    "{3}\n{4}\n".format(requestant.method,
+                                                        requestant.path,
+                                                        requestant.version,
+                                                        requestant.headers,
+                                                        requestant.body))
+                    # create environment and start wsgi app here
+
+
+    def serviceApps(self):
+        """
+        Service pending applications
+        """
+        pass
+        #for ca, application in self.apps.items():
+
+            #if application.waited:
+                #pass
+
+            #if not application.waited and requestant.ended:
+                #if steward.requestant.persisted:
+                    #steward.requestant.makeParser()  #set up for next time
+                #else:  # remove and close connection
+                    #self.closeConnection(ca)
+
+
+
+    def serviceAll(self):
+        """
+        Service request response
+        """
+        self.serviceConnects()
+        self.servant.serviceReceivesAllIx()
+        self.serviceReqs()
         self.servant.serviceTxesAllIx()
 
