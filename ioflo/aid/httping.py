@@ -1908,7 +1908,8 @@ class Requestant(Parsent):
 
         """
         super(Requestant, self).__init__(**kwa)
-        self.path = u''
+        self.path = u''  # full path in request line
+        self.query = u'' # query string from path
         self.changed = False  # True if msg changed on last parse iteration
 
     def checkPersisted(self):
@@ -1971,6 +1972,18 @@ class Requestant(Parsent):
             self.version = 10
         else:
             self.version = 11  # use HTTP/1.1 code for HTTP/1.x where x>=1
+
+
+        pathSplits = urlsplit(self.path)  # path should not include scheme host port
+        #path = pathSplits.path
+        #self.path = path
+        #path = quote(path)
+
+        #self.scheme = pathSplits.scheme
+        #hostname = pathSplits.hostname
+        #port = pathSplits.port
+        self.query = pathSplits.query
+        #qargs, query = updateQargsQuery(None, query)
 
         leaderParser = parseLeader(raw=self.msg,
                                    eols=(CRLF, LF),
@@ -2112,7 +2125,6 @@ class Responder(object):
 
     def __init__(self,
                  steward=None,
-                 hostname=None,  # unicode
                  status=200,  # integer
                  headers=None,
                  body=b'',
@@ -2120,14 +2132,12 @@ class Responder(object):
         """
         Initialize Instance
         steward = managing Steward instance
-        hostname = local server hostname for Server header
         status = response status code
         headers = http response headers
         body = http response body
         data = dict to jsonify as body if provided
         """
         self.steward = steward
-        self.hostname = hostname or socket.gethostname()
         self.status = status
         self.headers = lodict(headers) if headers else lodict()
         if body and isinstance(body, unicode):  # use default
@@ -2177,7 +2187,6 @@ class Responder(object):
         Build and return response message
 
         """
-        self.drained = False
         self.reinit(status=status,
                     headers=headers,
                     body=body,
@@ -2194,7 +2203,7 @@ class Responder(object):
         self.lines.append(startLine)
 
         if u'server' not in self.headers:  # create Server header
-            self.headers[u'host'] = self.hostname or socket.gethostname()
+            self.headers[u'server'] = "Ioflo Server"
 
         if u'date' not in self.headers:  # create Date header
             self.headers[u'date'] = httpDate1123(datetime.datetime.utcnow())
@@ -2226,8 +2235,7 @@ class Steward(object):
                  incomer,
                  requestant=None,
                  responder=None,
-                 dictable=False,
-                 hostname=u''):
+                 dictable=False):
         """
         incomer = Incomer instance for connection
         requestant = Requestant instance for connection
@@ -2241,8 +2249,7 @@ class Steward(object):
         self.requestant = requestant
 
         if responder is None:
-            responder = Responder(steward=self,
-                                  hostname=hostname)
+            responder = Responder(steward=self)
         self.responder = responder
         self.waited = False  # True if waiting for reponse to finish
         self.msg = b""  # outgoing msg bytes
@@ -2434,10 +2441,7 @@ class Porter(object):
         self.servant.serviceConnects()
         for ca, ix in self.servant.ixes.items():
             if ca not in self.stewards:
-                hostname = "{0}:{1}".format(*self.servant.eha)  # for responders
-                self.stewards[ca] = Steward(incomer=ix,
-                                            dictable=self.dictable,
-                                            hostname=hostname)
+                self.stewards[ca] = Steward(incomer=ix, dictable=self.dictable)
 
             if ix.timeout > 0.0 and ix.timer.expired:
                 self.closeConnection(ca)
@@ -2485,7 +2489,7 @@ class Porter(object):
 
 class WsgiResponder(object):
     """
-    Nonblocking HTTP WSGI Server Response class
+    Nonblocking HTTP WSGI Responder class
 
     HTTP/1.1 200 OK\r\n
     Content-Length: 122\r\n
@@ -2496,44 +2500,27 @@ class WsgiResponder(object):
     HttpVersionString = HTTP_11_VERSION_STRING  # http version string
 
     def __init__(self,
-                 steward=None,
-                 hostname=None,  # unicode
-                 status=200,  # integer
-                 headers=None,
-                 body=b'',
-                 data=None,
-                 **kwa):
+                 incomer,
+                 status=200,  # integer or string with reason
+                 headers=None):
         """
         Initialize Instance
-        steward = managing Steward instance
-        hostname = local server hostname for Server header
-        status = response status code
-        headers = http response headers
-        body = http response body
-        data = dict of environment data (repurposed from super class)
+        Parameters:
+            incomer = incomer connection instance
+            status = response status code
+            headers = http response headers
         """
-        super(WsgiResponder, self).super()
-        self.steward = steward
-        self.hostname = hostname or socket.gethostname()
+        self.incomer = incomer
         self.status = status
         self.headers = lodict(headers) if headers else lodict()
-        if body and isinstance(body, unicode):  # use default
-            # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
-            body = body.encode('iso-8859-1')
-        self.body = body or b''
-        self.data = data
 
-        self.ended = False  # True if response generated completed
-
-        self.msg = b""  # for debugging
-        self.lines = []  # for debugging
-        self.head = b""  # for debugging
+        self.headed = False  # True once headers sent
+        self.started = False  # True once start called (start_response)
+        self.ended = False  # True if response body completely sent
 
     def reinit(self,
                status=None,  # integer
-               headers=None,
-               body=None,
-               data=None):
+               headers=None):
         """
         Reinitialize anything that is not None
         This enables creating another response on a connection
@@ -2542,32 +2529,106 @@ class WsgiResponder(object):
             self.status = status
         if headers is not None:
             self.headers = lodict(headers)
-        if body is not None:  # body should be bytes
-            if isinstance(body, unicode):
-                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
-                body = body.encode('iso-8859-1')
-            self.body = body
-        else:
-            self.body = b''
-        if data is not None:
-            self.data = data
-        else:
-            self.data = None
+
+    def __call__(self):
+        """
+        Callable
+        """
+        pass
 
     def build(self,
               status=None,
-              headers=None,
-              body=None,
-              data=None):
+              headers=None):
         """
-        Build and return response message
+        Return built header
 
         """
-        self.drained = False
         self.reinit(status=status,
-                    headers=headers,
-                    body=body,
-                    data=data)
+                    headers=headers)
+
+        self.builded = False
+        self.started = False
+        self.ended = False
+
+        lines = []
+
+        if isinstance(self.status, (int, long)):
+            status = "{0} {1}".format(self.status, STATUS_DESCRIPTIONS[self.status])
+        else:
+            status = self.status
+
+        startLine = "{0} {1}".format(self.HttpVersionString, status)
+        try:
+            startLine = startLine.encode('ascii')
+        except UnicodeEncodeError:
+            startLine = startLine.encode('idna')
+        lines.append(startLine)
+
+        if u'server' not in self.headers:  # create Server header
+            self.headers[u'server'] = "Ioflo WSGI Server"
+
+        if u'date' not in self.headers:  # create Date header
+            self.headers[u'date'] = httpDate1123(datetime.datetime.utcnow())
+
+        for name, value in self.headers.items():
+            lines.append(packHeader(name, value))
+
+        lines.extend((b"", b""))
+        head = CRLF.join(lines)  # b'/r/n'
+
+        return head
+
+    def write(self, msg):
+        """
+        WSGI write callback
+        """
+        if not self.started:
+            raise AssertionError("WSGI write() before start_response()")
+
+        elf
+
+    def start(self, status, response_headers, exc_info=None):
+        """
+        WSGI application start_response callable
+
+        Parameters:
+
+        status is string of status code and status reason '200 OK'
+
+        response_headers is list of tuples of strings of the form (field, value)
+                          one tuple for each header example:
+                          [
+                              ('Content-type', 'text/plain'),
+                              ('X-Some-Header', 'value')
+                          ]
+
+        exc_info is optional exception info if exception occurred while
+                    processing request in wsgi application
+                    If exc_info is supplied, and no HTTP headers have been output yet,
+                    start_response should replace the currently-stored
+                    HTTP response headers with the newly-supplied ones,
+                    thus allowing the application to "change its mind" about
+                    the output when an error has occurred.
+
+                    However, if exc_info is provided, and the HTTP headers
+                    have already been sent, start_response must raise an error,
+                    and should re-raise using the exc_info tuple. That is:
+
+                    raise exc_info[1].with_traceback(exc_info[2]) (python3)
+                    raise exc_info[0], exc_info[1], exc_info[2] (python2)
+                    Use six.reraise to work for both
+
+        """
+        if exc_info:
+            try:
+                if self.headed:
+                    # Re-raise original exception if headers sent
+                    reraise(*exc_info)  # sixing.reraise
+            finally:
+                exc_info = None         # avoid dangling circular ref
+        elif self.started:
+            raise AssertionError("Headers already set!")
+
         self.lines = []
 
         startLine = "{0} {1} {2}".format(self.HttpVersionString,
@@ -2603,6 +2664,34 @@ class WsgiResponder(object):
         self.msg = self.head + body
         self.ended = True
         return self.msg
+
+    def send_chunked(self, data, delay = False, callback = None):
+        # in case there's no valid data to be sent uses the plain
+        # send method to send the empty string and returns immediately
+        # to the caller method, to avoid any problems
+        if not data: self.send_plain(
+            data,
+            delay = delay,
+            callback = callback
+            ); return
+
+        # creates the new list that is going to be used to store
+        # the various parts of the chunk and then calculates the
+        # size (in bytes) of the data that is going to be sent
+        buffer = []
+        size = len(data)
+
+        # creates the various parts of the chunk with the size
+        # of the data that is going to be sent and then adds
+        # each of the parts to the chunk buffer list
+        buffer.append("%x\r\n" % size)
+        buffer.append(data)
+        buffer.append("\r\n")
+
+        # joins the buffer containing the chunk parts and then
+        # sends it to the connection using the plain method
+        buffer_s = "".join(buffer)
+        self.send_plain(buffer_s, delay = delay, callback = callback)
 
 
 class Valet(object):
@@ -2742,27 +2831,97 @@ class Valet(object):
         if ca in self.reqs:
             self.reqs[ca].makeParser()
 
-    def environ(self, requestant):
+    def buildEnviron(self, requestant):
         """
         Returns wisgi environment dictionary for supplied requestant
         """
-        data = modict()
+        environ = odict()
         hostname = "{0}".format(self.servant.eha[0])
 
         # Required CGI variables
-        data['REQUEST_METHOD']    = requestant.method      # GET
-        data['PATH_INFO']         = requestant.path        # /hello
-        data['SERVER_NAME']       = hostname  # localhost
-        data['SERVER_PORT']       = str(self.servant.eha[1])  # 8888
+        environ['REQUEST_METHOD']    = requestant.method      # GET
+        environ['PATH_INFO']         = requestant.path        # /hello
+        environ['SERVER_NAME']       = hostname  # localhost
+        environ['SERVER_PORT']       = str(self.servant.eha[1])  # 8888
 
 
-        data['wsgi.version']      = (1, 0)
-        data['wsgi.url_scheme']   = self.scheme
-        data['wsgi.input']        = io.BytesIO(requestant.body)
-        data['wsgi.errors']       = sys.stderr
-        data['wsgi.multithread']  = False
-        data['wsgi.multiprocess'] = False
-        data['wsgi.run_once']     = False
+        environ['wsgi.version']      = (1, 0)
+        environ['wsgi.url_scheme']   = self.scheme
+        environ['wsgi.input']        = io.BytesIO(requestant.body)
+        environ['wsgi.errors']       = sys.stderr
+        environ['wsgi.multithread']  = False
+        environ['wsgi.multiprocess'] = False
+        environ['wsgi.run_once']     = False
+
+        path = parser.get_path()
+        query = parser.get_query()
+        path_info = path[self.mount_l:]
+
+        # verifies if the path and query values should be encoded and if
+        # that's the case the decoding process should unquote the received
+        # path and then convert it into a valid string representation, this
+        # is especially relevant for the python 3 infra-structure, this is
+        # a tricky process but is required for the wsgi compliance
+        if self.decode: path_info = self._decode(path_info)
+
+        # retrieves a possible forwarded protocol value from the request
+        # headers and calculates the appropriate (final scheme value)
+        # taking the proxy value into account
+        forwarded_protocol = parser.headers.get("x-forwarded-proto", None)
+        scheme = "https" if connection.ssl else "http"
+        scheme = forwarded_protocol if forwarded_protocol else scheme
+
+        # initializes the environment map (structure) with all the cgi based
+        # variables that should enable the application to handle the request
+        # and respond to it in accordance
+        environ = dict(
+            REQUEST_METHOD = parser.method.upper(),
+            SCRIPT_NAME = self.mount,
+            PATH_INFO = path_info,
+            QUERY_STRING = query,
+            CONTENT_TYPE = parser.headers.get("content-type", ""),
+            CONTENT_LENGTH = "" if parser.content_l == -1 else parser.content_l,
+            SERVER_NAME = self.host,
+            SERVER_PORT = str(self.port),
+            SERVER_PROTOCOL = parser.version_s,
+            SERVER_SOFTWARE = SERVER_SOFTWARE,
+            REMOTE_ADDR = connection.address[0]
+        )
+
+        # updates the environment map with all the structures referring
+        # to the wsgi specifications note that the message is retrieved
+        # as a buffer to be able to handle the file specific operations
+        environ["wsgi.version"] = (1, 0)
+        environ["wsgi.url_scheme"] = scheme
+        environ["wsgi.input"] = parser.get_message_b()
+        environ["wsgi.errors"] = sys.stderr
+        environ["wsgi.multithread"] = False
+        environ["wsgi.multiprocess"] = False
+        environ["wsgi.run_once"] = False
+        environ["wsgi.server_name"] = netius.NAME
+        environ["wsgi.server_version"] = netius.VERSION
+
+        # iterates over all the header values that have been received
+        # to set them in the environment map to be used by the wsgi
+        # infra-structure, not that their name is capitalized as defined
+        # in the standard specification
+        for key, value in parser.headers.items():
+            key = "HTTP_" + key.replace("-", "_").upper()
+            environ[key] = value
+
+        # verifies if the connection already has an iterator associated with
+        # it, if that's the case the connection is already in use and the current
+        # request processing must be delayed for future processing, this is
+        # typically associated with http pipelining
+        if hasattr(connection, "iterator") and connection.iterator:
+            if not hasattr(connection, "queue"): connection.queue = []
+            connection.queue.append(environ)
+            return
+
+        # calls the proper on environment callback so that the current request
+        # is handled and processed (flush operation)
+        self.on_environ(connection, environ)
+
 
 
 
