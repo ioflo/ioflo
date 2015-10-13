@@ -308,6 +308,32 @@ def updateQargsQuery(qargs=None, query=u'',):
     query = '&'.join(qargParts)
     return (qargs, query)
 
+def unquoteQuery(query):
+    """
+    Returns query string with unquoted values
+    """
+    sep = u'&'
+    parts = []
+    if u';' in query:
+        splits = query.split(u';')
+        sep = u';'
+    elif u'&' in query:
+        splits = query.split(u'&')
+    else:
+        splits = [query]
+    for part in splits:  # this prevents duplicates even if desired
+        if part:
+            if '=' in part:
+                key, val = part.split('=', 1)
+                val = unquote(val)
+                parts.append(u"{0}={1}".format(key, str(val)))
+            else:
+                key = part
+                parts.append[part]
+    query = '&'.join(parts)
+    return query
+
+
 def packHeader(name, *values):
     """
     Format and return a header line.
@@ -1908,8 +1934,10 @@ class Requestant(Parsent):
 
         """
         super(Requestant, self).__init__(**kwa)
-        self.path = u''  # full path in request line
-        self.query = u'' # query string from path
+        self.url = u''   # full path in request line either relative or absolute
+        self.path = u''  # partial path in request line without scheme host port
+        self.query = u'' # query string from full path
+        self.fragment = u''  # fragment from full path
         self.changed = False  # True if msg changed on last parse iteration
 
     def checkPersisted(self):
@@ -1960,10 +1988,10 @@ class Requestant(Parsent):
             lineParser.close()  # close generator
             break
 
-        method, path, version = parseRequestLine(line)
+        method, url, version = parseRequestLine(line)
 
         self.method = method
-        self.path = path.strip()
+        self.url = url.strip()
 
         if not version.startswith(u"HTTP/1."):
             raise UnknownProtocol(version)
@@ -1974,16 +2002,21 @@ class Requestant(Parsent):
             self.version = 11  # use HTTP/1.1 code for HTTP/1.x where x>=1
 
 
-        pathSplits = urlsplit(self.path)  # path should not include scheme host port
-        #path = pathSplits.path
-        #self.path = path
-        #path = quote(path)
-
+        pathSplits = urlsplit(self.url)
+        path = unquote(pathSplits.path)  # unquote non query path portion here
         #self.scheme = pathSplits.scheme
         #hostname = pathSplits.hostname
         #port = pathSplits.port
-        self.query = pathSplits.query
-        #qargs, query = updateQargsQuery(None, query)
+
+        self.query = unquoteQuery(pathSplits.query)  # unquote only the values
+        if self.query:
+            path += "?{0}".format(self.query)
+
+        self.fragment = pathSplits.fragment
+        if self.fragment:
+            path += "#{0}".format(self.fragment)
+
+        self.path = path
 
         leaderParser = parseLeader(raw=self.msg,
                                    eols=(CRLF, LF),
@@ -2836,12 +2869,11 @@ class Valet(object):
         Returns wisgi environment dictionary for supplied requestant
         """
         environ = odict()
-        hostname = "{0}".format(self.servant.eha[0])
 
         # Required CGI variables
         environ['REQUEST_METHOD']    = requestant.method      # GET
         environ['PATH_INFO']         = requestant.path        # /hello
-        environ['SERVER_NAME']       = hostname  # localhost
+        environ['SERVER_NAME']       = "{0}".format(self.servant.eha[0])  # localhost
         environ['SERVER_PORT']       = str(self.servant.eha[1])  # 8888
 
 
