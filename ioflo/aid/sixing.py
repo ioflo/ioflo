@@ -25,6 +25,15 @@ if sys.version > '3':
         """
         return x
 
+    def reraise(kind, value, trace=None):
+        if value is None:
+            value = kind()
+        if value.__traceback__ is not trace:
+            raise value.with_traceback(trace)
+        raise value
+
+
+
 else:
     #long = long
     #basestring = basestring
@@ -42,3 +51,4 @@ else:
         """
         return unicode(x)
 
+    exec("""def reraise(kind, value, trace=None): raise kind, value, trace""", globals())
