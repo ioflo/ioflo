@@ -466,7 +466,7 @@ class modict(odict):
 
     def replace(self, key, value):
         """
-        Replace the list of values with a single value.
+        Replace the list of values with a single item list of value.
         """
         super(modict, self).__setitem__(key, [value])
 
