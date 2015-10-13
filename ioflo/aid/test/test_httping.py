@@ -1650,7 +1650,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -1716,7 +1716,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -1830,7 +1830,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -1877,7 +1877,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -1994,7 +1994,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2041,7 +2041,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2143,7 +2143,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2193,7 +2193,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2317,7 +2317,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2368,7 +2368,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2754,7 +2754,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2801,7 +2801,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2921,7 +2921,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -2968,7 +2968,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -3091,7 +3091,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -3128,7 +3128,7 @@ class BasicTestCase(unittest.TestCase):
                                                                'qargs': {'name': 'fame'},
                                                                'scheme': 'http'},
                                                    'status': 307,
-                                                   'version': 11}],
+                                                   'version': (1, 1)}],
                                     'request':
                                         {'host': '127.0.0.1',
                                          'port': 6101,
@@ -3262,7 +3262,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -3299,7 +3299,7 @@ class BasicTestCase(unittest.TestCase):
                                                                'qargs': {'name': 'fame'},
                                                                'scheme': 'http'},
                                                    'status': 307,
-                                                   'version': 11}],
+                                                   'version': (1, 1)}],
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6103,
@@ -3463,7 +3463,7 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         response = beta.responses.popleft()
-        self.assertEqual(response, {'version': 11,
+        self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',
                                     'headers':
@@ -3500,7 +3500,7 @@ class BasicTestCase(unittest.TestCase):
                                                                'qargs': {'name': 'fame'},
                                                                'scheme': 'https'},
                                                    'status': 307,
-                                                   'version': 11}],
+                                                   'version': (1, 1)}],
                                     'request':
                                         {'host': 'localhost',
                                          'port': 6103,
@@ -3695,7 +3695,7 @@ class BasicTestCase(unittest.TestCase):
                                         'method': 'GET',
                                         'path': '/echo',
                                         'qargs': {'name': 'fame'},
-                                        'version': 11})
+                                        'version': 'HTTP/1.1'})
 
         responder = alpha.stewards.values()[0].responder
         self.assertEqual(responder.status, response['status'])

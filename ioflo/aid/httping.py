@@ -1268,7 +1268,7 @@ class Respondent(Parsent):
         Sets the .persisted flag
         """
         connection = self.headers.get("connection")  # check connection header
-        if self.version == 11:  # rules for http v1.1
+        if self.version == (1, 1):  # rules for http v1.1
             self.persisted = True  # connections default to persisted
             # An HTTP/1.1 proxy is assumed to stay open unless
             # explicitly closed.
@@ -1281,7 +1281,7 @@ class Respondent(Parsent):
             elif (not self.chunked and self.length is None):
                 self.persisted = False
 
-        elif self.version == 10:
+        elif self.version == (1, 0):
             self.persisted = False  # connections default to non-persisted
             # Some HTTP/1.0 implementations have support for persistent
             # connections, using rules different than HTTP/1.1.
@@ -1346,9 +1346,9 @@ class Respondent(Parsent):
         self.reason = reason.strip()
         if version in ("HTTP/1.0", "HTTP/0.9"):
             # Some servers might still return "0.9", treat it as 1.0 anyway
-            self.version = 10
+            self.version = (1, 0)
         elif version.startswith("HTTP/1."):
-            self.version = 11   # use HTTP/1.1 code for HTTP/1.x where x>=1
+            self.version = (1, 1)  # use HTTP/1.1 code for HTTP/1.x where x>=1
         else:
             raise UnknownProtocol(version)
 
@@ -1947,7 +1947,7 @@ class Requestant(Parsent):
         Sets the .persisted flag
         """
         connection = self.headers.get("connection")  # check connection header
-        if self.version == 11:  # rules for http v1.1
+        if self.version == (1, 1):  # rules for http v1.1
             self.persisted = True  # connections default to persisted
             connection = self.headers.get("connection")
             if connection and "close" in connection.lower():
@@ -1958,7 +1958,7 @@ class Requestant(Parsent):
             elif (not self.chunked and self.length is None):
                 self.persisted = False
 
-        elif self.version == 10:  # rules for http v1.0
+        elif self.version == (1, 0):  # rules for http v1.0
             self.persisted = False  # connections default to non-persisted
             # HTTP/1.0  Connection: keep-alive indicates persistent connection.
             if connection and "keep-alive" in connection.lower():
@@ -1997,9 +1997,9 @@ class Requestant(Parsent):
             raise UnknownProtocol(version)
 
         if version.startswith(u"HTTP/1.0"):
-            self.version = 10
+            self.version = (1, 0)
         else:
-            self.version = 11  # use HTTP/1.1 code for HTTP/1.x where x>=1
+            self.version = (1, 1)  # use HTTP/1.1 code for HTTP/1.x where x>=1
 
 
         pathSplits = urlsplit(self.url)
@@ -2305,6 +2305,7 @@ class Steward(object):
                                                     self.requestant.headers,
                                                     self.requestant.body))
         data = odict()
+        data['version'] = "HTTP/{0}.{1}".format(*self.requestant.version)
         data['method'] = self.requestant.method
 
         pathSplits = urlsplit(unquote(self.requestant.path))
@@ -2318,7 +2319,7 @@ class Steward(object):
 
         fragment = pathSplits.fragment
         data['fragment'] = fragment
-        data['version'] = self.requestant.version
+
         data['headers'] = copy.copy(self.requestant.headers)  # make copy
         data['body'] = self.requestant.body.decode('utf-8')
         data['data'] = copy.copy(self.requestant.data)  # make copy
@@ -2872,10 +2873,15 @@ class Valet(object):
 
         # Required CGI variables
         environ['REQUEST_METHOD']    = requestant.method      # GET
-        environ['PATH_INFO']         = requestant.path        # /hello
-        environ['SERVER_NAME']       = "{0}".format(self.servant.eha[0])  # localhost
+        environ['SERVER_NAME']       = self.servant.eha[0]      # localhost
         environ['SERVER_PORT']       = str(self.servant.eha[1])  # 8888
+        environ['SERVER_PROTOCOL']   = str(self.servant.eha[1])  # used by request http/1.1
+        environ['SCRIPT_NAME']       = u''
+        environ['PATH_INFO']         = requestant.path        # /hello?name=john
+        environ['QUERY_STRING']      = requestant.query        # name=john
 
+        #environ['CONTENT_TYPE']
+        #environ['CONTENT_LENGTH']
 
         environ['wsgi.version']      = (1, 0)
         environ['wsgi.url_scheme']   = self.scheme
