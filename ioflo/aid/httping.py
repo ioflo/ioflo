@@ -2485,6 +2485,8 @@ class Porter(object):
         """
         self.servant.serviceConnects()
         for ca, ix in self.servant.ixes.items():
+            # check for and handle cutoff connections by client here
+
             if ca not in self.stewards:
                 self.stewards[ca] = Steward(incomer=ix, dictable=self.dictable)
 
@@ -2566,11 +2568,18 @@ class WsgiResponder(object):
         self.headed = False  # True once headers sent
         self.chunked = False  # True if should send in chunks
         self.ended = False  # True if response body completely sent
+        self.closed = False  # True if connection closed by far side
         self.iterator = None  # iterator on application body
         self.status = 200  # integer or string with reason
         self.headers = lodict()  # headers
         self.length = None  # if content-length provided must not exceed
         self.size = 0  # number of body bytes sent so far
+
+    def close(self):
+        """
+        Close any resources
+        """
+        self.closed = True
 
     def reset(self, environ, chunkable=None):
         """
@@ -2710,7 +2719,7 @@ class WsgiResponder(object):
         """
         Service application
         """
-        if not self.ended:
+        if not self.closed and not self.ended:
             if self.iterator is None:  # initiate application
                 self.iterator = iter(self.app(self.environ, self.start))
 
@@ -2912,7 +2921,9 @@ class Valet(object):
         Close and remove connection and associated steward given by ca
         """
         self.servant.removeIx(ca)
+        self.reqs[ca].close()
         del self.reqs[ca]
+        self.reps[ca].close()
         del self.reps[ca]
 
     def serviceConnects(self):
@@ -2923,6 +2934,14 @@ class Valet(object):
         """
         self.servant.serviceConnects()
         for ca, ix in self.servant.ixes.items():
+            if ix.cutoff:
+                if ca in self.reqs:
+                    self.reqs[ca].close()  # this signals parser
+                if ca in self.reps:
+                    self.reps[ca].close()  # this signals handler
+                Wself.closeConnection(ca)
+                continue
+
             if ca not in self.reqs:
                 self.reqs[ca] = Requestant(msg=ix.rxbs, incomer=ix)
 
@@ -2935,7 +2954,15 @@ class Valet(object):
         """
         for ca, requestant in self.reqs.items():
             if requestant.parser:
-                requestant.parse()
+                try:
+                    requestant.parse()
+                except HTTPException as ex:
+                    #requestant.errored = True
+                    #requestant.error = str(ex)
+                    #requestant.ended = True
+                    sys.stderr.write(str(ex))
+                    self.closeConnection(ca)
+                    continue
 
                 if requestant.changed:
                     self.refreshIx(ca)
@@ -2965,6 +2992,10 @@ class Valet(object):
         Service pending responders
         """
         for ca, respondent in self.reps.items():
+            if respondent.closed:
+                self.closeConnection(ca)
+                continue
+
             if not respondent.ended:
                 respondent.service()
 
