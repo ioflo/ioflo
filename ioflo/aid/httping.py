@@ -352,6 +352,19 @@ def packHeader(name, *values):
     value = b', '.join(values)
     return (name + b': ' + value)
 
+def packChunk(msg):
+    """
+    Return msg bytes in a chunk if any otherwise return empty
+    """
+    if not msg:
+        return b''
+
+    lines = []
+    size = len(msg)
+    lines.append(u"{0}\r\n".format(size).encode('ascii'))  # convert to bytes
+    lines.append(msg)
+    lines.append(b'\r\n')
+    return (b''.join(lines))
 
 def parseLine(raw, eols=(CRLF, LF, CR ), kind="event line"):
     """
@@ -1089,7 +1102,6 @@ class Parsent(object):
         Assign True to .closed and close parser
         """
         self.closed = True
-
 
     def checkPersisted(self):
         """
@@ -1928,12 +1940,15 @@ class Requestant(Parsent):
     Parses request msg
     """
 
-    def __init__(self, **kwa):
+    def __init__(self, incomer=None, **kwa):
         """
         Initialize Instance
+        Parameters:
+            incomer = Incomer connection instance
 
         """
         super(Requestant, self).__init__(**kwa)
+        self.incomer = incomer
         self.url = u''   # full path in request line either relative or absolute
         self.path = u''  # partial path in request line without scheme host port
         self.query = u'' # query string from full path
@@ -2278,6 +2293,7 @@ class Steward(object):
         self.incomer = incomer
         if requestant is None:
             requestant = Requestant(msg=self.incomer.rxbs,
+                                    incomer=incomer,
                                     dictable=dictable)
         self.requestant = requestant
 
@@ -2535,55 +2551,56 @@ class WsgiResponder(object):
 
     def __init__(self,
                  incomer,
-                 status=200,  # integer or string with reason
-                 headers=None):
+                 app,
+                 environ,
+                 chunkable=False):
         """
         Initialize Instance
         Parameters:
             incomer = incomer connection instance
-            status = response status code
-            headers = http response headers
+            app = wsgi app callable
+            environ = wsgi environment dict
+            chunkable = True if may send body in chunks
         """
         self.incomer = incomer
-        self.status = status
-        self.headers = lodict(headers) if headers else lodict()
+        self.app = app
+        self.environ = environ
+        self.chunkable = True if chunkable else False
 
-        self.headed = False  # True once headers sent
         self.started = False  # True once start called (start_response)
+        self.headed = False  # True once headers sent
+        self.chunked = False  # True if should send in chunks
         self.ended = False  # True if response body completely sent
+        self.iterator = None  # iterator on application body
+        self.status = 200  # integer or string with reason
+        self.headers = lodict()  # headers
+        self.length = None  # if content-length provided must not exceed
+        self.size = 0  # number of body bytes sent so far
 
-    def reinit(self,
-               status=None,  # integer
-               headers=None):
+    def reset(self, environ, chunkable=None):
         """
-        Reinitialize anything that is not None
-        This enables creating another response on a connection
+        Reset attributes for another request-response
         """
-        if status is not None:
-            self.status = status
-        if headers is not None:
-            self.headers = lodict(headers)
+        self.environ = environ
 
-    def __call__(self):
-        """
-        Callable
-        """
-        pass
+        if self.chunkable is not None:
+            self.chunkable = chunkable
 
-    def build(self,
-              status=None,
-              headers=None):
-        """
-        Return built header
-
-        """
-        self.reinit(status=status,
-                    headers=headers)
-
-        self.builded = False
         self.started = False
+        self.headed = False
+        self.chunked = False
         self.ended = False
+        self.iterator = None
+        self.status = 200
+        self.headers = lodict()
+        self.length = None
+        self.size = 0
 
+    def build(self):
+        """
+        Return built head bytes from .status and .headers
+
+        """
         lines = []
 
         if isinstance(self.status, (int, long)):
@@ -2604,6 +2621,9 @@ class WsgiResponder(object):
         if u'date' not in self.headers:  # create Date header
             self.headers[u'date'] = httpDate1123(datetime.datetime.utcnow())
 
+        if self.chunkable and 'transfer-coding' not in self.headers:
+            self.headers[u'transfer-coding'] = u'chunked'
+
         for name, value in self.headers.items():
             lines.append(packHeader(name, value))
 
@@ -2614,12 +2634,27 @@ class WsgiResponder(object):
 
     def write(self, msg):
         """
-        WSGI write callback
+        WSGI write callback This writes out the headers the first time its called
+        otherwise writes the msg bytes
         """
         if not self.started:
             raise AssertionError("WSGI write() before start_response()")
 
-        elf
+        if not self.headed:  # head not written yet
+            head = self.build()
+            self.incomer.tx(head)
+            self.headed = True
+
+        if self.chunked:
+            msg = packChunk(msg)
+
+        if self.length is not None:  # limit total size to length
+            size = self.size + len(msg)
+            if size > self.length:
+                msg = msg[:self.length - size]
+            self.size += len(msg)
+
+        self.incomer.tx(msg)
 
     def start(self, status, response_headers, exc_info=None):
         """
@@ -2660,72 +2695,38 @@ class WsgiResponder(object):
                     reraise(*exc_info)  # sixing.reraise
             finally:
                 exc_info = None         # avoid dangling circular ref
-        elif self.started:
-            raise AssertionError("Headers already set!")
+        elif self.started:  # may not call start_response again without exc_info
+            raise AssertionError("Already started!")
 
-        self.lines = []
+        self.status = status
+        self.headers = lodict(response_headers)
 
-        startLine = "{0} {1} {2}".format(self.HttpVersionString,
-                                         self.status,
-                                         STATUS_DESCRIPTIONS[self.status])
-        try:
-            startLine = startLine.encode('ascii')
-        except UnicodeEncodeError:
-            startLine = startLine.encode('idna')
-        self.lines.append(startLine)
-
-        if u'server' not in self.headers:  # create Server header
-            self.headers[u'host'] = self.hostname or socket.gethostname()
-
-        if u'date' not in self.headers:  # create Date header
-            self.headers[u'date'] = httpDate1123(datetime.datetime.utcnow())
-
-        if self.data is not None:
-            body = ns2b(json.dumps(self.data, separators=(',', ':')))
-            self.headers[u'content-type'] = u'application/json; charset=utf-8'
+        if u'content-length' in self.headers:
+            self.length = int(self.headers['content-length'])
+            self.chunked = False  # cannot use chunking with finite content-length
         else:
-            body = self.body
+            self.length = None
+            self.chunked = self.chunkable
 
-        if body and (u'content-length' not in self.headers):
-            self.headers[u'content-length'] = str(len(body))
+        self.started = True
+        return self.write
 
-        for name, value in self.headers.items():
-            self.lines.append(packHeader(name, value))
+    def service(self):
+        """
+        Service application
+        """
+        if not self.ended:
+            if self.iterator is None:  # initiate application
+                self.iterator = iter(self.app(self.environ, self.start))
 
-        self.lines.extend((b"", b""))
-        self.head = CRLF.join(self.lines)  # b'/r/n'
-
-        self.msg = self.head + body
-        self.ended = True
-        return self.msg
-
-    def send_chunked(self, data, delay = False, callback = None):
-        # in case there's no valid data to be sent uses the plain
-        # send method to send the empty string and returns immediately
-        # to the caller method, to avoid any problems
-        if not data: self.send_plain(
-            data,
-            delay = delay,
-            callback = callback
-            ); return
-
-        # creates the new list that is going to be used to store
-        # the various parts of the chunk and then calculates the
-        # size (in bytes) of the data that is going to be sent
-        buffer = []
-        size = len(data)
-
-        # creates the various parts of the chunk with the size
-        # of the data that is going to be sent and then adds
-        # each of the parts to the chunk buffer list
-        buffer.append("%x\r\n" % size)
-        buffer.append(data)
-        buffer.append("\r\n")
-
-        # joins the buffer containing the chunk parts and then
-        # sends it to the connection using the plain method
-        buffer_s = "".join(buffer)
-        self.send_plain(buffer_s, delay = delay, callback = callback)
+            try:
+                msg = next(self.iterator)
+            except StopIteration:
+                self.ended = True
+            else:
+                self.write(msg)
+                if self.length is not None and self.size >= self.length:
+                    self.ended = True
 
 
 class Valet(object):
@@ -2736,8 +2737,8 @@ class Valet(object):
 
     def __init__(self,
                  app=None,
-                 apps=None,
                  reqs=None,
+                 reps=None,
                  servant=None,
                  store=None,
                  name='',
@@ -2753,8 +2754,8 @@ class Valet(object):
         """
         Initialization method for instance.
         app = wsgi application callable
-        apps = odict of running Wsgi Applications
-        reqs = odict of Requestant instances
+        reqs = odict of Requestant instances keyed by ca
+        apps = odict of running WsgiResponder instances keyed by ca
         servant = instance of Server or ServerTls or None
         store = Datastore for timers
 
@@ -2773,10 +2774,12 @@ class Valet(object):
         scheme = http scheme u'http' or u'https' or empty
 
         """
-        self.store = store or storing.Store(stamp=0.0)
+        self.app = app
         self.reqs = reqs if reqs is not None else odict()
-        self.apps = apps if apps is not None else odict()
-        self.dictable = True if dictable else False  # for stewards
+        self.reps = reps if reps is not None else odict()
+        self.store = store or storing.Store(stamp=0.0)
+        if not name:
+            name = "Ioflo_WSGI_server"
         self.timeout = timeout if timeout is not None else self.Timeout
 
         ha = ha or (host, port)  # ha = host address takes precendence over host, port
@@ -2848,13 +2851,18 @@ class Valet(object):
             if not requestant.ended:
                 idle = False
                 break
+        if idle:
+            for responder in self.reps.values():
+                if not responder.ended:
+                    idle = False
+                    break
         return idle
 
     def refreshIx(self, ca):
         """
         Restart incomer timer given by ca
         """
-        if  ca in self.ixes:
+        if ca in self.ixes:
             self.ixes[ca].timer.restart()
 
     def reuseReq(self, ca):
@@ -2869,99 +2877,40 @@ class Valet(object):
         """
         Returns wisgi environment dictionary for supplied requestant
         """
-        environ = odict()
+        environ = odict()  # maybe should be modict for cookies or other repeated headers
+
+        # WSGI variables
+        environ['wsgi.version'] = (1, 0)
+        environ['wsgi.url_scheme'] = self.scheme
+        environ['wsgi.input'] = io.BytesIO(requestant.body)
+        environ['wsgi.errors'] = sys.stderr
+        environ['wsgi.multithread'] = False
+        environ['wsgi.multiprocess'] = False
+        environ['wsgi.run_once'] = False
+        environ["wsgi.server_name"] = self.servant.name
+        environ["wsgi.server_version"] = (1, 0)
 
         # Required CGI variables
-        environ['REQUEST_METHOD']    = requestant.method      # GET
-        environ['SERVER_NAME']       = self.servant.eha[0]      # localhost
-        environ['SERVER_PORT']       = str(self.servant.eha[1])  # 8888
-        environ['SERVER_PROTOCOL']   = str(self.servant.eha[1])  # used by request http/1.1
-        environ['SCRIPT_NAME']       = u''
-        environ['PATH_INFO']         = requestant.path        # /hello?name=john
-        environ['QUERY_STRING']      = requestant.query        # name=john
+        environ['REQUEST_METHOD'] = requestant.method      # GET
+        environ['SERVER_NAME'] = self.servant.eha[0]      # localhost
+        environ['SERVER_PORT'] = str(self.servant.eha[1])  # 8888
+        environ['SERVER_PROTOCOL'] = "HTTP/{0}.{1}".format(*requestant.version)  # used by request http/1.1
+        environ['SCRIPT_NAME'] = u''
+        environ['PATH_INFO'] = requestant.path        # /hello?name=john
 
-        #environ['CONTENT_TYPE']
-        #environ['CONTENT_LENGTH']
+        # Optional CGI variables
+        environ['QUERY_STRING'] = requestant.query        # name=john
+        environ['REMOTE_ADDR'] = requestant.incomer.ca
+        environ['CONTENT_TYPE'] = requestant.headers.get('content-type', '')
+        length = requestant.length if requestant.length is not None else ""
+        environ['CONTENT_LENGTH'] = length
 
-        environ['wsgi.version']      = (1, 0)
-        environ['wsgi.url_scheme']   = self.scheme
-        environ['wsgi.input']        = io.BytesIO(requestant.body)
-        environ['wsgi.errors']       = sys.stderr
-        environ['wsgi.multithread']  = False
-        environ['wsgi.multiprocess'] = False
-        environ['wsgi.run_once']     = False
-
-        path = parser.get_path()
-        query = parser.get_query()
-        path_info = path[self.mount_l:]
-
-        # verifies if the path and query values should be encoded and if
-        # that's the case the decoding process should unquote the received
-        # path and then convert it into a valid string representation, this
-        # is especially relevant for the python 3 infra-structure, this is
-        # a tricky process but is required for the wsgi compliance
-        if self.decode: path_info = self._decode(path_info)
-
-        # retrieves a possible forwarded protocol value from the request
-        # headers and calculates the appropriate (final scheme value)
-        # taking the proxy value into account
-        forwarded_protocol = parser.headers.get("x-forwarded-proto", None)
-        scheme = "https" if connection.ssl else "http"
-        scheme = forwarded_protocol if forwarded_protocol else scheme
-
-        # initializes the environment map (structure) with all the cgi based
-        # variables that should enable the application to handle the request
-        # and respond to it in accordance
-        environ = dict(
-            REQUEST_METHOD = parser.method.upper(),
-            SCRIPT_NAME = self.mount,
-            PATH_INFO = path_info,
-            QUERY_STRING = query,
-            CONTENT_TYPE = parser.headers.get("content-type", ""),
-            CONTENT_LENGTH = "" if parser.content_l == -1 else parser.content_l,
-            SERVER_NAME = self.host,
-            SERVER_PORT = str(self.port),
-            SERVER_PROTOCOL = parser.version_s,
-            SERVER_SOFTWARE = SERVER_SOFTWARE,
-            REMOTE_ADDR = connection.address[0]
-        )
-
-        # updates the environment map with all the structures referring
-        # to the wsgi specifications note that the message is retrieved
-        # as a buffer to be able to handle the file specific operations
-        environ["wsgi.version"] = (1, 0)
-        environ["wsgi.url_scheme"] = scheme
-        environ["wsgi.input"] = parser.get_message_b()
-        environ["wsgi.errors"] = sys.stderr
-        environ["wsgi.multithread"] = False
-        environ["wsgi.multiprocess"] = False
-        environ["wsgi.run_once"] = False
-        environ["wsgi.server_name"] = netius.NAME
-        environ["wsgi.server_version"] = netius.VERSION
-
-        # iterates over all the header values that have been received
-        # to set them in the environment map to be used by the wsgi
-        # infra-structure, not that their name is capitalized as defined
-        # in the standard specification
-        for key, value in parser.headers.items():
+        # recieved http headers mapped to all caps with HTTP_ prepended
+        for key, value in requestant.headers.items():
             key = "HTTP_" + key.replace("-", "_").upper()
             environ[key] = value
 
-        # verifies if the connection already has an iterator associated with
-        # it, if that's the case the connection is already in use and the current
-        # request processing must be delayed for future processing, this is
-        # typically associated with http pipelining
-        if hasattr(connection, "iterator") and connection.iterator:
-            if not hasattr(connection, "queue"): connection.queue = []
-            connection.queue.append(environ)
-            return
-
-        # calls the proper on environment callback so that the current request
-        # is handled and processed (flush operation)
-        self.on_environ(connection, environ)
-
-
-
+        return environ
 
     def closeConnection(self, ca):
         """
@@ -2969,7 +2918,7 @@ class Valet(object):
         """
         self.servant.removeIx(ca)
         del self.reqs[ca]
-        del self.apps[ca]
+        del self.reps[ca]
 
     def serviceConnects(self):
         """
@@ -2979,21 +2928,18 @@ class Valet(object):
         """
         self.servant.serviceConnects()
         for ca, ix in self.servant.ixes.items():
-            if ca not in self.stewards:
-                hostname = "{0}:{1}".format(*self.servant.eha)  # for responders
-                self.reqs[ca] = Requestant(msg=ix.rxbs)
+            if ca not in self.reqs:
+                self.reqs[ca] = Requestant(msg=ix.rxbs, incomer=ix)
 
             if ix.timeout > 0.0 and ix.timer.expired:
                 self.closeConnection(ca)
-
-
 
     def serviceReqs(self):
         """
         Service pending requestants
         """
         for ca, requestant in self.reqs.items():
-            if not requestant.ended:
+            if requestant.parser:
                 requestant.parse()
 
                 if requestant.changed:
@@ -3006,24 +2952,34 @@ class Valet(object):
                                                         requestant.version,
                                                         requestant.headers,
                                                         requestant.body))
-                    # create environment and start wsgi app here
+                    # create or restart wsgi app responder here
+                    environ = self.buildEnviron(requestant)
+                    if ca not in self.reps:
+                        chunkable = True if requestant.version >= (1, 1) else False
+                        responder = WsgiResponder(incomer=requestant.incomer,
+                                                  app=self.app,
+                                                  environ=environ,
+                                                  chunkable=chunkable)
+                        self.reps[ca] = responder
+                    else:  # reuse
+                        responder = self.reps[ca]
+                        responder.reset(environ=environ)
 
-
-    def serviceApps(self):
+    def serviceReps(self):
         """
-        Service pending applications
+        Service pending responders
         """
-        pass
-        #for ca, application in self.apps.items():
+        for ca, respondent in self.reps.items():
+            if not respondent.ended:
+                respondent.service()
 
-            #if application.waited:
-                #pass
-
-            #if not application.waited and requestant.ended:
-                #if steward.requestant.persisted:
-                    #steward.requestant.makeParser()  #set up for next time
-                #else:  # remove and close connection
-                    #self.closeConnection(ca)
+            if respondent.ended:
+                requestant = self.reqs[ca]
+                if requestant.persisted:
+                    if requestant.parser is None:  # reuse
+                        requestant.makeParser()  # resets requestant parser
+                else:  # not persistent so close and remove requestant and responder
+                    self.closeConnection(ca)
 
 
 
@@ -3034,5 +2990,6 @@ class Valet(object):
         self.serviceConnects()
         self.servant.serviceReceivesAllIx()
         self.serviceReqs()
+        self.serviceReps()
         self.servant.serviceTxesAllIx()
 
