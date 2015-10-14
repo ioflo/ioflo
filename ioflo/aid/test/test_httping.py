@@ -3676,7 +3676,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(len(alpha.stewards), 1)
         requestant = alpha.stewards.values()[0].requestant
         self.assertEqual(requestant.method, request['method'])
-        self.assertEqual(requestant.path, request['path'])
+        self.assertEqual(requestant.url, request['path'])
         self.assertEqual(requestant.headers, {'accept': 'application/json',
                                                 'accept-encoding': 'identity',
                                                 'content-length': '0',
@@ -3781,7 +3781,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(len(alpha.reps), 1)
         requestant = alpha.reqs.values()[0]
         self.assertEqual(requestant.method, request['method'])
-        self.assertEqual(requestant.path, request['path'])
+        self.assertEqual(requestant.url, request['path'])
         self.assertEqual(requestant.headers, {'accept': 'application/json',
                                                 'accept-encoding': 'identity',
                                                 'content-length': '0',

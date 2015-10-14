@@ -1950,7 +1950,10 @@ class Requestant(Parsent):
         super(Requestant, self).__init__(**kwa)
         self.incomer = incomer
         self.url = u''   # full path in request line either relative or absolute
-        self.path = u''  # partial path in request line without scheme host port
+        self.scheme = u''  # scheme used in request line path
+        self.hostname = u''  # hostname used in request line path
+        self.port = u''  # port used in request line path
+        self.path = u''  # partial path in request line without scheme host port query fragment
         self.query = u'' # query string from full path
         self.fragment = u''  # fragment from full path
         self.changed = False  # True if msg changed on last parse iteration
@@ -2018,20 +2021,12 @@ class Requestant(Parsent):
 
 
         pathSplits = urlsplit(self.url)
-        path = unquote(pathSplits.path)  # unquote non query path portion here
-        #self.scheme = pathSplits.scheme
-        #hostname = pathSplits.hostname
-        #port = pathSplits.port
-
+        self.path = unquote(pathSplits.path)  # unquote non query path portion here
+        self.scheme = pathSplits.scheme
+        self.hostname = pathSplits.hostname
+        self.port = pathSplits.port
         self.query = unquoteQuery(pathSplits.query)  # unquote only the values
-        if self.query:
-            path += "?{0}".format(self.query)
-
         self.fragment = pathSplits.fragment
-        if self.fragment:
-            path += "#{0}".format(self.fragment)
-
-        self.path = path
 
         leaderParser = parseLeader(raw=self.msg,
                                    eols=(CRLF, LF),
@@ -2324,7 +2319,7 @@ class Steward(object):
         data['version'] = "HTTP/{0}.{1}".format(*self.requestant.version)
         data['method'] = self.requestant.method
 
-        pathSplits = urlsplit(unquote(self.requestant.path))
+        pathSplits = urlsplit(unquote(self.requestant.url))
         path = pathSplits.path
         data['path'] = path
 
