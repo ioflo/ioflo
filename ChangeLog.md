@@ -2,8 +2,11 @@
 CHANGE LOG
 -------------------
 ---------
-201509XX
+20151015
 ---------
+1.4.0
+
+Added Valet a WSGI server class that works within Ioflo
 
 Changed interface to packify unpackify
 
@@ -12,7 +15,7 @@ stage on input
 
 Refactor header parsing of http responses
 
-Requester is not subclass of Parsent
+Requestant and respondant are now subclass of Parsent
 Added .error and .errored attributes of Parsent so can report errors in processing
 or waiting
 
