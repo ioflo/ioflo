@@ -361,7 +361,7 @@ def packChunk(msg):
 
     lines = []
     size = len(msg)
-    lines.append(u"{0}\r\n".format(size).encode('ascii'))  # convert to bytes
+    lines.append(u"{0:x}\r\n".format(size).encode('ascii'))  # convert to bytes
     lines.append(msg)
     lines.append(b'\r\n')
     return (b''.join(lines))
@@ -2625,8 +2625,9 @@ class WsgiResponder(object):
         if u'date' not in self.headers:  # create Date header
             self.headers[u'date'] = httpDate1123(datetime.datetime.utcnow())
 
-        if self.chunkable and 'transfer-coding' not in self.headers:
-            self.headers[u'transfer-coding'] = u'chunked'
+        if self.chunkable and 'transfer-encoding' not in self.headers:
+            self.chunked = True
+            self.headers[u'transfer-encoding'] = u'chunked'
 
         for name, value in self.headers.items():
             lines.append(packHeader(name, value))
@@ -2707,10 +2708,10 @@ class WsgiResponder(object):
 
         if u'content-length' in self.headers:
             self.length = int(self.headers['content-length'])
-            self.chunked = False  # cannot use chunking with finite content-length
+            self.chunkable = False  # cannot use chunking with finite content-length
         else:
             self.length = None
-            self.chunked = self.chunkable
+            self.chunkable = self.chunkable
 
         self.started = True
         return self.write
@@ -2939,7 +2940,7 @@ class Valet(object):
                     self.reqs[ca].close()  # this signals parser
                 if ca in self.reps:
                     self.reps[ca].close()  # this signals handler
-                Wself.closeConnection(ca)
+                self.closeConnection(ca)
                 continue
 
             if ca not in self.reqs:
