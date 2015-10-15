@@ -31,7 +31,7 @@ def setUpModule():
     console.reinit(verbosity=console.Wordage.concise)
 
 def tearDownModule():
-    pass
+    console.reinit(verbosity=console.Wordage.concise)
 
 class BasicTestCase(unittest.TestCase):
     """
