@@ -47,10 +47,11 @@ console = getConsole()
 from ioflo.aid import httping
 
 def setUpModule():
-    console.reinit(verbosity=console.Wordage.concise)
+    pass
 
 def tearDownModule():
     pass
+
 
 class BasicTestCase(unittest.TestCase):
     """
@@ -61,13 +62,13 @@ class BasicTestCase(unittest.TestCase):
         """
 
         """
-        pass
+        console.reinit(verbosity=console.Wordage.profuse)
 
     def tearDown(self):
         """
 
         """
-        pass
+        console.reinit(verbosity=console.Wordage.concise)
 
     def testNonBlockingRequestEcho(self):
         """
@@ -75,7 +76,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestEcho.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -191,7 +192,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testNonBlockingRequestStream(self):
         """
@@ -199,7 +200,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestStream.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -344,7 +345,7 @@ class BasicTestCase(unittest.TestCase):
         beta.close()
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testNonBlockingRequestStreamChunked(self):
         """
@@ -352,7 +353,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestStreamChunked.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -497,7 +498,7 @@ class BasicTestCase(unittest.TestCase):
         beta.close()
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testNonBlockingRequestStreamFancy(self):
         """
@@ -505,7 +506,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestStreamFancy.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -651,7 +652,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testNonBlockingRequestStreamFancyChunked(self):
         """
@@ -659,7 +660,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestStreamFancyChunked.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -817,7 +818,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testNonBlockingRequestStreamFancyJson(self):
         """
@@ -825,7 +826,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestStreamFancyJson.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -973,7 +974,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testNonBlockingRequestStreamFancyJsonChunked(self):
         """
@@ -981,7 +982,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestStreamFancyJsonChunked.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -1132,7 +1133,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testNonBlockingRequestEchoTLS(self):
         """
@@ -1140,7 +1141,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testNonBlockingRequestEchoTLS.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -1288,7 +1289,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
 
     def testPatronRequestEcho(self):
@@ -1297,7 +1298,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronRequestEcho.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -1418,7 +1419,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
 
     def testPatronServiceEcho(self):
@@ -1427,7 +1428,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronServiceEcho.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -1547,7 +1548,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
 
     def testPatronPipelineEcho(self):
@@ -1556,7 +1557,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineEcho.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -1751,7 +1752,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def mockEchoService(self, server):
         """
@@ -1778,7 +1779,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineEchoSimple.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -1914,7 +1915,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def mockEchoServicePath(self, server):
         """
@@ -1941,7 +1942,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineEchoSimplePath.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -2078,7 +2079,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testPatronPipelineEchoSimplePathTrack(self):
         """
@@ -2088,7 +2089,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineEchoSimplePathTrack.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -2232,7 +2233,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def mockEchoServiceJson(self, server):
         """
@@ -2262,7 +2263,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineEchoJson.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -2408,7 +2409,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testPatronPipelineStream(self):
         """
@@ -2416,7 +2417,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineStream.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         store = storing.Store(stamp=0.0)
 
@@ -2650,7 +2651,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def mockEchoServiceSecure(self, server):
         """
@@ -2677,7 +2678,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineEchoSimpleSecure.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -2838,7 +2839,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testPatronPipelineEchoSimpleSecurePath(self):
         """
@@ -2846,7 +2847,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronPipelineEchoSimpleSecurePath.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -3005,7 +3006,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def mockRedirectService(self, server):
         """
@@ -3039,7 +3040,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronRedirectSimple.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -3152,7 +3153,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
 
     def mockRedirectComplexServiceA(self, server):
@@ -3201,7 +3202,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronRedirectComplex.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
@@ -3323,7 +3324,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogGamma.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
 
     def mockRedirectComplexServiceASecure(self, server):
@@ -3371,7 +3372,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPatronRedirectComplexSecure.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
         serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
@@ -3524,7 +3525,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogGamma.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testMultiPartForm(self):
         """
@@ -3532,7 +3533,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testMultiPartForm.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         console.terse("{0}\n".format("Building Request ...\n"))
         host = u'127.0.0.1'
@@ -3555,14 +3556,14 @@ class BasicTestCase(unittest.TestCase):
         self.assertTrue(b'Content-Disposition: form-data; name="html"\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n<html><body></body><html>\r\n' in msgOut)
         self.assertTrue(request.head.startswith(b'POST /echo?name=fame HTTP/1.1\r\nHost: 127.0.0.1:6101\r\nAccept-Encoding: identity\r\nContent-Length: 325\r\nAccept: application/json\r\nContent-Type: multipart/form-data; boundary='))
 
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testQueryQuoting(self):
         """
         Test agorithm for parsing and reassembling query
         """
         console.terse("{0}\n".format(self.testQueryQuoting.__doc__))
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         location = u'https%3A%2F%2Fapi.twitter.com%2F1.1%2Faccount%2Fverify_credentials.json?oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack%3D'
         path, sep, query = location.partition('?')
@@ -3609,7 +3610,7 @@ class BasicTestCase(unittest.TestCase):
         newQuery = '&'.join(qargParts)
         self.assertEqual(newQuery, u'oauth_consumer_key=meWtb1jEOCQciCgqheqiQoU&oauth_nonce=eb616fe02004000&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1437580412&oauth_token=1048104-WpGhCC4Fbj9Bp5PaTTuN0laSqD4vxCb2B7xh62YD&oauth_version=1.0&oauth_signature=KBD3DdNVZBjyOd0fqQ9X17ack%3D')
 
-        console.reinit(verbosity=console.Wordage.concise)
+
 
     def testPorterServiceEcho(self):
         """
@@ -3617,7 +3618,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testPorterServiceEcho.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         store = storing.Store(stamp=0.0)
 
@@ -3706,7 +3707,7 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
 
 
     def testValetServiceBasic(self):
@@ -3715,7 +3716,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testValetServiceBasic.__doc__))
 
-        console.reinit(verbosity=console.Wordage.profuse)
+
 
         store = storing.Store(stamp=0.0)
 
@@ -3802,7 +3803,111 @@ class BasicTestCase(unittest.TestCase):
 
         wireLogAlpha.close()
         wireLogBeta.close()
-        console.reinit(verbosity=console.Wordage.concise)
+
+
+
+    def testValetServiceBottle(self):
+        """
+        Test Valet WSGI service request response
+        """
+        console.terse("{0}\n".format(self.testValetServiceBottle.__doc__))
+
+
+
+        try:
+            import bottle
+        except ImportError as ex:
+            console.terse("Bottle not available.\n")
+
+            return
+
+        store = storing.Store(stamp=0.0)
+
+        def wsgiApp(environ, start_response):
+            start_response('200 OK', [('Content-type','text/plain'),
+                                      ('Content-length', '12')])
+            return [b"Hello World!"]
+
+        console.terse("{0}\n".format("Building Valet ...\n"))
+        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = httping.Valet(port = 6101,
+                              bufsize=131072,
+                              wlog=wireLogAlpha,
+                              store=store,
+                              app=wsgiApp)
+        self.assertIs(alpha.servant.reopen(), True)
+        self.assertEqual(alpha.servant.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Patron ...\n"))
+        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
+
+        beta = httping.Patron(bufsize=131072,
+                                     wlog=wireLogBeta,
+                                     store=store,
+                                     path=path,
+                                     reconnectable=True,
+                                     )
+
+        self.assertIs(beta.connector.reopen(), True)
+        self.assertIs(beta.connector.accepted, False)
+        self.assertIs(beta.connector.connected, False)
+        self.assertIs(beta.connector.cutoff, False)
+
+        request = odict([('method', u'GET'),
+                         ('path', u'/echo?name=fame'),
+                         ('qargs', odict()),
+                         ('fragment', u''),
+                         ('headers', odict([('Accept', 'application/json'),
+                                            ('Content-Length', 0)])),
+                        ])
+
+        beta.requests.append(request)
+
+        while (beta.requests or beta.connector.txes or not beta.responses or
+               not alpha.idle()):
+            alpha.serviceAll()
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+
+        self.assertIs(beta.connector.accepted, True)
+        self.assertIs(beta.connector.connected, True)
+        self.assertIs(beta.connector.cutoff, False)
+
+        self.assertEqual(len(alpha.servant.ixes), 1)
+        self.assertEqual(len(alpha.reqs), 1)
+        self.assertEqual(len(alpha.reps), 1)
+        requestant = alpha.reqs.values()[0]
+        self.assertEqual(requestant.method, request['method'])
+        self.assertEqual(requestant.url, request['path'])
+        self.assertEqual(requestant.headers, {'accept': 'application/json',
+                                                'accept-encoding': 'identity',
+                                                'content-length': '0',
+                                                'host': 'localhost:6101'})
+
+
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response['body'],bytearray(b'Hello World!'))
+        self.assertEqual(response['status'], 200)
+
+        responder = alpha.reps.values()[0]
+        self.assertTrue(responder.status.startswith, str(response['status']))
+        self.assertEqual(responder.headers, response['headers'])
+
+        alpha.servant.closeAll()
+        beta.connector.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+
+
 
 
 def runOne(test):
@@ -3855,7 +3960,7 @@ def runAll():
 
 if __name__ == '__main__' and __package__ is None:
 
-    #console.reinit(verbosity=console.Wordage.concise)
+    #
 
     #runAll() #run all unittests
 
