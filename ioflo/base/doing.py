@@ -68,6 +68,7 @@ def doify(name,
 class Doer(acting.Actor):
     """
     Provides object of 'do' command verb
+    The Doer's action method is the 'deed'
     Base class has Doer specific Registry of Classes
     Doer instance native actions context is recur
     Doer defaults to converting iois into attributes

@@ -14,12 +14,12 @@ from ....aid.odicting import odict
 from ....base.globaling import *
 
 from ....aid import aiding, navigating
-from ....base import deeding
+from ....base import doing
 
 from ....base.consoling import getConsole
 console = getConsole()
 
-class DetectorPositionBox(deeding.Deed):
+class DetectorPositionBox(doing.Doer):
     """
     Detects if vehicle position is in box or out
     output share indicates which side in or out

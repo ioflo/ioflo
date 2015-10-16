@@ -7,7 +7,7 @@ def TestFrame():
     import poking
     import needing
     import goaling
-    import deeding
+    import doing
     import traiting
     import fiating
     import wanting

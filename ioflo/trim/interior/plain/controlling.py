@@ -16,14 +16,14 @@ from ....base.globaling import *
 from ....aid import aiding, navigating, blending
 
 from ....base import storing
-from ....base import deeding
+from ....base import doing
 
 from ....base.consoling import getConsole
 console = getConsole()
 
 
 #Class definitions
-class ControllerPid(deeding.DeedLapse):
+class ControllerPid(doing.DoerLapse):
     """PIDController DeedLapse Deed Class
        PID Controller Class
 

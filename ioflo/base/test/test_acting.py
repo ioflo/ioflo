@@ -17,7 +17,7 @@ console = getConsole()
 
 
 from ioflo.base import acting
-from ioflo.base import deeding
+from ioflo.base import doing
 from ioflo.base import storing
 
 
@@ -45,12 +45,12 @@ class BasicTestCase(testing.FrameIofloTestCase):
         """
         super(BasicTestCase, self).tearDown()
 
-    def testActorify(self):
+    def testActify(self):
         """
-        Test the actorify decorator
+        Test the actify decorator
         """
-        console.terse("{0}\n".format(self.testActorify.__doc__))
-        @acting.actorify("BlueBeard")
+        console.terse("{0}\n".format(self.testActify.__doc__))
+        @acting.actify("BlueBeard")
         def bearded(self, x=1, y=2):
             """
             Actor action method
@@ -87,21 +87,21 @@ class BasicTestCase(testing.FrameIofloTestCase):
         self.assertEqual(z, 3)
 
 
-    def testDeedify(self):
+    def testDoify(self):
         """
-        Test the deedify decorator
+        Test the doify decorator
         """
-        console.terse("{0}\n".format(self.testDeedify.__doc__))
-        @deeding.deedify("BlackSmith")
+        console.terse("{0}\n".format(self.testDoify.__doc__))
+        @doing.doify("BlackSmith")
         def blackened(self, x=3, y=2):
             """
-            Deed action method
+            Doer action method
             """
             z = x + y
             return (self, z)
 
-        self.assertIn("BlackSmith", deeding.Deed.Registry)
-        actor, inits, ioinits, parms = deeding.Deed.__fetch__("BlackSmith")
+        self.assertIn("BlackSmith", doing.Doer.Registry)
+        actor, inits, ioinits, parms = doing.Doer.__fetch__("BlackSmith")
         self.assertIs(actor._Parametric, False)
         self.assertDictEqual(actor.Inits, {})
         self.assertDictEqual(actor.Ioinits, {})
@@ -111,7 +111,7 @@ class BasicTestCase(testing.FrameIofloTestCase):
         self.assertDictEqual(parms, {})
 
         actor = actor()  # create instance
-        self.assertIsInstance(actor, deeding.Deed )
+        self.assertIsInstance(actor, doing.Doer )
         self.assertEqual(actor.__class__.__name__, "BlackSmith")
         if sys.version > '3':
             self.assertEqual(actor.action.__self__.__class__.__name__, "BlackSmith")
@@ -121,49 +121,49 @@ class BasicTestCase(testing.FrameIofloTestCase):
             self.assertEqual(actor.action.im_class.__name__, "BlackSmith")
             self.assertIs(actor.action.im_func, blackened)
             self.assertIs(actor.action.im_self, actor)
-        self.assertEqual(actor.action.__doc__, '\n            Deed action method\n            ')
+        self.assertEqual(actor.action.__doc__, '\n            Doer action method\n            ')
         self.assertEqual(actor.action.__name__, 'blackened')
 
         me, z = actor()  # perform action
         self.assertIs(me, actor)
         self.assertEqual(z, 5)
 
-    def testFrameDeed(self):
+    def testFrameDoer(self):
         """
-        Test adding a Deed to a frame and running it
+        Test adding a Doer to a frame and running it
         """
-        console.terse("{0}\n".format(self.testFrameDeed.__doc__))
-        @deeding.deedify("TestDeed")
+        console.terse("{0}\n".format(self.testFrameDoer.__doc__))
+        @doing.doify("TestDoer")
         def action(self, a="Felgercarb", **kwa):
             """
-            Deed action method
+            Doer action method
             """
             share = self.store.create(".test.a").update(value=a)
 
-        self.assertIn("TestDeed", deeding.Deed.Registry)
-        act = self.addDeed("TestDeed")
+        self.assertIn("TestDoer", doing.Doer.Registry)
+        act = self.addDoer("TestDoer")
         self.assertIsInstance(act, acting.Act)
         self.assertIn(act, self.frame.reacts)
-        self.assertEqual(act.actor, "TestDeed")
+        self.assertEqual(act.actor, "TestDoer")
         self.assertEqual(act.frame, self.frame.name)
 
         self.resolve()  # resolve House
         self.assertIs(act.frame, self.frame)
         self.assertIs(act.frame.framer, self.framer)
         self.assertIs(act.actor.store, self.store)
-        self.assertIn(act.actor.name, deeding.Deed.Registry)
-        self.assertEqual(act.actor.name, "TestDeed")
-        self.assertIsInstance(act.actor, deeding.Deed)
-        self.assertEqual(act.actor.__class__.__name__, "TestDeed")
+        self.assertIn(act.actor.name, doing.Doer.Registry)
+        self.assertEqual(act.actor.name, "TestDoer")
+        self.assertIsInstance(act.actor, doing.Doer)
+        self.assertEqual(act.actor.__class__.__name__, "TestDoer")
         if sys.version > '3':
-            self.assertEqual(act.actor.action.__self__.__class__.__name__, "TestDeed")
+            self.assertEqual(act.actor.action.__self__.__class__.__name__, "TestDoer")
             self.assertIs(act.actor.action.__func__, action)
             self.assertIs(act.actor.action.__self__, act.actor)
         else:
-            self.assertEqual(act.actor.action.im_class.__name__, "TestDeed")
+            self.assertEqual(act.actor.action.im_class.__name__, "TestDoer")
             self.assertIs(act.actor.action.im_func, action)
             self.assertIs(act.actor.action.im_self, act.actor)
-        self.assertEqual(act.actor.action.__doc__, '\n            Deed action method\n            ')
+        self.assertEqual(act.actor.action.__doc__, '\n            Doer action method\n            ')
         self.assertEqual(act.actor.action.__name__, 'action')
 
         self.assertIs(self.store.fetch(".test.a"), None)
@@ -184,9 +184,9 @@ def runOne(test):
 def runSome():
     """ Unittest runner """
     tests =  []
-    names = ['testActorify',
-             'testDeedify',
-             'testFrameDeed', ]
+    names = ['testActify',
+             'testDoify',
+             'testFrameDoer', ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)

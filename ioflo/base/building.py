@@ -30,7 +30,7 @@ from . import acting
 from . import poking
 from . import needing
 from . import goaling
-from . import deeding
+from . import doing
 
 from . import traiting
 from . import fiating
@@ -2529,11 +2529,11 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         if not kind:
-            msg = "ParseError: Building verb '%s'. Missing kind for Deed." %\
+            msg = "ParseError: Building verb '%s'. Missing kind for Doer." %\
                                 (command)
             raise excepting.ParseError(msg, tokens, index)
 
-        if kind not in deeding.Deed.Registry: # class registration not exist
+        if kind not in doing.Doer.Registry: # class registration not exist
             msg = "ParseError: Building verb '%s'. No Deed of kind '%s' in registry" %\
                 (command, kind)
             raise excepting.ParseError(msg, tokens, index)
@@ -2543,7 +2543,7 @@ class Builder(object):
         if name:
             inits['name'] = name
         act = acting.Act(   actor=kind,
-                            registrar=deeding.Deed,
+                            registrar=doing.Doer,
                             inits=inits,
                             ioinits=ioinits,
                             parms=parms,
@@ -4389,7 +4389,7 @@ def Test(fileName = None, verbose = False):
     import fiating
     import wanting
     import completing
-    import deeding
+    import doing
     import arbiting
     import controlling
 
@@ -4404,7 +4404,7 @@ def Test(fileName = None, verbose = False):
     allModules = [globaling, aiding, excepting, registering,  storing, skedding,
                   acting, poking, goaling, needing, traiting,
                   fiating, wanting, completing,
-                  deeding, arbiting, controlling,
+                  doing, arbiting, controlling,
                   tasking, framing, logging, interfacing, serving,
                   housing, monitoring, testing]
 

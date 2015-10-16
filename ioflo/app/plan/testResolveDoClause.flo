@@ -12,25 +12,25 @@ framer test be active first test0
 
     frame test0 in timeout
       print "Hello World"
-      do deed at enter to stuff 5
-      do deed at enter by depth in .trial
-      do deed at enter by .trial
-      do deed at enter per trial ".trial"
-      do deed at enter for trial in .init.test
-      do deed at enter for .init.test
-      do deed at enter cum stuff 7
-      do deed at enter qua width in .trial
-      do deed at enter qua .trial
+      do doer at enter to stuff 5
+      do doer at enter by depth in .trial
+      do doer at enter by .trial
+      do doer at enter per trial ".trial"
+      do doer at enter for trial in .init.test
+      do doer at enter for .init.test
+      do doer at enter cum stuff 7
+      do doer at enter qua width in .trial
+      do doer at enter qua .trial
 
-      do deed param at enter to stuff 5
-      do deed param at enter by depth in .trial
-      do deed param at enter by .trial
-      do deed param at enter per trial ".trial"
-      do deed param at enter for trial in .init.test
-      do deed param at enter for .init.test
-      do deed param at enter cum stuff 7
-      do deed param at enter qua width in .trial
-      do deed param at enter qua .trial
+      do doer param at enter to stuff 5
+      do doer param at enter by depth in .trial
+      do doer param at enter by .trial
+      do doer param at enter per trial ".trial"
+      do doer param at enter for trial in .init.test
+      do doer param at enter for .init.test
+      do doer param at enter cum stuff 7
+      do doer param at enter qua width in .trial
+      do doer param at enter qua .trial
 
       set elapsed to 1.0
       go next if elapsed >= goal
@@ -71,26 +71,26 @@ framer test be active first test0
       go next if update .marked.updated
 
     frame test9 in timeout
-      do deed at enter via .rooted
-      do deed at enter via unrooted
-      do deed at enter via rooted of root
-      do deed at enter via framered of framer
-      do deed at enter via framed of frame
-      do deed at enter via actored of actor
-      do deed at enter via .absrooted of root
-      do deed at enter via .absframered of framer
-      do deed at enter via .absframed of frame
-      do deed at enter via .absactored of actor
-      do deed at enter via .rooted.
-      do deed at enter via unrooted.
-      do deed at enter via rooted. of root
-      do deed at enter via framered. of framer
-      do deed at enter via framed. of frame
-      do deed at enter via actored. of actor
-      do deed at enter via .absrooted. of root
-      do deed at enter via .absframered. of framer
-      do deed at enter via .absframed. of frame
-      do deed at enter via .absactored. of actor
+      do doer at enter via .rooted
+      do doer at enter via unrooted
+      do doer at enter via rooted of root
+      do doer at enter via framered of framer
+      do doer at enter via framed of frame
+      do doer at enter via actored of actor
+      do doer at enter via .absrooted of root
+      do doer at enter via .absframered of framer
+      do doer at enter via .absframed of frame
+      do doer at enter via .absactored of actor
+      do doer at enter via .rooted.
+      do doer at enter via unrooted.
+      do doer at enter via rooted. of root
+      do doer at enter via framered. of framer
+      do doer at enter via framed. of frame
+      do doer at enter via actored. of actor
+      do doer at enter via .absrooted. of root
+      do doer at enter via .absframered. of framer
+      do doer at enter via .absframed. of frame
+      do doer at enter via .absactored. of actor
       go next
 
   frame done

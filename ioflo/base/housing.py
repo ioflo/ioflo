@@ -26,7 +26,7 @@ from . import traiting  #needed for Registries
 from . import fiating  #needed for Registries
 from . import wanting  #needed for Registries
 from . import completing  #needed for Registries
-from . import deeding  #needed for Registries
+from . import doing  #needed for Registries
 from . import tasking  #needed for Registries
 from . import framing  #needed for Registries
 from . import logging  #needed for Registries
@@ -35,7 +35,7 @@ from .. import trim  #needed for Registries
 from .consoling import getConsole
 console = getConsole()
 
-#Dict of Registry Objects so can Clear and assign Names Counter variables
+# Dict of Registry Objects so can Clear and assign Names and Counter variables
 # Frame names registry is held by each framer. Separate frame name space per framer
 
 Registries = odict(store = storing.Store,

@@ -15,13 +15,13 @@ from ....base.globaling import *
 
 from ....aid import aiding
 from ....aid.navigating import DEGTORAD, RADTODEG
-from ....base import deeding
+from ....base import doing
 
 from ....base.consoling import getConsole
 console = getConsole()
 
 
-class FilterSensorHeading(deeding.DeedLapse):
+class FilterSensorHeading(doing.DoerLapse):
     """Class """
     Ioinits = odict(
         group = 'filter.sensor.heading',
@@ -139,7 +139,7 @@ class FilterSensorHeading(deeding.DeedLapse):
         print(format %\
               (self.output.value, self.parm.data.phase, self.parm.data.amp))
 
-class FilterWindowed(deeding.DeedLapse):
+class FilterWindowed(doing.DoerLapse):
     """Class """
     Ioinits = odict(
         group = 'filter.sensor.generic', output = 'state.generic',
@@ -296,7 +296,7 @@ FilterWindowed.__register__('FilterSensorTemperature', ioinits=odict(
                  layer = 40.0, tolerance = 5.0)) )
 
 
-class FilterCtdMin(deeding.DeedLapse):
+class FilterCtdMin(doing.DoerLapse):
     """Filter Ctd Minimum temperature
     """
     Ioinits = odict(

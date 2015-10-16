@@ -449,12 +449,12 @@ class SideAct(Act):
                                          self.human,
                                          self.count)
 
-def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
+def actify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
              parametric=None):
     """ Parametrized decorator function that converts the decorated function
         into an Actor sub class with .action method and with class name that
-        is name and registers the new subclass in the registry under name.
-        If base is not provided then use Actor
+        is name and registers the new subclass in the registry under name as
+        a subclass of base. The default base is Actor.
 
         The parameters  registry, parametric, inits, ioinits, and parms if provided,
         are used to create the class attributes for the new subclass
@@ -485,6 +485,8 @@ def actorify(name, base=None, registry=None, inits=None, ioinits=None, parms=Non
         cls.action = inner
         return inner
     return implicit
+
+actorify = actify  # alias for backwards compatibility
 
 @metaclassify(registering.RegisterType) # python2or3 compatible
 class Actor(object):

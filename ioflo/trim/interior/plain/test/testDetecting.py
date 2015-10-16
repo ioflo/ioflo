@@ -3,7 +3,8 @@ def TestBox():
 
     #clear registries
     storing.Store.Clear()
-    deeding.Deed.Clear()
+    #deeding.Deed.Clear()
+    doing.Doer.Clear()
 
     store = storing.Store(name = 'Test')
 

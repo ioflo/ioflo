@@ -12,15 +12,15 @@ from ..aid.sixing import *
 from ..aid.odicting import odict
 from .globaling import *
 
-from . import deeding
+from . import doing
 
 from .consoling import getConsole
 console = getConsole()
 
 
 #Arbiter Class
-class Arbiter(deeding.Deed):
-    """Arbiter Deed Class
+class Arbiter(doing.Doer):
+    """Arbiter Doer Class
        Generic Arbiter Class for Arbiters should be subclassed
 
     """

@@ -17,12 +17,12 @@ from ....base.globaling import *
 
 from ....aid import aiding, navigating, blending
 from ....aid.navigating import DEGTORAD, RADTODEG
-from ....base import deeding
+from ....base import doing
 
 from ....base.consoling import getConsole
 console = getConsole()
 
-class EstimatorPositionNfl(deeding.DeedLapse):
+class EstimatorPositionNfl(doing.DoerLapse):
     """Estimator Position NonlinearFusion class
     """
     Ioinits = odict(

@@ -9,7 +9,7 @@ _modules = ['globaling', 'excepting', 'interfacing',
            'registering', 'storing', 'skedding',
            'tasking', 'framing', 'logging', 'serving', 'monitoring',
            'acting', 'poking', 'goaling', 'needing', 'traiting',
-           'fiating', 'wanting','completing','deeding', 'arbiting',
+           'fiating', 'wanting','completing','doing', 'deeding', 'arbiting',
            'housing', 'building']
 
 

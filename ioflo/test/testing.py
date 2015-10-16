@@ -25,7 +25,7 @@ from ..base import storing
 from ..base import housing
 from ..base import framing
 from ..base import acting
-from ..base import deeding
+from ..base import doing
 
 
 
@@ -223,7 +223,7 @@ class FrameIofloTestCase(FramerIofloTestCase):
     def tearDown(self):
         super(FrameIofloTestCase, self).tearDown()
 
-    def addDeed(self,
+    def addDoer(self,
                 kind,
                 context=globaling.RECUR,
                 inits=None,
@@ -231,11 +231,11 @@ class FrameIofloTestCase(FramerIofloTestCase):
                 parms=None,
                 prerefs=None ):
         """
-        Create act to run deed class name given by kind and
+        Create act to run doer class name given by kind and
         add to context.
         """
         act = acting.Act(actor=kind,
-                         registrar=deeding.Deed,
+                         registrar=doing.Doer,
                          inits=inits,
                          ioinits=ioinits,
                          parms=parms,
@@ -247,48 +247,55 @@ class FrameIofloTestCase(FramerIofloTestCase):
         self.frame.addByContext(act, context)
         return act
 
-    def addBenterDeed(self, kind, **kwa):
+    def addBenterDoer(self, kind, **kwa):
         """
-        Create Act with actor of kind and add deed at BENTER context
+        Create Act with actor of kind and add doer at BENTER context
         """
-        return self.addDeed(kind, context=globaling.BENTER, **kwa)
+        return self.addDoer(kind, context=globaling.BENTER, **kwa)
 
-    def addEnterDeed(self, kind, **kwa):
+    def addEnterDoer(self, kind, **kwa):
         """
-        Create Act with actor of kind and add deed at ENTER context
+        Create Act with actor of kind and add doer at ENTER context
         """
-        return self.addDeed(kind, context=globaling.ENTER, **kwa)
+        return self.addDoer(kind, context=globaling.ENTER, **kwa)
 
-    def addRenterDeed(self, kind, **kwa):
+    def addRenterDoer(self, kind, **kwa):
         """
-        Create Act with actor of kind and add deed at RENTER context
+        Create Act with actor of kind and add doer at RENTER context
         """
-        return self.addDeed(kind, context=globaling.RENTER, **kwa)
+        return self.addDoer(kind, context=globaling.RENTER, **kwa)
 
-    def addRecurDeed(self, kind, **kwa):
+    def addRecurDoer(self, kind, **kwa):
         """
-        Create Act with actor of kind and add deed at RECUR context
+        Create Act with actor of kind and add doer at RECUR context
         """
-        return self.addDeed(kind, context=globaling.RECUR, **kwa)
+        return self.addDoer(kind, context=globaling.RECUR, **kwa)
 
-    def addPrecurDeed(self, kind, **kwa):
+    def addPrecurDoer(self, kind, **kwa):
         """
-        Create Act with actor of kind and add deed at PRECUR context
+        Create Act with actor of kind and add doer at PRECUR context
         """
-        return self.addDeed(kind, context=globaling.PRECUR, **kwa)
+        return self.addDoer(kind, context=globaling.PRECUR, **kwa)
 
-    def addExitDeed(self, kind, **kwa):
+    def addExitDoer(self, kind, **kwa):
         """
-        Create Act with actor of kind and add deed at EXIT context
+        Create Act with actor of kind and add doer at EXIT context
         """
-        return self.addDeed(kind, context=globaling.EXIT, **kwa)
+        return self.addDoer(kind, context=globaling.EXIT, **kwa)
 
-    def addRexitDeed(self, kind, **kwa):
+    def addRexitDoer(self, kind, **kwa):
         """
-        Create Act with actor of kind and add deed at REXIT context
+        Create Act with actor of kind and add doer at REXIT context
         """
-        return self.addDeed(kind, context=globaling.REXIT, **kwa)
+        return self.addDoer(kind, context=globaling.REXIT, **kwa)
 
-
-
+    # deprecated aliases for backwards compatibility
+    addDeed = addDoer
+    addBenterDeed = addBenterDoer
+    addEnterDeed = addEnterDoer
+    addRenterDeed = addRenterDoer
+    addRecurDeed = addRecurDoer
+    addPrecurDeed = addPrecurDoer
+    addExitDeed = addExitDoer
+    addRexitDeed = addRexitDoer
 

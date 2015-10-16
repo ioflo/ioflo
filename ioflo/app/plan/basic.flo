@@ -14,8 +14,8 @@ framer test be active first start
       inc .heading by green in .color
       inc blue in .color by .goal.depth
       copy green in .color into red in .tint
-      do deed at enter
-      do deed
+      do doer at enter
+      do doer
       go next
 
    frame doslave

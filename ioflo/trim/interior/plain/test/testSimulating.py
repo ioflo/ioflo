@@ -3,7 +3,8 @@ def TestSalinity():
 
     #clear registries
     storing.Store.Clear()
-    deeding.Deed.Clear()
+    #deeding.Deed.Clear()
+    doing.Doer.Clear()
 
     store = storing.Store(name = 'Test')
 
@@ -36,7 +37,8 @@ def TestMotion():
     """
     #clear registries
     storing.Store.Clear()
-    deeding.Deed.Clear()
+    #deeding.Deed.Clear()
+    doing.Doer.Clear()
 
     store = storing.Store(name = 'Test')
     #CreateActions(store)
@@ -82,7 +84,8 @@ def Test():
     #clear registries
     print("\nTesting Controllers\n")
     storing.Store.Clear()
-    deeding.Deed.Clear()
+    #deeding.Deed.Clear()
+    doing.Doer.Clear()
 
     store = storing.Store(name = 'Test')
     store.expose()
