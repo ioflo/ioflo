@@ -5,7 +5,6 @@ from __future__ import division
 
 import importlib
 
-#__all__ = ['base', 'trim']
 _modules = ['base', 'trim']  # register behaviors
 
 for m in _modules:
