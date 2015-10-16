@@ -5,9 +5,10 @@ from __future__ import division
 
 import importlib
 
-__all__ = ['base', 'trim']
+#__all__ = ['base', 'trim']
+_modules = ['base', 'trim']  # register behaviors
 
-for m in __all__:
+for m in _modules:
     importlib.import_module(".{0}".format(m), package='ioflo')
 
 from .__metadata__ import *

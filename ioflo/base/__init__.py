@@ -5,7 +5,7 @@
 #print("Package at {0}".format(__path__[0]))
 import importlib
 
-__all__ = ['globaling', 'excepting', 'interfacing',
+_modules = ['globaling', 'excepting', 'interfacing',
            'registering', 'storing', 'skedding',
            'tasking', 'framing', 'logging', 'serving', 'monitoring',
            'acting', 'poking', 'goaling', 'needing', 'traiting',
@@ -13,6 +13,6 @@ __all__ = ['globaling', 'excepting', 'interfacing',
            'housing', 'building']
 
 
-for m in __all__:
+for m in _modules:
     importlib.import_module(".{0}".format(m), package='ioflo.base')
 
