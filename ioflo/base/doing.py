@@ -1,14 +1,6 @@
 """
-deeding.py deed module
-
-Backwards compatibility module
-Deprecated use
-doing.py instead
-doify
-
+doing.py doer module for do verb behaviors
 """
-#print("module {0}".format(__name__))
-
 import time
 import struct
 from collections import deque, Mapping
@@ -30,15 +22,8 @@ console = getConsole()
 
 from ..aid.metaing import nonStringIterable
 from ..aid.aiding import  just, nameToPath
-from . import doing
 
-#deedify = doing.doify
-#Deed = doing.Doer
-#DeedParam = doing.DoerParam
-#DeedSince = doing.DoerSince
-#DeedLapse = doing.DoerLapse
-
-def deedify(name,
+def doify(name,
             base=None,
             registry=None,
             parametric=None,
@@ -48,15 +33,15 @@ def deedify(name,
     """ Parametrized decorator function that converts the decorated function
         into an Actor sub class with .action method and with class name name
         and registers the new subclass in the registry under name.
-        If base is not provided then use Deed
+        If base is provided then register as subclass of base. Default base is Doer
 
         The parameters  registry, parametric, inits, ioinits, and parms if provided,
         are used to create the class attributes for the new subclass
 
     """
-    base = base or Deed
-    if not issubclass(base, Deed):
-        msg = "Base class '{0}' not subclass of Deed".format(base)
+    base = base or Doer
+    if not issubclass(base, Doer):
+        msg = "Base class '{0}' not subclass of Doer".format(base)
         raise excepting.RegisterError(msg)
 
     attrs = odict()
@@ -80,75 +65,80 @@ def deedify(name,
         return inner
     return implicit
 
-class Deed(acting.Actor):
-    """ Provides object of 'do' command verb
-        Base class has Deed specific Registry of Classes
-
-         deeds are natively recur actions
-        Deeds default to converting iois into attributes
+class Doer(acting.Actor):
     """
-    Registry = odict()
+    Provides object of 'do' command verb
+    Base class has Doer specific Registry of Classes
+    Doer instance native actions context is recur
+    Doer defaults to converting iois into attributes
+    """
+    Registry = odict()  # create doer specific register
     _Parametric = False # convert iois into attributes
 
-class DeedParam(Deed):
-    """ Iois are converted to parms not attributes """
+class DoerParam(Doer):
+    """
+    Iois are converted to parms not attributes
+    """
     _Parametric = True # convert iois into parms
 
-class DeedSince(Deed):
-    """ DeedSince
-        Generic Super Class acts if input updated Since last time ran
-        knows time of current iteration and last time processed input
+class DoerSince(Doer):
+    """
+    Generic Super Class acts if input updated Since last time ran
+    knows time of current iteration and last time processed input
 
-        Should be subclassed
+    Should be subclassed
 
-        unique attributes
-            .stamp = current time of deed evaluation in seconds
+    Attributes
+        .stamp = current time of doer evaluation in seconds
 
     """
     def __init__(self, **kw):
         """Initialize Instance """
-        super(DeedSince,self).__init__( **kw)
+        super(DoerSince,self).__init__( **kw)
         self.stamp = None
 
     def action(self, **kw):
         """Should call this on superclass  as first step of subclass action method  """
-        console.profuse("Actioning DeedSince  {0}\n".format(self.name))
+        console.profuse("Actioning DoerSince  {0}\n".format(self.name))
         self.stamp = self.store.stamp
 
     def _expose(self):
         """     """
-        print("Deed %s stamp = %s" % (self.name, self.stamp))
+        print("Doer %s stamp = %s" % (self.name, self.stamp))
 
-class DeedLapse(Deed):
-    """ DeedLapse
-        Generic base class for Deeds that need to
-        keep track of lapsed time between iterations.
-        Should be subclassed
+class DoerLapse(Doer):
+    """
+    Generic base class for Doers that need to
+    keep track of lapsed time between iterations.
+    Should be subclassed
 
-        unique attributes
-            .stamp =  current time deed evaluation in seconds
-            .lapse = elapsed time betweeen evaluations of a behavior
+    Attributes
+        .stamp =  current time stamp of doer evaluation in seconds
+        .lapse = elapsed time betweeen current and previous evaluation
 
-       has restart method when resuming after noncontiguous time interruption
-       builder creates implicit entry action of restarter for deed
+    has restart method when resuming after noncontiguous time interruption
+    builder creates implicit entry action of restarter for Doer
     """
     def __init__(self, **kwa):
         """Initialize Instance """
-        super(DeedLapse,self).__init__( **kwa)
+        super(DoerLapse,self).__init__( **kwa)
 
         self.stamp = None
         self.lapse = 0.0 #elapsed time in seconds between updates calculated on update
 
     def restart(self):
-        """ Restart Deed
-            Override in subclass
-            This is called by restarter action in enter context
         """
-        console.profuse("Restarting DeedLapse  {0}\n".format(self.name))
+        Restart Doer
+        Override in subclass
+        This is called by restarter action in enter context
+        """
+        console.profuse("Restarting DoerLapse  {0}\n".format(self.name))
 
     def updateLapse(self):
-        """Calculates a new time lapse based on stamp or if stamp is None then use store stamp
-           updates .stamp
+        """
+        Calculates a new time lapse based on stamp
+        or if stamp is None then use store stamp
+        updates .stamp
         """
         stampLast, self.stamp = self.stamp, self.store.stamp
 
@@ -164,16 +154,16 @@ class DeedLapse(Deed):
 
     def action(self, **kwa):
         """    """
-        console.profuse("Actioning DeedLapse  {0}\n".format(self.name))
+        console.profuse("Actioning DoerLapse  {0}\n".format(self.name))
         self.updateLapse()
 
     def _expose(self):
         """     """
-        print("Deed %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse))
+        print("Doer %s stamp = %s lapse = %s" % (self.name, self.stamp, self.lapse))
 
     def _resolve(self, **kwa):
         """ Create enact with restart SideAct to restart this Actor """
-        parms = super(DeedLapse, self)._resolve( **kwa)
+        parms = super(DoerLapse, self)._resolve( **kwa)
 
         restartActParms = {}
         restartAct = acting.SideAct(   actor=self,
