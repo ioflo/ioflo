@@ -36,7 +36,6 @@ from ioflo.aid.odicting import odict
 #from ioflo.test import testing
 
 from ioflo.aid import nonblocking
-from ioflo.aid import httping
 from ioflo.aid.timing import Timer, StoreTimer
 from ioflo.base import storing
 
@@ -44,7 +43,7 @@ from ioflo.base.consoling import getConsole
 console = getConsole()
 
 
-from ioflo.aid import httping
+from ioflo.aid.http import httping, clienting, serving
 
 def setUpModule():
     pass
@@ -125,7 +124,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -168,7 +167,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method)
+        response = clienting.Respondent(msg=beta.rxbs, method=method)
         while response.parser:
             response.parse()
 
@@ -249,7 +248,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -301,7 +300,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method)
+        response = clienting.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
                     b'retry: 1000\n\n',
@@ -402,7 +401,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/stream'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -454,7 +453,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method)
+        response = clienting.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
                     b'd\r\nretry: 1000\n\n\r\n',
@@ -555,7 +554,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true&multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -607,7 +606,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method)
+        response = clienting.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
             b'retry: 1000\n\n',
@@ -709,7 +708,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true&multiply=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -762,7 +761,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method)
+        response = clienting.Respondent(msg=beta.rxbs, method=method)
 
         lines =  [
             b'd\r\nretry: 1000\n\n\r\n',
@@ -875,7 +874,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true&jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                          port=port,
                                          method=method,
                                          path=path,
@@ -927,7 +926,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs,
+        response = clienting.Respondent(msg=beta.rxbs,
                                       method=method,
                                       dictable=True,
                                       )
@@ -1031,7 +1030,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/fancy?idify=true&jsonify=true'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                          port=port,
                                          method=method,
                                          path=path,
@@ -1083,7 +1082,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs,
+        response = clienting.Respondent(msg=beta.rxbs,
                                       method=method,
                                       dictable=True)
 
@@ -1221,7 +1220,7 @@ class BasicTestCase(unittest.TestCase):
         path = u'/echo?name=fame'
         console.terse("{0} from  {1}:{2}{3} ...\n".format(method, host, port, path))
         headers = odict([(u'Accept', u'application/json')])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -1264,7 +1263,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(msgIn, msgOut)
 
         console.terse("Beta processes response \n")
-        response = httping.Respondent(msg=beta.rxbs, method=method)
+        response = clienting.Respondent(msg=beta.rxbs, method=method)
         while response.parser:
             response.parse()
 
@@ -1319,7 +1318,7 @@ class BasicTestCase(unittest.TestCase):
         headers = odict([(u'Accept', u'application/json')])
 
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      hostname=host,
                                      port=port,
@@ -1449,7 +1448,7 @@ class BasicTestCase(unittest.TestCase):
         headers = odict([(u'Accept', u'application/json')])
 
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                               wlog=wireLogBeta,
                               hostname=host,
                               port=port,
@@ -1574,7 +1573,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      hostname=host,
                                      port=port,
@@ -1796,7 +1795,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      hostname=host,
                                      port=port,
@@ -1961,7 +1960,7 @@ class BasicTestCase(unittest.TestCase):
         #port = alpha.eha[1]
         path = "http://{0}:{1}/".format('localhost', alpha.eha[1])
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      path=path,
                                      reconnectable=True,
@@ -2108,7 +2107,7 @@ class BasicTestCase(unittest.TestCase):
         #port = alpha.eha[1]
         path = "http://{0}:{1}/".format('localhost', alpha.eha[1])
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      path=path,
                                      reconnectable=True,
@@ -2282,7 +2281,7 @@ class BasicTestCase(unittest.TestCase):
         #port = alpha.eha[1]
         path = "http://{0}:{1}/".format('localhost', alpha.eha[1])
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      path=path,
                                      reconnectable=True,
@@ -2440,7 +2439,7 @@ class BasicTestCase(unittest.TestCase):
         port = alpha.eha[1]
 
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                  wlog=wireLogBeta,
                                  hostname=host,
                                  port=port,
@@ -2715,7 +2714,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
 
-        beta = httping.Patron(hostname=serverCertCommonName,
+        beta = clienting.Patron(hostname=serverCertCommonName,
                               port=alpha.eha[1],
                               bufsize=131072,
                               wlog=wireLogBeta,
@@ -2885,7 +2884,7 @@ class BasicTestCase(unittest.TestCase):
         #port = alpha.eha[1]
         path = "https://{0}:{1}/".format(serverCertCommonName, alpha.eha[1])
 
-        beta = httping.Patron(path=path,
+        beta = clienting.Patron(path=path,
                               bufsize=131072,
                               wlog=wireLogBeta,
                               reconnectable=True,
@@ -3057,7 +3056,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      hostname=host,
                                      port=port,
@@ -3227,7 +3226,7 @@ class BasicTestCase(unittest.TestCase):
         host = alpha.eha[0]
         port = alpha.eha[1]
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      hostname=host,
                                      port=port,
@@ -3424,7 +3423,7 @@ class BasicTestCase(unittest.TestCase):
         host = serverCertCommonName
         port = alpha.eha[1]
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                               wlog=wireLogBeta,
                               hostname=host,
                               port=port,
@@ -3545,7 +3544,7 @@ class BasicTestCase(unittest.TestCase):
                          (u'Content-Type', u'multipart/form-data')])
         fargs = odict([("text",  "This is the life,\nIt is the best.\n"),
                        ("html", "<html><body></body><html>")])
-        request =  httping.Requester(hostname=host,
+        request =  clienting.Requester(hostname=host,
                                      port=port,
                                      method=method,
                                      path=path,
@@ -3626,7 +3625,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = httping.Porter(port = 6101,
+        alpha = serving.Porter(port = 6101,
                               bufsize=131072,
                               wlog=wireLogAlpha,
                               store=store)
@@ -3640,7 +3639,7 @@ class BasicTestCase(unittest.TestCase):
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      store=store,
                                      path=path,
@@ -3725,7 +3724,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = httping.Valet(port = 6101,
+        alpha = serving.Valet(port = 6101,
                               bufsize=131072,
                               wlog=wireLogAlpha,
                               store=store,
@@ -3740,7 +3739,7 @@ class BasicTestCase(unittest.TestCase):
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      store=store,
                                      path=path,
@@ -3842,7 +3841,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = httping.Valet(port = 6101,
+        alpha = serving.Valet(port = 6101,
                               bufsize=131072,
                               wlog=wireLogAlpha,
                               store=store,
@@ -3857,7 +3856,7 @@ class BasicTestCase(unittest.TestCase):
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      store=store,
                                      path=path,
@@ -3967,7 +3966,7 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = httping.Valet(port = 6101,
+        alpha = serving.Valet(port = 6101,
                               bufsize=131072,
                               wlog=wireLogAlpha,
                               store=store,
@@ -3982,7 +3981,7 @@ class BasicTestCase(unittest.TestCase):
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
-        beta = httping.Patron(bufsize=131072,
+        beta = clienting.Patron(bufsize=131072,
                                      wlog=wireLogBeta,
                                      store=store,
                                      path=path,
