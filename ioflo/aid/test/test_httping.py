@@ -3878,13 +3878,14 @@ class BasicTestCase(unittest.TestCase):
                         ])
 
         beta.requests.append(request)
-
+        timer = StoreTimer(store, duration=1.0)
         while (beta.requests or beta.connector.txes or not beta.responses or
                not alpha.idle()):
             alpha.serviceAll()
             time.sleep(0.05)
             beta.serviceAll()
             time.sleep(0.05)
+            store.advanceStamp(0.1)
 
         self.assertIs(beta.connector.accepted, True)
         self.assertIs(beta.connector.connected, True)
