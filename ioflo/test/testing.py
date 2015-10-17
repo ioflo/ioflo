@@ -15,7 +15,7 @@ else:
 import os
 import importlib
 
-from ..base.consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 from ..aid.odicting import odict

@@ -24,7 +24,7 @@ from . import registering
 from . import storing
 from . import acting
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 #Class definitions

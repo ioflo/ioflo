@@ -15,7 +15,7 @@ import types
 
 from ioflo.aid.sixing import *
 from ioflo.test import testing
-from ioflo.base.consoling import getConsole
+from ioflo.aid.consoling import getConsole
 console = getConsole()
 
 from ioflo.aid import blending

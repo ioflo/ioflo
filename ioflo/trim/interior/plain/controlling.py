@@ -18,7 +18,7 @@ from ....aid import aiding, navigating, blending
 from ....base import storing
 from ....base import doing
 
-from ....base.consoling import getConsole
+from ....aid.consoling import getConsole
 console = getConsole()
 
 

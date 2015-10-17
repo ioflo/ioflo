@@ -34,7 +34,7 @@ from ..base.globaling import *
 from .odicting import odict
 from ..base import excepting
 
-from ..base.consoling import getConsole
+from .consoling import getConsole
 console = getConsole()
 
 

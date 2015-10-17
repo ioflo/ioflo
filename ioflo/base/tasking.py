@@ -11,7 +11,7 @@ from . import excepting
 from . import registering
 from . import storing
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 

@@ -19,7 +19,7 @@ from . import acting
 from . import tasking
 from . import framing
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 class Need(acting.Actor):

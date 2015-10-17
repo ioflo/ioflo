@@ -12,7 +12,7 @@ from .sixing import *
 from .odicting import odict
 from ..base import excepting
 
-from ..base.consoling import getConsole
+from .consoling import getConsole
 console = getConsole()
 
 TWOPI = 2.0 * math.pi  # two times pi

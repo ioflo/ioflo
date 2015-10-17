@@ -32,7 +32,7 @@ from . import framing  #needed for Registries
 from . import logging  #needed for Registries
 from .. import trim  #needed for Registries
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 # Dict of Registry Objects so can Clear and assign Names and Counter variables

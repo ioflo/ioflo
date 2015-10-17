@@ -20,7 +20,7 @@ from ..aid import aiding, nonblocking
 #from .aiding import b
 from . import tasking
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 #Class definitions

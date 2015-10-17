@@ -10,7 +10,7 @@ from abc import ABCMeta
 # import ioflo modules
 from .sixing import *
 
-from ..base.consoling import getConsole
+from .consoling import getConsole
 console = getConsole()
 
 

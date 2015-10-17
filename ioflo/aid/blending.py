@@ -9,7 +9,7 @@ import math
 from .sixing import *
 from ..base import excepting
 
-from ..base.consoling import getConsole
+from .consoling import getConsole
 console = getConsole()
 
 

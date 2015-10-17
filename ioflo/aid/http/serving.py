@@ -43,7 +43,7 @@ from ..nonblocking import Outgoer, OutgoerTls, Server, ServerTls
 
 from . import httping
 
-from ...base.consoling import getConsole
+from ..consoling import getConsole
 console = getConsole()
 
 CRLF = b"\r\n"

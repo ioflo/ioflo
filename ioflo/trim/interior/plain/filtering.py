@@ -17,7 +17,7 @@ from ....aid import aiding
 from ....aid.navigating import DEGTORAD, RADTODEG
 from ....base import doing
 
-from ....base.consoling import getConsole
+from ....aid.consoling import getConsole
 console = getConsole()
 
 

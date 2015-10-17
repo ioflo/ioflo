@@ -44,7 +44,7 @@ from . import serving
 
 from .. import trim
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 from ..trim import exterior

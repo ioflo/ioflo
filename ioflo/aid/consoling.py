@@ -1,10 +1,6 @@
-"""
-Cosole logging support
-Backwards compatibility module
+"""consoling.py classes for printing out to the console
 
 """
-#from ..aid.consoling import Console, getConsole
-
 import sys
 import os
 import errno

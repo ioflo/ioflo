@@ -21,7 +21,7 @@ from .globaling import *
 from ..aid import aiding
 from . import excepting
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 class NMEAParser(object):

@@ -39,7 +39,7 @@ from ioflo.aid import nonblocking
 from ioflo.aid.timing import Timer, StoreTimer
 from ioflo.base import storing
 
-from ioflo.base.consoling import getConsole
+from ioflo.aid.consoling import getConsole
 console = getConsole()
 
 

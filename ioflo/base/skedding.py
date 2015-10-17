@@ -11,7 +11,7 @@ import os
 import time
 from collections import deque
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 from ..aid.sixing import *
@@ -27,7 +27,7 @@ from . import building
 
 from ..__metadata__ import __version__
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 

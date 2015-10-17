@@ -5,7 +5,8 @@ import argparse
 import os
 
 from ..__metadata__ import __version__
-from ..base import skedding, consoling
+from ..aid import  consoling
+from ..base import skedding
 
 
 def parseArgs(version=__version__):

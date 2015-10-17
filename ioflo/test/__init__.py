@@ -18,7 +18,7 @@ else:
 import os
 
 
-from ioflo.base.consoling import getConsole
+from ioflo.aid.consoling import getConsole
 console = getConsole()
 console.reinit(verbosity=console.Wordage.concise)
 

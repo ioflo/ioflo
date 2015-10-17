@@ -18,7 +18,7 @@ from . import registering
 
 from ..aid.aiding import nameToPath
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 

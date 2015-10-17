@@ -16,7 +16,7 @@ from ....base.globaling import *
 from ....aid import aiding, navigating
 from ....base import doing
 
-from ....base.consoling import getConsole
+from ....aid.consoling import getConsole
 console = getConsole()
 
 class DetectorPositionBox(doing.Doer):

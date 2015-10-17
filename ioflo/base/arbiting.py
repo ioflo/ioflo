@@ -14,7 +14,7 @@ from .globaling import *
 
 from . import doing
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 

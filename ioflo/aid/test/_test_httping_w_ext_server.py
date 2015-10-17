@@ -43,7 +43,7 @@ from ioflo.aid import nonblocking
 from ioflo.aid import httping
 from ioflo.aid.timing import Timer
 
-from ioflo.base.consoling import getConsole
+from ioflo.aid.consoling import getConsole
 console = getConsole()
 
 

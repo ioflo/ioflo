@@ -12,7 +12,7 @@ import random
 from .sixing import *
 from ..base import excepting
 
-from ..base.consoling import getConsole
+from .consoling import getConsole
 console = getConsole()
 
 TIME1970 = long(2208988800) #offset secs between SNTP epoch=1900 & unix epoch=1970

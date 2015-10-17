@@ -33,7 +33,7 @@ from ..base import storing
 from ..aid.timing import StoreTimer
 
 
-from ..base.consoling import getConsole
+from .consoling import getConsole
 console = getConsole()
 
 class ConsoleNb(object):

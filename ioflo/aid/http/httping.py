@@ -41,7 +41,7 @@ from ...base import excepting, storing
 from .. import aiding
 from ..nonblocking import Outgoer, OutgoerTls, Server, ServerTls
 
-from ...base.consoling import getConsole
+from ..consoling import getConsole
 console = getConsole()
 
 CRLF = b"\r\n"

@@ -11,7 +11,7 @@ from ..aid import aiding
 from . import excepting
 from . import tasking
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 

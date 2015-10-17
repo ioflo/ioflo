@@ -2,9 +2,7 @@
 deeding.py deed module
 
 Backwards compatibility module
-Deprecated use
-doing.py instead
-doify
+Future use doing module instead
 
 """
 from . import doing

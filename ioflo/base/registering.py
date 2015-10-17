@@ -12,7 +12,7 @@ from ..aid.odicting import odict
 from . import excepting
 from ..aid.aiding import reverseCamel
 
-from .consoling import getConsole
+from ..aid.consoling import getConsole
 console = getConsole()
 
 class RegisterType(type):
