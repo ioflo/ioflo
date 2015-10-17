@@ -2,6 +2,16 @@
 CHANGE LOG
 -------------------
 ---------
+20151016
+---------
+1.4.1
+
+Refactored the httping.py module into a package http with submodules as the
+the size of the module was getting unweildly
+
+
+
+---------
 20151015
 ---------
 1.4.0
