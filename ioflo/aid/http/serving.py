@@ -279,393 +279,8 @@ class Requestant(httping.Parsent):
 
 class Responder(object):
     """
-    Nonblocking HTTP Server Response class
-
-    HTTP/1.1 200 OK\r\n
-    Content-Length: 122\r\n
-    Content-Type: application/json\r\n
-    Date: Thu, 30 Apr 2015 19:37:17 GMT\r\n
-    Server: IoBook.local\r\n\r\n
-    """
-    HttpVersionString = httping.HTTP_11_VERSION_STRING  # http version string
-
-    def __init__(self,
-                 steward=None,
-                 status=200,  # integer
-                 headers=None,
-                 body=b'',
-                 data=None):
-        """
-        Initialize Instance
-        steward = managing Steward instance
-        status = response status code
-        headers = http response headers
-        body = http response body
-        data = dict to jsonify as body if provided
-        """
-        self.steward = steward
-        self.status = status
-        self.headers = lodict(headers) if headers else lodict()
-        if body and isinstance(body, unicode):  # use default
-            # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
-            body = body.encode('iso-8859-1')
-        self.body = body or b''
-        self.data = data
-
-        self.ended = False  # True if response generated completed
-
-        self.msg = b""  # for debugging
-        self.lines = []  # for debugging
-        self.head = b""  # for debugging
-
-
-    def reinit(self,
-               status=None,  # integer
-               headers=None,
-               body=None,
-               data=None):
-        """
-        Reinitialize anything that is not None
-        This enables creating another response on a connection
-        """
-        if status is not None:
-            self.status = status
-        if headers is not None:
-            self.headers = lodict(headers)
-        if body is not None:  # body should be bytes
-            if isinstance(body, unicode):
-                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
-                body = body.encode('iso-8859-1')
-            self.body = body
-        else:
-            self.body = b''
-        if data is not None:
-            self.data = data
-        else:
-            self.data = None
-
-    def build(self,
-              status=None,
-              headers=None,
-              body=None,
-              data=None):
-        """
-        Build and return response message
-
-        """
-        self.reinit(status=status,
-                    headers=headers,
-                    body=body,
-                    data=data)
-        self.lines = []
-
-        startLine = "{0} {1} {2}".format(self.HttpVersionString,
-                                         self.status,
-                                         httping.STATUS_DESCRIPTIONS[self.status])
-        try:
-            startLine = startLine.encode('ascii')
-        except UnicodeEncodeError:
-            startLine = startLine.encode('idna')
-        self.lines.append(startLine)
-
-        if u'server' not in self.headers:  # create Server header
-            self.headers[u'server'] = "Ioflo Server"
-
-        if u'date' not in self.headers:  # create Date header
-            self.headers[u'date'] = httping.httpDate1123(datetime.datetime.utcnow())
-
-        if self.data is not None:
-            body = ns2b(json.dumps(self.data, separators=(',', ':')))
-            self.headers[u'content-type'] = u'application/json; charset=utf-8'
-        else:
-            body = self.body
-
-        if body and (u'content-length' not in self.headers):
-            self.headers[u'content-length'] = str(len(body))
-
-        for name, value in self.headers.items():
-            self.lines.append(httping.packHeader(name, value))
-
-        self.lines.extend((b"", b""))
-        self.head = CRLF.join(self.lines)  # b'/r/n'
-
-        self.msg = self.head + body
-        self.ended = True
-        return self.msg
-
-class Steward(object):
-    """
-    Manages the associated requestant and responder for an incoming connection
-    """
-    def __init__(self,
-                 incomer,
-                 requestant=None,
-                 responder=None,
-                 dictable=False):
-        """
-        incomer = Incomer instance for connection
-        requestant = Requestant instance for connection
-        responder = Responder instance for connection
-        dictable = True if should attempt to convert request body as json
-        """
-        self.incomer = incomer
-        if requestant is None:
-            requestant = Requestant(msg=self.incomer.rxbs,
-                                    incomer=incomer,
-                                    dictable=dictable)
-        self.requestant = requestant
-
-        if responder is None:
-            responder = Responder(steward=self)
-        self.responder = responder
-        self.waited = False  # True if waiting for reponse to finish
-        self.msg = b""  # outgoing msg bytes
-
-    def refresh(self):
-        """
-        Restart incomer timer
-        """
-        incomer.timer.restart()
-
-    def respond(self):
-        """
-        Respond to request  Override in subclass
-        Echo request
-        """
-        console.concise("Responding to Request:\n{0} {1} {2}\n"
-                                "{3}\n{4}\n".format(self.requestant.method,
-                                                    self.requestant.path,
-                                                    self.requestant.version,
-                                                    self.requestant.headers,
-                                                    self.requestant.body))
-        data = odict()
-        data['version'] = "HTTP/{0}.{1}".format(*self.requestant.version)
-        data['method'] = self.requestant.method
-
-        pathSplits = urlsplit(unquote(self.requestant.url))
-        path = pathSplits.path
-        data['path'] = path
-
-        query = pathSplits.query
-        qargs = odict()
-        qargs, query = httping.updateQargsQuery(qargs, query)
-        data['qargs'] = qargs
-
-        fragment = pathSplits.fragment
-        data['fragment'] = fragment
-
-        data['headers'] = copy.copy(self.requestant.headers)  # make copy
-        data['body'] = self.requestant.body.decode('utf-8')
-        data['data'] = copy.copy(self.requestant.data)  # make copy
-
-        msg = self.responder.build(status=200, data=data)
-        self.incomer.tx(msg)
-        self.waited = not self.responder.ended
-
-    def pour(self):
-        """
-        Run generator to stream response message
-
-        """
-
-        # putnext generator here
-
-        if self.responder.ended:
-            self.waited = False
-        else:
-            self.refresh()
-
-
-class Porter(object):
-    """
-    Porter class nonblocking HTTP server
-    """
-    Timeout = 5.0  # default server connection timeout
-
-    def __init__(self,
-                 servant=None,
-                 store=None,
-                 stewards=None,
-                 name='',
-                 bufsize=8096,
-                 wlog=None,
-                 ha=None,
-                 host=u'',
-                 port=None,
-                 eha=None,
-                 scheme=u'',
-                 dictable=False,
-                 timeout=None,
-                 **kwa):
-        """
-        Initialization method for instance.
-        servant = instance of Server or ServerTls or None
-        store = Datastore for timers
-        stewards = odict of Steward instances
-        kwa needed to pass additional parameters to servant
-
-        if servantinstances are not provided (None)
-        some or all of these parameters will be used for initialization
-
-        name = user friendly name for servant
-        bufsize = buffer size
-        wlog = WireLog instance if any
-        ha = host address duple (host, port) for local servant listen socket
-        host = host address for local servant listen socket, '' means any interface on host
-        port = socket port for local servant listen socket
-        eha = external destination address for incoming connections used in TLS
-        scheme = http scheme u'http' or u'https' or empty
-        dictable = Boolean flag If True attempt to convert body from json for requestants
-
-        """
-        self.store = store or storing.Store(stamp=0.0)
-        self.stewards = stewards if stewards is not None else odict()
-        self.dictable = True if dictable else False  # for stewards
-        self.timeout = timeout if timeout is not None else self.Timeout
-
-        ha = ha or (host, port)  # ha = host address takes precendence over host, port
-        if servant:
-            if isinstance(servant, ServerTls):
-                if scheme and scheme != u'https':
-                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
-                secured = True
-                scheme = u'https'
-                defaultPort = 443
-            elif isinstance(servant, Server):
-                if scheme and scheme != u'http':
-                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
-                secured = False
-                scheme = 'http'
-                defaultPort = 80
-            else:
-                raise ValueError("Invalid servant type {0}".format(type(servant)))
-        else:
-            scheme = u'https' if scheme == u'https' else u'http'
-            if scheme == u'https':
-                secured = True  # use tls socket connection
-                defaultPort = 443
-            else:
-                secured = False # non tls socket connection
-                defaultPort = 80
-
-        host, port = ha
-        port = port or  defaultPort  # if port not specified
-        ha = (host, port)
-
-        if servant:
-            if servant.ha != ha:
-                ValueError("Provided ha '{0}:{1}' incompatible with servant".format(ha[0], ha[1]))
-            # at some point may want to support changing the ha of provided servant
-
-        else:  # what about timeouts for servant connections
-            if secured:
-                servant = ServerTls(store=self.store,
-                                    name=name,
-                                    ha=ha,
-                                    eha=eha,
-                                    bufsize=bufsize,
-                                    wlog=wlog,
-                                    timeout=self.timeout,
-                                    **kwa)
-            else:
-                servant = Server(store=self.store,
-                                 name=name,
-                                 ha=ha,
-                                 eha=eha,
-                                 bufsize=bufsize,
-                                 wlog=wlog,
-                                 timeout=self.timeout,
-                                 **kwa)
-
-
-        self.secured = secured
-        self.servant = servant
-
-    def idle(self):
-        """
-        Returns True if no connections have requests in process
-        Useful for debugging
-        """
-        idle = True
-        for steward in self.stewards.values():
-            if not steward.requestant.ended:
-                idle = False
-                break
-        return idle
-
-    def closeConnection(self, ca):
-        """
-        Close and remove connection and associated steward given by ca
-        """
-        self.servant.removeIx(ca)
-        del self.stewards[ca]
-
-    def serviceConnects(self):
-        """
-        Service new incoming connections
-        Create requestants
-        Timeout stale connections
-        """
-        self.servant.serviceConnects()
-        for ca, ix in self.servant.ixes.items():
-            # check for and handle cutoff connections by client here
-
-            if ca not in self.stewards:
-                self.stewards[ca] = Steward(incomer=ix, dictable=self.dictable)
-
-            if ix.timeout > 0.0 and ix.timer.expired:
-                self.closeConnection(ca)
-
-    def serviceStewards(self):
-        """
-        Service pending requestants and responders
-        """
-        for ca, steward in self.stewards.items():
-            if not steward.waited:
-                steward.requestant.parse()
-
-                if steward.requestant.changed:
-                    steward.refresh()
-
-                if steward.requestant.ended:
-                    steward.requestant.dictify()
-                    console.concise("Parsed Request:\n{0} {1} {2}\n"
-                                    "{3}\n{4}\n".format(steward.requestant.method,
-                                                        steward.requestant.path,
-                                                        steward.requestant.version,
-                                                        steward.requestant.headers,
-                                                        steward.requestant.body))
-                    steward.respond()
-
-            if steward.waited:
-                steward.pour()
-
-            if not steward.waited and steward.requestant.ended:
-                if steward.requestant.persisted:
-                    steward.requestant.makeParser()  #set up for next time
-                else:  # remove and close connection
-                    self.closeConnection(ca)
-
-    def serviceAll(self):
-        """
-        Service request response
-        """
-        self.serviceConnects()
-        self.servant.serviceReceivesAllIx()
-        self.serviceStewards()
-        self.servant.serviceTxesAllIx()
-
-
-
-class WsgiResponder(object):
-    """
     Nonblocking HTTP WSGI Responder class
 
-    HTTP/1.1 200 OK\r\n
-    Content-Length: 122\r\n
-    Content-Type: application/json\r\n
-    Date: Thu, 30 Apr 2015 19:37:17 GMT\r\n
-    Server: IoBook.local\r\n\r\n
     """
     HttpVersionString = httping.HTTP_11_VERSION_STRING  # http version string
 
@@ -993,14 +608,6 @@ class Valet(object):
         if ca in self.ixes:
             self.ixes[ca].timer.restart()
 
-    def reuseReq(self, ca):
-        """
-        For requestant given by ca
-        Either remake parser or close connection
-        """
-        if ca in self.reqs:
-            self.reqs[ca].makeParser()
-
     def buildEnviron(self, requestant):
         """
         Returns wisgi environment dictionary for supplied requestant
@@ -1102,7 +709,7 @@ class Valet(object):
                     environ = self.buildEnviron(requestant)
                     if ca not in self.reps:
                         chunkable = True if requestant.version >= (1, 1) else False
-                        responder = WsgiResponder(incomer=requestant.incomer,
+                        responder = Responder(incomer=requestant.incomer,
                                                   app=self.app,
                                                   environ=environ,
                                                   chunkable=chunkable)
@@ -1131,8 +738,6 @@ class Valet(object):
                 else:  # not persistent so close and remove requestant and responder
                     self.closeConnection(ca)
 
-
-
     def serviceAll(self):
         """
         Service request response
@@ -1141,5 +746,384 @@ class Valet(object):
         self.servant.serviceReceivesAllIx()
         self.serviceReqs()
         self.serviceReps()
+        self.servant.serviceTxesAllIx()
+
+
+class CustomResponder(object):
+    """
+    Nonblocking HTTP Server Response class
+
+    HTTP/1.1 200 OK\r\n
+    Content-Length: 122\r\n
+    Content-Type: application/json\r\n
+    Date: Thu, 30 Apr 2015 19:37:17 GMT\r\n
+    Server: IoBook.local\r\n\r\n
+    """
+    HttpVersionString = httping.HTTP_11_VERSION_STRING  # http version string
+
+    def __init__(self,
+                 steward=None,
+                 status=200,  # integer
+                 headers=None,
+                 body=b'',
+                 data=None):
+        """
+        Initialize Instance
+        steward = managing Steward instance
+        status = response status code
+        headers = http response headers
+        body = http response body
+        data = dict to jsonify as body if provided
+        """
+        self.steward = steward
+        self.status = status
+        self.headers = lodict(headers) if headers else lodict()
+        if body and isinstance(body, unicode):  # use default
+            # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+            body = body.encode('iso-8859-1')
+        self.body = body or b''
+        self.data = data
+
+        self.ended = False  # True if response generated completed
+
+        self.msg = b""  # for debugging
+        self.lines = []  # for debugging
+        self.head = b""  # for debugging
+
+
+    def reinit(self,
+               status=None,  # integer
+               headers=None,
+               body=None,
+               data=None):
+        """
+        Reinitialize anything that is not None
+        This enables creating another response on a connection
+        """
+        if status is not None:
+            self.status = status
+        if headers is not None:
+            self.headers = lodict(headers)
+        if body is not None:  # body should be bytes
+            if isinstance(body, unicode):
+                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+                body = body.encode('iso-8859-1')
+            self.body = body
+        else:
+            self.body = b''
+        if data is not None:
+            self.data = data
+        else:
+            self.data = None
+
+    def build(self,
+              status=None,
+              headers=None,
+              body=None,
+              data=None):
+        """
+        Build and return response message
+
+        """
+        self.reinit(status=status,
+                    headers=headers,
+                    body=body,
+                    data=data)
+        self.lines = []
+
+        startLine = "{0} {1} {2}".format(self.HttpVersionString,
+                                         self.status,
+                                         httping.STATUS_DESCRIPTIONS[self.status])
+        try:
+            startLine = startLine.encode('ascii')
+        except UnicodeEncodeError:
+            startLine = startLine.encode('idna')
+        self.lines.append(startLine)
+
+        if u'server' not in self.headers:  # create Server header
+            self.headers[u'server'] = "Ioflo Server"
+
+        if u'date' not in self.headers:  # create Date header
+            self.headers[u'date'] = httping.httpDate1123(datetime.datetime.utcnow())
+
+        if self.data is not None:
+            body = ns2b(json.dumps(self.data, separators=(',', ':')))
+            self.headers[u'content-type'] = u'application/json; charset=utf-8'
+        else:
+            body = self.body
+
+        if body and (u'content-length' not in self.headers):
+            self.headers[u'content-length'] = str(len(body))
+
+        for name, value in self.headers.items():
+            self.lines.append(httping.packHeader(name, value))
+
+        self.lines.extend((b"", b""))
+        self.head = CRLF.join(self.lines)  # b'/r/n'
+
+        self.msg = self.head + body
+        self.ended = True
+        return self.msg
+
+class Steward(object):
+    """
+    Manages the associated requestant and responder for an incoming connection
+    """
+    def __init__(self,
+                 incomer,
+                 requestant=None,
+                 responder=None,
+                 dictable=False):
+        """
+        incomer = Incomer instance for connection
+        requestant = Requestant instance for connection
+        responder = Responder instance for connection
+        dictable = True if should attempt to convert request body as json
+        """
+        self.incomer = incomer
+        if requestant is None:
+            requestant = Requestant(msg=self.incomer.rxbs,
+                                    incomer=incomer,
+                                    dictable=dictable)
+        self.requestant = requestant
+
+        if responder is None:
+            responder = CustomResponder(steward=self)
+        self.responder = responder
+        self.waited = False  # True if waiting for reponse to finish
+        self.msg = b""  # outgoing msg bytes
+
+    def refresh(self):
+        """
+        Restart incomer timer
+        """
+        incomer.timer.restart()
+
+    def respond(self):
+        """
+        Respond to request  Override in subclass
+        Echo request
+        """
+        console.concise("Responding to Request:\n{0} {1} {2}\n"
+                                "{3}\n{4}\n".format(self.requestant.method,
+                                                    self.requestant.path,
+                                                    self.requestant.version,
+                                                    self.requestant.headers,
+                                                    self.requestant.body))
+        data = odict()
+        data['version'] = "HTTP/{0}.{1}".format(*self.requestant.version)
+        data['method'] = self.requestant.method
+
+        pathSplits = urlsplit(unquote(self.requestant.url))
+        path = pathSplits.path
+        data['path'] = path
+
+        query = pathSplits.query
+        qargs = odict()
+        qargs, query = httping.updateQargsQuery(qargs, query)
+        data['qargs'] = qargs
+
+        fragment = pathSplits.fragment
+        data['fragment'] = fragment
+
+        data['headers'] = copy.copy(self.requestant.headers)  # make copy
+        data['body'] = self.requestant.body.decode('utf-8')
+        data['data'] = copy.copy(self.requestant.data)  # make copy
+
+        msg = self.responder.build(status=200, data=data)
+        self.incomer.tx(msg)
+        self.waited = not self.responder.ended
+
+    def pour(self):
+        """
+        Run generator to stream response message
+
+        """
+
+        # putnext generator here
+
+        if self.responder.ended:
+            self.waited = False
+        else:
+            self.refresh()
+
+
+class Porter(object):
+    """
+    Porter class nonblocking HTTP server
+    """
+    Timeout = 5.0  # default server connection timeout
+
+    def __init__(self,
+                 servant=None,
+                 store=None,
+                 stewards=None,
+                 name='',
+                 bufsize=8096,
+                 wlog=None,
+                 ha=None,
+                 host=u'',
+                 port=None,
+                 eha=None,
+                 scheme=u'',
+                 dictable=False,
+                 timeout=None,
+                 **kwa):
+        """
+        Initialization method for instance.
+        servant = instance of Server or ServerTls or None
+        store = Datastore for timers
+        stewards = odict of Steward instances
+        kwa needed to pass additional parameters to servant
+
+        if servantinstances are not provided (None)
+        some or all of these parameters will be used for initialization
+
+        name = user friendly name for servant
+        bufsize = buffer size
+        wlog = WireLog instance if any
+        ha = host address duple (host, port) for local servant listen socket
+        host = host address for local servant listen socket, '' means any interface on host
+        port = socket port for local servant listen socket
+        eha = external destination address for incoming connections used in TLS
+        scheme = http scheme u'http' or u'https' or empty
+        dictable = Boolean flag If True attempt to convert body from json for requestants
+
+        """
+        self.store = store or storing.Store(stamp=0.0)
+        self.stewards = stewards if stewards is not None else odict()
+        self.dictable = True if dictable else False  # for stewards
+        self.timeout = timeout if timeout is not None else self.Timeout
+
+        ha = ha or (host, port)  # ha = host address takes precendence over host, port
+        if servant:
+            if isinstance(servant, ServerTls):
+                if scheme and scheme != u'https':
+                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
+                secured = True
+                scheme = u'https'
+                defaultPort = 443
+            elif isinstance(servant, Server):
+                if scheme and scheme != u'http':
+                    raise  ValueError("Provided scheme '{0}' incompatible with servant".format(scheme))
+                secured = False
+                scheme = 'http'
+                defaultPort = 80
+            else:
+                raise ValueError("Invalid servant type {0}".format(type(servant)))
+        else:
+            scheme = u'https' if scheme == u'https' else u'http'
+            if scheme == u'https':
+                secured = True  # use tls socket connection
+                defaultPort = 443
+            else:
+                secured = False # non tls socket connection
+                defaultPort = 80
+
+        host, port = ha
+        port = port or  defaultPort  # if port not specified
+        ha = (host, port)
+
+        if servant:
+            if servant.ha != ha:
+                ValueError("Provided ha '{0}:{1}' incompatible with servant".format(ha[0], ha[1]))
+            # at some point may want to support changing the ha of provided servant
+
+        else:  # what about timeouts for servant connections
+            if secured:
+                servant = ServerTls(store=self.store,
+                                    name=name,
+                                    ha=ha,
+                                    eha=eha,
+                                    bufsize=bufsize,
+                                    wlog=wlog,
+                                    timeout=self.timeout,
+                                    **kwa)
+            else:
+                servant = Server(store=self.store,
+                                 name=name,
+                                 ha=ha,
+                                 eha=eha,
+                                 bufsize=bufsize,
+                                 wlog=wlog,
+                                 timeout=self.timeout,
+                                 **kwa)
+
+
+        self.secured = secured
+        self.servant = servant
+
+    def idle(self):
+        """
+        Returns True if no connections have requests in process
+        Useful for debugging
+        """
+        idle = True
+        for steward in self.stewards.values():
+            if not steward.requestant.ended:
+                idle = False
+                break
+        return idle
+
+    def closeConnection(self, ca):
+        """
+        Close and remove connection and associated steward given by ca
+        """
+        self.servant.removeIx(ca)
+        del self.stewards[ca]
+
+    def serviceConnects(self):
+        """
+        Service new incoming connections
+        Create requestants
+        Timeout stale connections
+        """
+        self.servant.serviceConnects()
+        for ca, ix in self.servant.ixes.items():
+            # check for and handle cutoff connections by client here
+
+            if ca not in self.stewards:
+                self.stewards[ca] = Steward(incomer=ix, dictable=self.dictable)
+
+            if ix.timeout > 0.0 and ix.timer.expired:
+                self.closeConnection(ca)
+
+    def serviceStewards(self):
+        """
+        Service pending requestants and responders
+        """
+        for ca, steward in self.stewards.items():
+            if not steward.waited:
+                steward.requestant.parse()
+
+                if steward.requestant.changed:
+                    steward.refresh()
+
+                if steward.requestant.ended:
+                    steward.requestant.dictify()
+                    console.concise("Parsed Request:\n{0} {1} {2}\n"
+                                    "{3}\n{4}\n".format(steward.requestant.method,
+                                                        steward.requestant.path,
+                                                        steward.requestant.version,
+                                                        steward.requestant.headers,
+                                                        steward.requestant.body))
+                    steward.respond()
+
+            if steward.waited:
+                steward.pour()
+
+            if not steward.waited and steward.requestant.ended:
+                if steward.requestant.persisted:
+                    steward.requestant.makeParser()  #set up for next time
+                else:  # remove and close connection
+                    self.closeConnection(ca)
+
+    def serviceAll(self):
+        """
+        Service request response
+        """
+        self.serviceConnects()
+        self.servant.serviceReceivesAllIx()
+        self.serviceStewards()
         self.servant.serviceTxesAllIx()
 
