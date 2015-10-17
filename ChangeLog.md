@@ -7,7 +7,12 @@ CHANGE LOG
 1.4.1
 
 Refactored the httping.py module into a package http with submodules as the
-the size of the module was getting unweildly
+the size of the module was getting unwieldy
+
+Refactored naming of Deed. Now alised with Doer. Preferred it Doer.
+Deedify now aliased with preferred Doify
+Actorify not alised with preferred Actify
+
 
 
 
