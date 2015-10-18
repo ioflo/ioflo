@@ -6,6 +6,10 @@ CHANGE LOG
 ---------
 1.4.2
 
+Refactored consoling package location still supports old location
+As ioflo helper libraries are growing in size, refactoring now to make it less
+likely to need change in future as other projects become dependant.
+
 
 ---------
 20151016

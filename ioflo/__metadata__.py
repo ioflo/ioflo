@@ -2,7 +2,7 @@
 Ioflo package metadata
 '''
 
-__version_info__ = (1, 4, 1)
+__version_info__ = (1, 4, 2)
 __version__ = '{0}.{1}.{2}'.format(*__version_info__)
 __author__ = "Samuel M. Smith"
 __license__ = "Apache 2.0"
