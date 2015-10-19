@@ -311,7 +311,7 @@ class Store(registering.Registrar):
 
     @staticmethod
     def ShowNode(node, indent = 0, values=False):
-        if isinstance(node, dict):
+        if isinstance(node, dict):  # plain node
             for key, value in node.items():
                 msg = ""
                 for i in range(indent):
@@ -319,7 +319,7 @@ class Store(registering.Registrar):
                 msg += ".{0} ".format(key)
                 console.terse("{0}\n".format(msg))
                 Store.ShowNode(value, indent = indent + 1, values=values)
-        else:
+        else:  # share leaf
             msg = ""
             for i in range(indent):
                 msg += "  "
@@ -503,7 +503,8 @@ class Share(object):
     def __repr__(self):
         """    """
         itemreprs = repr(self._data.__dict__)
-        return 'Share '  + itemreprs
+        deckreprs = repr(self.deck)
+        return ("Share(name={0}, data=Data({1}), deck={2})".format(self.name, itemreprs, deckreprs))
 
     def clear(self):
         """   """
@@ -874,6 +875,13 @@ class Deck(deque):
     """
     push = deque.append  # alias
     pull = deque.popleft  # alias
+
+
+    def __repr__(self):
+        """    """
+        itemreprs = repr(list(self))
+
+        return ("Deck({0})".format(itemreprs))
 
     def gulp(self, elem):
         """
