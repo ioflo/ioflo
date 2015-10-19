@@ -408,8 +408,7 @@ class Share(object):
                  stamp=None,
                  unit=None,
                  owner=None,
-                 deck=None,
-                 **kwa):
+                 deck=None):
         """
         Initialize instance
 
