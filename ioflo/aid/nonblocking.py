@@ -428,7 +428,7 @@ class Driver(object):
                                        speed=speed,
                                        bs=bs)
 
-            except importError:
+            except ImportError:
                 self.server = DeviceNb(port=port,
                                        speed=speed,
                                        bs=bs)
