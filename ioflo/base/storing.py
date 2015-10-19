@@ -23,27 +23,25 @@ console = getConsole()
 
 
 class Node(odict):
-    """ Special odict with name property to hold the pathname to the node
+    """
+    Special odict with name property to hold the pathname to the node
     """
     __slots__ = ('_name', ) # attribute supporting name property
-
 
     def __init__(self, *pa, **kwa):
         """ Initialize instance. name is empty """
         super(Node,self).__init__(*pa, **kwa)
-
         self._name = ""
 
-    #property name
-    def getName(self):
-        """getter for name property """
+    @property
+    def name(self):  #property name
+        """Get name property. Pathname to node."""
         return self._name
 
-    def setName(self, name):
-        """setter for name property """
+    @name.setter
+    def name(self, name):
+        """Set name property """
         self._name = name
-
-    name = property(fget = getName, fset = setName, doc = "Pathname to node.")
 
     def byName(self, name):
         """ Sets name and returns self.
@@ -581,37 +579,41 @@ class Share(object):
         return self.deck.pull()
 
     # properties
-    def getOwner(self):  # owner property
-        """getter for  owner property """
+    @property
+    def owner(self):  # owner property
+        """Get owner property"""
         return self._owner
 
-    def setOwner(self, owner):  # owner property
-        """setter for owner property """
+    @owner.setter
+    def owner(self, owner):  # owner property
+        """Set owner property """
         self._owner = owner
-    owner = property(fget = getOwner, fset = setOwner, doc = "Owner of share")
 
-    def getTruth(self):  # truth property
-        """getter for truth property """
+    @property
+    def truth(self):  # truth property
+        """Get truth property """
         return self._truth
 
-    def setTruth(self, truth):  # truth property
-        """setter for value property """
+    @truth.setter
+    def truth(self, truth):  # truth property
+        """Set truth property """
         self._truth = truth
-    truth = property(fget = getTruth, fset = setTruth, doc = "Truth for this share")
 
-    def getUnit(self):   # unit property
-        """getter for unit property """
+    @property
+    def unit(self):   # unit property
+        """Get unit property """
         return self._unit
 
-    def setUnit(self, unit): # unit property
-        """setter for unit property """
+    @unit.setter
+    def unit(self, unit): # unit property
+        """Set unit property """
         if not isinstance(unit, Data):
             raise ValueError("Not Data object %s" % unit)
         self._unit = unit
-    unit = property(fget = getUnit, fset = setUnit, doc = "Unit(s) for this share")
 
-    def getValue(self):  # value property
-        """getter for value property
+    @property
+    def value(self):  # value property
+        """Get value property
            returns none if no field in data of name 'value'
         """
         try:
@@ -619,23 +621,24 @@ class Share(object):
         except AttributeError:
             return None
 
-    def setValue(self, value):  # value property
-        """setter for value property """
+    @value.setter
+    def value(self, value):  # value property
+        """Set value property """
         setattr(self._data, 'value', value)
         self.stamp = self.store.stamp
-    value = property(fget = getValue, fset = setValue, doc = "Value for this share")
 
-    def getData(self):  # data property
-        """getter for data property """
+    @property
+    def data(self):  # data property
+        """Get data property """
         return self._data
 
-    def setData(self, data):  # data property
-        """setter for data property """
+    @data.setter
+    def data(self, data):  # data property
+        """Set data property """
         if not isinstance(data, Data):
             raise ValueError("Not Data object %s" % data)
         self._data = data
         self.stamp = self.store.stamp
-    data = property(fget = getData, fset = setData, doc = "Data for this share")
 
     def change(self, *pa, **kwa):
         """Change data fields without affecting stamp.
