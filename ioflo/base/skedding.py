@@ -347,7 +347,7 @@ class Skedder(object):
             for house in self.houses:
                 #show store hierarchy
                 console.concise( "\nData Store for {0}\n".format(house.name))
-                house.store.expose(values=(console._verbosity >= console.Wordage.terse))
+                house.store.expose(valued=(console._verbosity >= console.Wordage.terse))
 
 
 def Test(real = False, verbose = False):

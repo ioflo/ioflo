@@ -302,15 +302,22 @@ class Store(registering.Registrar):
 
         return self.addNode(name=name)
 
-    def expose(self, values=False):
-        """   """
+    def expose(self, valued=False):
+        """
+        If valued then display values for leaf share items
+        """
         console.terse("Store name= {0}, stamp= {1}\n".format(self.name, self.stamp))
         console.terse("Nodes & Shares:\n")
-        Store.ShowNode(self.shares, indent = 0, values=values)
+        Store.ShowNode(self.shares, indent = 0, valued=valued)
 
 
     @staticmethod
-    def ShowNode(node, indent = 0, values=False):
+    def ShowNode(node, indent=0, valued=False):
+        """
+        node is node to display
+        indent is number of spaces to indent
+        If valued then display values for leaf share items
+        """
         if isinstance(node, dict):  # plain node
             for key, value in node.items():
                 msg = ""
@@ -318,18 +325,24 @@ class Store(registering.Registrar):
                     msg += "  "
                 msg += ".{0} ".format(key)
                 console.terse("{0}\n".format(msg))
-                Store.ShowNode(value, indent = indent + 1, values=values)
+                Store.ShowNode(value, indent = indent + 1, valued=valued)
         else:  # share leaf
             msg = ""
+            offset = ""
             for i in range(indent):
-                msg += "  "
-            if values:
+                offset += "  "
+            msg += offset
+            if valued:
                 for key, val in node.items():
                     msg += "{0}={1} ".format(key, val)
+                if node.deck:
+                    msg +=  "\n{0}deck={1}".format(offset, list(node.deck))
                 console.terse("{0}\n".format(msg))
             else:
                 for key in node.keys():
                     msg += "{0} ".format(key)
+                if node.deck:
+                    msg += "\n{0}deck".format(offset)
                 console.terse("{0}\n".format(msg))
 
 

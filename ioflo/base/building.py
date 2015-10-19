@@ -374,7 +374,7 @@ class Builder(object):
 
                         #show hierarchy of each house's store
                         console.concise( "\nData Store for {0}\n".format(house.name))
-                        house.store.expose(values=(console._verbosity >= console.Wordage.terse))
+                        house.store.expose(valued=(console._verbosity >= console.Wordage.terse))
 
                 return True
 
