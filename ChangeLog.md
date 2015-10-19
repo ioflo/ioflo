@@ -2,6 +2,14 @@
 CHANGE LOG
 -------------------
 ---------
+201510XX
+---------
+1.4.4
+
+Updated properties in storing module classes to use new decorator syntax
+
+
+---------
 20151018
 ---------
 1.4.3
