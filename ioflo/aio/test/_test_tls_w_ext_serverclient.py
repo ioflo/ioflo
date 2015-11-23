@@ -24,7 +24,7 @@ from ioflo.base.globaling import *
 from ioflo.aid.consoling import getConsole
 console = getConsole()
 
-from ioflo.aid import nonblocking
+from ioflo.aio import nonblocking
 
 def setUpModule():
     console.reinit(verbosity=console.Wordage.concise)

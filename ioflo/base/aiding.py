@@ -19,8 +19,8 @@ from ..aid.timing import Timer, MonoTimer, StoreTimer, totalSeconds
 from ..aid.metaing import metaclassify, NonStringIterable, NonStringSequence, nonStringIterable, \
      nonStringSequence
 
-# In future users should import from ioflo.aid.nonblocking not here
-from ..aid.nonblocking import SerialNb, ConsoleNb, SocketUdpNb, SocketUxdNb, WinMailslotNb
+# In future users should import from ioflo.aio.nonblocking not here
+#from ..aio.nonblocking import SerialNb, ConsoleNb, SocketUdpNb, SocketUxdNb, WinMailslotNb
 
 # In future users should import from ioflo.aid.navigating not here
 from ..aid.navigating import Sign, Delta, Wrap2, \

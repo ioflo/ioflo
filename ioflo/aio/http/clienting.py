@@ -35,14 +35,16 @@ except ImportError:
 from email.parser import HeaderParser
 
 # Import ioflo libs
-from ..sixing import *
-from ..odicting import odict, lodict, modict
+from ...aid.sixing import *
+from ...aid import aiding
+from ...aid.odicting import odict, lodict, modict
+from ...aid.consoling import getConsole
 from ...base import excepting, storing
-from .. import aiding
+
 from ..nonblocking import Outgoer, OutgoerTls, Server, ServerTls
 from . import httping
 
-from ..consoling import getConsole
+
 console = getConsole()
 
 CRLF = b"\r\n"

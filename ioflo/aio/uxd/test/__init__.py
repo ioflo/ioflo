@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-http  io test package
+uxd io  test package
 
 To run all the unittests:
 

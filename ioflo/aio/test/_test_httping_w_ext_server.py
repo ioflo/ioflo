@@ -39,7 +39,7 @@ from ioflo.base.globaling import *
 from ioflo.aid.odicting import odict
 #from ioflo.test import testing
 
-from ioflo.aid import nonblocking
+from ioflo.aio import nonblocking
 from ioflo.aid import httping
 from ioflo.aid.timing import Timer
 

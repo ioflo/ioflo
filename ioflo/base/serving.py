@@ -15,9 +15,9 @@ from ..aid.sixing import *
 from ..aid.odicting import odict
 from .globaling import *
 
-from ..aid import aiding, nonblocking
+from ..aid import aiding
+from ..aio import nonblocking
 
-#from .aiding import b
 from . import tasking
 
 from ..aid.consoling import getConsole

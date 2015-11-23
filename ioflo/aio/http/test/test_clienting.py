@@ -31,19 +31,17 @@ except ImportError:
 
 # Import ioflo libs
 from ioflo.aid.sixing import *
-from ioflo.base.globaling import *
-from ioflo.aid.odicting import odict
-#from ioflo.test import testing
-
-from ioflo.aid import nonblocking
 from ioflo.aid.timing import Timer, StoreTimer
+from ioflo.aid.odicting import odict
+from ioflo.aid.consoling import getConsole
+from ioflo.base.globaling import *
 from ioflo.base import storing
 
-from ioflo.aid.consoling import getConsole
+from ioflo.aio import nonblocking
+from ioflo.aio.http import httping, clienting, serving
+
 console = getConsole()
 
-
-from ioflo.aid.http import httping, clienting, serving
 
 def setUpModule():
     pass
