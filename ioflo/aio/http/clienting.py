@@ -41,7 +41,7 @@ from ...aid.odicting import odict, lodict, modict
 from ...aid.consoling import getConsole
 from ...base import excepting, storing
 
-from ..nonblocking import Outgoer, OutgoerTls, Server, ServerTls
+from ..tcp import Client, ClientTls, Server, ServerTls
 from . import httping
 
 
@@ -685,13 +685,13 @@ class Patron(object):
         scheme = scheme.lower()
 
         if connector:
-            if isinstance(connector, OutgoerTls):
+            if isinstance(connector, ClientTls):
                 if scheme and scheme != u'https':
                     raise  ValueError("Provided scheme '{0}' incompatible with connector".format(scheme))
                 secured = True
                 scheme = u'https'
                 defaultPort = 443
-            elif isinstance(connector, Outgoer):
+            elif isinstance(connector, Client):
                 if scheme and scheme != u'http':
                     raise  ValueError("Provided scheme '{0}' incompatible with connector".format(scheme))
                 secured = False
@@ -722,7 +722,7 @@ class Patron(object):
             # at some point may want to support changing the hostname and ha of provided connector
         else:
             if secured:
-                connector = OutgoerTls(store=self.store,
+                connector = ClientTls(store=self.store,
                                        name=name,
                                        uid=uid,
                                        host=hostname,
@@ -731,7 +731,7 @@ class Patron(object):
                                        wlog=wlog,
                                        **kwa)
             else:
-                connector = Outgoer(store=self.store,
+                connector = Client(store=self.store,
                                     name=name,
                                     uid=uid,
                                     host=hostname,
@@ -859,7 +859,7 @@ class Patron(object):
                 self.connector.close()
                 if secured:
                     context = getattr(self.connector, 'context')
-                    connector = OutgoerTls(store=self.connector.store,
+                    connector = ClientTls(store=self.connector.store,
                                            name=self.connector.name,
                                            uid=self.connector.uid,
                                            ha=(hostname, port),
@@ -867,7 +867,7 @@ class Patron(object):
                                            wlog=self.connector.wlog,
                                            context=context)
                 else:
-                    connector = Outgoer(store=self.connector.store,
+                    connector = Client(store=self.connector.store,
                                         name=self.connector.name,
                                         uid=self.connector.uid,
                                         ha=(hostname, port),

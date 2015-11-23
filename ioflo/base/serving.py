@@ -16,7 +16,7 @@ from ..aid.odicting import odict
 from .globaling import *
 
 from ..aid import aiding
-from ..aio import nonblocking
+from ..aio.udp import PeerUdp
 
 from . import tasking
 
@@ -60,7 +60,7 @@ class Server(tasking.Tasker):
 
         #create socket server
         self.sha = sha
-        self.server = nonblocking.SocketUdpNb(ha=sha) #reopened by runner
+        self.server = PeerUdp(ha=sha) #reopened by runner
         self.dha = dha #set up destination address
 
         self.prefix = prefix #prefix to log directory for server
@@ -77,7 +77,7 @@ class Server(tasking.Tasker):
         if sha is not None:
             self.sha = sha
             if not self.server:
-                self.server = nonblocking.SocketUdpNb(ha=sha, path='') #reopened by runner
+                self.server = PeerUdp(ha=sha, path='') #reopened by runner
             self.server.ha = sha
 
         if dha is not None:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Unittests for nonblocking module
+Unittests for tcping module
 """
 import sys
 if sys.version_info < (2, 7):
@@ -16,13 +16,13 @@ import socket
 import errno
 
 from ioflo.aid.sixing import *
-from ioflo.base.globaling import *
-#from ioflo.test import testing
 from ioflo.aid.consoling import getConsole
+from ioflo.aio import wiring
+from ioflo.aio.tcp import serving, clienting
+from ioflo.base import storing
+
 console = getConsole()
 
-from ioflo.aio import nonblocking
-from ioflo.base import storing
 
 def setUpModule():
     console.reinit(verbosity=console.Wordage.concise)
@@ -39,8 +39,12 @@ class BasicTestCase(unittest.TestCase):
         """
 
         """
-        certdirpath = os.path.dirname(os.path.abspath(sys.modules.get(__name__).__file__))
-        self.certdirpath = os.path.join(certdirpath, 'tls', 'certs')
+        tempdirpath = os.path.dirname(
+                        os.path.dirname(
+                            os.path.dirname(
+                                os.path.abspath(
+                                    sys.modules.get(__name__).__file__))))
+        self.certdirpath = os.path.join(tempdirpath, 'test', 'tls', 'certs')
 
     def tearDown(self):
         """
@@ -67,22 +71,22 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
 
-        wireLog = nonblocking.WireLog(path=logDirpath)
+        wireLog = wiring.WireLog(path=logDirpath)
         result = wireLog.reopen(prefix='alpha', midfix='6101')
 
         store = storing.Store(stamp=0.0)
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLog, store=store)
+        alpha = serving.Server(port = 6101, bufsize=131072, wlog=wireLog, store=store)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.Client(ha=alpha.eha, bufsize=131072, store=store)
+        beta = clienting.Client(ha=alpha.eha, bufsize=131072, store=store)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
 
-        gamma = nonblocking.Client(ha=alpha.eha, bufsize=131072, store=store)
+        gamma = clienting.Client(ha=alpha.eha, bufsize=131072, store=store)
         self.assertIs(gamma.reopen(), True)
         self.assertIs(gamma.accepted, False)
         self.assertIs(gamma.connected, False)
@@ -471,19 +475,19 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
 
-        wireLogAlpha = nonblocking.WireLog(path=logDirpath, same=True)
+        wireLogAlpha = wiring.WireLog(path=logDirpath, same=True)
         result = wireLogAlpha.reopen(prefix='alpha', midfix='6101')
 
-        wireLogBeta = nonblocking.WireLog(buffify=True)
+        wireLogBeta = wiring.WireLog(buffify=True)
         result = wireLogBeta.reopen()
 
         store = storing.Store(stamp=0.0)
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha, store=store)
+        alpha = serving.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha, store=store)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta, store=store)
+        beta = clienting.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta, store=store)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -613,18 +617,18 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
 
-        wireLogAlpha = nonblocking.WireLog(path=logDirpath, same=True)
+        wireLogAlpha = wiring.WireLog(path=logDirpath, same=True)
         result = wireLogAlpha.reopen(prefix='alpha', midfix='6101')
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = serving.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = clienting.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -733,20 +737,20 @@ class BasicTestCase(unittest.TestCase):
 
     def testClientAutoReconnect(self):
         """
-        Test Classes Outgoer reconnectable
+        Test Classes Client/Outgoer reconnectable
         """
         console.terse("{0}\n".format(self.testClientAutoReconnect.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         store = storing.Store(stamp=0.0)
 
-        beta = nonblocking.Outgoer(ha=('127.0.0.1', 6101),
+        beta = clienting.Client(ha=('127.0.0.1', 6101),
                                    bufsize=131072,
                                    wlog=wireLogBeta,
                                    store=store,
@@ -770,7 +774,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha, store=store)
+        alpha = serving.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha, store=store)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
@@ -834,10 +838,10 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testTLSConnectionDefault.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
@@ -848,7 +852,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
         serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
-        alpha = nonblocking.ServerTls(host='localhost',
+        alpha = serving.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -864,7 +868,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTls(ha=alpha.ha,
+        beta = clienting.ClientTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -962,10 +966,10 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testTLSConnectionVerifyNeither.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
@@ -976,7 +980,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
         serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
-        alpha = nonblocking.ServerTls(host='localhost',
+        alpha = serving.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -992,7 +996,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTls(ha=alpha.ha,
+        beta = clienting.ClientTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1091,10 +1095,10 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testTLSConnectionClientVerifyServerCert.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
@@ -1105,7 +1109,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTls(host='localhost',
+        alpha = serving.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1121,7 +1125,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTls(ha=alpha.ha,
+        beta = clienting.ClientTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1220,10 +1224,10 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testTLSConnectionServerVerifyClientCert.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
@@ -1234,7 +1238,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTls(host='localhost',
+        alpha = serving.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1250,7 +1254,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTls(ha=alpha.ha,
+        beta = clienting.ClientTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1349,10 +1353,10 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testTLSConnectionVerifyBoth.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
@@ -1363,7 +1367,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTls(host='localhost',
+        alpha = serving.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1379,7 +1383,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTls(ha=alpha.ha,
+        beta = clienting.ClientTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1478,10 +1482,10 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testTLSConnectionVerifyBothTLSv1.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
@@ -1492,7 +1496,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
         serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
 
-        alpha = nonblocking.ServerTls(host='localhost',
+        alpha = serving.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1508,7 +1512,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTls(ha=alpha.ha,
+        beta = clienting.ClientTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1607,11 +1611,7 @@ def runOne(test):
 def runSome():
     """ Unittest runner """
     tests =  []
-    names = ['testConsoleNb',
-             'testWireLog',
-             'testWireLogBuffify',
-             'testSocketUdpNb',
-             'testSocketUxdNb',
+    names = [
              'testTcpClientServer',
              'testTcpClientServerServiceCat',
              'testTcpClientServerService',
@@ -1622,7 +1622,6 @@ def runSome():
              'testTLSConnectionServerVerifyClientCert',
              'testTLSConnectionVerifyBoth',
              'testTLSConnectionVerifyBothTLSv1',
-
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

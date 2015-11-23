@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Unittests for nonblocking module
+Unittests for http serving module
 """
 
 import sys
@@ -37,7 +37,7 @@ from ioflo.aid.timing import Timer, StoreTimer
 from ioflo.aid.consoling import getConsole
 from ioflo.base import storing
 
-from ioflo.aio import nonblocking
+from ioflo.aio import wiring
 from ioflo.aio.http import httping, clienting, serving
 
 console = getConsole()
@@ -78,7 +78,7 @@ class BasicTestCase(unittest.TestCase):
         store = storing.Store(stamp=0.0)
 
         console.terse("{0}\n".format("Building Valet ...\n"))
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
         alpha = serving.Porter(port = 6101,
@@ -90,7 +90,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Patron ...\n"))
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
@@ -177,7 +177,7 @@ class BasicTestCase(unittest.TestCase):
             return [b"Hello World!"]
 
         console.terse("{0}\n".format("Building Valet ...\n"))
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
         alpha = serving.Valet(port = 6101,
@@ -190,7 +190,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Patron ...\n"))
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
@@ -294,7 +294,7 @@ class BasicTestCase(unittest.TestCase):
 
 
         console.terse("{0}\n".format("Building Valet ...\n"))
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
         alpha = serving.Valet(port = 6101,
@@ -307,7 +307,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Patron ...\n"))
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
@@ -419,7 +419,7 @@ class BasicTestCase(unittest.TestCase):
             yield "data: END\n\n"
 
         console.terse("{0}\n".format("Building Valet ...\n"))
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
         alpha = serving.Valet(port = 6101,
@@ -432,7 +432,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Patron ...\n"))
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])

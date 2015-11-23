@@ -7,7 +7,7 @@
 from ..aid.sixing import *
 from .globaling import *
 
-from ..aid import aiding
+from ..aio.udp import PeerUdp
 from . import excepting
 from . import tasking
 
@@ -55,7 +55,7 @@ class Monitor(tasking.Tasker):
         self.host = host
         self.port = port
         self.ha = (self.host, self.port)
-        self.server = aiding.SocketUdpNb(host = self.host,port = self.port, path = '')
+        self.server = PeerUdp(host = self.host,port = self.port, path = '')
 
         self.dha = (dhost, dport) #set up destination address
 

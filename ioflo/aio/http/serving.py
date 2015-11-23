@@ -41,7 +41,7 @@ from ...aid import aiding
 from ...aid.consoling import getConsole
 from ...base import excepting, storing
 
-from ..nonblocking import Outgoer, OutgoerTls, Server, ServerTls
+from ..tcp import Server, ServerTls
 from . import httping
 
 
@@ -499,7 +499,7 @@ class Valet(object):
         Initialization method for instance.
         app = wsgi application callable
         reqs = odict of Requestant instances keyed by ca
-        apps = odict of running WsgiResponder instances keyed by ca
+        apps = odict of running Wsgi Responder instances keyed by ca
         servant = instance of Server or ServerTls or None
         store = Datastore for timers
 

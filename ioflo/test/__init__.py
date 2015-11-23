@@ -22,9 +22,12 @@ from ioflo.aid.consoling import getConsole
 console = getConsole()
 console.reinit(verbosity=console.Wordage.concise)
 
-top = os.path.dirname(os.path.dirname
-                     (os.path.abspath
-                     (sys.modules.get(__name__).__file__)))
+start = os.path.dirname(os.path.dirname
+                        (os.path.abspath
+                            (sys.modules.get(__name__).__file__)))
+
+# need top to be above root for relative imports to not go above top level
+top = os.path.dirname(start)
 
 def run(top, start=None):
     """
@@ -40,4 +43,4 @@ def run(top, start=None):
     unittest.TextTestRunner(verbosity=2).run(suite)
 
 if __name__ == "__main__":
-    run(top)
+    run(top, start)

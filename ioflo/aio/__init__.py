@@ -1,5 +1,4 @@
 """
-aio  asynchronous input output package
-nonblocking
+aio  asynchronous (nonblocking) input output package
 """
-
+from .wiring import WireLog

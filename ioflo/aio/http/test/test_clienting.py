@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Unittests for nonblocking module
+Unittests for http clienting module
 """
 
 import sys
@@ -37,7 +37,7 @@ from ioflo.aid.consoling import getConsole
 from ioflo.base.globaling import *
 from ioflo.base import storing
 
-from ioflo.aio import nonblocking
+from ioflo.aio import wiring, tcp
 from ioflo.aio.http import httping, clienting, serving
 
 console = getConsole()
@@ -75,18 +75,18 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = tcp.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -199,18 +199,18 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
+        wireLogBeta = wiring.WireLog(buffify=True, same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = tcp.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -352,18 +352,18 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
+        wireLogBeta = wiring.WireLog(buffify=True, same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = tcp.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -505,18 +505,18 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
+        wireLogBeta = wiring.WireLog(buffify=True, same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = tcp.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -659,18 +659,18 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
+        wireLogBeta = wiring.WireLog(buffify=True, same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = tcp.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -825,18 +825,18 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
+        wireLogBeta = wiring.WireLog(buffify=True, same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = tcp.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -981,18 +981,18 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True, same=True)
+        wireLogBeta = wiring.WireLog(buffify=True, same=True)
         result = wireLogBeta.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        beta = nonblocking.Outgoer(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
+        beta = tcp.Client(ha=alpha.eha, bufsize=131072, wlog=wireLogBeta)
         self.assertIs(beta.reopen(), True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
@@ -1140,10 +1140,10 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
@@ -1154,7 +1154,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
         serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
-        alpha = nonblocking.ServerTls(host='localhost',
+        alpha = tcp.ServerTls(host='localhost',
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -1171,7 +1171,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        beta = nonblocking.OutgoerTls(ha=alpha.ha,
+        beta = tcp.ClientTls(ha=alpha.ha,
                                       bufsize=131072,
                                       wlog=wireLogBeta,
                                       context=None,
@@ -1297,17 +1297,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -1427,17 +1427,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -1556,17 +1556,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -1778,17 +1778,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -1941,17 +1941,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         #host = alpha.eha[0]
@@ -2088,17 +2088,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         #host = alpha.eha[0]
@@ -2262,17 +2262,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
         #host = alpha.eha[0]
@@ -2418,10 +2418,10 @@ class BasicTestCase(unittest.TestCase):
 
         store = storing.Store(stamp=0.0)
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101,
+        alpha = tcp.Server(port = 6101,
                                    bufsize=131072,
                                    wlog=wireLogAlpha,
                                    store=store)
@@ -2431,7 +2431,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -2677,7 +2677,7 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
         serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
@@ -2690,7 +2690,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        alpha = nonblocking.ServerTls(host=serverCertCommonName,
+        alpha = tcp.ServerTls(host=serverCertCommonName,
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -2707,7 +2707,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("{0}\n".format("Building Patron ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -2846,7 +2846,7 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
         serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
@@ -2859,7 +2859,7 @@ class BasicTestCase(unittest.TestCase):
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
 
-        alpha = nonblocking.ServerTls(host=serverCertCommonName,
+        alpha = tcp.ServerTls(host=serverCertCommonName,
                                       port = 6101,
                                       bufsize=131072,
                                       wlog=wireLogAlpha,
@@ -2876,7 +2876,7 @@ class BasicTestCase(unittest.TestCase):
 
         console.terse("{0}\n".format("Building Patron ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         #host = alpha.eha[0]
         #port = alpha.eha[1]
@@ -3039,17 +3039,17 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -3201,25 +3201,25 @@ class BasicTestCase(unittest.TestCase):
 
 
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
         self.assertIs(alpha.reopen(), True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        wireLogGamma = nonblocking.WireLog(buffify=True, same=True)
+        wireLogGamma = wiring.WireLog(buffify=True, same=True)
         result = wireLogGamma.reopen()
 
-        gamma = nonblocking.Server(port = 6103, bufsize=131072, wlog=wireLogGamma)
+        gamma = tcp.Server(port = 6103, bufsize=131072, wlog=wireLogGamma)
         self.assertIs(gamma.reopen(), True)
         self.assertEqual(gamma.ha, ('0.0.0.0', 6103))
         self.assertEqual(gamma.eha, ('127.0.0.1', 6103))
 
         console.terse("{0}\n".format("Building Connector ...\n"))
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = alpha.eha[0]
         port = alpha.eha[1]
@@ -3376,10 +3376,10 @@ class BasicTestCase(unittest.TestCase):
         serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
         clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
 
-        wireLogAlpha = nonblocking.WireLog(buffify=True, same=True)
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
         result = wireLogAlpha.reopen()
 
-        alpha = nonblocking.ServerTls(host=serverCertCommonName,
+        alpha = tcp.ServerTls(host=serverCertCommonName,
                                    port = 6101,
                                    bufsize=131072,
                                    wlog=wireLogAlpha,
@@ -3393,10 +3393,10 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.ha, ('127.0.0.1', 6101))
         self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
 
-        wireLogGamma = nonblocking.WireLog(buffify=True, same=True)
+        wireLogGamma = wiring.WireLog(buffify=True, same=True)
         result = wireLogGamma.reopen()
 
-        gamma = nonblocking.ServerTls(host=serverCertCommonName,
+        gamma = tcp.ServerTls(host=serverCertCommonName,
                                    port = 6103,
                                    bufsize=131072,
                                    wlog=wireLogGamma,
@@ -3416,7 +3416,7 @@ class BasicTestCase(unittest.TestCase):
         clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
         serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
 
-        wireLogBeta = nonblocking.WireLog(buffify=True,  same=True)
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
         host = serverCertCommonName
         port = alpha.eha[1]
