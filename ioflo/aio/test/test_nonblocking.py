@@ -2,10 +2,7 @@
 """
 Unittests for nonblocking module
 """
-
 import sys
-if sys.version > '3':
-    xrange = range
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:

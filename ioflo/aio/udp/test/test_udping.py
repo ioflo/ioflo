@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Unittests for nonblocking module
+Unittests for udp async io (nonblocking) module
 """
 
 import sys
-if sys.version > '3':
-    xrange = range
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -15,18 +13,14 @@ import os
 import time
 import tempfile
 import shutil
-import socket
-import errno
 
 from ioflo.aid.sixing import *
 from ioflo.aid.consoling import getConsole
 from ioflo.base.globaling import *
-from ioflo.base import storing
 from ioflo.aio import wiring
 from ioflo.aio.udp import udping
 
 console = getConsole()
-
 
 
 def setUpModule():
@@ -70,13 +64,13 @@ class BasicTestCase(unittest.TestCase):
         if not os.path.exists(logDirpath):
             os.makedirs(logDirpath)
 
-        wireLog = nonblocking.WireLog(path=logDirpath)
+        wireLog = wiring.WireLog(path=logDirpath)
         result = wireLog.reopen(prefix='alpha', midfix='6101')
 
-        alpha = nonblocking.SocketUdpNb(port = 6101, wlog=wireLog)
+        alpha = udping.SocketUdpNb(port = 6101, wlog=wireLog)
         self.assertIs(alpha.reopen(), True)
 
-        beta = nonblocking.SocketUdpNb(port = 6102)
+        beta = udping.SocketUdpNb(port = 6102)
         self.assertIs(beta.reopen(), True)
 
         console.terse("Sending alpha to beta\n")
