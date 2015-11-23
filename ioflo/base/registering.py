@@ -6,7 +6,6 @@
 import random
 
 from ..aid.sixing import *
-from .globaling import *
 from ..aid.odicting import odict
 
 from . import excepting

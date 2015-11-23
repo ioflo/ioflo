@@ -15,7 +15,7 @@ except ImportError: #python 3 zip is same as izip
     izip = zip
 
 from ..aid.sixing import *
-from .globaling import *
+from .globaling import AUX, MOOT, INDENT_ADD, ScheduleNames
 from ..aid.odicting import odict
 
 from ..aid.classing import metaclassify, nonStringIterable

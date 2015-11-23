@@ -9,7 +9,7 @@ import inspect
 import copy
 
 from ..aid.sixing import *
-from .globaling import *
+from .globaling import INDENT_ADD
 from ..aid.odicting import odict
 from ..aid import aiding
 from . import excepting

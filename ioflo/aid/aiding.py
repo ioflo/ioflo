@@ -30,7 +30,7 @@ except ImportError:
 
 # Import ioflo libs
 from .sixing import *
-from ..base.globaling import *
+#from ..base.globaling import *
 from .odicting import odict
 from ..base import excepting
 

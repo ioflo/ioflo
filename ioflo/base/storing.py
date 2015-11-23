@@ -10,7 +10,7 @@ import copy
 from collections import deque
 
 from ..aid.sixing import *
-from .globaling import *
+from .globaling import INDENT_ADD, REO_IdentPub
 from ..aid.odicting import odict
 
 from . import excepting
