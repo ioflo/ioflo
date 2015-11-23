@@ -18,7 +18,7 @@ from ..aid.sixing import *
 from .globaling import *
 from ..aid.odicting import odict
 
-from ..aid.metaing import metaclassify, nonStringIterable
+from ..aid.classing import metaclassify, nonStringIterable
 from ..aid.aiding import nameToPath
 from . import excepting
 from . import registering

@@ -15,8 +15,8 @@ from ..aid.aiding import  reverseCamel,  \
 # In future users should import from ioflo.aid.timing not here
 from ..aid.timing import Timer, MonoTimer, StoreTimer, totalSeconds
 
-# In future users should import from ioflo.aid.metaing not here
-from ..aid.metaing import metaclassify, NonStringIterable, NonStringSequence, nonStringIterable, \
+# In future users should import from ioflo.aid.classing not here
+from ..aid.classing import metaclassify, NonStringIterable, NonStringSequence, nonStringIterable, \
      nonStringSequence
 
 # In future users should import from ioflo.aio not here

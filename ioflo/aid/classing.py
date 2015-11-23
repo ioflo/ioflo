@@ -1,5 +1,5 @@
 """
-Metaclass and utility classes
+meta class and base class utility classes and functions
 
 """
 from __future__ import absolute_import, division, print_function

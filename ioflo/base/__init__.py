@@ -16,3 +16,5 @@ _modules = ['globaling', 'excepting', 'interfacing',
 for m in _modules:
     importlib.import_module(".{0}".format(m), package='ioflo.base')
 
+from .storing import Store, Node, Share, Deck
+from .doing import doify, Doer

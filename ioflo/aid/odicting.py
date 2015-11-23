@@ -341,10 +341,6 @@ class lodict(odict):
         return super(lodict, self).__getitem__(key.lower())
 
 
-
-
-
-
 class modict(odict):
     """
     Multiple Ordered Dictionary. Inspired by other MultiDicts in the wild.

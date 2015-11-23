@@ -15,7 +15,7 @@ from ioflo.test import testing
 from ioflo.aid.consoling import getConsole
 console = getConsole()
 
-from ioflo.aid import metaing
+from ioflo.aid import classing
 from ioflo.base import registering
 
 def setUpModule():
@@ -53,11 +53,11 @@ class BasicTestCase(unittest.TestCase):
         y = b'abc'
         z = [1, 2, 3]
 
-        self.assertTrue(isinstance(a, metaing.NonStringIterable))
-        self.assertTrue(isinstance(w, metaing.NonStringIterable))
-        self.assertFalse(isinstance(x, metaing.NonStringIterable))
-        self.assertFalse(isinstance(y, metaing.NonStringIterable))
-        self.assertTrue(isinstance(z, metaing.NonStringIterable))
+        self.assertTrue(isinstance(a, classing.NonStringIterable))
+        self.assertTrue(isinstance(w, classing.NonStringIterable))
+        self.assertFalse(isinstance(x, classing.NonStringIterable))
+        self.assertFalse(isinstance(y, classing.NonStringIterable))
+        self.assertTrue(isinstance(z, classing.NonStringIterable))
 
 
     def TestNonStringSequence(self):
@@ -71,11 +71,11 @@ class BasicTestCase(unittest.TestCase):
         y = b'abc'
         z = [1, 2, 3]
 
-        self.assertTrue(isinstance(a, metaing.NonStringIterable))
-        self.assertFalse(isinstance(w, metaing.NonStringSequence))
-        self.assertFalse(isinstance(x, metaing.NonStringSequence))
-        self.assertFalse(isinstance(y, metaing.NonStringSequence))
-        self.assertTrue(isinstance(z, metaing.NonStringSequence))
+        self.assertTrue(isinstance(a, classing.NonStringIterable))
+        self.assertFalse(isinstance(w, classing.NonStringSequence))
+        self.assertFalse(isinstance(x, classing.NonStringSequence))
+        self.assertFalse(isinstance(y, classing.NonStringSequence))
+        self.assertTrue(isinstance(z, classing.NonStringSequence))
 
     def TestMetaclassify(self):
         """
@@ -83,7 +83,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.TestMetaclassify.__doc__))
 
-        @metaing.metaclassify(registering.RegisterType)
+        @classing.metaclassify(registering.RegisterType)
         class A(object):
             #__metaclass__ = registering.RegisterType
             def __init__(self, name="", store=None):

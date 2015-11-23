@@ -20,7 +20,7 @@ from . import acting
 from ..aid.consoling import getConsole
 console = getConsole()
 
-from ..aid.metaing import nonStringIterable
+from ..aid.classing import nonStringIterable
 from ..aid.aiding import  just, nameToPath
 
 def doify(name,
