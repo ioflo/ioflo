@@ -1,5 +1,5 @@
 """
-nonblocking.py
+tcp async io (nonblocking) module
 
 """
 from __future__ import absolute_import, division, print_function
@@ -7,20 +7,12 @@ from __future__ import absolute_import, division, print_function
 import sys
 import os
 import socket
-import time
 import errno
-import io
 import platform
 from collections import deque
 
-
 try:
     import ssl
-except ImportError:
-    pass
-
-try:
-    import win32file
 except ImportError:
     pass
 
@@ -29,13 +21,9 @@ from ..aid.sixing import *
 from ..aid.odicting import odict
 from ..aid.timing import StoreTimer
 from ..aid.consoling import getConsole
-from ..base.globaling import *
-from ..base import excepting
 from ..base import storing
 
 console = getConsole()
-
-
 
 def initServerContext(context=None,
                       version=None,
