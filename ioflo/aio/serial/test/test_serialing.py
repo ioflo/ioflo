@@ -17,12 +17,8 @@ import socket
 import errno
 
 from ioflo.aid.sixing import *
-from ioflo.base.globaling import *
 from ioflo.aid.consoling import getConsole
-
-
-from ioflo.aio.serial.serialing import ConsoleNb
-from ioflo.base import storing
+from ioflo.aio.serial import serialing
 
 console = getConsole()
 
@@ -53,7 +49,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testConsoleNb.__doc__))
 
-        myconsole = ConsoleNb()
+        myconsole = serialing.ConsoleNb()
         result = myconsole.open()
         #self.assertIs(result, False)
         #self.assertIs(result, True)

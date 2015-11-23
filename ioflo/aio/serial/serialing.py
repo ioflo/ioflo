@@ -6,21 +6,12 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 import os
-import socket
-import time
 import errno
-import io
-import platform
 from collections import deque
 
 # Import ioflo libs
 from ...aid.sixing import *
-from ...aid.odicting import odict
-from ...aid.timing import StoreTimer
 from ...aid.consoling import getConsole
-from ...base.globaling import *
-from ...base import excepting
-from ...base import storing
 
 console = getConsole()
 
