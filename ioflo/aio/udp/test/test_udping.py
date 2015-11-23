@@ -16,7 +16,6 @@ import shutil
 
 from ioflo.aid.sixing import *
 from ioflo.aid.consoling import getConsole
-from ioflo.base.globaling import *
 from ioflo.aio import wiring
 from ioflo.aio.udp import udping
 

@@ -5,28 +5,20 @@ Over the wire logs
 """
 
 import sys
-if sys.version > '3':
-    xrange = range
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
     import unittest
 
 import os
-import time
 import tempfile
 import shutil
-import socket
-import errno
 
 from ioflo.aid.sixing import *
-from ioflo.base.globaling import *
 from ioflo.aid.consoling import getConsole
 from ioflo.aio import wiring
-from ioflo.base import storing
 
 console = getConsole()
-
 
 
 def setUpModule():
