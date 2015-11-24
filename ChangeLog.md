@@ -2,12 +2,16 @@
 CHANGE LOG
 -------------------
 ---------
-201510XX
+20151124
 ---------
 1.4.4
 
-Updated properties in storing module classes to use new decorator syntax
-
+Updated storing module classes properties to use decorator syntax
+Refactored aid package into smaller sub modules for better future proofing
+Refactored async io modules to be in new aio package with finer granularity for
+future proofing
+Minor bug fixes and improvements
+More unittests
 
 ---------
 20151018
