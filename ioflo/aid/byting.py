@@ -5,18 +5,9 @@ byting.py utility functions supporting byte, bit, hex conversion and packing
 from __future__ import absolute_import, division, print_function
 
 import sys
-import math
-import types
-import socket
 import os
-import sys
-import errno
-import time
-import datetime
 import struct
-import re
 import string
-from collections import deque
 
 # Import ioflo libs
 from .sixing import *

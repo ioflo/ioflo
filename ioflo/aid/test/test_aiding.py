@@ -46,73 +46,27 @@ class BasicTestCase(unittest.TestCase):
         """
         super(BasicTestCase, self).tearDown()
 
-    def testTagify(self):
+    def testJust(self):
         """
-        Test tagify function
+        Test just function
         """
-        console.terse("{0}\n".format(self.testTagify.__doc__))
+        console.terse("{0}\n".format(self.testJust.__doc__))
         console.reinit(verbosity=console.Wordage.profuse)
 
-        tag = aiding.tagify()
-        self.assertEqual(tag, u'')
+        x = (1, 2, 3, 4)
+        self.assertEqual(tuple(aiding.just(3, x)), (1, 2, 3))
 
-        tag = aiding.tagify(head='exchange')
-        self.assertEqual(tag, 'exchange')
+        x = (1, 2, 3)
+        self.assertEqual(tuple(aiding.just(3, x)), (1, 2, 3))
 
-        tag = aiding.tagify(head='exchange', tail='completed')
-        self.assertEqual(tag, 'exchange.completed')
+        x = (1, 2)
+        self.assertEqual(tuple(aiding.just(3, x)), (1, 2, None))
 
-        tag = aiding.tagify(head='exchange', tail=['process', 'started'])
-        self.assertEqual(tag, 'exchange.process.started')
+        x = (1, )
+        self.assertEqual(tuple(aiding.just(3, x)), (1, None, None))
 
-        tag = aiding.tagify(head='exchange', tail=['process', 'started'], sep='/')
-        self.assertEqual(tag, 'exchange/process/started')
-
-        tag = aiding.tagify(tail=['process', 'started'])
-        self.assertEqual(tag, 'process.started')
-
-        console.reinit(verbosity=console.Wordage.concise)
-
-    def testEventify(self):
-        """
-        Test eventify function
-        """
-        console.terse("{0}\n".format(self.testEventify.__doc__))
-        console.reinit(verbosity=console.Wordage.profuse)
-
-        dt = datetime.datetime.utcnow()
-        stamp = dt.isoformat()
-
-        event = aiding.eventify('hello')
-        self.assertEqual(event['tag'], 'hello')
-        self.assertEqual(event['data'], {})
-        #"YYYY-MM-DDTHH:MM:SS.mmmmmm"
-        tdt = datetime.datetime.strptime(event['stamp'], "%Y-%m-%dT%H:%M:%S.%f")
-        self.assertGreater(tdt, dt)
-
-        event = aiding.eventify(tag=aiding.tagify(head='exchange', tail='started'),
-                                stamp=stamp)
-        self.assertEqual(event['tag'], 'exchange.started' )
-        self.assertEqual(event['stamp'], stamp )
-
-        event = aiding.eventify(tag=aiding.tagify(tail='started', head='exchange'),
-                                stamp=stamp,
-                                data = odict(name='John'))
-        self.assertEqual(event['tag'], 'exchange.started')
-        self.assertEqual(event['stamp'], stamp)
-        self.assertEqual(event['data'], {'name':  'John',})
-
-        stamp = '2015-08-10T19:26:47.194736'
-        event = aiding.eventify(tag='process.started', stamp=stamp, data={'name': 'Jill',})
-        self.assertEqual(event, {'tag': 'process.started',
-                                 'stamp': '2015-08-10T19:26:47.194736',
-                                 'data': {'name': 'Jill',},})
-
-        event = aiding.eventify(tag="with uid", stamp=stamp, uid="abcde")
-        self.assertEqual(event, {'data': {},
-                                'stamp': '2015-08-10T19:26:47.194736',
-                                'tag': 'with uid',
-                                'uid': 'abcde'})
+        x = ()
+        self.assertEqual(tuple(aiding.just(3, x)), (None, None, None))
 
         console.reinit(verbosity=console.Wordage.concise)
 
@@ -129,8 +83,7 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = [
-             'testTagify',
-             'testEventify',
+             'testJust',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

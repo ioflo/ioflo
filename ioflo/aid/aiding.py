@@ -1,45 +1,97 @@
-"""aiding.py constants and basic functions
+"""
+aiding.py miscellaneous utility functions
 
 """
 from __future__ import absolute_import, division, print_function
 
 import sys
-import math
-import types
-import socket
 import os
-import sys
-import errno
-import time
-import datetime
-import struct
 import re
-import string
-from collections import deque
-
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
-
-try:
-    import win32file
-except ImportError:
-    pass
 
 # Import ioflo libs
 from .sixing import *
-from .odicting import odict
-from ..base import excepting
-
 from .consoling import getConsole
+
 console = getConsole()
 
 # For backwards compatibility. In the future import from .byting
 from .byting import (binize, unbinize, hexize, unhexize, hexify, unhexify,
                      bytify, unbytify, packify, unpackify, packByte, unpackByte,
                      denary2BinaryStr, dec2BinStr, printHex, printDecimal)
+
+# For backwards compatibility. In the future import from .eventing
+from .eventing import tagify, eventify
+
+# For backwards compatibility. In the future import from .checking
+from .checking import crc16, crc64
+
+# For backwards compatibility. In the future import from .filing
+from .filing import ocfn, load, dump, loadJson, dumpJson
+
+
+def repack(n, seq, default=None):
+    """ Repacks seq into a generator of len n and returns the generator.
+        The purpose is to enable unpacking into n variables.
+        The first n-1 elements of seq are returned as the first n-1 elements of the
+        generator and any remaining elements are returned in a tuple as the
+        last element of the generator
+        default (None) is substituted for missing elements when len(seq) < n
+
+        Example:
+
+        x = (1, 2, 3, 4)
+        tuple(repack(3, x))
+        (1, 2, (3, 4))
+
+        x = (1, 2, 3)
+        tuple(repack(3, x))
+        (1, 2, (3,))
+
+        x = (1, 2)
+        tuple(repack(3, x))
+        (1, 2, ())
+
+        x = (1, )
+        tuple(repack(3, x))
+        (1, None, ())
+
+        x = ()
+        tuple(repack(3, x))
+        (None, None, ())
+
+    """
+    it = iter(seq)
+    for _i in range(n - 1):
+        yield next(it, default)
+    yield tuple(it)
+
+def just(n, seq, default=None):
+    """ Returns a generator of just the first n elements of seq and substitutes
+        default (None) for any missing elements. This guarantees that a generator of exactly
+        n elements is returned. This is to enable unpacking into n varaibles
+
+        Example:
+
+        x = (1, 2, 3, 4)
+        tuple(just(3, x))
+        (1, 2, 3)
+        x = (1, 2, 3)
+        tuple(just(3, x))
+        (1, 2, 3)
+        x = (1, 2)
+        tuple(just(3, x))
+        (1, 2, None)
+        x = (1, )
+        tuple(just(3, x))
+        (1, None, None)
+        x = ()
+        tuple(just(3, x))
+        (None, None, None)
+
+    """
+    it = iter(seq)
+    for _i in range(n):
+        yield next(it, default)
 
 def reverseCamel(name, lower=True):
     """ Returns camel case reverse of name.
@@ -82,74 +134,11 @@ def nameToPath(name):
     path = ''.join(pathParts)
     return path
 
-def repack(n, seq, default=None):
-    """ Repacks seq into a generator of len n and returns the generator.
-        The purpose is to enable unpacking into n variables.
-        The first n-1 elements of seq are returned as the first n-1 elements of the
-        generator and any remaining elements are returned in a tuple as the
-        last element of the generator
-        default (None) is substituted for missing elements when len(seq) < n
-
-        Example:
-
-        x = (1, 2, 3, 4)
-        tuple(Repack(3, x))
-        (1, 2, (3, 4))
-
-        x = (1, 2, 3)
-        tuple(Repack(3, x))
-        (1, 2, (3,))
-
-        x = (1, 2)
-        tuple(Repack(3, x))
-        (1, 2, ())
-
-        x = (1, )
-        tuple(Repack(3, x))
-        (1, None, ())
-
-        x = ()
-        tuple(Repack(3, x))
-        (None, None, ())
-
-    """
-    it = iter(seq)
-    for _i in range(n - 1):
-        yield next(it, default)
-    yield tuple(it)
-
-def just(n, seq, default=None):
-    """ Returns a generator of just the first n elements of seq and substitutes
-        default (None) for any missing elements. This guarantees that a generator of exactly
-        n elements is returned. This is to enable unpacking into n varaibles
-
-        Example:
-
-        x = (1, 2, 3, 4)
-        tuple(Just(3, x))
-        (1, 2, 3)
-        x = (1, 2, 3)
-        tuple(Just(3, x))
-        (1, 2, 3)
-        x = (1, 2)
-        tuple(Just(3, x))
-        (1, 2, None)
-        x = (1, )
-        tuple(Just(3, x))
-        (1, None, None)
-        x = ()
-        tuple(Just(3, x))
-        (None, None, None)
-
-    """
-    it = iter(seq)
-    for _i in range(n):
-        yield next(it, default)
-
-# Faster to use precompiled versions in globaling
 def isPath(s):
     """Returns True if string s is valid Store path name
        Returns False otherwise
+
+       Faster to use precompiled versions in base
 
        raw string
        this also matches an empty string so need
@@ -253,198 +242,4 @@ def isIdentPub(s):
         return True
     else:
         return False
-
-def tagify(tail=u'', head=u'', sep=u'.'):
-    """
-    Returns namespaced event tag string.
-    Tag generated by joining with sep the head and tail in that order
-
-    If tail is a list Then join all string elements of tail individually
-    Else use string suffix
-
-    If either head or tail is empty then do not exhibit
-
-    """
-    parts = [head]
-    if hasattr(tail, 'append'):  # list so extend parts
-        parts.extend(tail)
-    else:  # string so append
-        parts.append(tail)
-    return sep.join([part for part in parts if part])
-
-def eventify(tag, data=None, stamp=None, uid=None):
-    """
-    Returns new event with tag and  current timestamp and data if any
-    Timestamp is iso 8601
-    YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
-    Adds uid field if provided
-    """
-    event = odict([(u'tag', tag),
-                    (u'stamp', stamp if stamp is not None else
-                         datetime.datetime.utcnow().isoformat()),
-                    (u'data', data if data is not None else odict())
-                   ])
-    if uid is not None:
-        event['uid'] = uid
-    return event
-
-def crc16(inpkt):
-    """ Returns 16 bit crc or inpkt packed binary string
-        compatible with ANSI 709.1 and 852
-        inpkt is bytes in python3 or str in python2
-        needs struct module
-    """
-    inpkt = bytearray(inpkt)
-    poly = 0x1021  # Generator Polynomial
-    crc = 0xffff
-    for element in inpkt :
-        i = 0
-        #byte = ord(element)
-        byte = element
-        while i < 8 :
-            crcbit = 0x0
-            if (crc & 0x8000):
-                crcbit = 0x01
-            databit = 0x0
-            if (byte & 0x80):
-                databit = 0x01
-            crc = crc << 1
-            crc = crc & 0xffff
-            if (crcbit != databit):
-                crc = crc ^ poly
-            byte = byte << 1
-            byte = byte & 0x00ff
-            i += 1
-    crc = crc ^ 0xffff
-    return struct.pack("!H",crc )
-
-CRC16 = Crc16 = crc16 # alias
-
-def crc64(inpkt) :
-    """ Returns 64 bit crc of inpkt binary packed string inpkt
-        inpkt is bytes in python3 or str in python2
-        returns tuple of two 32 bit numbers for top and bottom of 64 bit crc
-    """
-    inpkt = bytearray(inpkt)
-    polytop = 0x42f0e1eb
-    polybot = 0xa9ea3693
-    crctop  = 0xffffffff
-    crcbot  = 0xffffffff
-    for element in inpkt :
-        i = 0
-        #byte = ord(element)
-        byte = element
-        while i < 8 :
-            topbit = 0x0
-            if (crctop & 0x80000000):
-                topbit = 0x01
-            databit = 0x0
-            if (byte & 0x80):
-                databit = 0x01
-            crctop = crctop << 1
-            crctop = crctop & 0xffffffff
-            botbit = 0x0
-            if (crcbot & 0x80000000):
-                botbit = 0x01
-            crctop = crctop | botbit
-            crcbot = crcbot << 1
-            crcbot = crcbot & 0xffffffff
-            if (topbit != databit):
-                crctop = crctop ^ polytop
-                crcbot = crcbot ^ polybot
-            byte = byte << 1
-            byte = byte & 0x00ff
-            i += 1
-    crctop = crctop ^ 0xffffffff
-    crcbot = crcbot ^ 0xffffffff
-    return (crctop, crcbot)
-
-CRC64 = Crc64 = crc64 # alias
-
-def ocfn(filename, openMode = 'r+', binary=False):
-    """Atomically open or create file from filename.
-
-       If file already exists, Then open file using openMode
-       Else create file using write update mode If not binary Else
-           write update binary mode
-       Returns file object
-
-       If binary Then If new file open with write update binary mode
-    """
-    try:
-        newfd = os.open(filename, os.O_EXCL | os.O_CREAT | os.O_RDWR, 436) # 436 == octal 0664
-        if not binary:
-            newfile = os.fdopen(newfd,"w+")
-        else:
-            newfile = os.fdopen(newfd,"w+b")
-    except OSError as ex:
-        if ex.errno == errno.EEXIST:
-            newfile = open(filename, openMode)
-        else:
-            raise
-    return newfile
-
-Ocfn = ocfn # alias
-
-def load(file = ""):
-    """Loads object from pickled file, returns object"""
-
-    if not file:
-        raise ParameterError("No file to Load form: {0}".format(file))
-
-    f = open(file,"r+")
-    p = pickle.Unpickler(f)
-    it = p.load()
-    f.close()
-    return it
-
-Load = load
-
-def dump(it = None, file = ""):
-    """Pickles  it object to file"""
-
-    if not it:
-        raise ParameterError("No object to Dump: {0}".format(str(it)))
-
-    if not file:
-        raise ParameterError("No file to Dump to: {0}".format(file))
-
-
-    f = open(file, "w+")
-    p = pickle.Pickler(f)
-    p.dump(it)
-    f.close()
-
-Dump = dump
-
-def dumpJson(it = None, filename = "", indent=2):
-    """Jsonifys it and dumps it to filename"""
-    if not it:
-        raise ValueError("No object to Dump: {0}".format(it))
-
-    if not filename:
-        raise ValueError("No file to Dump to: {0}".format(filename))
-
-    with ocfn(filename, "w+") as f:
-        json.dump(it, f, indent=2)
-        f.flush()
-        os.fsync(f.fileno())
-
-DumpJson = dumpJson
-
-def loadJson(filename = ""):
-    """ Loads json object from filename, returns unjsoned object"""
-    if not filename:
-        raise ParameterError("Empty filename to load.")
-
-    with ocfn(filename) as f:
-        try:
-            it = json.load(f, object_pairs_hook=odict())
-        except EOFError:
-            return None
-        except ValueError:
-            return None
-        return it
-
-LoadJson = loadJson
 
