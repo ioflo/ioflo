@@ -31,7 +31,6 @@ except ImportError:
 
 # Import ioflo libs
 from ioflo.aid.sixing import *
-from ioflo.base.globaling import *
 from ioflo.aid.odicting import odict
 from ioflo.aid.timing import Timer, StoreTimer
 from ioflo.aid.consoling import getConsole

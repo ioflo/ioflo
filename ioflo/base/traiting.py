@@ -10,13 +10,8 @@ from collections import deque
 import inspect
 
 from ..aid.sixing import *
-from .globaling import *
 from ..aid.odicting import odict
 
-from ..aid import aiding
-from . import excepting
-from . import registering
-from . import storing
 from . import acting
 
 from ..aid.consoling import getConsole

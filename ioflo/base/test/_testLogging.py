@@ -1,5 +1,4 @@
 from ioflo.aid.sixing import *
-from ioflo.base.globaling import *
 from ioflo.base import storing
 from ioflo.base import logging
 

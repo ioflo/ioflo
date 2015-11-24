@@ -11,7 +11,6 @@ import inspect
 
 from ....aid.sixing import *
 from ....aid.odicting import odict
-from ....base.globaling import *
 
 from ....aid import aiding, navigating, blending
 

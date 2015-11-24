@@ -7,7 +7,6 @@
 import random
 
 from ..aid.sixing import *
-from .globaling import *
 
 
 class ParameterError(Exception):

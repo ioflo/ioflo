@@ -34,7 +34,6 @@ from ioflo.aid.sixing import *
 from ioflo.aid.timing import Timer, StoreTimer
 from ioflo.aid.odicting import odict
 from ioflo.aid.consoling import getConsole
-from ioflo.base.globaling import *
 from ioflo.base import storing
 
 from ioflo.aio import wiring, tcp
