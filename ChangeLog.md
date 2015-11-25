@@ -4,6 +4,13 @@ CHANGE LOG
 ---------
 20151124
 ---------
+1.4.5
+
+Added exports of Patron and Valet classes to aio.http package
+
+---------
+20151124
+---------
 1.4.4
 
 Updated storing module classes properties to use decorator syntax
