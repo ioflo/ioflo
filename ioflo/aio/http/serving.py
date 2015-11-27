@@ -650,13 +650,15 @@ class Valet(object):
 
     def closeConnection(self, ca):
         """
-        Close and remove connection and associated steward given by ca
+        Close and remove connection given by ca
         """
         self.servant.removeIx(ca)
-        self.reqs[ca].close()
-        del self.reqs[ca]
-        self.reps[ca].close()
-        del self.reps[ca]
+        if ca in self.reqs:
+            self.reqs[ca].close()  # this signals request parser
+            del self.reqs[ca]
+        if ca in self.reps:
+            self.reps[ca].close()  # this signals response handler
+            del self.reps[ca]
 
     def serviceConnects(self):
         """
@@ -667,10 +669,6 @@ class Valet(object):
         self.servant.serviceConnects()
         for ca, ix in self.servant.ixes.items():
             if ix.cutoff:
-                if ca in self.reqs:
-                    self.reqs[ca].close()  # this signals parser
-                if ca in self.reps:
-                    self.reps[ca].close()  # this signals handler
                 self.closeConnection(ca)
                 continue
 
