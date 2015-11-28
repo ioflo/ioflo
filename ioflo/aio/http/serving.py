@@ -173,7 +173,7 @@ class Requestant(httping.Parsent):
 
         # NOTE: RFC 2616, S4.4, #3 says ignore if transfer-encoding is "chunked"
         contentLength = self.headers.get("content-length")
-        if not self.chunked:  
+        if not self.chunked:
             if contentLength:
                 try:
                     self.length = int(contentLength)
@@ -263,16 +263,7 @@ class Requestant(httping.Parsent):
             del self.msg[:self.length]
 
         else:  # unknown content length invalid
-            raise httping.HTTPException("Invalid body content-length not provided!")            
-            #while True:
-                #if self.msg:
-                    #self.body.extend(self.msg[:])
-                    #del self.msg[:]  # python2 bytearrays dont have clear self.msg.clear()
-
-                #if self.closed:  # no more data so finish
-                    #break
-
-                #(yield None)
+            raise httping.HTTPException("Invalid body, content-length not provided!")
 
         # only gets to here once content length has become finite
         # closed or not chunked or chunking has ended

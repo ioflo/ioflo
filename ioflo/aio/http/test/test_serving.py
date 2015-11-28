@@ -378,6 +378,253 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogBeta.close()
 
+    def testValetServiceBottleNoContentLength(self):
+        """
+        Test Valet WSGI service request response no content-length in request
+        """
+        console.terse("{0}\n".format(self.testValetServiceBottleNoContentLength.__doc__))
+
+        try:
+            import bottle
+        except ImportError as ex:
+            console.terse("Bottle not available.\n")
+            return
+
+        store = storing.Store(stamp=0.0)
+
+        app = bottle.default_app() # create bottle app
+
+        @app.get('/echo')
+        @app.get('/echo/<action>')
+        @app.post('/echo')
+        @app.post('/echo/<action>')
+        def echoGet(action=None):
+            """
+            Echo back request data
+            """
+            query = dict(bottle.request.query.items())
+            body = bottle.request.json
+            raw = bottle.request.body.read()
+            form = odict(bottle.request.forms)
+
+            data = odict(verb=bottle.request.method,
+                        url=bottle.request.url,
+                        action=action,
+                        query=query,
+                        form=form,
+                        content=body)
+            return data
+
+
+        console.terse("{0}\n".format("Building Valet ...\n"))
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = serving.Valet(port = 6101,
+                              bufsize=131072,
+                              wlog=wireLogAlpha,
+                              store=store,
+                              app=app)
+        self.assertIs(alpha.servant.reopen(), True)
+        self.assertEqual(alpha.servant.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Patron ...\n"))
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
+
+        beta = clienting.Patron(bufsize=131072,
+                                     wlog=wireLogBeta,
+                                     store=store,
+                                     path=path,
+                                     reconnectable=True,
+                                     )
+
+        self.assertIs(beta.connector.reopen(), True)
+        self.assertIs(beta.connector.accepted, False)
+        self.assertIs(beta.connector.connected, False)
+        self.assertIs(beta.connector.cutoff, False)
+
+        request = odict([('method', u'GET'),
+                         ('path', u'/echo?name=fame'),
+                         ('qargs', odict()),
+                         ('fragment', u''),
+                         ('headers', odict([('Accept', 'application/json'),
+                                            ])),
+                        ])
+
+        beta.requests.append(request)
+        timer = StoreTimer(store, duration=1.0)
+        while (beta.requests or beta.connector.txes or not beta.responses or
+               not alpha.idle()):
+            alpha.serviceAll()
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+            store.advanceStamp(0.1)
+
+        self.assertIs(beta.connector.accepted, True)
+        self.assertIs(beta.connector.connected, True)
+        self.assertIs(beta.connector.cutoff, False)
+
+        self.assertEqual(len(alpha.servant.ixes), 1)
+        self.assertEqual(len(alpha.reqs), 1)
+        self.assertEqual(len(alpha.reps), 1)
+        requestant = alpha.reqs.values()[0]
+        self.assertEqual(requestant.method, request['method'])
+        self.assertEqual(requestant.url, request['path'])
+        self.assertEqual(requestant.headers, {'accept': 'application/json',
+                                                'accept-encoding': 'identity',
+                                                'host': 'localhost:6101'})
+
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['reason'], 'OK')
+        self.assertEqual(response['body'],bytearray(b''))
+        self.assertEqual(response['data'],{'action': None,
+                                            'content': None,
+                                            'form': {},
+                                            'query': {'name': 'fame'},
+                                            'url': 'http://localhost:6101/echo?name=fame',
+                                            'verb': 'GET'},)
+
+        responder = alpha.reps.values()[0]
+        self.assertTrue(responder.status.startswith, str(response['status']))
+        self.assertEqual(responder.headers, response['headers'])
+
+        alpha.servant.closeAll()
+        beta.connector.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+
+    def testValetServiceBottleNonPersistent(self):
+        """
+        Test Valet WSGI service request response non persistent connection in request
+        """
+        console.terse("{0}\n".format(self.testValetServiceBottleNonPersistent.__doc__))
+
+        try:
+            import bottle
+        except ImportError as ex:
+            console.terse("Bottle not available.\n")
+            return
+
+        store = storing.Store(stamp=0.0)
+
+        app = bottle.default_app() # create bottle app
+
+        @app.get('/echo')
+        @app.get('/echo/<action>')
+        @app.post('/echo')
+        @app.post('/echo/<action>')
+        def echoGet(action=None):
+            """
+            Echo back request data
+            """
+            query = dict(bottle.request.query.items())
+            body = bottle.request.json
+            raw = bottle.request.body.read()
+            form = odict(bottle.request.forms)
+
+            data = odict(verb=bottle.request.method,
+                        url=bottle.request.url,
+                        action=action,
+                        query=query,
+                        form=form,
+                        content=body)
+            return data
+
+
+        console.terse("{0}\n".format("Building Valet ...\n"))
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = serving.Valet(port = 6101,
+                              bufsize=131072,
+                              wlog=wireLogAlpha,
+                              store=store,
+                              app=app)
+        self.assertIs(alpha.servant.reopen(), True)
+        self.assertEqual(alpha.servant.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.servant.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Patron ...\n"))
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+
+        path = "http://{0}:{1}/".format('localhost', alpha.servant.eha[1])
+
+        beta = clienting.Patron(bufsize=131072,
+                                     wlog=wireLogBeta,
+                                     store=store,
+                                     path=path,
+                                     reconnectable=True,
+                                     )
+
+        self.assertIs(beta.connector.reopen(), True)
+        self.assertIs(beta.connector.accepted, False)
+        self.assertIs(beta.connector.connected, False)
+        self.assertIs(beta.connector.cutoff, False)
+
+        request = odict([('method', u'GET'),
+                         ('path', u'/echo?name=fame'),
+                         ('qargs', odict()),
+                         ('fragment', u''),
+                         ('headers', odict([('Accept', 'application/json'),
+                                            ('Connection', 'close')])),
+                        ])
+
+        beta.requests.append(request)
+        timer = StoreTimer(store, duration=1.0)
+        while (beta.requests or beta.connector.txes or not beta.responses or
+               not alpha.idle()):
+            alpha.serviceAll()
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+            store.advanceStamp(0.1)
+
+        self.assertIs(beta.connector.accepted, True)
+        self.assertIs(beta.connector.connected, True)
+        self.assertIs(beta.connector.cutoff, False)
+
+        self.assertEqual(len(alpha.servant.ixes), 1)
+        self.assertEqual(len(alpha.reqs), 1)
+        self.assertEqual(len(alpha.reps), 1)
+        requestant = alpha.reqs.values()[0]
+        self.assertEqual(requestant.method, request['method'])
+        self.assertEqual(requestant.url, request['path'])
+        self.assertEqual(requestant.headers, {'accept': 'application/json',
+                                                'accept-encoding': 'identity',
+                                                'host': 'localhost:6101',
+                                                'connection': 'close',})
+
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['reason'], 'OK')
+        self.assertEqual(response['body'],bytearray(b''))
+        self.assertEqual(response['data'],{'action': None,
+                                            'content': None,
+                                            'form': {},
+                                            'query': {'name': 'fame'},
+                                            'url': 'http://localhost:6101/echo?name=fame',
+                                            'verb': 'GET'},)
+
+        responder = alpha.reps.values()[0]
+        self.assertTrue(responder.status.startswith, str(response['status']))
+        self.assertEqual(responder.headers, response['headers'])
+
+        alpha.servant.closeAll()
+        beta.connector.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
+
     def testValetServiceBottleStream(self):
         """
         Test Valet WSGI service request response stream sse
@@ -957,6 +1204,8 @@ def runSome():
              'testPorterServiceEcho',
              'testValetServiceBasic',
              'testValetServiceBottle',
+             'testValetServiceBottleNoContentLength',
+             'testValetServiceBottleNonPersistent',
              'testValetServiceBottleStream',
              'testValetServiceBasicSecure',
              'testValetServiceBottleSecure',
