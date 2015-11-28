@@ -2,6 +2,13 @@
 CHANGE LOG
 -------------------
 ---------
+20151127
+---------
+1.4.6
+
+Fixed bugs in http server handling of empty request bodies
+
+---------
 20151124
 ---------
 1.4.5
