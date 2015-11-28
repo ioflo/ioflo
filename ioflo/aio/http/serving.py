@@ -173,15 +173,18 @@ class Requestant(httping.Parsent):
 
         # NOTE: RFC 2616, S4.4, #3 says ignore if transfer-encoding is "chunked"
         contentLength = self.headers.get("content-length")
-        if contentLength and not self.chunked:
-            try:
-                self.length = int(contentLength)
-            except ValueError:
-                self.length = None
-            else:
-                if self.length < 0:  # ignore nonsensical negative lengths
+        if not self.chunked:  
+            if contentLength:
+                try:
+                    self.length = int(contentLength)
+                except ValueError:
                     self.length = None
-        else:
+                else:
+                    if self.length < 0:  # ignore nonsensical negative lengths
+                        self.length = None
+            else:  # if no body then neither content-length or chunked required
+                self.length = 0  # assume no body so length 0
+        else: # ignore content-length if chunked
             self.length = None
 
         contentType = self.headers.get("content-type")
@@ -259,16 +262,17 @@ class Requestant(httping.Parsent):
             self.body = self.msg[:self.length]
             del self.msg[:self.length]
 
-        else:  # unknown content length so parse forever until closed
-            while True:
-                if self.msg:
-                    self.body.extend(self.msg[:])
-                    del self.msg[:]  # python2 bytearrays dont have clear self.msg.clear()
+        else:  # unknown content length invalid
+            raise httping.HTTPException("Invalid body content-length not provided!")            
+            #while True:
+                #if self.msg:
+                    #self.body.extend(self.msg[:])
+                    #del self.msg[:]  # python2 bytearrays dont have clear self.msg.clear()
 
-                if self.closed:  # no more data so finish
-                    break
+                #if self.closed:  # no more data so finish
+                    #break
 
-                (yield None)
+                #(yield None)
 
         # only gets to here once content length has become finite
         # closed or not chunked or chunking has ended
@@ -735,7 +739,9 @@ class Valet(object):
                     if requestant.parser is None:  # reuse
                         requestant.makeParser()  # resets requestant parser
                 else:  # not persistent so close and remove requestant and responder
-                    self.closeConnection(ca)
+                    ix = self.servant.ixes[ca]
+                    if not ix.txes:  # wait for outgoing txes to be empty
+                        self.closeConnection(ca)
 
     def serviceAll(self):
         """
