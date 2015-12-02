@@ -279,12 +279,14 @@ class Responder(object):
 
     """
     HttpVersionString = httping.HTTP_11_VERSION_STRING  # http version string
+    Delay = 1.0
 
     def __init__(self,
                  incomer,
                  app,
                  environ,
-                 chunkable=False):
+                 chunkable=False,
+                 delay=None):
         """
         Initialize Instance
         Parameters:
@@ -308,6 +310,7 @@ class Responder(object):
         self.headers = lodict()  # headers
         self.length = None  # if content-length provided must not exceed
         self.size = 0  # number of body bytes sent so far
+        self.evented = False  # True if response is event-stream
 
     def close(self):
         """
@@ -446,6 +449,10 @@ class Responder(object):
         else:
             self.length = None
             self.chunkable = self.chunkable
+
+            if u'content-type' in self.headers:
+                if self.headers['content-type'].startswith('text/event-stream'):
+                    self.evented = True
 
         self.started = True
         return self.write
