@@ -3,7 +3,15 @@ CHANGE LOG
 -------------------
 
 ---------
-20151207
+20151208
+---------
+1.4.9
+
+Fixed http server to handle HTTPError like exceptions when not caught by wsgi app
+
+
+---------
+20151208
 ---------
 1.4.8
 

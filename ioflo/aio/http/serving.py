@@ -468,7 +468,7 @@ class Responder(object):
             try:
                 msg = next(self.iterator)
             except StopIteration:
-                self.write(bytearray([]))  # if chunked send empty chunk to terminate
+                self.write(b'')  # if chunked send empty chunk to terminate
                 self.ended = True
             except Exception as ex:  # handle http exceptions not caught by app
                 if not self.headed and hasattr(ex, 'status'):
