@@ -1,6 +1,15 @@
 ------------------
 CHANGE LOG
 -------------------
+
+---------
+20151207
+---------
+1.4.8
+
+Fixed bug http server wsgi environment variable type for content-length
+
+
 ---------
 20151207
 ---------
