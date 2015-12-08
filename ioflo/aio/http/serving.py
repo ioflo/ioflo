@@ -471,9 +471,10 @@ class Responder(object):
                 self.write(bytearray([]))  # if chunked send empty chunk to terminate
                 self.ended = True
             else:
-                self.write(msg)
-                if self.length is not None and self.size >= self.length:
-                    self.ended = True
+                if msg:
+                    self.write(msg)
+                    if self.length is not None and self.size >= self.length:
+                        self.ended = True
 
 
 class Valet(object):
