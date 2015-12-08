@@ -2,11 +2,19 @@
 CHANGE LOG
 -------------------
 ---------
+20151207
+---------
+1.4.7
+
+Fixe bug in http server handling of chunked not sending empty terminating chunk
+
+---------
 20151127
 ---------
 1.4.6
 
 Fixed bugs in http server handling of empty request bodies
+
 
 ---------
 20151124
