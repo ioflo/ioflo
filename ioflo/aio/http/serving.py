@@ -396,7 +396,8 @@ class Responder(object):
                 msg = msg[:self.length - size]
             self.size += len(msg)
 
-        self.incomer.tx(msg)
+        if msg:
+            self.incomer.tx(msg)
 
     def start(self, status, response_headers, exc_info=None):
         """
@@ -448,7 +449,6 @@ class Responder(object):
             self.chunkable = False  # cannot use chunking with finite content-length
         else:
             self.length = None
-            self.chunkable = self.chunkable
 
             if u'content-type' in self.headers:
                 if self.headers['content-type'].startswith('text/event-stream'):
@@ -468,6 +468,7 @@ class Responder(object):
             try:
                 msg = next(self.iterator)
             except StopIteration:
+                self.write(bytearray([]))  # if chunked send empty chunk to terminate
                 self.ended = True
             else:
                 self.write(msg)

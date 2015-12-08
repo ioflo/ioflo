@@ -340,11 +340,8 @@ def packHeader(name, *values):
 
 def packChunk(msg):
     """
-    Return msg bytes in a chunk if any otherwise return empty
+    Return msg bytes in a chunk 
     """
-    if not msg:
-        return b''
-
     lines = []
     size = len(msg)
     lines.append(u"{0:x}\r\n".format(size).encode('ascii'))  # convert to bytes
