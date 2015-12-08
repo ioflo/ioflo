@@ -642,8 +642,8 @@ class Valet(object):
         environ['QUERY_STRING'] = requestant.query        # name=john
         environ['REMOTE_ADDR'] = requestant.incomer.ca
         environ['CONTENT_TYPE'] = requestant.headers.get('content-type', '')
-        length = requestant.length if requestant.length is not None else ""
-        environ['CONTENT_LENGTH'] = length
+        if requestant.length is not None:
+            environ['CONTENT_LENGTH'] = str(requestant.length)
 
         # recieved http headers mapped to all caps with HTTP_ prepended
         for key, value in requestant.headers.items():
