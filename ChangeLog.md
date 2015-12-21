@@ -3,6 +3,15 @@ CHANGE LOG
 -------------------
 
 ---------
+20151221
+---------
+1.5.0
+
+Fixed Incomer TCP connection to have refreshable attribute to refresh connection
+timeout whenever there is activity on the connection.
+
+
+---------
 20151208
 ---------
 1.4.9

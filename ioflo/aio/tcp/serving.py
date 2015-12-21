@@ -102,7 +102,8 @@ class Incomer(object):
                  cs=None,
                  wlog=None,
                  store=None,
-                 timeout=None):
+                 timeout=None,
+                 refreshable=True):
 
         """
         Initialization method for instance.
@@ -114,6 +115,7 @@ class Incomer(object):
         wlog = WireLog object if any
         store = data store reference
         timeout = timeout for .timer
+        refreshable = True if tx/rx activity refreshes timer False otherwise
         """
         self.name = name
         self.uid = uid
@@ -130,6 +132,7 @@ class Incomer(object):
         self.store = store or storing.Store(stamp=0.0)
         self.timeout = timeout if timeout is not None else self.Timeout
         self.timer = StoreTimer(self.store, duration=self.timeout)
+        self.refreshable = refreshable
 
     def shutdown(self, how=socket.SHUT_RDWR):
         """
@@ -172,6 +175,12 @@ class Incomer(object):
 
     close = shutclose  # alias
 
+    def refresh(self):
+        """
+        Restart timer
+        """
+        self.timer.restart()
+
     def receive(self):
         """
         Perform non blocking receive on connected socket .cs
@@ -201,6 +210,9 @@ class Incomer(object):
 
             if self.wlog:  # log over the wire rx
                 self.wlog.writeRx(self.ca, data)
+
+            if self.refreshable:
+                self.refresh()
 
         else:  # data empty so connection closed on other end
             self.cutoff = True
@@ -274,6 +286,9 @@ class Incomer(object):
 
             if self.wlog:
                 self.wlog.writeTx(self.ca, data[:result])
+
+            if self.refreshable:
+                self.refresh()
 
         return result
 

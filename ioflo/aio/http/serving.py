@@ -76,7 +76,6 @@ class Requestant(httping.Parsent):
         self.path = u''  # partial path in request line without scheme host port query fragment
         self.query = u'' # query string from full path
         self.fragment = u''  # fragment from full path
-        self.changed = False  # True if msg changed on last parse iteration
 
     def checkPersisted(self):
         """
@@ -626,13 +625,6 @@ class Valet(object):
                     break
         return idle
 
-    def refreshIx(self, ca):
-        """
-        Restart incomer timer given by ca
-        """
-        if ca in self.ixes:
-            self.ixes[ca].timer.restart()
-
     def buildEnviron(self, requestant):
         """
         Returns wisgi environment dictionary for supplied requestant
@@ -717,9 +709,6 @@ class Valet(object):
                     sys.stderr.write(str(ex))
                     self.closeConnection(ca)
                     continue
-
-                if requestant.changed:
-                    self.refreshIx(ca)
 
                 if requestant.ended:
                     console.concise("Parsed Request:\n{0} {1} {2}\n"
@@ -1120,9 +1109,6 @@ class Porter(object):
         for ca, steward in self.stewards.items():
             if not steward.waited:
                 steward.requestant.parse()
-
-                if steward.requestant.changed:
-                    steward.refresh()
 
                 if steward.requestant.ended:
                     steward.requestant.dictify()
