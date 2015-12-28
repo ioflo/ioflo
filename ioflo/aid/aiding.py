@@ -26,7 +26,7 @@ from .eventing import tagify, eventify
 from .checking import crc16, crc64
 
 # For backwards compatibility. In the future import from .filing
-from .filing import ocfn, load, dump, loadJson, dumpJson
+from .filing import ocfn, load, dump, loadPickle, dumpPickle, loadJson, dumpJson
 
 
 def repack(n, seq, default=None):

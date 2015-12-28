@@ -43,7 +43,58 @@ def ocfn(filename, openMode='r+', binary=False):
             raise
     return newfile
 
-def load(file=""):
+def dump(data, filepath):
+    '''
+    Write data as as type self.ext to filepath. json or .msgpack
+    '''
+    if ' ' in filepath:
+        raise IOError("Invalid filepath '{0}' "
+                                "contains space".format(filepath))
+
+    root, ext = os.path.splitext(filepath)
+    if ext == '.json':
+        with ocfn(filepath, "w+") as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+    elif ext == '.msgpack':
+        if not msgpack:
+            raise IOError("Invalid filepath ext '{0}' "
+                        "needs msgpack installed".format(filepath))
+        with ocfn(filepath, "w+b", binary=True) as f:
+            msgpack.dump(data, f)
+            f.flush()
+            os.fsync(f.fileno())
+    else:
+        raise IOError("Invalid filepath ext '{0}' "
+                    "not '.json' or '.msgpack'".format(filepath))
+
+def load(filepath):
+    '''
+    Return data read from filepath as dict
+    file may be either json or msgpack given by extension .json or .msgpack
+    Otherwise return None
+    '''
+    try:
+        root, ext = os.path.splitext(filepath)
+        if ext == '.json':
+            with ocfn(filepath, "r") as f:
+                it = json.load(f, object_pairs_hook=odict)
+        elif ext == '.msgpack':
+            if not msgpack:
+                raise IOError("Invalid filepath ext '{0}' "
+                            "needs msgpack installed".format(filepath))
+            with ocfn(filepath, "rb", binary=True) as f:
+                it = msgpack.load(f, object_pairs_hook=odict)
+        else:
+            it = None
+    except EOFError:
+        return None
+    except ValueError:
+        return None
+    return it
+
+def loadPickle(file=""):
     """
     Loads pickled object from file, returns object
     """
@@ -56,7 +107,7 @@ def load(file=""):
 
     return it
 
-def dump(it=None, file=""):
+def dumpPickle(it=None, file=""):
     """
     Pickles it object to file
     """
