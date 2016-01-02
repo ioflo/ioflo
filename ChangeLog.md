@@ -2,6 +2,12 @@
 CHANGE LOG
 -------------------
 
+--------
+201601xx
+--------
+
+Refactored so load dump are for the generic json or msgpack
+
 ---------
 20151221
 ---------
