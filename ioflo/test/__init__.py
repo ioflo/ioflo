@@ -29,8 +29,7 @@ top = os.path.dirname(start)
 
 def run(top, start=None):
     """
-    Run unittests starting at directory given by start
-    Default start is the location of the ioflo.base package
+    Run unittests starting at directory given by start within the package rooted at top
     """
     if not start:
         start = top

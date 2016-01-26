@@ -407,7 +407,8 @@ class Driver(object):
                                        speed=speed,
                                        bs=bs)
 
-            except ImportError:
+            except ImportError as  ex:
+                console.terse("Error: importing pyserial\n{0}\n".format(ex))
                 self.server = DeviceNb(port=port,
                                        speed=speed,
                                        bs=bs)
