@@ -140,6 +140,11 @@ class BasicTestCase(unittest.TestCase):
         fields = byting.unpackify(fmt=fmt, b=packed)
         self.assertEqual(fields, (0xA5, 0x38, 0x08, 0x01))
 
+        fmt = u'8 6 7 3'
+        packed = bytearray([0xa5, 0xe0, 0x41, 0xff, 0xff])
+        fields = byting.unpackify(fmt=fmt, b=packed, size=3)
+        self.assertEqual(fields, (0xA5, 0x38, 0x08, 0x01))
+
 
 def runOne(test):
     '''

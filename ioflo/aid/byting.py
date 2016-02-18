@@ -134,7 +134,7 @@ def unbytify(b=bytearray([])):
 def packify(fmt=u'8', fields=[0x00], size=1):
     """
     Packs fields sequence of bit fields into bytearray of size bytes using fmt string.
-    Each space separated field of fmt is the length of the associated bit field
+    Each white space separated field of fmt is the length of the associated bit field
 
     Assumes unsigned fields values.
     Assumes network big endian so first fields element is high order bits.
@@ -143,7 +143,8 @@ def packify(fmt=u'8', fields=[0x00], size=1):
        that is,   nonzero is True and packs as a 1
     for 2+ length bit fields the field element is truncated
     to the number of low order bits in the bit field
-    if sum of number of bits in fmt less than size bytes the remaining bits are zero padded
+    if sum of number of bits in fmt less than size bytes then the last byte in
+       the bytearray is right zero padded
     if sum of number of bits in fmt greater than size bytes returns exception
     to pad just use 0 value in source field.
     example
@@ -162,7 +163,7 @@ def packify(fmt=u'8', fields=[0x00], size=1):
         bu += bfl
 
         if not (0 < bu <= (size * 8)):
-            raise ValueError("Total bit field lengths in fmt not >0 and < {0}".format(size * 8))
+            raise ValueError("Total bit field lengths in fmt not in (0, {0}]".format(size * 8))
 
         if bfl == 1:
             if fields[i]:
@@ -179,12 +180,13 @@ def packify(fmt=u'8', fields=[0x00], size=1):
 
     return bytify(packed, size)
 
-def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False):
+def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=None):
     """
     Returns tuple of unsigned int bit field values that are unpacked from the
     bytearray b according to fmt string. b maybe integer iterator
+    If size provided only unpack the first size bytes.
 
-    Each space separated field of fmt is the length of the associated bit field.
+    Each white space separated field of fmt is the length of the associated bit field.
     returns unsigned fields values.
 
     Assumes network big endian so first fmt is high order bits.
@@ -202,7 +204,8 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False):
     unpackify(u"1 3 2 2", 0xc3, True) returns (True, 4, 0, 3)
     """
     b = bytearray(b)
-    size = len(b)
+    size = size if size is not None else len(b)
+    b = b[:size]
     fields = []  # list of bit fields
     bfp = 8 * size  # bit field position
     bu = 0  # bits used
