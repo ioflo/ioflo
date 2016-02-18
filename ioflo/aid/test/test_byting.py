@@ -155,6 +155,62 @@ class BasicTestCase(unittest.TestCase):
         fields = byting.unpackify(fmt=fmt, b=packed, size=3)
         self.assertEqual(fields, (0xA5, 0x38, 0x08, 0x01))
 
+    def testPackifyInto(self):
+        """
+        Test the packbits
+        """
+        console.terse("{0}\n".format(self.testPackifyInto.__doc__))
+
+        fmt = u'3 2 1 1'
+        fields = [6, 2, True, False]
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=1)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([212, 0, 0, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[0]), '11010100')
+
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=1, offset=2)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([212, 0, 212, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[2]), '11010100')
+
+        b[0] =  0x0
+        self.assertEqual(b, bytearray([0, 0, 212, 0, 0, 0]))
+        size = byting.packifyInto(b, fmt=fmt, fields=fields)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([212, 0, 212, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[0]), '11010100')
+
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        fmt = u''
+        fields = []
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=0)
+        self.assertEqual(size, 0)
+        self.assertEqual(b, bytearray([0, 0, 0, 0, 0, 0]))
+
+        size = byting.packifyInto(b, fmt=fmt, fields=fields)
+        self.assertEqual(size, 0)
+        self.assertEqual(b, bytearray([0, 0, 0, 0, 0, 0]))
+
+        fmt = u'3 1'
+        fields = [5, True]
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=1)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([176, 0, 0, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[0]), '10110000')
+
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        fmt = u'8 6 7 3'
+        fields = [0xA5, 0x38, 0x08, 0x01]
+        size = byting.packifyInto(b, fmt=fmt, fields=fields)
+        self.assertEqual(size, 3)
+        self.assertEqual(b, bytearray([0xa5, 0xe0, 0x41, 0, 0, 0]))
+
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, offset=1)
+        self.assertEqual(size, 3)
+        self.assertEqual(b, bytearray([0, 0xa5, 0xe0, 0x41, 0, 0]))
+
 
 def runOne(test):
     '''
@@ -171,6 +227,7 @@ def runSome():
              'testBinizeUnbinize',
              'testBytifyUnbytify',
              'testPackifyUnpackify',
+             'testPackifyInto',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

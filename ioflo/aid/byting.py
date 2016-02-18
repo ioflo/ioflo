@@ -135,6 +135,7 @@ def packify(fmt=u'8', fields=[0x00], size=None):
     """
     Packs fields sequence of bit fields into bytearray of size bytes using fmt string.
     Each white space separated field of fmt is the length of the associated bit field
+    If not provided size is the least integer number of bytes that hold the fmt.
 
     Assumes unsigned fields values.
     Assumes network big endian so first fields element is high order bits.
@@ -157,7 +158,7 @@ def packify(fmt=u'8', fields=[0x00], size=None):
     if not (0 <= tbfl <= (size * 8)):
         raise ValueError("Total bit field lengths in fmt not in [0, {0}]".format(size * 8))
 
-    packed = 0
+    n = 0
     bfp = 8 * size  # starting bit field position
     bu = 0  # bits used
 
@@ -176,10 +177,69 @@ def packify(fmt=u'8', fields=[0x00], size=None):
 
         bits <<= (bfp - bfl) #shift left to bit position less bit field size
 
-        packed |= bits  # bit-or in bits
+        n |= bits  # bit-or in bits
         bfp -= bfl #adjust bit field position for next element
 
-    return bytify(packed, size)
+    return bytify(n, size)
+
+def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0):
+    """
+    Packs fields sequence of bit fields using fmt string into bytearray b
+    of size bytes starting at offset and returns actual size.
+    Each white space separated field of fmt is the length of the associated bit field
+    If not provided size is the least integer number of bytes that hold the fmt.
+
+    Assumes unsigned fields values.
+    Assumes network big endian so first fields element is high order bits.
+    Each field in format string is number of bits for the associated bit field
+    Fields with length of 1 are treated as has having boolean truthy field values
+       that is,   nonzero is True and packs as a 1
+    for 2+ length bit fields the field element is truncated
+    to the number of low order bits in the bit field
+    if sum of number of bits in fmt less than size bytes then the last byte in
+       the bytearray is right zero padded
+    if sum of number of bits in fmt greater than size bytes returns exception
+    to pad just use 0 value in source field.
+    example
+    packify("1 3 2 2", (True, 4, 0, 3)). returns bytearry([0xc3])
+    """
+    tbfl = sum((int(x) for x in fmt.split()))
+    if size is None:
+        size = (tbfl // 8) + 1 if tbfl % 8 else tbfl // 8
+
+    if not (0 <= tbfl <= (size * 8)):
+        raise ValueError("Total bit field lengths in fmt not in [0, {0}]".format(size * 8))
+
+    n = 0
+    bfp = 8 * size  # starting bit field position
+    bu = 0  # bits used
+
+    for i, bfmt in enumerate(fmt.split()):
+        bits = 0x00
+        bfl = int(bfmt)
+        bu += bfl
+
+        if bfl == 1:
+            if fields[i]:
+                bits = 0x01
+            else:
+                bits = 0x00
+        else:
+            bits = fields[i] & (2**bfl - 1)  # bit-and mask out high order bits
+
+        bits <<= (bfp - bfl) #shift left to bit position less bit field size
+
+        n |= bits  # bit-or in bits
+        bfp -= bfl #adjust bit field position for next element
+
+    count = 0
+    while n or (count < size):
+        b[offset + size - 1 - count] = n & 0xFF
+        count += 1
+        n >>=  8
+
+    return size
+
 
 def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=None):
     """
