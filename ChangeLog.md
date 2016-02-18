@@ -9,6 +9,8 @@ CHANGE LOG
 
 Refactored so load dump are for the generic json or msgpack
 
+Added buffer flushes to pyserial (requires pyserial 3.0)
+
 ---------
 20151221
 ---------

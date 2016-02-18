@@ -108,7 +108,7 @@ def unhexify(h=u''):
 def bytify(n=0, size=3):
     """
     Returns bytearray of size bytes equivalent of integer n that is left zero padded
-    to at least size bytes
+    to at least size bytes. Big endian
     """
     b = bytearray([])
     count = 0
@@ -121,7 +121,7 @@ def bytify(n=0, size=3):
 def unbytify(b=bytearray([])):
     """
     Returns unsigned integer equivalent of bytearray b
-    b may be any iterable of ints including bytes or list of ints
+    b may be any iterable of ints including bytes or list of ints. Big endian.
     """
     b = bytearray(b)
     b.reverse()
