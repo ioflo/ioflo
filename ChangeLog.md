@@ -13,6 +13,8 @@ Added buffer flushes to pyserial (requires pyserial 3.0)
 
 Added size parameter to unpackify so can unpack just part of input
 
+Added packifyInto function
+
 ---------
 20151221
 ---------
