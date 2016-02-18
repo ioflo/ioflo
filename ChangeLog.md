@@ -11,6 +11,8 @@ Refactored so load dump are for the generic json or msgpack
 
 Added buffer flushes to pyserial (requires pyserial 3.0)
 
+Added size parameter to unpackify so can unpack just part of input
+
 ---------
 20151221
 ---------

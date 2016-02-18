@@ -131,7 +131,7 @@ def unbytify(b=bytearray([])):
         n += b.pop()
     return n
 
-def packify(fmt=u'8', fields=[0x00], size=1):
+def packify(fmt=u'8', fields=[0x00], size=None):
     """
     Packs fields sequence of bit fields into bytearray of size bytes using fmt string.
     Each white space separated field of fmt is the length of the associated bit field
@@ -150,20 +150,21 @@ def packify(fmt=u'8', fields=[0x00], size=1):
     example
     packify("1 3 2 2", (True, 4, 0, 3)). returns bytearry([0xc3])
     """
-    if abs(int(size)) != size:
-        raise ValueError("Invalid size={0}. Not positive integer.".format(size))
+    tbfl = sum((int(x) for x in fmt.split()))
+    if size is None:
+        size = (tbfl // 8) + 1 if tbfl % 8 else tbfl // 8
+
+    if not (0 <= tbfl <= (size * 8)):
+        raise ValueError("Total bit field lengths in fmt not in [0, {0}]".format(size * 8))
 
     packed = 0
-    bfp = 8 * size  # bit field position
+    bfp = 8 * size  # starting bit field position
     bu = 0  # bits used
 
     for i, bfmt in enumerate(fmt.split()):
         bits = 0x00
         bfl = int(bfmt)
         bu += bfl
-
-        if not (0 < bu <= (size * 8)):
-            raise ValueError("Total bit field lengths in fmt not in (0, {0}]".format(size * 8))
 
         if bfl == 1:
             if fields[i]:
@@ -184,7 +185,7 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=N
     """
     Returns tuple of unsigned int bit field values that are unpacked from the
     bytearray b according to fmt string. b maybe integer iterator
-    If size provided only unpack the first size bytes.
+    If not provided size is the least integer number of bytes that hold the fmt.
 
     Each white space separated field of fmt is the length of the associated bit field.
     returns unsigned fields values.
@@ -194,7 +195,7 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=N
     If boolean parameter is True then return boolean values for
        bit fields of length 1
 
-    if sum of number of bits in fmt less than 8 * len(b) then remaining
+    if sum of number of bits in fmt less than 8 * size) then remaining
     bits are returned as additional field in result.
 
     if sum of number of bits in fmt greater 8 * len(b) returns exception
@@ -204,7 +205,14 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=N
     unpackify(u"1 3 2 2", 0xc3, True) returns (True, 4, 0, 3)
     """
     b = bytearray(b)
-    size = size if size is not None else len(b)
+
+    tbfl = sum((int(x) for x in fmt.split()))
+    if size is None:
+        size = (tbfl // 8) + 1 if tbfl % 8 else tbfl // 8
+
+    if not (0 <= tbfl <= (size * 8)):
+        raise ValueError("Total bit field lengths in fmt not in [0, {0}]".format(size * 8))
+
     b = b[:size]
     fields = []  # list of bit fields
     bfp = 8 * size  # bit field position
@@ -214,9 +222,6 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=N
     for i, bfmt in enumerate(fmt.split()):
         bfl = int(bfmt)
         bu += bfl
-
-        if not (0 < bu <= (size * 8)):
-            raise ValueError("Total bit field lengths in fmt not >0 and < {0}".format(size * 8))
 
         mask = (2**bfl - 1) << (bfp - bfl)  # make mask
         bits = n & mask  # mask off other bits

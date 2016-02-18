@@ -92,10 +92,17 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(packed, bytearray([212]))
         self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '11010100')
 
+        packed = byting.packify(fmt=fmt, fields=fields)
+        self.assertEqual(packed, bytearray([212]))
+        self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '11010100')
+
         fmt = u''
         fields = []
         size = 0
         packed = byting.packify(fmt=fmt, fields=fields, size=size)
+        self.assertEqual(packed, bytearray([]))
+
+        packed = byting.packify(fmt=fmt, fields=fields)
         self.assertEqual(packed, bytearray([]))
 
         fmt = u'3 1'
@@ -112,6 +119,9 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(packed, bytearray([0xa5, 0xe0, 0x41]))
         self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '101001011110000001000001')
         # 0xa5e040
+        packed = byting.packify(fmt=fmt, fields=fields)
+        self.assertEqual(packed, bytearray([0xa5, 0xe0, 0x41]))
+        self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '101001011110000001000001')
 
         fmt = u'3 2 1 1'
         packed = bytearray([212])
