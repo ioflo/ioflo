@@ -3,9 +3,9 @@ CHANGE LOG
 -------------------
 
 --------
-201601xx
+20160311
 --------
-1.5.X
+1.5.1
 
 Refactored so load dump are for the generic json or msgpack
 
@@ -14,6 +14,8 @@ Added buffer flushes to pyserial (requires pyserial 3.0)
 Added size parameter to unpackify so can unpack just part of input
 
 Added packifyInto function
+
+Added signExtend function
 
 ---------
 20151221
