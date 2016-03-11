@@ -240,7 +240,6 @@ def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0):
 
     return size
 
-
 def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=None):
     """
     Returns tuple of unsigned int bit field values that are unpacked from the
@@ -305,6 +304,19 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=N
                 bits = False
         fields.append(bits) #assign to fields list
     return tuple(fields) #convert to tuple
+
+def signExtend(x, n=8):
+    """
+    Returns signed integer that is the sign extention of n bit unsigned integer with
+    n significant bits
+
+    This is useful when unpacking bit fields where the bit fields use two's complement
+    to represent signed numbers. Assumes the the upper bits (above w) of x are zeros
+    Works for both positive and negative x
+    """
+    m = 1 << (n-1)  # mask
+    r = (x ^ m) - m
+    return (r)
 
 def packByte(fmt = b'8', fields = [0x00]):
     """Packs fields sequence into one byte using fmt string.

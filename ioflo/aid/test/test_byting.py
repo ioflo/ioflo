@@ -136,12 +136,12 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(fields, tuple())
 
         fmt = u'3 1'
-        packed = [0xb0]
+        packed = bytearray([0xb0])
         fields = byting.unpackify(fmt=fmt, b=packed)
         self.assertEqual(fields, (5, 1, 0))
 
         fmt = u'4 3 1'
-        packed = [0x0b]
+        packed = [0x0b]  # converts to bytearray in parameter
         fields = byting.unpackify(fmt=fmt, b=packed)
         self.assertEqual(fields, (0, 5, 1))
 
@@ -211,6 +211,52 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(size, 3)
         self.assertEqual(b, bytearray([0, 0xa5, 0xe0, 0x41, 0, 0]))
 
+    def testSignExtend(self):
+        """
+        Test the signExtend function
+        """
+        console.terse("{0}\n".format(self.testSignExtend.__doc__))
+        a =( 2 ** 8) - 11  # 8 bit two's complement rep of -11
+        self.assertEqual(a, 0xf5)
+        b = bytearray([0xf5])  # make bytearray
+        y, x = byting.unpackify(fmt='3 5', b=b)  # assign lower 5 bits to x
+        self.assertEqual(x, 0x15)
+        z = byting.signExtend(x, n=5)
+        self.assertEqual(z, -11)
+
+        a = 11
+        self.assertEqual(a, 0x0b)
+        b = bytearray([0x0b])
+        y, x = byting.unpackify(fmt='3 5', b=b)  # assign lower 5 bits to x
+        self.assertEqual(x, 0x0b)
+        z = byting.signExtend(x, n=5)
+        self.assertEqual(z, 11)
+
+        a = (2 ** 8) - 16
+        self.assertEqual(a, 0xf0)
+        b = bytearray([0xf0])  # make bytearray
+        y, x = byting.unpackify(fmt='3 5', b=b)  # assign lower 5 bits to x
+        self.assertEqual(x, 0x10)
+        z = byting.signExtend(x, n=5)
+        self.assertEqual(z, -16)
+
+        a = 15
+        self.assertEqual(a, 0x0f)
+        b = bytearray([0x0f])
+        y, x = byting.unpackify(fmt='3 5', b=b)  # assign lower 5 bits to x
+        self.assertEqual(x, 0x0f)
+        z = byting.signExtend(x, n=5)
+        self.assertEqual(z, 15)
+
+        a = 0
+        self.assertEqual(a, 0x00)
+        b = bytearray([0x00])
+        y, x = byting.unpackify(fmt='3 5', b=b)  # assign lower 5 bits to x
+        self.assertEqual(x, 0x00)
+        z = byting.signExtend(x, n=5)
+        self.assertEqual(z, 0)
+
+
 
 def runOne(test):
     '''
@@ -228,6 +274,7 @@ def runSome():
              'testBytifyUnbytify',
              'testPackifyUnpackify',
              'testPackifyInto',
+             'testSignExtend',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
