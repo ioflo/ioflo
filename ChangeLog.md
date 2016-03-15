@@ -3,6 +3,14 @@ CHANGE LOG
 -------------------
 
 --------
+201603XX
+--------
+1.5.2
+
+packifyInto now extends b to be long enough if too short
+
+
+--------
 20160311
 --------
 1.5.1
