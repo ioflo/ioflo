@@ -185,9 +185,11 @@ def packify(fmt=u'8', fields=[0x00], size=None):
 def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0):
     """
     Packs fields sequence of bit fields using fmt string into bytearray b
-    of size bytes starting at offset and returns actual size.
+    starting at offset and packing into size bytes
     Each white space separated field of fmt is the length of the associated bit field
     If not provided size is the least integer number of bytes that hold the fmt.
+    Extends the length of b to accomodate size after offset if not enough.
+    Returns actual size of portion packed into.
 
     Assumes unsigned fields values.
     Assumes network big endian so first fields element is high order bits.
@@ -209,6 +211,9 @@ def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0):
 
     if not (0 <= tbfl <= (size * 8)):
         raise ValueError("Total bit field lengths in fmt not in [0, {0}]".format(size * 8))
+
+    if len(b) < (offset + size):
+        b.extend([0x00]*(offset + size - len(b)))
 
     n = 0
     bfp = 8 * size  # starting bit field position
@@ -307,11 +312,11 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=N
 
 def signExtend(x, n=8):
     """
-    Returns signed integer that is the sign extention of n bit unsigned integer with
-    n significant bits
+    Returns signed integer that is the sign extention of n bit unsigned integer x
+    in twos complement form where x has n significant bits
 
     This is useful when unpacking bit fields where the bit fields use two's complement
-    to represent signed numbers. Assumes the the upper bits (above w) of x are zeros
+    to represent signed numbers. Assumes the the upper bits (above n) of x are zeros
     Works for both positive and negative x
     """
     m = 1 << (n-1)  # mask

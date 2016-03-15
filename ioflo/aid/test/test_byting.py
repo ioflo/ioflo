@@ -211,6 +211,13 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(size, 3)
         self.assertEqual(b, bytearray([0, 0xa5, 0xe0, 0x41, 0, 0]))
 
+        b = bytearray()
+        fmt = u'8 6 7 3'
+        fields = [0xA5, 0x38, 0x08, 0x01]
+        size = byting.packifyInto(b, fmt=fmt, fields=fields)
+        self.assertEqual(size, 3)
+        self.assertEqual(b, bytearray([0xa5, 0xe0, 0x41]))
+
     def testSignExtend(self):
         """
         Test the signExtend function
