@@ -9,6 +9,8 @@ CHANGE LOG
 
 packifyInto now extends b to be long enough if too short
 
+Added Stamper class to provide Store like protocol interface for managing
+relative time stamp
 
 --------
 20160311
