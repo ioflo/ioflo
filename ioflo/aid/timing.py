@@ -359,5 +359,37 @@ class StoreTimer(object):
         return self.restart(start=self.start, duration=duration)
 
 
+class Stamper(object):
+    """
+    Provides a relative time stamp that is advanced with method
+    Models the protocol for time stamps used by the Store class
+    Use this to provide matching interface to Store for relative time stamp
+
+    Attributes:
+        stamp is relative time stamp
+
+    """
+    def __init__(self, stamp=None):
+        """
+        Initialize instance
+        """
+        self.stamp = float(stamp) if stamp is not None else 0.0
+
+    def change(self, stamp):
+        """
+        change time stamp
+        """
+        self.stamp = float(stamp)
+
+    changeStamp = change  # alias
+
+    def advance(self, delta):
+        """
+        Advance time stamp by delta
+        """
+        self.stamp += float(delta)
+
+    advanceStamp = advance  # alias
+
 
 
