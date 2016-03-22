@@ -1,5 +1,5 @@
 """
-asynchronous (nonblocking) tcp io package
+asynchronous (nonblocking) udp io package
 
 """
 
