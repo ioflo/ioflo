@@ -42,6 +42,7 @@ class Stack(MixIn):
                  stamper=None,
                  version=None,
                  puid=None,
+                 local=None,
                  uid=None,
                  name=None,
                  ha='',
@@ -66,10 +67,11 @@ class Stack(MixIn):
             stamper is relative time stamper for this stack
             version is version tuple or string for this stack
             puid is previous uid for devices managed by this stack
-            uid is uid of local device shared with stack
-            name is name of local device shared with stack
-            ha is host address of local device shared with stack
-            kind is kind of local device shared with stack
+            local is local device created by subclass takes precedence
+            uid is uid of local device shared with stack if local not given
+            name is name of local device shared with stack if local not given
+            ha is host address of local device shared with stack if local not given
+            kind is kind of local device shared with stack if local not given
             server is interface server if any
             rxbs is bytearray buffer to hold rx data stream if any
             rxPkts is deque to hold received packet if any
@@ -117,11 +119,12 @@ class Stack(MixIn):
         if getattr(self, 'puid', None) is None:  # allows subclass override
             self.puid = puid if puid is not None else self.Uid
 
-        self.local = LocalDevice(stack=self,
-                                 name=name,
-                                 uid=uid,
-                                 ha=ha,
-                                 kind=kind)
+        self.local = local if local is not None else LocalDevice(stack=self,
+                                                                name=name,
+                                                                uid=uid,
+                                                                ha=ha,
+                                                                kind=kind)
+        self.local.stack = self  # in case passed up from subclass
 
         self.remotes = self.uidRemotes = odict()  # remotes indexed by uid
         self.nameRemotes = odict()  # remotes indexed by name
