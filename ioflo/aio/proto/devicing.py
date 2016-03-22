@@ -26,7 +26,7 @@ class Device(object):
                  stack,
                  uid=None,
                  name=None,
-                 ha='',
+                 ha=None,
                  kind=None,
                  ):
         """
@@ -50,7 +50,7 @@ class Device(object):
         self.stack = stack
         self.uid = uid if uid is not None else stack.nextUid()
         self.name = name if name is not None else "Device{0}".format(self.uid)
-        self.ha = ha
+        self.ha = ha if ha is not None else ''
         self.kind = kind
 
     def show(self):
@@ -88,6 +88,21 @@ class LocalDevice(Device):
         Initialization method for instance
 
         Assumes local device in stack is created before any remotes are added
+        
+        Inherited Parameters:
+            stack is Stack managing this device required
+            name is user friendly name of device
+            uid  is unique device id
+            ha is device host address
+            kind is type of device
+
+        Inherited Attributes:
+            .stack is Stack managing this device required
+            .name is user friendly name of device
+            .uid  is unique device id per channel or site
+            .ha is device host address
+            .kind is type of device
+            
         """
         uid = uid if uid is not None else stack.nextUid()
         super(LocalDevice, self).__init__(stack=stack, uid=uid, **kwa)
@@ -103,6 +118,21 @@ class RemoteDevice(Device):
                  **kwa):
         """
         Initialization method for instance
+        
+        Inherited Parameters:
+            stack is Stack managing this device required
+            name is user friendly name of device
+            uid  is unique device id
+            ha is device host address
+            kind is type of device
+
+        Inherited Attributes:
+            .stack is Stack managing this device required
+            .name is user friendly name of device
+            .uid  is unique device id per channel or site
+            .ha is device host address
+            .kind is type of device
+            
         """
         if uid is None:
             uid = stack.nextUid()

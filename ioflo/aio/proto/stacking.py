@@ -130,7 +130,7 @@ class Stack(MixIn):
         self.nameRemotes = odict()  # remotes indexed by name
         self.haRemotes =  odict()  # remotes indexed by ha
 
-        self.server = server or self.serverFromLocal()  # may return None
+        self.server = server if server is not None or self.serverFromLocal()  # may return None
 
         if self.server:
             if not self.server.reopen():  # open interface
