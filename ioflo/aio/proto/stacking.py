@@ -892,8 +892,9 @@ class StreamStack(Stack):
             txMsgs is deque to hold messages to be transmitted if any
             stats is odict of stack statistics if any
 
-
         Parameters:
+
+        Inherited Attributes:
             .stamper is relative time stamper for this stack
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
@@ -910,8 +911,6 @@ class StreamStack(Stack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-
-        Inherited Attributes:
 
         Attributes:
 
@@ -957,8 +956,9 @@ class GramStack(Stack):
             txMsgs is deque to hold messages to be transmitted if any
             stats is odict of stack statistics if any
 
-
         Parameters:
+
+        Inherited Attributes:
             .stamper is relative time stamper for this stack
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
@@ -975,8 +975,6 @@ class GramStack(Stack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-
-        Inherited Attributes:
 
         Attributes:
 
