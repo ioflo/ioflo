@@ -26,10 +26,8 @@ class Device(object):
                  stack,
                  uid=None,
                  name=None,
-                 ha=None,
-                 kind=0,
-                 exchanger=None,
-                 exchangent=None,
+                 ha='',
+                 kind=None,
                  ):
         """
         Initialization method for instance
@@ -40,8 +38,6 @@ class Device(object):
             uid  is unique device id
             ha is device host address
             kind is type of device
-            exchanger is Exchanger instance of current exchange with this device
-            exchangent is Exchangent instance of correspondent exchange with this device
 
         Attributes:
             .stack is Stack managing this device required
@@ -49,8 +45,6 @@ class Device(object):
             .uid  is unique device id per channel or site
             .ha is device host address
             .kind is type of device
-            .exchanger is Exchanger instance of initiated exchange with this device
-            .exchangent is Exchangent instance of correspondent exchange with this device
 
         """
         self.stack = stack
@@ -58,8 +52,6 @@ class Device(object):
         self.name = name if name is not None else "Device{0}".format(self.uid)
         self.ha = ha
         self.kind = kind
-        self.exchanger = exchanger
-        self.exchangent = exchangent
 
     def show(self):
         """
@@ -73,24 +65,16 @@ class Device(object):
         return result
 
     def process(self):
-        '''
-        Call .process on .exchanger .exchangent to allow timer based processing
-        '''
-        if self.exchanger:
-            self.exchanger.process()
-
-        if self.exchangent:
-            self.exchangent.process()
+        """
+        Timer based processing
+        """
+        pass
 
     def receive(self, msg):
         """
         Process received msg.
         """
-        if self.exchanger:
-            self.exchanger.receive(msg)
-
-        elif self.exchangent:
-            self.exchangent.receive(msg)
+        pass
 
 class LocalDevice(Device):
     """

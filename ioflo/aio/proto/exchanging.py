@@ -13,7 +13,7 @@ from ioflo.aid.sixing import *
 from ioflo.aid.odicting import odict
 from ioflo.aid.byting import bytify, unbytify, packify, packifyInto, unpackify
 from ioflo.aid.eventing import eventify, tagify
-from ioflo.aid.timing import StoreTimer
+from ioflo.aid.timing import StoreTimer, tuuid
 from ioflo.aid import getConsole
 
 console = getConsole()
@@ -28,9 +28,9 @@ class Exchange(object):
 
     def __init__(self,
                  stack,
-                 euid=None,
-                 device=None,
+                 uid=None,
                  name=None,
+                 device=None,
                  timeout=None,
                  redoTimout=None,
                  rxMsg=None,
@@ -41,23 +41,24 @@ class Exchange(object):
 
         Attributes:
             .stack is interface stack instance
-            .euid is Exchange uid
+            .uid is Exchange unique id
+            .name is user friendly name of exchange
             .done is True If done  False otherwise
             .failed is True If failed False otherwise
 
         """
         self.stack = stack
-        self.euid = euid
-        self.done = False
-        self.failed = False
-        self.device = device
+        self.uid = uid if uid is not None else tuuid()
         self.name = name or self.__class__.__name__
+        self.device = device
         self.timeout = timeout if timeout is not None else self.Timeout
         self.timer = StoreTimer(stack.stamper, duration=self.timeout)
         self.redoTimeout = redoTimeout if redoTimout is not None else self.RedoTimeout
         self.redoTimer = StoreTimer(stack.stamper, duration=self.redoTimeout)
         self.rxMsg = rxMsg  # latest message received
         self.txMsg = txMsg  # initial message to transmit
+        self.done = False
+        self.failed = False
         self.acked = False
 
     def start(self):
@@ -145,22 +146,6 @@ class Exchanger(Exchange):
         """
         super(Exchanger, self).__init__(stack=stack, **kwa)
 
-    def add(self):
-        """
-        set self as .device exchanger
-        """
-        if self.device.exchanger is not None:
-            raise ValueError("Failed add, device exchanger is not None")
-
-        self.device.exchanger = self
-
-    def remove(self):
-        """
-        Remove self as device exchanger
-        """
-        if self.device.exchanger is self:
-            self.device.exchanger = None
-
     def process(self):
         """
         Process time based handling of exchange like timeout or retries
@@ -225,23 +210,6 @@ class Exchangent(Exchange):
 
         """
         super(Exchangent, self).__init__(stack=stack, **kwa)
-
-    def add(self):
-        """
-        set self as .device exchangent
-        """
-        if self.device.exchangent is not None:
-            raise ValueError("Failed add, device exchangent in use.")
-
-        self.device.exchanger = self
-
-    def remove(self):
-        """
-        Remove self as device exchangent
-        """
-        if self.device.exchangent is self:
-            self.device.exchangent = None
-
 
     def process(self):
         """

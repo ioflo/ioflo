@@ -16,7 +16,7 @@ from ioflo.aid.sixing import *
 from ioflo.aid.odicting import odict
 from ioflo.aid.byting import bytify, unbytify, packify, unpackify
 from ioflo.aid.eventing import eventify, tagify
-from ioflo.aid.timing import tuuid, Stamper
+from ioflo.aid.timing import tuuid, Stamper, StoreTimer
 from ioflo.aid import getConsole
 
 console = getConsole()
@@ -31,7 +31,7 @@ class MixIn(object):
         pass
 
 
-class Stack(Mixin):
+class Stack(MixIn):
     """
     Base stack object.
     Should be subclassed for specific transport type
@@ -42,10 +42,9 @@ class Stack(Mixin):
                  stamper=None,
                  version=None,
                  puid=None,
-                 local=None,
                  uid=None,
-                 name='',
-                 ha=None,
+                 name=None,
+                 ha='',
                  kind=None,
                  server=None,
                  rxbs=None,
@@ -67,11 +66,10 @@ class Stack(Mixin):
             stamper is relative time stamper for this stack
             version is version tuple or string for this stack
             puid is previous uid for devices managed by this stack
-            local is local device if any for this stack
-            uid is uid of local device shared with stack if local not given
-            name is name of local device shared with stack if local not given
-            ha is host address of local device shared with stack if local not given
-            kind is kind of local device shared with stack if local not given
+            uid is uid of local device shared with stack
+            name is name of local device shared with stack
+            ha is host address of local device shared with stack
+            kind is kind of local device shared with stack
             server is interface server if any
             rxbs is bytearray buffer to hold rx data stream if any
             rxPkts is deque to hold received packet if any
@@ -119,12 +117,11 @@ class Stack(Mixin):
         if getattr(self, 'puid', None) is None:  # allows subclass override
             self.puid = puid if puid is not None else self.Uid
 
-        self.local = local or LocalDevice(stack=self,
-                                          name=name,
-                                          uid=uid,
-                                          ha=ha,
-                                          kind=kind)
-        self.local.stack = self  # in case parameter ensure stack
+        self.local = LocalDevice(stack=self,
+                                 name=name,
+                                 uid=uid,
+                                 ha=ha,
+                                 kind=kind)
 
         self.remotes = self.uidRemotes = odict()  # remotes indexed by uid
         self.nameRemotes = odict()  # remotes indexed by name
