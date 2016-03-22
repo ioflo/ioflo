@@ -109,7 +109,7 @@ class Stack(MixIn):
             .kind is local device kind as stack kind
 
         """
-        super().__init__(**kwa)
+        super(Stack, self).__init__(**kwa)
 
         self.stamper = stamper or Stamper(stamp=0.0)
         self.version = version
@@ -681,7 +681,7 @@ class KeepStack(Stack):
                                                                  )
         local.stack = self
 
-        super().__init__(puid=puid,
+        super(KeepStack, self).__init__(puid=puid,
                                         local=local,
                                         **kwa)
 
@@ -699,7 +699,7 @@ class KeepStack(Stack):
         '''
         Add a remote  to .remotes
         '''
-        super().addRemote(remote=remote)
+        super(KeepStack, self).addRemote(remote=remote)
         if dump:
             self.dumpRemote(remote)
         return remote
@@ -712,7 +712,7 @@ class KeepStack(Stack):
         If dump then dump the keep file for the remote at new
         '''
         #old = remote.uid
-        super().moveRemote(remote, new=new)
+        super(KeepStack, self).moveRemote(remote, new=new)
         if clear:
             self.keep.clearRemoteData(remote.name)
         if dump:
@@ -723,7 +723,7 @@ class KeepStack(Stack):
         Rename remote with old remote.name to new name but keep same index
         '''
         old = remote.name
-        super().renameRemote(remote=remote, new=new)
+        super(KeepStack, self).renameRemote(remote=remote, new=new)
         if clear:
             self.keep.clearRemoteData(old)
         if dump:
@@ -734,7 +734,7 @@ class KeepStack(Stack):
         Remove remote
         If clear then also remove from disk
         '''
-        super().removeRemote(remote=remote)
+        super(KeepStack, self).removeRemote(remote=remote)
         if clear:
             self.clearRemote(remote)
 
@@ -925,7 +925,7 @@ class StreamStack(Stack):
 
 
         """
-        super().__init__(**kwa)
+        super(StreamStack, self).__init__(**kwa)
 
 
 
@@ -990,7 +990,7 @@ class GramStack(Stack):
 
 
         """
-        super().__init__(**kwa)
+        super(GramStack, self).__init__(**kwa)
 
 
     def serverFromLocal(self):
