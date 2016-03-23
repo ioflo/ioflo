@@ -60,6 +60,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(stack.uid, 1)
         self.assertEqual(stack.local.uid, stack.uid)
         self.assertEqual(stack.ha, '')
+        self.assertEqual(stack.aha, '')
         self.assertEqual(stack.local.ha, stack.ha)
         self.assertEqual(stack.kind, None)
         self.assertEqual(stack.local.kind, stack.kind)

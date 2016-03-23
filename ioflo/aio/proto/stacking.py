@@ -94,6 +94,7 @@ class Stack(MixIn):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
+            .aha is server accepting (listening) host address for .server
 
         Inherited Properties:
 
@@ -108,7 +109,9 @@ class Stack(MixIn):
 
         self.stamper = stamper or Stamper(stamp=0.0)
         self.version = version
-
+        
+        self.aha = ha
+        
         if getattr(self, 'puid', None) is None:  # allows subclass override
             self.puid = puid if puid is not None else self.Uid
 
@@ -124,16 +127,16 @@ class Stack(MixIn):
         self.haRemotes =  odict()  # remotes indexed by ha
 
         self.server = server if server is not None else self.serverFromLocal()  # may return None
-
+        
         if self.server:
             if not self.server.reopen():  # open interface
                 raise ValueError("Stack '{0}': Failed opening server at"
                             " '{1}'\n".format(self.name, self.server.ha))
 
-            self.ha = self.server.ha  # update local host address after open
+            self.aha = self.server.ha  # update local host address after open
 
             console.verbose("Stack '{0}': Opened server at '{1}'\n".format(self.name,
-                                                                           self.ha))
+                                                                           self.aha))
         self.rxbs = rxbs if rxbs is not None else bytearray()
         self.rxPkts = rxPkts if rxPkts is not None else deque()
         self.rxMsgs = rxMsgs if rxMsgs is not None else deque()
