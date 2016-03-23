@@ -21,15 +21,8 @@ from ioflo.aid import getConsole
 
 console = getConsole()
 
-from  .devicing import LocalDevice, RemoteDevice
-
-class MixIn(object):
-    """
-    Base class to enable consistent MRO for mixin multiple inheritance
-    """
-    def __init__(self, *pa, **kwa):
-        pass
-
+from .protoing import MixIn
+from .devicing import LocalDevice, RemoteDevice
 
 class Stack(MixIn):
     """

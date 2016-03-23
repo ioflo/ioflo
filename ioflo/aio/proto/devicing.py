@@ -17,8 +17,9 @@ from ioflo.aid import getConsole
 
 console = getConsole()
 
+from .protoing import MixIn
 
-class Device(object):
+class Device(MixIn):
     """
     Device Class
     """
@@ -88,7 +89,7 @@ class LocalDevice(Device):
         Initialization method for instance
 
         Assumes local device in stack is created before any remotes are added
-        
+
         Inherited Parameters:
             stack is Stack managing this device required
             name is user friendly name of device
@@ -102,7 +103,7 @@ class LocalDevice(Device):
             .uid  is unique device id per channel or site
             .ha is device host address
             .kind is type of device
-            
+
         """
         uid = uid if uid is not None else stack.nextUid()
         super(LocalDevice, self).__init__(stack=stack, uid=uid, **kwa)
@@ -118,7 +119,7 @@ class RemoteDevice(Device):
                  **kwa):
         """
         Initialization method for instance
-        
+
         Inherited Parameters:
             stack is Stack managing this device required
             name is user friendly name of device
@@ -132,7 +133,7 @@ class RemoteDevice(Device):
             .uid  is unique device id per channel or site
             .ha is device host address
             .kind is type of device
-            
+
         """
         if uid is None:
             uid = stack.nextUid()
