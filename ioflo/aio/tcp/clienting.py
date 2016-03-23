@@ -78,6 +78,7 @@ class Client(object):
         self.timeout = timeout if timeout is not None else self.Timeout
         self.timer = StoreTimer(self.store, duration=self.timeout)
         self.reconnectable = reconnectable if reconnectable is not None else self.Reconnectable
+        self.opened = False
 
 
     @property
@@ -192,7 +193,7 @@ class Client(object):
             self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.bs)
 
         self.cs.setblocking(0) #non blocking socket
-
+        self.opened = True
         return True
 
     def reopen(self):
@@ -242,6 +243,7 @@ class Client(object):
             self.cs = None
             self.accepted = False
             self.connected = False
+            self.opened = False
 
     close = shutclose  # alias
 
@@ -524,6 +526,7 @@ class ClientTls(Client):
             self.cs = None
             self.accepted = False
             self.connected = False
+            self.opened = False
 
     close = shutclose  # alias
 

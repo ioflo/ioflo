@@ -71,8 +71,10 @@ class BasicTestCase(unittest.TestCase):
 
         ha = os.path.join(sockDirpath, 'alpha.uxd')
         alpha = uxding.SocketUxdNb(ha=ha, umask=0x077, wlog=wireLog)
+        self.assertIs(alpha.opened, False)
         result = alpha.reopen()
         self.assertIs(result, True)
+        self.assertIs(alpha.opened, True)
         self.assertEqual(alpha.ha, ha)
 
         ha = os.path.join(sockDirpath, 'beta.uxd')
@@ -174,6 +176,8 @@ class BasicTestCase(unittest.TestCase):
         alpha.close()
         beta.close()
         gamma.close()
+
+        self.assertIs(alpha.opened, False)
 
         wireLog.close()
         shutil.rmtree(tempDirpath)

@@ -41,6 +41,7 @@ class SocketUdpNb(object):
         self.wlog = wlog
 
         self.ss = None #server's socket needs to be opened
+        self.opened = False
 
     def actualBufSizes(self):
         """
@@ -81,7 +82,7 @@ class SocketUdpNb(object):
             return False
 
         self.ha = self.ss.getsockname() #get resolved ha after bind
-
+        self.opened = True
         return True
 
     def reopen(self):
@@ -98,6 +99,7 @@ class SocketUdpNb(object):
         if self.ss:
             self.ss.close() #close socket
             self.ss = None
+            self.opened = False
 
     def receive(self):
         """

@@ -42,6 +42,7 @@ class WinMailslotNb(object):
         self.wlog = wlog
 
         self.ms = None   # Mailslot needs to be opened
+        self.opened = False
 
     def open(self):
         """
@@ -57,6 +58,7 @@ class WinMailslotNb(object):
             console.terse('mailslot.error = {0}'.format(ex))
             return False
 
+        self.opened = True
         return True
 
     def reopen(self):
@@ -73,6 +75,7 @@ class WinMailslotNb(object):
         if self.ms:
             win32file.CloseHandle(self.ms)
             self.ms = None
+            self.opened = False
 
     def receive(self):
         """

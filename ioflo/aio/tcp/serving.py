@@ -520,6 +520,7 @@ class Acceptor(object):
 
         self.ss = None  # listen socket for accepts
         self.axes = deque()  # deque of duple (ca, cs) accepted connections
+        self.opened = False
 
     def actualBufSizes(self):
         """
@@ -568,7 +569,7 @@ class Acceptor(object):
             return False
 
         self.ha = self.ss.getsockname()  # get resolved ha after bind
-
+        self.opened = True
         return True
 
     def reopen(self):
@@ -590,6 +591,7 @@ class Acceptor(object):
                 pass
             self.ss.close()  #close socket
             self.ss = None
+            self.opened = False
 
     def accept(self):
         """

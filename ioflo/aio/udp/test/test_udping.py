@@ -67,7 +67,9 @@ class BasicTestCase(unittest.TestCase):
         result = wireLog.reopen(prefix='alpha', midfix='6101')
 
         alpha = udping.SocketUdpNb(port = 6101, wlog=wireLog)
+        self.assertIs(alpha.opened, False)
         self.assertIs(alpha.reopen(), True)
+        self.assertIs(alpha.opened, True)
 
         beta = udping.SocketUdpNb(port = 6102)
         self.assertIs(beta.reopen(), True)
@@ -106,6 +108,8 @@ class BasicTestCase(unittest.TestCase):
 
         alpha.close()
         beta.close()
+
+        self.assertIs(alpha.opened, False)
 
         wireLog.close()
         shutil.rmtree(tempDirpath)

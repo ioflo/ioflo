@@ -77,11 +77,15 @@ class BasicTestCase(unittest.TestCase):
         store = storing.Store(stamp=0.0)
 
         alpha = serving.Server(port = 6101, bufsize=131072, wlog=wireLog, store=store)
+        self.assertIs(alpha.opened, False)
         self.assertIs(alpha.reopen(), True)
+        self.assertIs(alpha.opened, True)
         self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
 
         beta = clienting.Client(ha=alpha.eha, bufsize=131072, store=store)
+        self.assertIs(beta.opened, False)
         self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.opened, True)
         self.assertIs(beta.accepted, False)
         self.assertIs(beta.connected, False)
         self.assertIs(beta.cutoff, False)
@@ -451,6 +455,9 @@ class BasicTestCase(unittest.TestCase):
         alpha.close()
         beta.close()
         gamma.close()
+
+        self.assertIs(alpha.opened, False)
+        self.assertIs(beta.opened, False)
 
         wireLog.close()
         shutil.rmtree(tempDirpath)
