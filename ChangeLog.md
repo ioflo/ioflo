@@ -12,6 +12,9 @@ packifyInto now extends b to be long enough if too short
 Added Stamper class to provide Store like protocol interface for managing
 relative time stamp
 
+Added aio.proto package with base classes for creating async packetized protocols
+using aio
+
 --------
 20160311
 --------
