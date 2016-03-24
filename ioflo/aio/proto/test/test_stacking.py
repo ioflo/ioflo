@@ -18,6 +18,7 @@ from binascii import hexlify
 # Import ioflo libs
 from ioflo.aid.sixing import *
 from ioflo.aid.byting import hexify, bytify, unbytify, packify, unpackify
+from ioflo.aid.timing import Timer
 from ioflo.aid import getConsole
 
 console = getConsole()
@@ -106,7 +107,63 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(len(stack.haRemotes), 0)
 
 
+    def testStacks(self):
+        """
+        Test two stacks sending packets
+        """
+        console.terse("{0}\n".format(self.testStacks.__doc__))
 
+        alpha = stacking.UdpStack(name='alpha',
+                               port=8000)
+        self.assertEqual(alpha.name, "alpha")
+        self.assertEqual(alpha.ha, ('127.0.0.1', 8000))
+        self.assertEqual(alpha.aha, ('0.0.0.0', 8000))
+        self.assertIs(alpha.server.opened, True)
+        self.assertEqual(len(alpha.remotes), 0)
+
+        remote = devicing.UdpRemoteDevice(stack=alpha,
+                                       name='BetaRemote',
+                                       ha=('localhost', 8002))
+        self.assertEqual(remote.uid, 2)
+        self.assertEqual(remote.name, 'BetaRemote')
+        self.assertEqual(remote.ha, ('127.0.0.1', 8002))
+        alpha.addRemote(remote)
+
+
+        beta = stacking.UdpStack(name='beta',
+                              port=8002)
+        self.assertEqual(beta.name, "beta")
+        self.assertEqual(beta.ha, ('127.0.0.1', 8002))
+        self.assertEqual(beta.aha, ('0.0.0.0', 8002))
+        self.assertIs(beta.server.opened, True)
+        self.assertEqual(len(beta.remotes), 0)
+
+        remote = devicing.UdpRemoteDevice(stack=beta,
+                                       name='AlphaRemote',
+                                       ha=('localhost', 8000))
+        self.assertEqual(remote.uid, 2)
+        self.assertEqual(remote.name, 'AlphaRemote')
+        self.assertEqual(remote.ha, ('127.0.0.1', 8000))
+        beta.addRemote(remote)
+
+        msg2beta = "Hello beta it's me alpha."
+        alpha.transmit(msg2beta)
+
+        msg2alpha = "Hi alpha from beta."
+        beta.transmit(msg2alpha)
+
+        timer = Timer(duration=0.5)
+        while not timer.expired:
+            alpha.serviceAll()
+            beta.serviceAll()
+
+        self.assertEqual(len(alpha.rxMsgs), 0)
+        self.assertEqual(len(beta.rxMsgs), 0)
+        self.assertEqual(alpha.stats['msg_received'], 1)
+        self.assertEqual(beta.stats['msg_received'], 1)
+
+        alpha.server.close()
+        beta.server.close()
 
 
 def runOne(test):
@@ -122,6 +179,7 @@ def runSome():
     tests =  []
     names = [
              'testStack',
+             'testStacks',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

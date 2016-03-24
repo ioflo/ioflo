@@ -8,16 +8,16 @@ import struct
 from binascii import hexlify
 from collections import deque, namedtuple
 import enum
+import socket
 
-from ioflo.aid.sixing import *
-from ioflo.aid.odicting import odict
-from ioflo.aid.byting import bytify, unbytify, packify, unpackify
-from ioflo.aid.eventing import eventify, tagify
-from ioflo.aid import getConsole
+from ...aid.sixing import *
+from ...aid.odicting import odict
+from ...aid.byting import bytify, unbytify, packify, unpackify
+from ...aid.eventing import eventify, tagify
+from ...aid import getConsole
+from .protoing import MixIn
 
 console = getConsole()
-
-from .protoing import MixIn
 
 class Device(MixIn):
     """
@@ -83,7 +83,6 @@ class LocalDevice(Device):
     """
     def __init__(self,
                  stack,
-                 uid=None,
                  **kwa):
         """
         Initialization method for instance
@@ -105,8 +104,7 @@ class LocalDevice(Device):
             .kind is type of device
 
         """
-        uid = uid if uid is not None else stack.nextUid()
-        super(LocalDevice, self).__init__(stack=stack, uid=uid, **kwa)
+        super(LocalDevice, self).__init__(stack=stack, **kwa)
 
 
 class RemoteDevice(Device):
@@ -143,4 +141,110 @@ class RemoteDevice(Device):
         super(RemoteDevice, self).__init__(stack=stack, uid=uid, **kwa)
 
 
+class UdpDevice(Device):
+    """
+    Udp device
+    """
 
+    def __init__(self,
+                 stack,
+                 ha=None,
+                 **kwa):
+        """
+        Initialization method for instance
+
+        Inherited Parameters:
+            stack is Stack managing this device required
+            name is user friendly name of device
+            uid  is unique device id
+            ha is device  udp host address, a duple (host,port)
+            kind is type of device
+
+        Parameters:
+
+
+        Inherited Attributes:
+            .stack is Stack managing this device required
+            .name is user friendly name of device
+            .uid  is unique device id per channel or site
+            .ha is device udp host address, a duple (host,port)
+            .kind is type of device
+
+        Attributes:
+
+        """
+        if ha:
+            host, port = ha
+            host = socket.gethostbyname(host)
+            if host in ['0.0.0.0', '']:
+                host = '127.0.0.1'
+            ha = (host, port)
+
+        super().__init__(stack=stack, ha=ha, **kwa)
+
+
+class UdpLocalDevice(UdpDevice, LocalDevice):
+    """
+    Udp LocalDevice
+    """
+    def __init__(self,
+                 stack,
+                 **kwa):
+        """
+        Initialization method for instance
+
+        Inherited Parameters:
+            stack is Stack managing this device required
+            name is user friendly name of device
+            uid  is unique device id
+            ha is device udp host address, a duple (host,port)
+            kind is type of device
+
+        Parameters:
+
+
+        Inherited Attributes:
+            .stack is Stack managing this device required
+            .name is user friendly name of device
+            .uid  is unique device id per channel or site
+            .ha is device udp host address, a duple (host,port)
+            .kind is type of device
+
+        Attributes:
+
+        """
+        super().__init__(stack=stack, **kwa)
+
+
+class UdpRemoteDevice(UdpDevice, RemoteDevice):
+    """
+    Udp remote device
+    """
+
+    def __init__(self,
+                 stack,
+                 **kwa):
+        """
+        Initialization method for instance
+
+        Inherited Parameters:
+            stack is Stack managing this device required
+            name is user friendly name of device
+            uid  is unique device id
+            ha is device udp host address, a duple (host,port)
+            kind is type of device
+
+        Parameters:
+
+
+        Inherited Attributes:
+            .stack is Stack managing this device required
+            .name is user friendly name of device
+            .uid  is unique device id per channel or site
+            .ha is device udp host address, a duple (host,port)
+            .kind is type of device
+
+        Attributes:
+
+        """
+        super().__init__(stack=stack, **kwa)

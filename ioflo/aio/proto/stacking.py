@@ -13,17 +13,19 @@ import random
 import errno
 import socket
 
-from ioflo.aid.sixing import *
-from ioflo.aid.odicting import odict
-from ioflo.aid.byting import bytify, unbytify, packify, unpackify
-from ioflo.aid.eventing import eventify, tagify
-from ioflo.aid.timing import tuuid, Stamper, StoreTimer
-from ioflo.aid import getConsole
+from ...aid.sixing import *
+from ...aid.odicting import odict
+from ...aid.byting import bytify, unbytify, packify, unpackify
+from ...aid.eventing import eventify, tagify
+from ...aid.timing import tuuid, Stamper, StoreTimer
+from ...aid import getConsole
+from ..udp import udping
+from .protoing import MixIn
+from . import devicing, packeting
+
 
 console = getConsole()
 
-from .protoing import MixIn
-from .devicing import LocalDevice, RemoteDevice
 
 class Stack(MixIn):
     """
@@ -110,18 +112,18 @@ class Stack(MixIn):
 
         self.stamper = stamper or Stamper(stamp=0.0)
         self.version = version
-        
+
         if getattr(self, 'aha', None) is None:  # allows subclass override
             self.aha = ha if ha is not None else ''
-        
+
         if getattr(self, 'puid', None) is None:  # allows subclass override
             self.puid = puid if puid is not None else self.Uid
 
-        self.local = local if local is not None else LocalDevice(stack=self,
-                                                                name=name,
-                                                                uid=uid,
-                                                                ha=ha,
-                                                                kind=kind)
+        self.local = local if local is not None else devicing.LocalDevice(stack=self,
+                                                                          name=name,
+                                                                          uid=uid,
+                                                                          ha=ha,
+                                                                          kind=kind)
         self.local.stack = self  # in case passed up from subclass
 
         self.remotes = self.uidRemotes = odict()  # remotes indexed by uid
@@ -129,7 +131,7 @@ class Stack(MixIn):
         self.haRemotes =  odict()  # remotes indexed by ha
 
         self.server = server if server is not None else self.serverFromLocal()  # may return None
-        
+
         if self.server:
             if not self.server.reopen():  # open interface
                 raise ValueError("Stack '{0}': Failed opening server at"
@@ -1081,3 +1083,143 @@ class GramStack(Stack):
             self.rxPkts.append((packet, ha))     # duple = ( packed, source address)
         return True  # received data
 
+
+class UdpStack(GramStack):
+    """
+    UDP communications Stack Class
+    """
+    Port = 12357
+
+    def __init__(self,
+                 puid=None,
+                 local=None,
+                 uid=None,
+                 name=None,
+                 ha=None,
+                 kind=None,
+                 host=None,
+                 port=None,
+                 bufcnt=2,
+                 **kwa):
+        """
+        Setup Stack instance
+
+        Inherited Parameters:
+            stamper is relative time stamper for this stack
+            version is version tuple or string for this stack
+            puid is previous uid for devices managed by this stack
+            local is local device if any for this stack
+            uid is uid of local device shared with stack if local not given
+            name is name of local device shared with stack if local not given
+            ha is host address of local udp device (host,port) shared with stack if local not given
+            kind is kind of local device shared with stack if local not given
+            server is interface server if any
+            rxbs is bytearray buffer to hold input data stream if any
+            rxPkts is deque to hold received packet if any
+            rxMsgs is deque to hold received msgs if any
+            txPkts is deque to hold packet to be transmitted if any
+            txMsgs is deque to hold messages to be transmitted if any
+            stats is odict of stack statistics if any
+
+        Parameters:
+            host is local udp host if ha not provided
+            port is local udp port if ha not provided
+            bufcnt is number of udp buffers equivalent for udp buffer to allocate
+
+        Inherited Attributes:
+            .stamper is relative time stamper for this stack
+            .version is version tuple or string for this stack
+            .puid is previous uid for devices managed by this stack
+            .local is local device for this stack
+            .server is interface server if any
+            .rxbs is bytearray buffer to hold input data stream
+            .rxPkts is deque of duples to hold received packets
+            .rxMsgs is deque of duples to hold received msgs and remotes
+            .txPkts is deque of duples to hold packets to be transmitted
+            .txMsgs is deque of duples to hold messages to be transmitted
+            .remotes is odict of remotes indexed by uid
+            .uidRemotes is alias for .remotes
+            .nameRemotes = odict  of remotes indexed by name
+            .haRemotes = odict of remotes indexed by ha
+            .stats is odict of stack statistics
+            .statTimer is relative timer for statistics
+            .aha is host address of accepting (listening) by server
+
+        Attributes:
+            .bufcnt is number of udp buffers equivalent ffor udp buffer to allocate
+
+        Inherited Properties:
+            .uid is local device unique id as stack uid
+            .name is local device name as stack name
+            .ha  is local device ha as stack ha
+            .kind is local device kind as stack kind
+
+        Properties:
+
+
+        """
+        if ha is None and (host is not None or port is not None):
+            host = host if host is not None else ''
+            port = port if port is not None else self.Port
+            ha = (host, port)
+
+        self.bufcnt = bufcnt  # used in serverFromLocal
+
+        if getattr(self, 'puid', None) is None:  # need .puid to make local
+            self.puid = puid if puid is not None else self.Uid
+
+        local = local if local is not None else devicing.UdpLocalDevice(stack=self,
+                                                                        uid=uid,
+                                                                        name=name,
+                                                                        ha=ha,
+                                                                        kind=kind)
+        super().__init__(local=local, ha=ha, **kwa)
+
+
+    def serverFromLocal(self):
+        '''
+        Create local listening server for stack
+        '''
+        server = udping.SocketUdpNb(ha=self.aha,
+                             bufsize=udping.UDP_MAX_PACKET_SIZE * self.bufcnt)
+        return server
+
+
+    def packetize(self, msg, remote):
+        """
+        Returns packed packet created from msg destined for remote
+        Override in subclass
+        """
+        return packeting.Packet(packed=msg.encode('ascii'))
+
+    def parserize(self, raw, ha):
+        """
+        Returns packet parsed from raw data sourced from ha
+        Override in subclass
+        """
+        return packeting.Packet(packed=raw)
+
+    def messagize(self, pkt, ha):
+        """
+        Returns duple of (message, remote) converted from packet pkt and ha
+        Override in subclass
+        """
+        msg = pkt.packed.decode("ascii")
+        try:
+            remote = self.haRemotes[ha]
+        except KeyError as ex:
+            console.concise(("{0}: Dropping packet received from unknown remote "
+                             "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
+        return (msg, remote)
+
+    def _serviceOneRxMsg(self):
+        """
+        Service one duple from .rxMsgs deque
+        """
+        msg, remote = self.rxMsgs.popleft()
+        console.concise("{0}: Servicing RxMsg from {1} at {2:.3f}:"
+                        "\n     {3}\n".format(self.name,
+                                              remote.name,
+                                              self.stamper.stamp,
+                                              msg))
+        self.incStat("msg_received")

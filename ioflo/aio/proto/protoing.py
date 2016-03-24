@@ -5,7 +5,7 @@ Device Base Package
 from __future__ import absolute_import, division, print_function
 
 
-from ioflo.aid import getConsole
+from ...aid import getConsole
 
 console = getConsole()
 

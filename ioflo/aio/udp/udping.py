@@ -15,6 +15,12 @@ from ...aid.consoling import getConsole
 
 console = getConsole()
 
+UDP_MAX_DATAGRAM_SIZE = (2 ** 16) - 1  # 65535
+UDP_MAX_SAFE_PAYLOAD = 548  # IPV4 MTU 576 - udp headers 28
+# IPV6 MTU is 1280 but headers are bigger
+UDP_MAX_PACKET_SIZE = min(1024, UDP_MAX_DATAGRAM_SIZE)  # assumes IPV6 capable equipment
+
+
 class SocketUdpNb(object):
     """
     Class to manage non blocking I/O on UDP socket.

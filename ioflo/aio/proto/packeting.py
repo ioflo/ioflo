@@ -9,14 +9,15 @@ from binascii import hexlify
 from collections import deque, namedtuple
 import enum
 
-from ioflo.aid.sixing import *
-from ioflo.aid.odicting import odict
-from ioflo.aid.byting import bytify, unbytify, packify, packifyInto, unpackify
-from ioflo.aid import getConsole
+from ...aid.sixing import *
+from ...aid.odicting import odict
+from ...aid.byting import bytify, unbytify, packify, packifyInto, unpackify
+from ...aid import getConsole
+from .protoing import MixIn
 
 console = getConsole()
 
-from .protoing import MixIn
+
 
 class Part(MixIn):
     """
