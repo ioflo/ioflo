@@ -38,7 +38,7 @@ class Stack(MixIn):
                  local=None,
                  uid=None,
                  name=None,
-                 ha='',
+                 ha=None,
                  kind=None,
                  server=None,
                  rxbs=None,
@@ -110,7 +110,8 @@ class Stack(MixIn):
         self.stamper = stamper or Stamper(stamp=0.0)
         self.version = version
         
-        self.aha = ha
+        if getattr(self, 'aha', None) is None:  # allows subclass override
+            self.aha = ha if ha is not None else ''
         
         if getattr(self, 'puid', None) is None:  # allows subclass override
             self.puid = puid if puid is not None else self.Uid
