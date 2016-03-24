@@ -63,6 +63,13 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(part.size, len(part))
         self.assertEqual(part.packed, bytearray([0, 0]))
 
+        packed = bytearray([0, 1, 2, 3])
+        part = packeting.Part(size=2, packed=packed)
+        self.assertEqual(part.size, 4)
+        self.assertEqual(part.size, len(packed))
+        self.assertEqual(part.size, len(part))
+        self.assertEqual(part.packed, packed)
+
     def testPackerPart(self):
         """
         Test PackerPart class

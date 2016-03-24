@@ -11,6 +11,7 @@ import enum
 import time
 import random
 import errno
+import socket
 
 from ioflo.aid.sixing import *
 from ioflo.aid.odicting import odict
@@ -432,7 +433,7 @@ class Stack(MixIn):
         """
         msg, remote = self.txMsgs.popleft()  # duple (msg, destination uid
         console.verbose("{0} sending to {1}\n{2}\n".format(self.name,
-                                                           self.remotes[uid].name,
+                                                           remote.name,
                                                            msg))
         packet = self.packetize(msg, remote)
         if packet is not None:

@@ -24,12 +24,13 @@ class Part(MixIn):
     """
     Size = 0
 
-    def __init__(self, size=None, **kwa):
+    def __init__(self, size=None, packed=None, **kwa):
         """
         Initialization method for instance.
 
         Parameters:
-            size is initial size of .packed
+            size is initial size of .packed if packed not provided
+            packed is initial .packed
 
         Attributes:
             .packed is bytearray of packed binary data
@@ -40,8 +41,11 @@ class Part(MixIn):
         """
         super(Part, self).__init__(**kwa)
 
-        size = size if size is not None else self.Size
-        self.packed = bytearray([0 for i in range(0, size)])
+        if packed is None:
+            size = size if size is not None else self.Size
+            self.packed = bytearray([0 for i in range(0, size)])
+        else:
+            self.packed = bytearray(packed)
 
     def __len__(self):
         """
