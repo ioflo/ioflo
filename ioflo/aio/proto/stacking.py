@@ -136,7 +136,7 @@ class Stack(MixIn):
         self.nameRemotes = nameRemotes if nameRemotes is not None else odict()
         self.haRemotes =  haRemotes if haRemotes is not None else odict()
 
-        self.server = server if server is not None else self.serverFromLocal()  # may return None
+        self.server = server if server is not None else self.createServer(ha=self.aha)
 
         if self.server:
             if not self.server.reopen():  # open interface
@@ -221,9 +221,11 @@ class Stack(MixIn):
         self.puid += 1
         return self.puid
 
-    def serverFromLocal(self):
+    def createServer(self, ha=None):
         """
-        Create server from local data
+        Create and return server on ha
+
+        ha is the host address of the server
         """
         return None
 
@@ -1006,7 +1008,7 @@ class GramStack(Stack):
         super(GramStack, self).__init__(**kwa)
 
 
-    def serverFromLocal(self):
+    def createServer(self, ha=None):
         """
         Create server from local data
         """
@@ -1178,7 +1180,7 @@ class UdpStack(GramStack):
             port = port if port is not None else self.Port
             ha = (host, port)
 
-        self.bufcnt = bufcnt  # used in serverFromLocal
+        self.bufcnt = bufcnt  # used in createServer
 
         if getattr(self, 'puid', None) is None:  # need .puid to make local
             self.puid = puid if puid is not None else self.Uid
@@ -1191,11 +1193,11 @@ class UdpStack(GramStack):
         super().__init__(local=local, ha=ha, **kwa)
 
 
-    def serverFromLocal(self):
-        '''
+    def createServer(self, ha=None):
+        """
         Create local listening server for stack
-        '''
-        server = udping.SocketUdpNb(ha=self.aha,
+        """
+        server = udping.SocketUdpNb(ha=ha,
                              bufsize=udping.UDP_MAX_PACKET_SIZE * self.bufcnt)
         return server
 
