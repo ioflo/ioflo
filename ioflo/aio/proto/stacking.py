@@ -50,6 +50,9 @@ class Stack(MixIn):
                  txbs=None,
                  txPkts=None,
                  txMsgs=None,
+                 remotes=None,
+                 nameRemotes=None,
+                 haRemotes=None,
                  stats=None,
                  **kwa
                 ):
@@ -75,6 +78,9 @@ class Stack(MixIn):
             txbs is bytearray buffer to hold rx data stream if any
             txPkts is deque to hold packet to be transmitted if any
             txMsgs is deque to hold messages to be transmitted if any
+            remotes is odict to hold remotes keyed by uid if any
+            nameRemotes is odict to hold remotes keyed by name if any
+            haRemotes is odict to remotes keyed by ha if any
             stats is odict of stack statistics if any
 
         Inherited Attributes:
@@ -126,9 +132,9 @@ class Stack(MixIn):
                                                                           kind=kind)
         self.local.stack = self  # in case passed up from subclass
 
-        self.remotes = self.uidRemotes = odict()  # remotes indexed by uid
-        self.nameRemotes = odict()  # remotes indexed by name
-        self.haRemotes =  odict()  # remotes indexed by ha
+        self.remotes = self.uidRemotes = remotes if remotes is not None else odict()
+        self.nameRemotes = nameRemotes if nameRemotes is not None else odict()
+        self.haRemotes =  haRemotes if haRemotes is not None else odict()
 
         self.server = server if server is not None else self.serverFromLocal()  # may return None
 
@@ -892,6 +898,9 @@ class StreamStack(Stack):
             rxPkts is deque to hold received packet if any
             rxMsgs is deque to hold received msgs if any
             txPkts is deque to hold packet to be transmitted if any
+            remotes is odict to hold remotes keyed by uid if any
+            nameRemotes is odict to hold remotes keyed by name if any
+            haRemotes is odict to remotes keyed by ha if any
             txMsgs is deque to hold messages to be transmitted if any
             stats is odict of stack statistics if any
 
@@ -957,6 +966,9 @@ class GramStack(Stack):
             rxMsgs is deque to hold received msgs if any
             txPkts is deque to hold packet to be transmitted if any
             txMsgs is deque to hold messages to be transmitted if any
+            remotes is odict to hold remotes keyed by uid if any
+            nameRemotes is odict to hold remotes keyed by name if any
+            haRemotes is odict to remotes keyed by ha if any
             stats is odict of stack statistics if any
 
         Parameters:
@@ -1119,6 +1131,9 @@ class UdpStack(GramStack):
             rxMsgs is deque to hold received msgs if any
             txPkts is deque to hold packet to be transmitted if any
             txMsgs is deque to hold messages to be transmitted if any
+            remotes is odict to hold remotes keyed by uid if any
+            nameRemotes is odict to hold remotes keyed by name if any
+            haRemotes is odict to remotes keyed by ha if any
             stats is odict of stack statistics if any
 
         Parameters:
