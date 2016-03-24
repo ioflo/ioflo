@@ -221,7 +221,7 @@ class Stack(MixIn):
         self.puid += 1
         return self.puid
 
-    def createServer(self, ha=None):
+    def createServer(self, ha):
         """
         Create and return server on ha
 
@@ -1008,7 +1008,7 @@ class GramStack(Stack):
         super(GramStack, self).__init__(**kwa)
 
 
-    def createServer(self, ha=None):
+    def createServer(self, ha):
         """
         Create server from local data
         """
@@ -1193,7 +1193,7 @@ class UdpStack(GramStack):
         super().__init__(local=local, ha=ha, **kwa)
 
 
-    def createServer(self, ha=None):
+    def createServer(self, ha):
         """
         Create local listening server for stack
         """
