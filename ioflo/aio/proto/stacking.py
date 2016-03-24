@@ -590,7 +590,7 @@ class Stack(MixIn):
                         "\n     {3}\n".format(self.name,
                                               remote.name,
                                               self.stamper.stamp,
-                                              msg.show()))
+                                              msg))
 
     def serviceRxMsgs(self):
         """
