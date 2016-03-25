@@ -502,14 +502,14 @@ class Stack(MixIn):
         self.serviceTxMsgOnce()
         self.serviceTxPktsOnce()
 
-    def process(self):
+    def serviceTimers(self):
         """
         Allow timer based processing
         Call .process on all remotes to allow timer based processing
         of their exchanges
         """
         for remote in self.remotes.values():
-            remote.process()
+            remote.serviceTimers()
 
     def clearRxbs(self):
         """
@@ -608,6 +608,8 @@ class Stack(MixIn):
                                               remote.name,
                                               self.stamper.stamp,
                                               msg))
+        if remote:
+            remote.processRxMsg(msg)
 
     def serviceRxMsgs(self):
         """
@@ -631,7 +633,7 @@ class Stack(MixIn):
         self.serviceReceives()
         self.serviceRxPkts()
         self.serviceRxMsgs()
-        self.process()
+        self.serviceTimers()
 
     def serviceAllRxOnce(self):
         """
@@ -640,7 +642,7 @@ class Stack(MixIn):
         self.serviceReceivesOnce()
         self.serviceRxPktsOnce()
         self.serviceRxMsgsOnce()
-        self.process()
+        self.serviceTimers()
 
     def serviceAll(self):
         """
