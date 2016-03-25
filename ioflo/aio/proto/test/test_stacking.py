@@ -165,6 +165,31 @@ class BasicTestCase(unittest.TestCase):
         alpha.server.close()
         beta.server.close()
 
+    def testUdpStack(self):
+        """
+        Test UdpStack class
+        """
+        console.terse("{0}\n".format(self.testUdpStack.__doc__))
+
+        stack = stacking.UdpStack()
+        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.UdpStack.Port))
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ('0.0.0.0', stacking.UdpStack.Port))
+        stack.close()
+
+        ha = ('127.0.0.1', 8000)
+        stack = stacking.UdpStack(ha=ha)
+        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ha)
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ha)
+        stack.close()
+
 
 def runOne(test):
     '''
@@ -180,6 +205,7 @@ def runSome():
     names = [
              'testStack',
              'testStacks',
+             'testUdpStack',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

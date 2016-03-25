@@ -229,6 +229,13 @@ class Stack(MixIn):
         """
         return None
 
+    def close(self):
+        """
+        Close server if any
+        """
+        if self.server:
+            self.server.close()
+
     def addRemote(self, remote):
         """
         Uniquely add a remote to indexes
@@ -1175,10 +1182,13 @@ class UdpStack(GramStack):
 
 
         """
-        if ha is None and (host is not None or port is not None):
-            host = host if host is not None else ''
-            port = port if port is not None else self.Port
-            ha = (host, port)
+        if ha is None:
+            if (host is not None or port is not None):
+                host = host if host is not None else ''
+                port = port if port is not None else self.Port
+                ha = (host, port)
+            else:
+                ha = ('', self.Port)  # host all interfaces, bind with 0 port creates ephemeral port
 
         self.bufcnt = bufcnt  # used in createServer
 

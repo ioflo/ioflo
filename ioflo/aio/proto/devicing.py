@@ -179,8 +179,40 @@ class UdpDevice(Device):
             if host in ['0.0.0.0', '']:
                 host = '127.0.0.1'
             ha = (host, port)
+        else:
+            ha = ('127.0.0.1', stack.Port)
 
         super().__init__(stack=stack, ha=ha, **kwa)
+
+    @property
+    def host(self):
+        """
+        Property that returns host of local interface ha duple (host, port)
+        """
+        return self.ha[0]
+
+    @host.setter
+    def host(self, value):
+        """
+        Setter for host property
+        """
+        host, port = self.local.ha
+        self.local.ha = (value, port)
+
+    @property
+    def port(self):
+        """
+        Property that returns host of local interface ha duple (host, port)
+        """
+        return self.ha[1]
+
+    @port.setter
+    def port(self, value):
+        """
+        Setter for host property
+        """
+        host, port = self.local.ha
+        self.local.ha = (host, value)
 
 
 class UdpLocalDevice(UdpDevice, LocalDevice):
