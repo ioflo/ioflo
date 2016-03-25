@@ -14,11 +14,12 @@ else:
 import os
 
 from binascii import hexlify
+import time
 
 # Import ioflo libs
 from ioflo.aid.sixing import *
 from ioflo.aid.byting import hexify, bytify, unbytify, packify, unpackify
-from ioflo.aid.timing import Timer
+from ioflo.aid.timing import Timer, StoreTimer, Stamper
 from ioflo.aid import getConsole
 
 console = getConsole()
@@ -113,6 +114,8 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testStacks.__doc__))
 
+        stamper = Stamper()
+
         alpha = stacking.UdpStack(name='alpha',
                                port=8000)
         self.assertEqual(alpha.name, "alpha")
@@ -152,10 +155,15 @@ class BasicTestCase(unittest.TestCase):
         msg2alpha = "Hi alpha from beta."
         beta.transmit(msg2alpha)
 
-        timer = Timer(duration=0.5)
-        while not timer.expired:
-            alpha.serviceAll()
-            beta.serviceAll()
+        #timer = Timer(duration=0.5)
+        while (alpha.txMsgs or alpha.txPkts or alpha.rxPkts or alpha.rxMsgs
+                or beta.txMsgs or  beta.txPkts or beta.rxPkts or beta.rxMsgs):
+            alpha.serviceAllTx()
+            beta.serviceAllTx()
+            time.sleep(0.1)
+            alpha.serviceAllRx()
+            beta.serviceAllRx()
+            stamper.advanceStamp(0.1)
 
         self.assertEqual(len(alpha.rxMsgs), 0)
         self.assertEqual(len(beta.rxMsgs), 0)
