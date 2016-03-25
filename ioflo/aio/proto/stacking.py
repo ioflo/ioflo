@@ -538,6 +538,9 @@ class Stack(MixIn):
                 errno = ex.args[0]  # args[0] always errno for compat
                 if errno == errno.ECONNRESET:
                     return False  # no recieved data
+                else:
+                    raise
+
             if not raw:
                 return False  # no received data
             self.rxbs.extend(raw)
@@ -1099,6 +1102,9 @@ class GramStack(Stack):
             errno = ex.args[0]  # args[0] always errno for compat
             if errno == errno.ECONNRESET:
                 return False  # no recieved data
+            else:
+                raise
+
         if not raw:  # no received data
             return False
         packet = self.parserize(raw, ha)
