@@ -537,7 +537,7 @@ class Stack(MixIn):
             except Exception as ex:
                 errno = ex.args[0]  # args[0] always errno for compat
                 if errno == errno.ECONNRESET:
-                    return False  # no recieved data
+                    return False  # no received data
                 else:
                     raise
 
@@ -1101,7 +1101,7 @@ class GramStack(Stack):
         except socket.error as ex:
             errno = ex.args[0]  # args[0] always errno for compat
             if errno == errno.ECONNRESET:
-                return False  # no recieved data
+                return False  # no received data
             else:
                 raise
 
