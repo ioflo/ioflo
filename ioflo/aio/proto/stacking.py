@@ -1258,3 +1258,5 @@ class UdpStack(GramStack):
                                               self.stamper.stamp,
                                               msg))
         self.incStat("msg_received")
+        if remote:
+            remote.processRxMsg(msg)
