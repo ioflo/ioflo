@@ -1210,7 +1210,6 @@ class UdpStack(GramStack):
                                                                         kind=kind)
         super().__init__(local=local, ha=ha, **kwa)
 
-
     def createServer(self, ha):
         """
         Create local listening server for stack
@@ -1218,7 +1217,6 @@ class UdpStack(GramStack):
         server = udping.SocketUdpNb(ha=ha,
                              bufsize=udping.UDP_MAX_PACKET_SIZE * self.bufcnt)
         return server
-
 
     def packetize(self, msg, remote):
         """
