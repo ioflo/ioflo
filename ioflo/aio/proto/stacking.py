@@ -580,7 +580,7 @@ class Stack(MixIn):
         Assumes that there is a message on the .rxes deque
         """
         pkt, ha = self.rxPkts.popleft()  # (packet, source address)
-        console.verbose("{0} received packet from {1}\n{1}\n".format(self.name,
+        console.verbose("{0} received packet from {1}\n{2}\n".format(self.name,
                                                                      ha,
                                                                      pkt.show()))
         message, remote = self.messagize(pkt, ha)
