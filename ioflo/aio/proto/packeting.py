@@ -122,7 +122,7 @@ class PackerPart(Part):
            Return offset into raw of unparsed portion
            Base method to be overridden in subclass
         """
-        if (not raw) or (not self.verifySize(raw)):
+        if (raw is None) or (not self.verifySize(raw)):
             raise ValueError("Parse Packer: Not enough raw data for packer. "
                              "Need {0} bytes, got {1} bytes.".format(self.size,
                                                                      len(raw)))

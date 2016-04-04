@@ -92,6 +92,14 @@ class BasicTestCase(unittest.TestCase):
         show = part.show()
         self.assertEqual(show, '    PackerPart: packed=0x\n')
 
+        raw = bytearray()
+        offset = part.parse(raw=raw)
+        self.assertEqual(offset, part.size)
+        self.assertEqual(offset, 0)
+        self.assertEqual(part.packed, bytearray([]))
+        show = part.show()
+        self.assertEqual(show, '    PackerPart: packed=0x\n')
+
         raw = bytearray([7, 2, 1, 0])
         offset = part.parse(raw=raw)
         self.assertEqual(offset, part.size)

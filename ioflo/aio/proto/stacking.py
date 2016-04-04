@@ -446,7 +446,7 @@ class Stack(MixIn):
             if not self.remotes:
                 emsg = "No remote to send to.\n"
                 console.terse(emsg)
-                self.incStat("msg_destination_invalid")
+                self.incStat("pkt_destination_invalid")
                 return
             ha = self.remotes.values()[0].ha
         self.txPkts.append((pkt, ha))
