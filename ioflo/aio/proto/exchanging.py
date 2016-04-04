@@ -34,18 +34,45 @@ class Exchange(MixIn):
                  device=None,
                  timeout=None,
                  redoTimout=None,
-                 rxMsg=None,
-                 txMsg=None):
+                 tx=None,
+                 rx=None):
         """
         Setup Exchange instance
-        timeout of 0.0 means no timeout go forever
+
+        Inherited Parameters:
+
+        Parameters:
+            stack is interface stack instance
+            uid is Exchange unique id
+            name is user friendly name of exchange
+            device is associated device handling exchange
+            timeout is exchange expiration timeout
+                timeout of 0.0 means no expiration go on forever
+            redoTimeout is redo appropriate packet/message in exchange
+            rx is latest received  msg/pkt/data
+            tx is latest/next transmitted msg/pkt/data
+
+        Inherited Attributes
 
         Attributes:
             .stack is interface stack instance
             .uid is Exchange unique id
             .name is user friendly name of exchange
+            .device is associated device handling exchange
+            .timeout is exchange expiration timeout
+                timeout of 0.0 means no expiration go on forever
+            .timer is StoreTimer instance for .timeout
+            .redoTimeout is redo appropriate packet/message in exchange
+            .redoTimer is StoreTimer instance for .redoTimeout
+            .rx is latest received  msg/pkt/data
+            .tx is latest/next transmitted msg/pkt/data
             .done is True If done  False otherwise
             .failed is True If failed False otherwise
+            .acked is True if ack has been sent
+
+        Inherited Properties
+
+        Properties
 
         """
         self.stack = stack
@@ -56,8 +83,8 @@ class Exchange(MixIn):
         self.timer = StoreTimer(stack.stamper, duration=self.timeout)
         self.redoTimeout = redoTimeout if redoTimout is not None else self.RedoTimeout
         self.redoTimer = StoreTimer(stack.stamper, duration=self.redoTimeout)
-        self.rxMsg = rxMsg  # latest message received
-        self.txMsg = txMsg  # initial message to transmit
+        self.rx = rx  # latest message received
+        self.tx = tx  # initial message to transmit
         self.done = False
         self.failed = False
         self.acked = False
@@ -68,6 +95,7 @@ class Exchange(MixIn):
         """
         self.done = False
         self.failed = False
+        self.acked = False
 
     def run(self):
         """
@@ -80,7 +108,7 @@ class Exchange(MixIn):
         Process time based handling of exchange like timeout or retries
         """
         if self.timeout > 0.0 and self.timer.expired:
-            console.concise("Exchange {0}. Timed out with {1} at {2}\n".format(
+            console.concise("{0}. Timed out with {1} at {2}\n".format(
                     self.stack.name, self.device.name, round(self.stack.stamper.stamp, 3)))
             self.fail()
             return
@@ -92,31 +120,61 @@ class Exchange(MixIn):
                                             self.name,
                                             self.device.name,
                                             round(self.stack.stamper.stamp, 3)))
-            self.message(self.txMsg)
+            if self.tx is not None:
+                self.send(self.tx)
 
-    def receive(self, msg):
+    def send(self, tx=None):
         """
-        Process received msg.
-        Subclasses should call super to call this
+        send tx
+        Override in subclass to queue appropriately
         """
-        self.rxMsg = msg
+        if tx is not None:
+            self.tx = tx  # always last transmitted msg/pkt/data
+        if self.tx is None:
+            raise ValueError("{0}: {1} Cannot send. No .tx."
+                                "\n".format(self.stack.name,
+                                            self.name))
+        #self.stack.transmit(self.tx, self.device.ha)
+        #self.stack.message(self.tx, self.device)
 
-    def message(self, msg):
+    def transmit(self, pkt=None):
+        """
+        Queue pkt on stack packet queue
+        """
+        if pkt is not None:
+            self.tx = pkt  # always last transmitted msg/pkt/data
+        if self.tx is None:
+            raise ValueError("{0}: {1} Cannot transmit. No .tx."
+                                "\n".format(self.stack.name,
+                                            self.name))
+        self.stack.transmit(self.tx, self.device.ha)
+
+
+    def message(self, msg=None):
         """
         Queue msg on stack message queue
         """
-        self.stack.message(msg)
-        self.txMsg = msg  # always last transmitted msg
+        if msg is not None:
+            self.tx = msg  # always last transmitted msg/pkt/data
+        if self.tx is None:
+            raise ValueError("{0}: {1} Cannot message. No .tx."
+                                "\n".format(self.stack.name,
+                                            self.name))
+        self.stack.message(self.tx, self.device)
 
-    def finish(self, event=None):
+    def receive(self, rx):
         """
-        Exchange complete as success
-        Mark flags and  push completion event
+        Process received msg/pkt/data.
+        Subclasses should call super to call this
         """
-        if event is None:
-            event =  eventify(tag=tagify(['exchange', self.name, 'finished' ]))
-        self.stack.rxEvents.append(event)
-        self.remove()
+        self.rx = rx
+
+    def finish(self):
+        """
+        Exchange complete
+        Default is as success unless .failed
+        Mark flags
+        """
         self.done = True
         console.concise("{0}: Finished {1} with {2} as {3} at {4}\n".format(
                                             self.stack.name,
@@ -125,14 +183,12 @@ class Exchange(MixIn):
                                             'FAILURE' if self.failed else 'SUCCESS',
                                             round(self.stack.stamper.stamp, 3)))
 
-    def fail(self, event=None):
+    def fail(self):
         """
         Exchange complete as failure
         """
         self.failed = True
-        if event is None:
-            event =  eventify(tag=tagify(['exchange', self.name, 'failed' ]))
-        self.finish(event=event)
+        self.finish()
 
 
 class Exchanger(Exchange):
@@ -147,54 +203,19 @@ class Exchanger(Exchange):
         """
         super(Exchanger, self).__init__(stack=stack, **kwa)
 
-    def process(self):
-        """
-        Process time based handling of exchange like timeout or retries
-        """
-        if self.timeout > 0.0 and self.timer.expired:
-            console.concise("Exchanger {0}. Timed out with {1} at {2}\n".format(
-                    self.stack.name, self.device.name, round(self.stack.stamper.stamp, 3)))
-            self.fail()
-            return
-
-        if self.redoTimer.expired:
-            self.redoTimer.restart()
-            console.concise("{0}: Redoing {1} with {2} at {3}\n".format(
-                                    self.stack.name,
-                                    self.name,
-                                    self.device.name,
-                                    round(self.stack.stamper.stamp, 3)))
-            self.message(self.txMsg)
-
-    def start(self, txMsg=None):
+    def start(self, tx=None):
         """
         Initiate exchange
         """
-        if txMsg is not None:
-            self.txMsg = txMsg
-
-        if not self.txMsg:
-            raise waving.ExchangeError("{0}: Cannot start {1} no initial message"
-                                        " to send.".format(self.stack.name,
-                                                           self.name))
+        super(Exchanger, self).start()  # reset flags
 
         self.timer.restart()
         self.redoTimer.restart()
-        self.add()
         console.concise("{0}: Initiating {1} with {2} at {3}.\n".format(self.stack.name,
                                             self.name,
                                             self.device.name,
                                             round(self.stack.stamper.stamp, 3)))
-
-        self.message(self.txMsg)
-
-    def finish(self, event=None):
-        """
-        Exchange complete as success
-        Super to clean up
-        """
-        super(Exchanger, self).finish(event=event)
-
+        self.send(tx)
 
 class Exchangent(Exchange):
     """
@@ -212,38 +233,27 @@ class Exchangent(Exchange):
         """
         super(Exchangent, self).__init__(stack=stack, **kwa)
 
-    def process(self):
-        """
-        Process time based handling of exchange like timeout or retries
-        """
-        if self.timeout > 0.0 and self.timer.expired:
-            console.concise("Exchange {0}. Timed out with {1} at {2}\n".format(
-                    self.stack.name, self.device.name, round(self.stack.stamper.stamp, 3)))
-            self.fail()
-            return
-
-    def start(self, rxMsg=None):
+    def start(self, rx=None):
         """
         Correspond to exchange
         """
-        if rxMsg is not None:
-            self.rxMsg = rxMsg
-
-        if not self.rxMsg:
-            raise waving.ExchangeError("{0}: Cannot start {1} no initial message"
-                                        " to correspond to.".format(self.stack.name,
-                                                                    self.name))
         self.timer.restart()
         self.redoTimer.restart()
-        self.add()
         console.concise("{0}: Corresponding {1} with {2} at {3}.\n".format(self.stack.name,
                                             self.name,
                                             self.device.name,
                                             round(self.stack.stamper.stamp, 3)))
-        self.respond()
+        self.respond(rx)
 
-    def respond(self):
+    def respond(self, rx=None):
         """
         Respond to the associated request
         """
+        if rx is not None:
+            self.rx = rx
+
+        if self.rx is None:
+            raise ValueError("{0}: Cannot respond {1} no .rx"
+                             "received.\n".format(self.stack.name,
+                                                  self.name))
         self.finish()

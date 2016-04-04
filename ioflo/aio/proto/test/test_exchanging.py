@@ -74,9 +74,6 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(exchangent.device, None)
 
 
-
-
-
 def runOne(test):
     '''
     Unittest Runner
