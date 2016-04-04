@@ -128,7 +128,7 @@ class SocketUdpNb(object):
 
         if console._verbosity >= console.Wordage.profuse:  # faster to check
             cmsg = ("\nServer at {0}, received from {1}:\n------------\n"
-                       "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
+                       "{2}\n".format(self.ha, sa, data.decode("UTF-8", "replace")))
             console.profuse(cmsg)
 
         if self.wlog:  # log over the wire rx
@@ -153,7 +153,7 @@ class SocketUdpNb(object):
 
         if console._verbosity >=  console.Wordage.profuse:
             cmsg = ("\nServer at {0}, sent {1} bytes to {2}:\n------------\n"
-                    "{3}\n".format(self.ha, result, da, data[:result].decode('UTF-8')))
+                    "{3}\n".format(self.ha, result, da, data[:result].decode("UTF-8", "replace")))
             console.profuse(cmsg)
 
         if self.wlog:
