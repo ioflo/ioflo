@@ -200,12 +200,83 @@ class Exchanger(Exchange):
                  **kwa):
         """
         Setup Exchanger instance
+
+        Inherited Parameters:
+            stack is interface stack instance
+            uid is Exchange unique id
+            name is user friendly name of exchange
+            device is associated device handling exchange
+            timeout is exchange expiration timeout
+                timeout of 0.0 means no expiration go on forever
+            redoTimeout is redo appropriate packet/message in exchange
+            rx is latest received  msg/pkt/data
+            tx is latest/next transmitted msg/pkt/data
+
+        Parameters:
+
+        Inherited Attributes
+            .stack is interface stack instance
+            .uid is Exchange unique id
+            .name is user friendly name of exchange
+            .device is associated device handling exchange
+            .timeout is exchange expiration timeout
+                timeout of 0.0 means no expiration go on forever
+            .timer is StoreTimer instance for .timeout
+            .redoTimeout is redo appropriate packet/message in exchange
+            .redoTimer is StoreTimer instance for .redoTimeout
+            .rx is latest received  msg/pkt/data
+            .tx is latest/next transmitted msg/pkt/data
+            .done is True If done  False otherwise
+            .failed is True If failed False otherwise
+            .acked is True if ack has been sent
+
+        Attributes:
+
+        Inherited Properties
+
+        Properties
+
         """
         super(Exchanger, self).__init__(stack=stack, **kwa)
 
     def start(self, tx=None):
         """
         Initiate exchange
+
+        Inherited Parameters:
+            stack is interface stack instance
+            uid is Exchange unique id
+            name is user friendly name of exchange
+            device is associated device handling exchange
+            timeout is exchange expiration timeout
+                timeout of 0.0 means no expiration go on forever
+            redoTimeout is redo appropriate packet/message in exchange
+            rx is latest received  msg/pkt/data
+            tx is latest/next transmitted msg/pkt/data
+
+        Parameters:
+
+        Inherited Attributes
+            .stack is interface stack instance
+            .uid is Exchange unique id
+            .name is user friendly name of exchange
+            .device is associated device handling exchange
+            .timeout is exchange expiration timeout
+                timeout of 0.0 means no expiration go on forever
+            .timer is StoreTimer instance for .timeout
+            .redoTimeout is redo appropriate packet/message in exchange
+            .redoTimer is StoreTimer instance for .redoTimeout
+            .rx is latest received  msg/pkt/data
+            .tx is latest/next transmitted msg/pkt/data
+            .done is True If done  False otherwise
+            .failed is True If failed False otherwise
+            .acked is True if ack has been sent
+
+        Attributes:
+
+        Inherited Properties
+
+        Properties
         """
         super(Exchanger, self).start()  # reset flags
 
