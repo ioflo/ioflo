@@ -24,7 +24,7 @@ from ioflo.aid import getConsole
 
 console = getConsole()
 
-from ioflo.aio.proto import stacking, devicing
+from ioflo.aio.proto import stacking, devicing, packeting
 
 def setUpModule():
     console.reinit(verbosity=console.Wordage.concise)
@@ -107,12 +107,36 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(len(stack.nameRemotes), 0)
         self.assertEqual(len(stack.haRemotes), 0)
 
+    def testUdpStack(self):
+        """
+        Test UdpStack class
+        """
+        console.terse("{0}\n".format(self.testUdpStack.__doc__))
 
-    def testStacks(self):
+        stack = stacking.UdpStack()
+        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.UdpStack.Port))
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ('0.0.0.0', stacking.UdpStack.Port))
+        stack.close()
+
+        ha = ('127.0.0.1', 8000)
+        stack = stacking.UdpStack(ha=ha)
+        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ha)
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ha)
+        stack.close()
+
+    def testUdpStacks(self):
         """
         Test two stacks sending packets
         """
-        console.terse("{0}\n".format(self.testStacks.__doc__))
+        console.terse("{0}\n".format(self.testUdpStacks.__doc__))
 
         stamper = Stamper()
 
@@ -150,10 +174,10 @@ class BasicTestCase(unittest.TestCase):
         beta.addRemote(remote)
 
         msg2beta = "Hello beta it's me alpha."
-        alpha.transmit(msg2beta)
+        alpha.message(msg2beta)
 
         msg2alpha = "Hi alpha from beta."
-        beta.transmit(msg2alpha)
+        beta.message(msg2alpha)
 
         #timer = Timer(duration=0.5)
         while (alpha.txMsgs or alpha.txPkts or alpha.rxPkts or alpha.rxMsgs
@@ -170,33 +194,30 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.stats['msg_received'], 1)
         self.assertEqual(beta.stats['msg_received'], 1)
 
+        msg2beta = "Whats up beta?"
+        packet = packeting.Packet(packed=msg2beta.encode('ascii'))
+        alpha.transmit(packet)
+
+        msg2alpha = "Just hanging alpha."
+        packet = packeting.Packet(packed=msg2alpha.encode('ascii'))
+        beta.transmit(packet)
+
+        while (alpha.txMsgs or alpha.txPkts or alpha.rxPkts or alpha.rxMsgs
+                or beta.txMsgs or  beta.txPkts or beta.rxPkts or beta.rxMsgs):
+            alpha.serviceAllTx()
+            beta.serviceAllTx()
+            time.sleep(0.1)
+            alpha.serviceAllRx()
+            beta.serviceAllRx()
+            stamper.advanceStamp(0.1)
+
+        self.assertEqual(len(alpha.rxMsgs), 0)
+        self.assertEqual(len(beta.rxMsgs), 0)
+        self.assertEqual(alpha.stats['msg_received'], 2)
+        self.assertEqual(beta.stats['msg_received'], 2)
+
         alpha.server.close()
         beta.server.close()
-
-    def testUdpStack(self):
-        """
-        Test UdpStack class
-        """
-        console.terse("{0}\n".format(self.testUdpStack.__doc__))
-
-        stack = stacking.UdpStack()
-        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
-        self.assertEqual(stack.local.uid, 1)
-        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
-        self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.UdpStack.Port))
-        self.assertEqual(stack.local.kind, None)
-        self.assertEqual(stack.aha, ('0.0.0.0', stacking.UdpStack.Port))
-        stack.close()
-
-        ha = ('127.0.0.1', 8000)
-        stack = stacking.UdpStack(ha=ha)
-        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
-        self.assertEqual(stack.local.uid, 1)
-        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
-        self.assertEqual(stack.local.ha, ha)
-        self.assertEqual(stack.local.kind, None)
-        self.assertEqual(stack.aha, ha)
-        stack.close()
 
 
 def runOne(test):
@@ -212,8 +233,8 @@ def runSome():
     tests =  []
     names = [
              'testStack',
-             'testStacks',
              'testUdpStack',
+             'testUdpStacks',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

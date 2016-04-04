@@ -435,6 +435,22 @@ class Stack(MixIn):
         if self.server.opened and self.txPkts:
             self._serviceOneTxPkt()
 
+    def transmit(self, pkt, ha=None):
+        """
+        Append (pkt, ha) duple to .txPkts deque
+        If destination remote.ha not given
+        Then use zeroth remote.ha If any otherwise Raise exception
+        Override in subclass
+        """
+        if ha is None:
+            if not self.remotes:
+                emsg = "No remote to send to.\n"
+                console.terse(emsg)
+                self.incStat("msg_destination_invalid")
+                return
+            ha = self.remotes.values()[0].ha
+        self.txPkts.append((pkt, ha))
+
     def packetize(self, msg, remote):
         """
         Returns packed packet created from msg destined for remote
@@ -470,7 +486,7 @@ class Stack(MixIn):
         if self.txMsgs:
             self._serviceOneTxMsg()
 
-    def transmit(self, msg, remote=None):
+    def message(self, msg, remote=None):
         """
         Append (msg, remote) duple to .txMsgs deque
         If destination remote not given

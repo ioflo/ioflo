@@ -91,7 +91,7 @@ class Exchange(object):
                                             self.name,
                                             self.device.name,
                                             round(self.stack.stamper.stamp, 3)))
-            self.transmit(self.txMsg)
+            self.message(self.txMsg)
 
     def receive(self, msg):
         """
@@ -100,11 +100,11 @@ class Exchange(object):
         """
         self.rxMsg = msg
 
-    def transmit(self, msg):
+    def message(self, msg):
         """
-        Queue msg on stack transmit queue
+        Queue msg on stack message queue
         """
-        self.stack.transmit(msg)
+        self.stack.message(msg)
         self.txMsg = msg  # always last transmitted msg
 
     def finish(self, event=None):
@@ -163,7 +163,7 @@ class Exchanger(Exchange):
                                     self.name,
                                     self.device.name,
                                     round(self.stack.stamper.stamp, 3)))
-            self.transmit(self.txMsg)
+            self.message(self.txMsg)
 
     def start(self, txMsg=None):
         """
@@ -185,7 +185,7 @@ class Exchanger(Exchange):
                                             self.device.name,
                                             round(self.stack.stamper.stamp, 3)))
 
-        self.transmit(self.txMsg)
+        self.message(self.txMsg)
 
     def finish(self, event=None):
         """
