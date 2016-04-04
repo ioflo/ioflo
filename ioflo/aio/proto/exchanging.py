@@ -15,11 +15,12 @@ from ...aid.byting import bytify, unbytify, packify, packifyInto, unpackify
 from ...aid.eventing import eventify, tagify
 from ...aid.timing import StoreTimer, tuuid
 from ...aid import getConsole
+from .protoing import MixIn
 
 console = getConsole()
 
 
-class Exchange(object):
+class Exchange(MixIn):
     """
     Exchange (pseudo transaction) base class for exchanges
     """
