@@ -51,6 +51,10 @@ class Exchange(MixIn):
             redoTimeout is redo appropriate packet/message in exchange
             rx is latest received  msg/pkt/data
             tx is latest/next transmitted msg/pkt/data
+            
+        Class Attributes:
+            .Timeout is overall exchange timeout
+            .RedoTimeout is redo timeout
 
         Inherited Attributes
 
@@ -212,6 +216,10 @@ class Exchanger(Exchange):
             tx is latest/next transmitted msg/pkt/data
 
         Parameters:
+        
+        Class Attributes:
+            .Timeout is overall exchange timeout
+            .RedoTimeout is redo timeout
 
         Inherited Attributes
             .stack is interface stack instance
@@ -254,6 +262,10 @@ class Exchanger(Exchange):
             tx is latest/next transmitted msg/pkt/data
 
         Parameters:
+        
+       Class Attributes:
+            .Timeout is overall exchange timeout
+            .RedoTimeout is redo timeout
 
         Inherited Attributes
             .stack is interface stack instance
