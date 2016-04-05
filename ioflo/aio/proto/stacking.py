@@ -525,7 +525,7 @@ class Stack(MixIn):
         of their exchanges
         """
         for remote in self.remotes.values():
-            remote.serviceTimers()
+            remote.process()
 
     def clearRxbs(self):
         """
@@ -628,7 +628,7 @@ class Stack(MixIn):
                                               self.stamper.stamp,
                                               msg))
         if remote:
-            remote.processRxMsg(msg)
+            remote.receive(msg)
 
     def serviceRxMsgs(self):
         """
@@ -901,8 +901,6 @@ class KeepStack(Stack):
         self.clearRemoteKeeps()
 
 
-
-
 class StreamStack(Stack):
     """
     Stream based stack object.
@@ -967,7 +965,6 @@ class StreamStack(Stack):
 
         """
         super(StreamStack, self).__init__(**kwa)
-
 
 
 class GramStack(Stack):
@@ -1273,4 +1270,4 @@ class UdpStack(GramStack):
                                               msg))
         self.incStat("msg_received")
         if remote:
-            remote.processRxMsg(msg)
+            remote.receive(msg)

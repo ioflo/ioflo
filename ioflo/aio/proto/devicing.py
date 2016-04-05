@@ -65,15 +65,15 @@ class Device(MixIn):
                     self.kind))
         return result
 
-    def serviceTimers(self):
+    def process(self):
         """
         Timer based processing
         """
         pass
 
-    def processRxMsg(self, msg):
+    def receive(self, rx):
         """
-        Process received msg.
+        Process received rx msg/pkt/data.
         """
         pass
 
