@@ -408,9 +408,9 @@ class Stack(MixIn):
             else:
                 raise
 
-        console.profuse("{0}: sent to {1}\n    {2}\n".format(self.name,
+        console.profuse("{0}: sent to {1}\n    0x{2}\n".format(self.name,
                                                              ha or '',
-                                                             self.txbs[:count]))
+                                                             hexlify(self.txbs[:count]).decode('ascii')))
 
         if count < len(self.txbs):
             del self.txbs[:count]
@@ -1071,9 +1071,9 @@ class GramStack(Stack):
             else:
                 raise
 
-        console.profuse("{0}: sent to {1}\n    {2}\n".format(self.name,
+        console.profuse("{0}: sent to {1}\n    0x{2}\n".format(self.name,
                                                           ha,
-                                                          pkt.packed))
+                                                          hexlify(pkt.packed).decode('ascii')))
         return True  # not blocked
 
     def serviceTxPkts(self):
