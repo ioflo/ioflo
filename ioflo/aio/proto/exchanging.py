@@ -174,7 +174,7 @@ class Exchange(MixIn):
     def receive(self, rx):
         """
         Process received msg/pkt/data.
-        Subclasses should call super to call this
+        Subclasses should extend with super call and additional handling
         """
         self.rx = rx
 
