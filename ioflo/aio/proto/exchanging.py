@@ -130,7 +130,15 @@ class Exchange(MixIn):
     def send(self, tx=None):
         """
         send tx
-        Override in subclass to queue appropriately
+        Extend in subclass to queue appropriately
+        
+        Either:
+           super().send(tx)
+           self.stack.transmit(self.tx, self.device.ha)
+        Or
+           super().send(tx)
+           self.stack.message(self.tx, self.device)
+
         """
         if tx is not None:
             self.tx = tx  # always last transmitted msg/pkt/data
@@ -138,9 +146,7 @@ class Exchange(MixIn):
             raise ValueError("{0}: {1} Cannot send. No .tx."
                                 "\n".format(self.stack.name,
                                             self.name))
-        #self.stack.transmit(self.tx, self.device.ha)
-        #self.stack.message(self.tx, self.device)
-
+        
     def transmit(self, pkt=None):
         """
         Queue pkt on stack packet queue
