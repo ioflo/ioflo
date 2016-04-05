@@ -149,7 +149,6 @@ class Exchange(MixIn):
                                             self.name))
         self.stack.transmit(self.tx, self.device.ha)
 
-
     def message(self, msg=None):
         """
         Queue msg on stack message queue
