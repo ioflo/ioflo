@@ -8,6 +8,7 @@ import sys
 import os
 import socket
 import errno
+from binascii import hexlify
 
 # Import ioflo libs
 from ...aid.sixing import *
@@ -116,8 +117,7 @@ class SocketUdpNb(object):
         but always returns a tuple with two elements
         """
         try:
-            #sa = source address tuple (sourcehost, sourceport)
-            data, sa = self.ss.recvfrom(self.bs)
+            data, sa = self.ss.recvfrom(self.bs)  # sa is source (host, port)
         except socket.error as ex:
             if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return (b'', None) #receive has nothing empty string for data
@@ -127,8 +127,12 @@ class SocketUdpNb(object):
                 raise #re raise exception ex1
 
         if console._verbosity >= console.Wordage.profuse:  # faster to check
+            try:
+                load = data.decode("UTF-8")
+            except UnicodeDecodeError as ex:
+                load = "0x{0}".format(hexlify(data).decode("ASCII"))
             cmsg = ("\nServer at {0}, received from {1}:\n------------\n"
-                       "{2}\n".format(self.ha, sa, data.decode("UTF-8", "replace")))
+                       "{2}\n".format(self.ha, sa, load))
             console.profuse(cmsg)
 
         if self.wlog:  # log over the wire rx
@@ -152,8 +156,12 @@ class SocketUdpNb(object):
             raise
 
         if console._verbosity >=  console.Wordage.profuse:
+            try:
+                load = data[:result].decode("UTF-8")
+            except UnicodeDecodeError as ex:
+                load = "0x{0}".format(hexlify(data[:result]).decode("ASCII"))
             cmsg = ("\nServer at {0}, sent {1} bytes to {2}:\n------------\n"
-                    "{3}\n".format(self.ha, result, da, data[:result].decode("UTF-8", "replace")))
+                    "{3}\n".format(self.ha, result, da, load))
             console.profuse(cmsg)
 
         if self.wlog:
