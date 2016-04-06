@@ -325,6 +325,8 @@ class Exchangent(Exchange):
         """
         Correspond to exchange
         """
+        super(Exchangent, self).start()  # reset flags
+        
         self.timer.restart()
         self.redoTimer.restart()
         console.concise("{0}: Corresponding {1} with {2} at {3}.\n".format(self.stack.name,
