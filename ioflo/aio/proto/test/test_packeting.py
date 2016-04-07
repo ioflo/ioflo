@@ -166,7 +166,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(part.size, len(part))
         self.assertEqual(part.packed, bytearray([]))
         show = part.show()
-        self.assertEqual(show, '    PacketPart: packet=None packed=0x\n')
+        self.assertEqual(show, '    PacketPart: packed=0x\n')
 
         part = packeting.PacketPart(packet="Not a packet")
         self.assertEqual(part.packet, "Not a packet")

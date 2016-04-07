@@ -263,14 +263,13 @@ class PacketPart(Part):
         """
         super(PacketPart, self).__init__(**kwa)
         self.packet = packet
-        
+
     def show(self):
         """
         Returns descriptive string for display purposes
         """
         name = self.__class__.__name__
-        result = ("    {0}: packet={1} packed=0x{2}\n".format(name,
-                                        self.packet.name if self.packet else None, 
+        result = ("    {0}: packed=0x{1}\n".format(name,
                                         hexlify(self.packed).decode('ascii')))
         return result
 
