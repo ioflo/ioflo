@@ -437,7 +437,7 @@ class Stack(MixIn):
 
     def transmit(self, pkt, ha=None):
         """
-        Append (pkt, ha) duple to .txPkts deque
+        Pack and Append (pkt, ha) duple to .txPkts deque
         If destination remote.ha not given
         Then use zeroth remote.ha If any otherwise Raise exception
         Override in subclass
@@ -449,6 +449,7 @@ class Stack(MixIn):
                 self.incStat("pkt_destination_invalid")
                 return
             ha = self.remotes.values()[0].ha
+        pkt.pack()
         self.txPkts.append((pkt, ha))
 
     def packetize(self, msg, remote):

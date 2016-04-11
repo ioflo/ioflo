@@ -310,5 +310,15 @@ class Packet(Part):
         self.stack = stack
 
 
+    def parse(self, raw):
+        """
+        Parse raw data into .packed
+        """
+        return self.size
 
+    def pack(self):
+        """
+        Pack into .packed
+        """
+        return self.packed
 
