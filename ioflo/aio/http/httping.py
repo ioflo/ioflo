@@ -565,7 +565,7 @@ def parseRequestLine(line):
     method, path, version, extra = aiding.repack(4, line.split(), default = u'')
 
     if not version.startswith("HTTP/"):
-        raise UnkownProtocol(version)
+        raise UnknownProtocol(version)
 
     if method not in METHODS:
         raise BadMethod(method)
