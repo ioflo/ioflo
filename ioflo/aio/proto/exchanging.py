@@ -117,7 +117,7 @@ class Exchange(MixIn):
             self.fail()
             return
 
-        if self.redoTimer.expired:
+        if self.redoTimeout > 0.0 and self.redoTimer.expired:
             self.redoTimer.restart()
             console.concise("{0}: Redoing {1} with {2} at {3}\n".format(
                                             self.stack.name,
