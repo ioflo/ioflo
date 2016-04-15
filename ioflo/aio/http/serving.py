@@ -711,6 +711,10 @@ class Valet(object):
                     continue
 
                 if requestant.ended:
+                    if requestant.errored:  # parse may swallow error but set .errored
+                        self.closeConnection(ca)
+                        continue
+
                     console.concise("Parsed Request:\n{0} {1} {2}\n"
                                     "{3}\n{4}\n".format(requestant.method,
                                                         requestant.path,
