@@ -235,6 +235,13 @@ class Stack(MixIn):
         """
         if self.server:
             self.server.close()
+    
+    def reopen(self):
+        """
+        Reopen server if any
+        """
+        if self.server:
+            self.server.reopen()    
 
     def addRemote(self, remote):
         """
@@ -1018,6 +1025,7 @@ class GramStack(Stack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
+            .aha is host address of accepting (listening) by server
 
         Attributes:
 

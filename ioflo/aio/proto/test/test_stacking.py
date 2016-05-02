@@ -216,8 +216,14 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.stats['msg_received'], 2)
         self.assertEqual(beta.stats['msg_received'], 2)
 
-        alpha.server.close()
-        beta.server.close()
+        alpha.close()
+        beta.close()
+
+        alpha.reopen()
+        beta.reopen()
+
+        alpha.close()
+        beta.close()
 
 
 def runOne(test):
