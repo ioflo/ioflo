@@ -851,13 +851,21 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        #serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        #serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        #clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        #clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        #clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        #serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        serverKeypath = self.certdirpath + '/server_key.pem'  # local server private key
+        serverCertpath = self.certdirpath + '/server_cert.pem'  # local server public cert
+        clientCafilepath = self.certdirpath + '/client.pem' # remote client public cert
+
+        clientKeypath = self.certdirpath + '/client_key.pem'  # local client private key
+        clientCertpath = self.certdirpath + '/client_cert.pem'  # local client public cert
+        serverCafilepath = self.certdirpath + '/server.pem' # remote server public cert
 
         alpha = serving.ServerTls(host='localhost',
                                       port = 6101,
@@ -979,13 +987,21 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        #serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        #serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        #clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        #clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        #clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        #serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        serverKeypath = self.certdirpath + '/server_key.pem'  # local server private key
+        serverCertpath = self.certdirpath + '/server_cert.pem'  # local server public cert
+        clientCafilepath = self.certdirpath + '/client.pem' # remote client public cert
+
+        clientKeypath = self.certdirpath + '/client_key.pem'  # local client private key
+        clientCertpath = self.certdirpath + '/client_cert.pem'  # local client public cert
+        serverCafilepath = self.certdirpath + '/server.pem' # remote server public cert
 
         alpha = serving.ServerTls(host='localhost',
                                       port = 6101,

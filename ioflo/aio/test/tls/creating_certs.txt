@@ -1,0 +1,94 @@
+=======================
+TLS/SSL Certificates CA Certificates
+=======================
+
+Need to refresh these every year
+
+
+http://stackoverflow.com/questions/24675167/ca-certificates-mac-os-x
+
+https://msol.io/blog/tech/2014/09/30/create-a-self-signed-ssl-certificate-with-openssl/
+
+
+Using OpenSSL
+
+
+$ cd ioflo/ioflo/aio/test/tls/certs
+
+-------
+client
+--------
+
+$ openssl genrsa -out client_key.pem 2048
+$ openssl req -new -key client_key.pem -out client_csr.pem
+
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:US
+State or Province Name (full name) [Some-State]:UTAH
+Locality Name (eg, city) []:Lindon
+Organization Name (eg, company) [Internet Widgits Pty Ltd]: Fillin
+Organizational Unit Name (eg, section) []: fillin
+Common Name (e.g. server FQDN or YOUR name) []:localhost
+Email Address []: fillin
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+
+$ openssl req -x509 -days 365 -key client_key.pem -in client_csr.pem -out client_cert.pem
+$ cat  client_key.pem  client_cert.pem > client.pem
+
+------
+server
+-------
+
+$ openssl genrsa -out server_key.pem 2048
+$ openssl req -new -key server_key.pem -out server_csr.pem
+
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:US
+State or Province Name (full name) [Some-State]:Utah
+Locality Name (eg, city) []:Lindon
+Organization Name (eg, company) [Internet Widgits Pty Ltd]: fillin
+Organizational Unit Name (eg, section) []: fillin
+Common Name (e.g. server FQDN or YOUR name) []:localhost
+Email Address []: fillin
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+
+$ openssl req -x509 -days 365 -key server_key.pem -in server_csr.pem -out server_cert.pem
+$ cat  server_key.pem  server_cert.pem > server.pem
+
+
+$ cp server_key.pem localhost.key
+$ cp server_cert.pem localhost.crt
+$ cp server.pem localhost.pem
+
+
+The first time try to access bottle server with this certificate Safari
+will complain about the certificate. Check the box to trust and Safari
+will add it to the keychain.
+
+https://localhost:8080/echo
+
+Google chrome will then accept it as valid.
+
+After 1 year the certificates will be bad.
+
+

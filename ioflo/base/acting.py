@@ -186,67 +186,68 @@ class Act(object):
             self.actor._prepare(**self.parms)
 
     def resolvePath(self, ipath, ival=None, iown=None, warn=False):
-        """ Returns resolved Share or Node instance from ipath
-            ipath may be path name of share or node
-            or reference to Share or Node instance
+        """
+        Returns resolved Share or Node instance from ipath
+        ipath may be path name of share or node
+        or reference to Share or Node instance
 
-            This method resolves pathname strings into share and node references
-            at resolve time.
+        This method resolves pathname strings into share and node references
+        at resolve time.
 
-            ival is optional value for share
-            iown is optional ownership if True then overwrite if exists
-                   otherwise do not overwrite
+        ival is optional value for share
+        iown is optional ownership if True then overwrite if exists
+               otherwise do not overwrite
 
-            if warn then will complain if the share is created.
+        if warn then will complain if the share is created.
 
-            It allows for substitution into ipath of
-            frame, framer, actor, main frame, or main framer relative names.
-            So that lexically relative pathnames can
-            be dynamically resolved in support of framer cloning.
-            It assumes that any implied variants have been reconciled.
-            If .actor is not yet instantiated then raises exception if ipath
-               uses actor relative addressing. This may occur for init prerefs.
+        It allows for substitution into ipath of
+        frame, framer, actor, main frame, or main framer relative names.
+        So that lexically relative pathnames can
+        be dynamically resolved in support of framer cloning.
+        It assumes that any implied variants have been reconciled.
+        If .actor is not yet instantiated then raises exception if ipath
+           uses actor relative addressing. This may occur for init prerefs.
 
-            When ipath is a string:  (not a Node or Share reference)
-                the following syntax is used:
+        When ipath is a string:  (not a Node or Share reference)
+            the following syntax is used:
 
-                If the path name starts with a leading '.' dot then path name is
-                fully reconciled and no contextual substitutions are to be applied.
+            If the path name starts with a leading '.' dot then path name is
+            fully reconciled and no contextual substitutions are to be applied.
 
-                Otherwise make subsitutions in pathname strings that begin
-                with 'framer.'
-                Substitute for special path part 'framer' with names of 'me' or 'main'
-                Substitute for special path part 'frame' with names  of 'me' or 'main'
-                Substitute for special path part 'actor' with name of 'me'
+            Otherwise make subsitutions in pathname strings that begin
+            with 'framer.'
+            Substitute for special path part 'framer' with names of 'me' or 'main'
+            Substitute for special path part 'frame' with names  of 'me' or 'main'
+            Substitute for special path part 'actor' with name of 'me'
 
-                'me' indicates substitute the current framer, frame, or actor name
-                respectively.
+            'me' indicates substitute the current framer, frame, or actor name
+            respectively.
 
-                'main' indicates substitute the current frame's main framer or main frame
-                name respectively obtained from
+            'main' indicates substitute the current frame's main framer or main frame
+            name respectively obtained from
 
-            When  ipath is a pathname string that resolves to a Share and ival is not None
-            Then ival is used to initialize the share values.
-                ival should be a share initializer:
-                   valid initializers are:
-                       a dict of fields and values
-                       a list of duples, each a (key, value) item
+        When  ipath is a pathname string that resolves to a Share and ival is not None
+        Then ival is used to initialize the share values.
+            ival should be a share initializer:
+               valid initializers are:
+                   a dict of fields and values
+                   a list of duples, each a (key, value) item
 
-                If own is True then .update(ival) is used
-                Otherwise .create(ival) is used
+            If own is True then .update(ival) is used
+            Otherwise .create(ival) is used
 
-            Requires that:
-               self.store exist
+        Requires that:
+           self.store exist
 
-               The following have already been resolved:
-                   self.frame
-                   self.frame.framer
-                   self.frame.framer.main
-                   self.frame.framer.main.framer
+           The following have already been resolved:
+               self.frame
+               self.frame.framer
+               self.frame.framer.main
+               self.frame.framer.main.framer
 
-               If actor relative addressing is used then:
-                  self.actor is resolved
-                  self.actor.name is not empty
+           If actor relative addressing is used then:
+              self.actor is resolved
+              self.actor.name is not empty
 
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
@@ -547,77 +548,78 @@ class Actor(object):
         return parms
 
     def _initio(self, inode='', **kwa):
-        """ Intialize and hookup ioflo shares from node pathname inode and kwa arguments.
-            This implements a generic Actor interface protocol for associating the
-            io data flow shares to the Actor.
+        """
+        Compute initializations for ioflo shares from inode and kwa arguments.
+        This implements a generic Actor interface protocol for associating the
+        io data flow shares to the Actor.
 
-            inode is the computed pathname string of the default share node
-            where shares associated with the Actor instance may be placed when
-            relative addressing is used.
+        inode is the computed pathname string of the default share node
+        where shares associated with the Actor instance may be placed when
+        relative addressing is used.
 
-            The values of the items in the **kwa argument may be either strings or
-            mappings
+        The values of the items in the **kwa argument may be either strings or
+        mappings
 
-            For each key,val in **kwa.items() there are the following 2 forms for val:
+        For each key,val in **kwa.items() there are the following 2 forms for val:
 
-            1- string:
-               ipath = pathnamestring
-            2- dict of items (mapping) of form:
-                {
-                    ipath: "pathnamestring", (optional)
-                    ival: initial value, (optional)
-                    iown: truthy, (optional)
-                }
+        1- string:
+           ipath = pathnamestring
+        2- dict of items (mapping) of form:
+            {
+                ipath: "pathnamestring", (optional)
+                ival: initial value, (optional)
+                iown: truthy, (optional)
+            }
 
-            In either case, three init values are produced, these are:
-                ipath, ival, iown,
-            Missing init values from ipath, ival, iown will be assigned a
-            default value as per the rules below:
+        In either case, three init values are produced, these are:
+            ipath, ival, iown,
+        Missing init values from ipath, ival, iown will be assigned a
+        default value as per the rules below:
 
-            For each kwa item (key, val)
-                key is the name of the associated instance attribute or action parm.
-                Extract ipath, ival, iown from val
+        For each kwa item (key, val)
+            key is the name of the associated instance attribute or action parm.
+            Extract ipath, ival, iown from val
 
-                Shares are initialized with mappings passed into share.create or
-                share.update. So to assign ival to share.value pass into share.create
-                or share.update a mapping of the form {'value': ival} whereas
-                passing in an empty mapping does nothing.
+            Shares are initialized with mappings passed into share.create or
+            share.update. So to assign ival to share.value pass into share.create
+            or share.update a mapping of the form {'value': ival} whereas
+            passing in an empty mapping does nothing.
 
-                If ipath not provided
-                    ipath is the default path inode.key
-                Else ipath is provided
-                    If ipath starts with dot "." Then absolute path
-                    Else ipath does not start with dot "." Then relative path from inode
+            If ipath not provided
+                ipath is the default path inode.key
+            Else ipath is provided
+                If ipath starts with dot "." Then absolute path
+                Else ipath does not start with dot "." Then relative path from inode
 
-                    If ipath ends with dot Then the path is to a node not share
-                            node ref is created and remaining init values are ignored
+                If ipath ends with dot Then the path is to a node not share
+                        node ref is created and remaining init values are ignored
 
 
-                If ival not provided
-                     set ival to empty mapping which when passed to share.create
-                     will not change share.value
-                Else ival provided
-                    If ival is an empty Mapping Then
-                        assign a shallow copy of ival to share.value by passing
-                        in {value: ival (copy)} to share.create/.update
-                    Else If ival is a non-string iterable and not a mapping
-                        assign a shallow copy of ival to share.value by passing
-                        in {value: ival (copy)} to share.create/.update
-                    Else If ival is a non-empty Mapping Then
-                        Each item in ival is assigned as a field, value pair in the share
-                        by passing ival directly into share.create or share.update
-                        This means there is no way to init a share.value to a non empty mapping
-                        It is possible to init a share.value to an empty mapping see below
-                    Else
-                        assign ival to share.value by by passing
-                        in {value: ival} to share.create or share.update
-
-                Create share with pathname given by ipath
-
-                If iown Then
-                    init share with ival value using update
+            If ival not provided
+                 set ival to empty mapping which when passed to share.create
+                 will not change share.value
+            Else ival provided
+                If ival is an empty Mapping Then
+                    assign a shallow copy of ival to share.value by passing
+                    in {value: ival (copy)} to share.create/.update
+                Else If ival is a non-string iterable and not a mapping
+                    assign a shallow copy of ival to share.value by passing
+                    in {value: ival (copy)} to share.create/.update
+                Else If ival is a non-empty Mapping Then
+                    Each item in ival is assigned as a field, value pair in the share
+                    by passing ival directly into share.create or share.update
+                    This means there is no way to init a share.value to a non empty mapping
+                    It is possible to init a share.value to an empty mapping see below
                 Else
-                    init share with ival value using create ((change if not exist))
+                    assign ival to share.value by by passing
+                    in {value: ival} to share.create or share.update
+
+            Create share with pathname given by ipath
+
+            If iown Then
+                init share with ival value using update
+            Else
+                init share with ival value using create ((change if not exist))
 
         """
         if not isinstance(inode, basestring):
