@@ -207,6 +207,20 @@ def Convert2StrBoolPathCoordNum(text):
 
     return None
 
+def StripQuotes(text):
+    """
+    Returns text with leading and following quotes (singe or double) stripped
+    off if any Otherwise return as is
+    """
+
+    if REO_Quoted.match(text): #text is double quoted string
+        return text.strip('"')  #strip off quotes
+
+    if REO_QuotedSingle.match(text): #text is single quoted string
+        return text.strip("'")  #strip off quotes
+
+    return text
+
 CommandList = ['load', 'house', 'init',
                'server',
                'logger', 'log', 'loggee',
@@ -3561,17 +3575,24 @@ class Builder(object):
         data = odict()
         if index == (len(tokens) - 1): #only one more token so it must be value
             value = tokens[index]
+            if value in Reserved:  # ending token not valid value
+                msg = "ParseError: Encountered reserved '{0}' instead of value." % (value)
+                raise excepting.ParseError(msg, tokens, index)
             index +=1 #eat token
             field = 'value' #default field
 
         else: #more than one so first may be field and second token may be value
             field = tokens[index]
+            if field in Reserved:  # ending token not valid field
+                msg = "ParseError: Encountered reserved '{0}' instead of field." % (field)
+                raise excepting.ParseError(msg, tokens, index)
             index += 1
             value = tokens[index]
             if value in Reserved: #second reserved token so first token was value
                 value = field
                 field = 'value' #default field
             else: #first token was field and second value
+                field = StripQuotes(field)
                 index += 1 #eat token
 
         data[field] = Convert2StrBoolPathCoordNum(value) #convert to BoolNumStr, load data
@@ -3582,16 +3603,14 @@ class Builder(object):
             if field in Reserved: #ending token so break
                 break
 
-            if REO_Quoted.match(field): # field is double quoted string
-                field = field.strip('"')  #strip off quotes
-            elif REO_QuotedSingle.match(field): #field is single quoted string
-                field = field.strip("'")  #strip off quotes
-
-
+            field = StripQuotes(field)
             index += 1 #eat token
-            value = tokens[index]
-            index += 1
 
+            value = tokens[index]
+            if value in Reserved:  # ending token before valid value
+                msg = "ParseError: Encountered reserved '{0}' instead of value." % (value)
+                raise excepting.ParseError(msg, tokens, index)
+            index += 1
             data[field] = Convert2StrBoolPathCoordNum(value) #convert to BoolNumStr, load data
 
         #prevent using multiple fields if one of them is 'value'
@@ -3600,7 +3619,7 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         #prevent using incorrect format for fields
-        for field, value in data.items():
+        for field in data:  # keys
             if not REO_IdentPub.match(field): #invalid format
                 msg = "ParseError: Invalid field  = '%s'" % (field)
                 raise excepting.ParseError(msg, tokens, index)
@@ -3642,9 +3661,9 @@ class Builder(object):
         fields = []
         found = False #flag to indicate found 'in' wich indicates fields clause
 
-        while index < len(tokens):
+        while index < len(tokens):  # provisionall parse for fields
             field = tokens[index]
-            if field == 'in': #field list present and completed
+            if field == 'in': #field list present and completed now we know
                 index +=1
                 found = True
                 break
@@ -3653,9 +3672,10 @@ class Builder(object):
                 break
 
             index += 1 #eat token
-            fields.append(field)
+            field = StripQuotes(field)
+            fields.append(field)  # provisional
 
-        if not found: #no fields clause
+        if not found:  # no fields clause so we ignore
             index = indexSave #so restore index
             fields = [] #empty fields list
 
@@ -3664,14 +3684,7 @@ class Builder(object):
             msg = "ParseError: Field = 'value' with multiple fields = '%s'" % (fields)
             raise excepting.ParseError(msg, tokens, index)
 
-        for i, field in enumerate(fields):
-            if REO_Quoted.match(field): # field is double quoted string
-                field = field.strip('"')  #strip off quotes
-                fields.insert(i, field )
-            elif REO_QuotedSingle.match(field): #field is single quoted string
-                field = field.strip("'")  #strip off quotes
-                fields.insert(i, field )
-
+        for i, field in enumerate(fields):  # now we check if valid format
             if not REO_IdentPub.match(field):
                 msg = "ParseError: Invalid format of field '%s'" % (field)
                 raise excepting.ParseError(msg, tokens, index)
@@ -3720,11 +3733,7 @@ class Builder(object):
                 break
 
             index += 1 #eat token
-            if REO_Quoted.match(field): # field is double quoted string
-                field = field.strip('"')
-            elif REO_QuotedSingle.match(field): #field is single quoted string
-                field = field.strip("'")  #strip off quotes
-
+            field = StripQuotes(field)
             fields.append(field)
 
         if not found: #no fields clause
