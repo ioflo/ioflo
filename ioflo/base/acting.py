@@ -560,6 +560,12 @@ class Actor(object):
         where shares associated with the Actor instance may be placed when
         relative addressing is used.
 
+        The inode is computed as absolute, relative, or default.
+        When not provided the default inode is  'framer.me.frame.me.actor.me.'
+        When the inode is relative it is relative to the framer inode
+        If the framer is a cloned auxiliary then the inode could be relative
+          to the main framer inode
+
         The values of the items in the **kwa argument may be either strings or
         mappings
 
@@ -636,7 +642,7 @@ class Actor(object):
                 if finode == "main":  # replace finode with main framer inode
                     finode = framer.main.framer.inode
                 elif finode == "mine":  # don't prepend main framer inode
-                    finode = ""
+                    finode = ""  # effectively empty inode
                 else:  # possibly prepend main framer inode if finode relative
                     minode = framer.main.framer.inode
                     minode = minode.rstrip('.')
