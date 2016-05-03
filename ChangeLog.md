@@ -3,7 +3,7 @@ CHANGE LOG
 -------------------
 
 --------
-201603XX
+20160503
 --------
 1.5.2
 
@@ -14,6 +14,8 @@ relative time stamp
 
 Added aio.proto package with base classes for creating async packetized protocols
 using aio
+
+Refreshed TLS certs for unittests
 
 Refactord floscript field parsing to ensure field names cannot be reserved connectives
 unless quoted
