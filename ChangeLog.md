@@ -15,6 +15,9 @@ relative time stamp
 Added aio.proto package with base classes for creating async packetized protocols
 using aio
 
+Refactord floscript field parsing to ensure field names cannot be reserved connectives
+unless quoted
+
 --------
 20160311
 --------
