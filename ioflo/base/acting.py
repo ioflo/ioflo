@@ -470,7 +470,7 @@ def actify(name, base=None, registry=None, inits=None, ioinits=None, parms=None,
     if registry:
         attrs['Registry'] = odict()
     if parametric is not None:
-        attrs['_Parametric'] = parametric
+        attrs['_Parametric'] = True if parametric else False
     if inits:
         attrs['Inits'] = odict(inits)
     if ioinits:
