@@ -187,7 +187,8 @@ class Store(registering.Registrar):
     def add(self, share):
         """Add share to store and change shares .store to self
            Creates node hierarchy from name as needed
-           If share already exists with same name then raises exception. Should use .change instead
+           If share already exists with same name then raises exception.
+           Should use .change instead is want to change path of existing share
            This is to prevent inadvertant adding of shares that clobber node hierarchy
 
            for a single item list
