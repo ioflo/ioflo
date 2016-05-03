@@ -226,6 +226,9 @@ class Act(object):
             'main' indicates substitute the current frame's main framer or main frame
             name respectively obtained from
 
+        If ipath ends with a '.' then it resolves to a node
+        Otherwise if not trailing dot it resolves to a share
+
         When  ipath is a pathname string that resolves to a Share and ival is not None
         Then ival is used to initialize the share values.
             ival should be a share initializer:
