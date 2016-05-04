@@ -8,6 +8,14 @@ CHANGE LOG
 1.5.3
 
 
+Added support in floscript parsing for verb statement continuation with
+connective clauses. So if subsequent line starts with connective it is appended
+as continuation. Also blank and comment lines between clauses are skipped
+This allows more flexible formatting of long statements with comments etc
+
+Added constraint that Tasker, Framer, Frame names can not be Reserved words
+this is to make syntax highlighting easier in the future. Reserved words (connectives
+and comparisons) act like keyworks for that purpose and verbs act like built ins
 
 
 --------
