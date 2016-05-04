@@ -221,7 +221,7 @@ def StripQuotes(text):
 
     return text
 
-CommandList = ['load', 'house', 'init',
+VerbList = ['load', 'house', 'init',
                'server',
                'logger', 'log', 'loggee',
                'framer', 'first',
@@ -240,8 +240,8 @@ Comparisons = ['==', '<', '<=', '>=', '>', '!=']
 Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'cum', 'qua', 'via',
                'as', 'at', 'in', 'of', 'on',
                'if', 'be', 'into', 'and', 'not', '+-', ]
-Reserved = Connectives + Comparisons #concatenate to get reserved words
-ReservedFrameNames = ['next', 'prev'] #these frame names have special meaning as goto target
+Reserved = Connectives + Comparisons  #concatenate to get reserved words
+ReservedFrameNames = ['next', 'prev']  # frame names with special meaning as target of goto
 
 
 class Builder(object):
@@ -274,6 +274,43 @@ class Builder(object):
         self.currentFrame = None  # current frame
         self.currentContext = NATIVE
 
+    def tokenize(self, line):
+        """
+        Parse line and read and parse continuation lines if any and return tokens list.
+        """
+        saveLines = []
+        saveLineViews = []
+
+        while line.endswith('\\\n'):  # escaped newline continuation
+            line = line.rstrip()
+            saveLineViews.append("%04d %s" % (self.currentCount, line))
+            saveLines.append(line.rstrip('\\').strip())
+            line = self.currentFile.readline() #empty if end of file
+            self.currentCount  += 1 #inc line counter
+
+        # process last line read as either only line or continuation line
+        line = line.rstrip()
+        saveLineViews.append("%04d %s" % (self.currentCount, line))
+        saveLines.append(line)
+
+        # join all saved into one line
+        lineView = "\n".join(saveLineViews)
+        line = " ".join(saveLines)
+
+        console.concise(lineView + '\n')
+
+        line = line.strip() #strips white space both ends
+
+        chunks = REO_Chunks.findall(line)  # also chunks trailing comments
+        tokens = []
+        for chunk in chunks:
+            if chunk[0] == '#':  # throw away chunk as comment
+                break
+            else:
+                tokens.append(chunk)
+
+        return tokens
+
     def build(self, fileName='', mode=None, metas=None, preloads=None, behaviors=None):
         """
            Allows building from multiple files. Essentially files list is stack of files
@@ -301,8 +338,6 @@ class Builder(object):
         housing.House.Clear() #clear house registry
         housing.ClearRegistries() #clear all the other registries
 
-        lineView = ''
-
         try: #IOError
             self.fileName = os.path.abspath(self.fileName)
             self.currentFile = open(self.fileName,"r")
@@ -310,47 +345,46 @@ class Builder(object):
 
             try: #ResolveError
                 while self.currentFile:
-                    line = self.currentFile.readline() #empty if end of file
-                    self.currentCount  += 1 #inc line counter
+                    line = self.currentFile.readline()  # empty if end of file
+                    self.currentCount  += 1  # inc line counter
+                    nextTokens = []  # for connective continuation
 
                     while (line):
-                        saveLines = []
-                        saveLineViews = []
-
-                        while line.endswith('\\\n'): #continuation
-                            line = line.rstrip()
-                            saveLineViews.append("%04d %s" % (self.currentCount, line))
-                            saveLines.append(line.rstrip('\\').strip())
-                            line = self.currentFile.readline() #empty if end of file
-                            self.currentCount  += 1 #inc line counter
-
-                        line = line.rstrip()
-                        saveLineViews.append("%04d %s" % (self.currentCount, line))
-                        saveLines.append(line)
-                        lineView = "\n".join(saveLineViews)
-                        line = " ".join(saveLines)
-
-                        console.concise(lineView + '\n')
-
-                        line = line.strip() #strips white space both ends
-
-                        chunks = REO_Chunks.findall(line) # removes trailing comments
-                        tokens = []
-                        for chunk in chunks:
-                            if chunk[0] == '#': #throw out whole line as comment
-                                break
-                            else:
-                                tokens.append(chunk)
+                        if nextTokens:  # parsed ahead but not continuation
+                            tokens = nextTokens
+                            nextTokens = []
+                        else:
+                            tokens = self.tokenize(line)  # line and any continuations
 
                         if (not tokens):  #empty line or comment only
-                            line = self.currentFile.readline() #empty if end of file
-                            self.currentCount  += 1 #inc line counter
-                            continue
-                        #above guarantees at least 1 token
+                            line = self.currentFile.readline()  # empty if end of file
+                            self.currentCount  += 1  # inc line counter
+                            continue  # guarantees at least 1 token
+
+                        # verbs like load which change file context can not be continued
+                        if tokens[0] not  in ('load'):  # verb allows connective continuation
+                            while True:  # iteratively attempt connective continuation
+                                # Connective continuation
+                                # adds lines that start with connective
+                                # skips empty or comment lines
+                                # stops on line starting with non connective verb
+                                line = self.currentFile.readline()  # empty if end of file
+                                self.currentCount  += 1  # inc line counter
+                                if not line:  # end of file
+                                    break
+
+                                nextTokens = self.tokenize(line)  # parse ahead
+                                if nextTokens and nextTokens[0] not in Reserved:  # not connective
+                                    break  # do not continue
+
+                                if nextTokens:
+                                    tokens.extend(nextTokens)  # add continuation
+                                    nextTokens = []
 
                         self.currentHuman =  ' '.join(tokens)
+
                         try: #ParseError ParseWarning
-                            if not self.dispatch(tokens):
+                            if not self.dispatch(tokens):  # catches dispatches the return unexpectedly
                                 console.terse("Script Parsing stopped at line {0} in file {1}\n".format(
                                     self.currentCount, self.currentFile.name))
                                 console.terse(lineView + '\n')
@@ -364,8 +398,9 @@ class Builder(object):
                             raise
 
                         #dispatch evals commands. self.currentFile may be changed by load command
-                        line = self.currentFile.readline() #empty if end of file
-                        self.currentCount  += 1 #inc line counter
+                        if not nextTokens:
+                            line = self.currentFile.readline() #empty if end of file
+                            self.currentCount  += 1 #inc line counter
 
                     self.currentFile.close()
                     if self.files:
@@ -407,24 +442,28 @@ class Builder(object):
                     f.close()
 
     def dispatch(self, tokens):
-        """Converts command into build method name  and calls it"""
+        """
+        Converts declaration verb into build method name  and calls it
+        """
 
-        command = tokens[0]
+        verb = tokens[0]
         index = 1
-        if command not in CommandList:
-            msg = "ParseError: Building {0}. Unknown command {1}, index = {2} tokens = {3}".format(
-                     command, command, index, tokens)
+        if verb not in VerbList:
+            msg = "ParseError: Building {0}. Unknown verb {1}, index = {2} tokens = {3}".format(
+                     verb, verb, index, tokens)
             raise excepting.ParseError(msg, tokens, index)
 
-        commandMethod = 'build' + command.capitalize()
-        if hasattr(self, commandMethod):
-            return(getattr(self, commandMethod )(command, tokens, index))
+        verbMethod = 'build' + verb.capitalize()
+        if hasattr(self, verbMethod):
+            return(getattr(self, verbMethod )(verb, tokens, index))
         else:
-            return self.buildGeneric(command, tokens, index)
+            return self.buildGeneric(verb, tokens, index)
 
-    def buildGeneric(self, command, tokens, index):
-        """Called with no build method exists for a command """
-        msg = "ParseError: No build method for command {0}.".format(command)
+    def buildGeneric(self, verb, tokens, index):
+        """
+        Called when no build method exists for a verb
+        """
+        msg = "ParseError: No build method for verb {0}.".format(verb)
         raise excepting.ParseError(msg, tokens, index)
 
     def buildLoad(self, command, tokens, index):
@@ -4357,7 +4396,7 @@ class Builder(object):
         """Verify that name is a valid public identifyer
            Used for Tasker, Framer, and Frame names
         """
-        if not REO_IdentPub.match(name): #bad name
+        if not REO_IdentPub.match(name) or name in Reserved: #bad name
             msg = "ParseError: Building verb '%s'. Invalid entity name '%s'" %\
                 (command, name)
             raise excepting.ParseError(msg, tokens, index)

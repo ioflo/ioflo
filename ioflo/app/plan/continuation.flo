@@ -1,0 +1,55 @@
+#example mission continuation.flo
+
+house continuation
+
+framer vehiclesim be active first vehicle_run
+
+frame vehicle_run
+   do simulator motion uuv
+
+framer mission be active first mission_start
+
+  frame timeout
+    go abort if elapsed > 30
+
+  frame mission_start in timeout
+    set elapsed to 20.0
+    set goal.heading to 0.0
+    set goal.depth to 5.0
+    set goal.speed to 2.5
+
+    put true
+      into stuff of framer  # connective continuation ending comment
+    put true into stuff  # connective continuation with pre comment
+      of frame
+    set state.test
+      # connective continutaion with comment line
+      of framer to true
+    set state.test
+
+
+      of frame to true  # blank lines
+
+    put true into junk of frame of root
+    put true into junk of frame autopilot_run of framer autopilot
+    go next if state.test of framer and state.test of frame
+
+  frame mission_stop
+    print "Success"
+    bid stop vehiclesim
+    bid stop autopilot
+    bid stop me
+
+  frame abort
+    print "Failure"
+    put "Address" into meta.failure
+    bid stop all
+
+
+framer autopilot be active first autopilot_run
+
+  frame autopilot_run
+    do controller pid speed
+    do controller pid heading
+    do controller pid depth
+    do controller pid pitch

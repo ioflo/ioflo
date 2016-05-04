@@ -28,7 +28,7 @@ def getPlanFiles(planDirPath=PLAN_DIR_PATH):
 def test():
     """ Execute run.start """
     plans = getPlanFiles()
-    filepath = "../plan/meta.flo"
+    filepath = "../plan/continuation.flo"
     opts = dict(gandolf='grey', saruman='white')
     metas = [("opts", ".testmeta.opts", dict(value=opts))]
 
@@ -44,7 +44,7 @@ def test():
                         mode=None,
                         houses=None,
                         metas=metas,
-                        verbose=2,
+                        verbose=4,
                         )
 
 if __name__ == '__main__':
