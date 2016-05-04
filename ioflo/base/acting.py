@@ -663,8 +663,9 @@ class Actor(object):
         iois = odict()
 
         for key, val in kwa.items():  # assumes keys are basestrings
-            if val is None:  # ignore if None to catch inadvertent ioinit share
-                continue  # Use val="" to default the ipath to same as key
+            if val is None:  # use default assume no way to be inadvertent
+                val = ""  # empty string for val defaults ipath to same as key
+                #continue
 
             if isinstance(val, basestring):
                 ipath = val
