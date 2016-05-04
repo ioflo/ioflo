@@ -241,7 +241,7 @@ class Stack(MixIn):
         Reopen server if any
         """
         if self.server:
-            self.server.reopen()    
+            return self.server.reopen()    
 
     def addRemote(self, remote):
         """
