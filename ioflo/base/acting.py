@@ -671,7 +671,7 @@ class Actor(object):
                 iown = None
                 ival = odict() # effectively will not change share
             elif isinstance(val, Mapping): # dictionary
-                ipath = val.get('ipath')
+                ipath = val.get('ipath', '')
                 iown = val.get('iown')
 
                 if not 'ival' in val:
