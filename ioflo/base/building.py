@@ -387,14 +387,14 @@ class Builder(object):
                             if not self.dispatch(tokens):  # catches dispatches the return unexpectedly
                                 console.terse("Script Parsing stopped at line {0} in file {1}\n".format(
                                     self.currentCount, self.currentFile.name))
-                                console.terse(lineView + '\n')
+                                console.terse(self.currentHuman + '\n')
                                 return False
 
                         except excepting.ParseError as ex:
                             console.terse("\n{0}\n\n".format(ex))
                             console.terse("Script line {0} in file {1}\n".format(
                                 self.currentCount, self.currentFile.name))
-                            console.terse(lineView + '\n')
+                            console.terse(self.currentHuman + '\n')
                             raise
 
                         #dispatch evals commands. self.currentFile may be changed by load command
