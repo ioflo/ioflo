@@ -662,9 +662,9 @@ class Actor(object):
 
         iois = odict()
 
-        for key, val in kwa.items():
-            if val is None:
-                continue
+        for key, val in kwa.items():  # assumes keys are basestrings
+            if val is None:  # ignore if None to catch inadvertent ioinit share
+                continue  # Use val="" to default the ipath to same as key
 
             if isinstance(val, basestring):
                 ipath = val
@@ -692,7 +692,7 @@ class Actor(object):
             if ipath:
                 if not ipath.startswith('.'): # full path is inode joined to ipath
                     ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
-            else:
+            else: # empty ipath
                 ipath = '.'.join((inode.rstrip('.'), key))  # when ipath empty create default from key
 
             if ipath.startswith('me.') or ipath == 'me':
