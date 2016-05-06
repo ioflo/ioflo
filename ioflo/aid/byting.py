@@ -105,37 +105,54 @@ def unhexify(h=u''):
         b.append(int(s, 16))
     return b
 
-def bytify(n=0, size=3):
+def bytify(n=0, size=1, reverse=False):
     """
-    Returns bytearray of size bytes equivalent of integer n that is left zero padded
-    to at least size bytes. Big endian
+    Returns bytearray of at least size bytes equivalent of integer n that is
+    left zero padded to at least size bytes. If bytearray equivalent of n is
+    longer than size the bytearray is extended to the length needed to represent n.
+    Big endian is the default.
+    If reverse is true then it reverses the order of the bytes in the resultant
+    bytearray for little endian with right zero padding.
     """
-    b = bytearray([])
+    b = bytearray()
     count = 0
-    while n or (count < size):
+    while n:
         b.insert(0, n & 0xFF)
         count += 1
         n >>=  8
+    if (count < size):
+        if reverse:
+            b =  b + bytearray([0]*(size-count))
+        else:
+            b = bytearray([0]*(size-count)) + b
+    if reverse:
+        b.reverse()
     return b
 
-def unbytify(b=bytearray([])):
+def unbytify(b=bytearray([]), reverse=False):
     """
     Returns unsigned integer equivalent of bytearray b
-    b may be any iterable of ints including bytes or list of ints. Big endian.
+    b may be any iterable of ints including bytes or list of ints.
+    Big endian is the default.
+    If reverse is true then it reverses the order of the bytes in the byte array
+    before conversion for little endian.
     """
     b = bytearray(b)
-    b.reverse()
+    if not reverse:  # process MSB first on the right
+        b.reverse()
     n = 0
     while b:
         n <<= 8
         n += b.pop()
     return n
 
-def packify(fmt=u'8', fields=[0x00], size=None):
+def packify(fmt=u'8', fields=[0x00], size=None, reverse=False):
     """
     Packs fields sequence of bit fields into bytearray of size bytes using fmt string.
     Each white space separated field of fmt is the length of the associated bit field
     If not provided size is the least integer number of bytes that hold the fmt.
+    If reverse is true reverse the order of the bytes in the byte array before
+    returning. This is useful for converting between bigendian and littleendian.
 
     Assumes unsigned fields values.
     Assumes network big endian so first fields element is high order bits.
@@ -180,9 +197,9 @@ def packify(fmt=u'8', fields=[0x00], size=None):
         n |= bits  # bit-or in bits
         bfp -= bfl #adjust bit field position for next element
 
-    return bytify(n, size)
+    return bytify(n=n, size=size, reverse=reverse)
 
-def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0):
+def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0, reverse=False):
     """
     Packs fields sequence of bit fields using fmt string into bytearray b
     starting at offset and packing into size bytes
@@ -190,6 +207,9 @@ def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0):
     If not provided size is the least integer number of bytes that hold the fmt.
     Extends the length of b to accomodate size after offset if not enough.
     Returns actual size of portion packed into.
+    The default assumes big endian.
+    If reverse is True then reverses the byte order before extending. Useful for
+    little endian.
 
     Assumes unsigned fields values.
     Assumes network big endian so first fields element is high order bits.
@@ -237,19 +257,30 @@ def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0):
         n |= bits  # bit-or in bits
         bfp -= bfl #adjust bit field position for next element
 
-    count = 0
-    while n or (count < size):
-        b[offset + size - 1 - count] = n & 0xFF
-        count += 1
-        n >>=  8
+    bp = bytify(n=n, size=size, reverse=reverse)
+
+    b[offset:offset + len(bp)] = bp
+
+    #count = 0
+    #while n or (count < size):
+        #b[offset + size - 1 - count] = n & 0xFF
+        #count += 1
+        #n >>=  8
 
     return size
 
-def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=None):
+def unpackify(fmt=u'1 1 1 1 1 1 1 1',
+              b=bytearray([0x00]),
+              boolean=False,
+              size=None,
+              reverse=False):
     """
     Returns tuple of unsigned int bit field values that are unpacked from the
-    bytearray b according to fmt string. b maybe integer iterator
+    bytearray b according to fmt string. b maybe an integer iterator
     If not provided size is the least integer number of bytes that hold the fmt.
+    The default assumes big endian.
+    If reverse is True then reverse the byte order of b before unpackifing. This
+    is useful for little endian.
 
     Each white space separated field of fmt is the length of the associated bit field.
     returns unsigned fields values.
@@ -269,6 +300,8 @@ def unpackify(fmt=u'1 1 1 1 1 1 1 1', b=bytearray([0x00]), boolean=False, size=N
     unpackify(u"1 3 2 2", 0xc3, True) returns (True, 4, 0, 3)
     """
     b = bytearray(b)
+    if reverse:
+        b.reverse()
 
     tbfl = sum((int(x) for x in fmt.split()))
     if size is None:

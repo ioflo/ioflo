@@ -7,6 +7,7 @@ CHANGE LOG
 --------
 1.5.4
 
+Fix some bugs
 
 
 

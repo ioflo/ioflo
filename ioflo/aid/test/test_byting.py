@@ -79,6 +79,21 @@ class BasicTestCase(unittest.TestCase):
         b = byting.bytify(n, 2)
         self.assertEqual(b, bytearray([1, 2, 3]))
 
+        b = bytearray([1, 2, 3])
+        n = byting.unbytify(b, reverse=True)
+        self.assertEqual(n, 0x030201)
+        n = byting.unbytify([1, 2, 3], reverse=True)
+        self.assertEqual(n, 0x030201)
+        n = byting.unbytify(b'\x01\x02\x03', reverse=True)
+        self.assertEqual(n, 0x030201)
+
+        b = byting.bytify(n, reverse=True)
+        self.assertEqual(b, bytearray([1, 2, 3]))
+        b = byting.bytify(n, 4, reverse=True)
+        self.assertEqual(b, bytearray([0, 1, 2, 3]))
+        b = byting.bytify(n, 2, reverse=True)
+        self.assertEqual(b, bytearray([1, 2, 3]))
+
     def testPackifyUnpackify(self):
         """
         Test the packbits
@@ -89,11 +104,11 @@ class BasicTestCase(unittest.TestCase):
         fields = [6, 2, True, False]
         size = 1
         packed = byting.packify(fmt=fmt, fields=fields, size=size)
-        self.assertEqual(packed, bytearray([212]))
+        self.assertEqual(packed, bytearray([0xd4]))
         self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '11010100')
 
         packed = byting.packify(fmt=fmt, fields=fields)
-        self.assertEqual(packed, bytearray([212]))
+        self.assertEqual(packed, bytearray([0xd4]))
         self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '11010100')
 
         fmt = u''
@@ -123,8 +138,14 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(packed, bytearray([0xa5, 0xe0, 0x41]))
         self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '101001011110000001000001')
 
+        fmt = u'8 6 7 3'
+        fields = [0xA5, 0x38, 0x08, 0x01]
+        size = 4
+        packed = byting.packify(fmt=fmt, fields=fields, size=size)
+        self.assertEqual(packed, bytearray([0xa5, 0xe0, 0x41, 0x00]))
+
         fmt = u'3 2 1 1'
-        packed = bytearray([212])
+        packed = bytearray([0xd4])
         fields = byting.unpackify(fmt=fmt, b=packed, boolean=True)
         self.assertEqual(fields, (6, 2, True, False, False))
         fields = byting.unpackify(fmt=fmt, b=packed, boolean=False)
@@ -154,6 +175,83 @@ class BasicTestCase(unittest.TestCase):
         packed = bytearray([0xa5, 0xe0, 0x41, 0xff, 0xff])
         fields = byting.unpackify(fmt=fmt, b=packed, size=3)
         self.assertEqual(fields, (0xA5, 0x38, 0x08, 0x01))
+
+        fmt = u'3 2 1 1'
+        fields = [6, 2, True, False]
+        size = 1
+        packed = byting.packify(fmt=fmt, fields=fields, size=size, reverse=True)
+        self.assertEqual(packed, bytearray([0xd4]))
+        self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '11010100')
+
+        packed = byting.packify(fmt=fmt, fields=fields, reverse=True)
+        self.assertEqual(packed, bytearray([0xd4]))
+        self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '11010100')
+
+        fmt = u''
+        fields = []
+        size = 0
+        packed = byting.packify(fmt=fmt, fields=fields, size=size, reverse=True)
+        self.assertEqual(packed, bytearray([]))
+
+        packed = byting.packify(fmt=fmt, fields=fields, reverse=True)
+        self.assertEqual(packed, bytearray([]))
+
+        fmt = u'3 1'
+        fields = [5, True]
+        size = 1
+        packed = byting.packify(fmt=fmt, fields=fields, size=size, reverse=True)
+        self.assertEqual(packed, bytearray([0xb0]))
+        self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '10110000')
+
+        fmt = u'8 6 7 3'
+        fields = [0xA5, 0x38, 0x08, 0x01]
+        size = 3
+        packed = byting.packify(fmt=fmt, fields=fields, size=size, reverse=True)
+        self.assertEqual(packed, bytearray([0x41, 0xe0, 0xa5]))
+        self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '010000011110000010100101')
+        # 0xa5e040
+        packed = byting.packify(fmt=fmt, fields=fields, reverse=True)
+        self.assertEqual(packed, bytearray([0x41, 0xe0, 0xa5]))
+        self.assertEqual(byting.binize(byting.unbytify(packed), size*8), '010000011110000010100101')
+
+        fmt = u'8 6 7 3'
+        fields = [0xA5, 0x38, 0x08, 0x01]
+        size = 4
+        packed = byting.packify(fmt=fmt, fields=fields, size=size, reverse=True)
+        self.assertEqual(packed, bytearray([0x00, 0x41, 0xe0, 0xa5]))
+
+        fmt = u'3 2 1 1'
+        packed = bytearray([212])
+        fields = byting.unpackify(fmt=fmt, b=packed, boolean=True, reverse=True)
+        self.assertEqual(fields, (6, 2, True, False, False))
+        fields = byting.unpackify(fmt=fmt, b=packed, boolean=False, reverse=True)
+        self.assertEqual(fields, (6, 2, 1, 0, 0))
+
+        fmt = u''
+        packed = bytearray([])
+        fields = byting.unpackify(fmt=fmt, b=packed, reverse=True)
+        self.assertEqual(fields, tuple())
+
+        fmt = u'3 1'
+        packed = bytearray([0xb0])
+        fields = byting.unpackify(fmt=fmt, b=packed, reverse=True)
+        self.assertEqual(fields, (5, 1, 0))
+
+        fmt = u'4 3 1'
+        packed = [0x0b]  # converts to bytearray in parameter
+        fields = byting.unpackify(fmt=fmt, b=packed, reverse=True)
+        self.assertEqual(fields, (0, 5, 1))
+
+        fmt = u'8 6 7 3'
+        packed = bytearray([0xa5, 0xe0, 0x41])
+        fields = byting.unpackify(fmt=fmt, b=packed, reverse=True)
+        self.assertEqual(fields, (0x41, 0x38, 0x14, 0x05))
+
+        fmt = u'8 6 7 3'
+        packed = bytearray([0xff, 0xff, 0xa5, 0xe0, 0x41])
+        fields = byting.unpackify(fmt=fmt, b=packed, size=3, reverse=True)
+        self.assertEqual(fields, (0x41, 0x38, 0x14, 0x05))
+
 
     def testPackifyInto(self):
         """
@@ -217,6 +315,63 @@ class BasicTestCase(unittest.TestCase):
         size = byting.packifyInto(b, fmt=fmt, fields=fields)
         self.assertEqual(size, 3)
         self.assertEqual(b, bytearray([0xa5, 0xe0, 0x41]))
+
+        fmt = u'3 2 1 1'
+        fields = [6, 2, True, False]
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=1, reverse=True)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([212, 0, 0, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[0]), '11010100')
+
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=1, offset=2, reverse=True)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([212, 0, 212, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[2]), '11010100')
+
+        b[0] =  0x0
+        self.assertEqual(b, bytearray([0, 0, 212, 0, 0, 0]))
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, reverse=True)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([212, 0, 212, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[0]), '11010100')
+
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        fmt = u''
+        fields = []
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=0, reverse=True)
+        self.assertEqual(size, 0)
+        self.assertEqual(b, bytearray([0, 0, 0, 0, 0, 0]))
+
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, reverse=True)
+        self.assertEqual(size, 0)
+        self.assertEqual(b, bytearray([0, 0, 0, 0, 0, 0]))
+
+        fmt = u'3 1'
+        fields = [5, True]
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, size=1, reverse=True)
+        self.assertEqual(size, 1)
+        self.assertEqual(b, bytearray([176, 0, 0, 0, 0, 0]))
+        self.assertEqual(byting.binize(b[0]), '10110000')
+
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        fmt = u'8 6 7 3'
+        fields = [0xA5, 0x38, 0x08, 0x01]
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, reverse=True)
+        self.assertEqual(size, 3)
+        self.assertEqual(b, bytearray([0x41, 0xe0, 0xa5, 0, 0, 0]))
+
+        b = bytearray([0, 0, 0, 0, 0, 0])
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, offset=1, reverse=True)
+        self.assertEqual(size, 3)
+        self.assertEqual(b, bytearray([0, 0x41, 0xe0, 0xa5, 0, 0]))
+
+        b = bytearray()
+        fmt = u'8 6 7 3'
+        fields = [0xA5, 0x38, 0x08, 0x01]
+        size = byting.packifyInto(b, fmt=fmt, fields=fields, reverse=True)
+        self.assertEqual(size, 3)
+        self.assertEqual(b, bytearray([0x41, 0xe0, 0xa5]))
 
     def testSignExtend(self):
         """
