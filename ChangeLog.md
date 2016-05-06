@@ -9,6 +9,9 @@ CHANGE LOG
 
 Fix some bugs
 
+Added reverse parameter to (un)bytify (un)packify packifyinto to make is easier
+to deal with little endian
+
 
 
 --------
