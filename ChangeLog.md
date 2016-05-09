@@ -1,6 +1,16 @@
 ------------------
 CHANGE LOG
 -------------------
+--------
+201605XX
+--------
+1.5.5
+
+Bug fixes
+
+Refactor classes in Stacking and Devicing
+Added TCPStack
+
 
 --------
 20160506
