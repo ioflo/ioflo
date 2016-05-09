@@ -1434,7 +1434,7 @@ class UdpStack(GramStack):
                                                                         name=name,
                                                                         ha=ha,
                                                                         kind=kind)
-        super(UdpStack).__init__(local=local, ha=ha, **kwa)
+        super(UdpStack, self).__init__(local=local, ha=ha, **kwa)
 
     def createServer(self, ha):
         """
