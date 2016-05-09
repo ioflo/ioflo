@@ -20,6 +20,7 @@ from ...aid.eventing import eventify, tagify
 from ...aid.timing import tuuid, Stamper, StoreTimer
 from ...aid import getConsole
 from ..udp import udping
+from ..tcp import clienting, serving
 from .protoing import MixIn
 from . import devicing, packeting
 
@@ -1074,16 +1075,10 @@ class StreamStack(Stack):
         """
         super(StreamStack, self).__init__(**kwa)
 
-    def createServer(self, ha):
-        """
-        Create server from local data
-        """
-        return None
 
-
-class TcpStack(IpStack, StreamStack):
+class TcpClientStack(IpStack, StreamStack):
     """
-    TcpStream based stack object.
+    Tcp Client Stream based stack object.
 
     """
     Port = 75321
@@ -1154,29 +1149,107 @@ class TcpStack(IpStack, StreamStack):
 
         """
         self.bufsize = bufsize  # create server needs to setup before super call
-        super(TcpStack, self).__init__(**kwa)
+        super(TcpClientStack, self).__init__(**kwa)
 
     def createServer(self, ha):
         """
         Create local listening server for stack
         """
-        server = tcping.Client(ha=ha,
-                               bufsize=self.bufsize)
+        server = clienting.Client(ha=ha,
+                                         bufsize=self.bufsize)
         return server
 
-    def packetize(self, msg, remote):
-        """
-        Returns packed packet created from msg destined for remote
-        Override in subclass
-        """
-        return packeting.Packet(packed=msg.encode('ascii'))
 
-    def parserize(self, raw, ha):
+class TcpServerStack(IpStack, StreamStack):
+    """
+    Tcp Server Stream based stack object.
+
+    """
+    Port = 75321
+
+    def __init__(self,
+                 host=u'',
+                 eha=None,
+                 bufsize=1048576,
+                 **kwa):
         """
-        Returns packet parsed from raw data sourced from ha
-        Override in subclass
+        Setup Stack instance
+
+        Inherited Parameters:
+            stamper is relative time stamper for this stack
+            version is version tuple or string for this stack
+            puid is previous uid for devices managed by this stack
+            local is local device if any for this stack
+            uid is uid of local device shared with stack if local not given
+            name is name of local device shared with stack if local not given
+            ha is host address of local device shared with stack if local not given
+            kind is kind of local device shared with stack if local not given
+            server is interface server if any
+            rxbs is bytearray buffer to hold rx data stream if any
+            rxPkts is deque to hold received packet if any
+            rxMsgs is deque to hold received msgs if any
+            txbs is bytearray buffer to hold rx data stream if any
+            txPkts is deque to hold packet to be transmitted if any
+            txMsgs is deque to hold messages to be transmitted if any
+            remotes is odict to hold remotes keyed by uid if any
+            nameRemotes is odict to hold remotes keyed by name if any
+            haRemotes is odict to remotes keyed by ha if any
+            stats is odict of stack statistics if any
+            host is local tcp host if ha not provided
+            port is local tcp port if ha not provided
+
+        Parameters:
+            eha is external host address used by server acceptor TLS if any
+            bufsize is tcp socket buffer size
+
+        Inherited Attributes:
+            .stamper is relative time stamper for this stack
+            .version is version tuple or string for this stack
+            .puid is previous uid for devices managed by this stack
+            .local is local device for this stack
+            .server is interface server if any
+            .rxbs is bytearray buffer to hold input data stream
+            .rxPkts is deque of duples to hold received packets
+            .rxMsgs is deque of duples to hold received msgs and remotes
+            .txbs is bytearray buffer to hold rx data stream if any
+            .txPkts is deque of duples to hold packets to be transmitted
+            .txMsgs is deque of duples to hold messages to be transmitted
+            .remotes is odict of remotes indexed by uid
+            .uidRemotes is alias for .remotes
+            .nameRemotes = odict  of remotes indexed by name
+            .haRemotes = odict of remotes indexed by ha
+            .stats is odict of stack statistics
+            .statTimer is relative timer for statistics
+            .aha is server accepting (listening) host address for .server
+
+        Attributes:
+            .eha is external host address used by server acceptor TLS if any
+            .bufsize is tcp socket buffer size
+
+        Inherited Properties:
+            .uid is local device unique id as stack uid
+            .name is local device name as stack name
+            .ha  is local device ha as stack ha
+            .kind is local device kind as stack kind
+
+        Properties:
+
+
         """
-        return packeting.Packet(packed=raw)
+        self.eha = eha
+        self.bufsize = bufsize  # create server needs to setup before super call
+        super(TcpServerStack, self).__init__(host=host, **kwa)
+
+    def createServer(self, ha):
+        """
+        Create local listening server for stack
+        """
+        server = serving.Server(ha=ha,
+                                eha=self.eha,
+                                bufsize=self.bufsize)
+        self.eha = self.server.eha  # update local copy after init
+        return server
+
 
 
 class GramStack(Stack):
@@ -1244,13 +1317,6 @@ class GramStack(Stack):
 
         """
         super(GramStack, self).__init__(**kwa)
-
-
-    def createServer(self, ha):
-        """
-        Create server from local data
-        """
-        return None
 
     def _serviceOneTxPkt(self, laters, blockeds):
         """
