@@ -141,9 +141,9 @@ class RemoteDevice(Device):
         super(RemoteDevice, self).__init__(stack=stack, uid=uid, **kwa)
 
 
-class UdpDevice(Device):
+class IpDevice(Device):
     """
-    Udp device
+    IP device
     """
 
     def __init__(self,
@@ -215,9 +215,9 @@ class UdpDevice(Device):
         self.local.ha = (host, value)
 
 
-class UdpLocalDevice(UdpDevice, LocalDevice):
+class IpLocalDevice(IpDevice, LocalDevice):
     """
-    Udp LocalDevice
+    Ip LocalDevice
     """
     def __init__(self,
                  stack,
@@ -248,9 +248,9 @@ class UdpLocalDevice(UdpDevice, LocalDevice):
         super().__init__(stack=stack, **kwa)
 
 
-class UdpRemoteDevice(UdpDevice, RemoteDevice):
+class IpRemoteDevice(IpDevice, RemoteDevice):
     """
-    Udp remote device
+    Ip remote device
     """
 
     def __init__(self,

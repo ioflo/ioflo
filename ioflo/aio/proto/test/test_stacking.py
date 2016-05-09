@@ -114,7 +114,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testUdpStack.__doc__))
 
         stack = stacking.UdpStack()
-        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
         self.assertEqual(stack.local.uid, 1)
         self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
         self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.UdpStack.Port))
@@ -124,7 +124,7 @@ class BasicTestCase(unittest.TestCase):
 
         ha = ('127.0.0.1', 8000)
         stack = stacking.UdpStack(ha=ha)
-        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
         self.assertEqual(stack.local.uid, 1)
         self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
         self.assertEqual(stack.local.ha, ha)
@@ -148,7 +148,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(alpha.server.opened, True)
         self.assertEqual(len(alpha.remotes), 0)
 
-        remote = devicing.UdpRemoteDevice(stack=alpha,
+        remote = devicing.IpRemoteDevice(stack=alpha,
                                        name='BetaRemote',
                                        ha=('localhost', 8002))
         self.assertEqual(remote.uid, 2)
@@ -165,7 +165,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.server.opened, True)
         self.assertEqual(len(beta.remotes), 0)
 
-        remote = devicing.UdpRemoteDevice(stack=beta,
+        remote = devicing.IpRemoteDevice(stack=beta,
                                        name='AlphaRemote',
                                        ha=('localhost', 8000))
         self.assertEqual(remote.uid, 2)

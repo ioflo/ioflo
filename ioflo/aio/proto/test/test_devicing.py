@@ -82,21 +82,21 @@ class BasicTestCase(unittest.TestCase):
         console.terse("{0}\n".format(self.testUdpDevice.__doc__))
 
         stack = stacking.UdpStack()
-        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
         self.assertEqual(stack.local.uid, 1)
         self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
         self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.UdpStack.Port))
         self.assertEqual(stack.local.kind, None)
         self.assertEqual(stack.aha, ('0.0.0.0', stacking.UdpStack.Port))
 
-        device = devicing.UdpDevice(stack=stack)
+        device = devicing.IpDevice(stack=stack)
         self.assertEqual(device.stack, stack)
         self.assertEqual(device.uid, 2)  # stacks .local has uid 1
         self.assertEqual(device.name, "Device{0}".format(device.uid))
         self.assertEqual(device.ha, ('127.0.0.1',stacking.UdpStack.Port))
         self.assertEqual(device.kind, None)
 
-        device = devicing.UdpRemoteDevice(stack=stack)
+        device = devicing.IpRemoteDevice(stack=stack)
         self.assertIs(device.stack, stack)
         self.assertEqual(device.uid, 3)
         self.assertEqual(device.name, "Device{0}".format(device.uid))
@@ -107,14 +107,14 @@ class BasicTestCase(unittest.TestCase):
 
         ha = ('127.0.0.1', 8000)
         stack = stacking.UdpStack(ha=ha)
-        self.assertIsInstance(stack.local, devicing.UdpLocalDevice)
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
         self.assertEqual(stack.local.uid, 1)
         self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
         self.assertEqual(stack.local.ha, ha)
         self.assertEqual(stack.local.kind, None)
         self.assertEqual(stack.aha, ha)
 
-        device = devicing.UdpDevice(stack=stack, ha=ha)
+        device = devicing.IpDevice(stack=stack, ha=ha)
         self.assertEqual(device.stack, stack)
         self.assertEqual(device.uid, 2)  # stacks .local has uid 1
         self.assertEqual(device.name, "Device{0}".format(device.uid))
@@ -123,7 +123,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(device.host, ha[0])
         self.assertEqual(device.port, ha[1])
 
-        device = devicing.UdpRemoteDevice(stack=stack, ha=ha)
+        device = devicing.IpRemoteDevice(stack=stack, ha=ha)
         self.assertIs(device.stack, stack)
         self.assertEqual(device.uid, 3)
         self.assertEqual(device.name, "Device{0}".format(device.uid))
