@@ -1003,7 +1003,7 @@ class IpStack(Stack):
                                                                        ha=ha,
                                                                        kind=kind)
 
-        super(TcpStack, self).__init__(local=local, ha=ha, **kwa)
+        super(IpStack, self).__init__(local=local, ha=ha, **kwa)
 
 
 class StreamStack(Stack):
@@ -1339,21 +1339,12 @@ class GramStack(Stack):
         return True  # received data
 
 
-class UdpStack(GramStack):
+class UdpStack(IpStack, GramStack):
     """
     UDP communications Stack Class
     """
-    Port = 12357
 
     def __init__(self,
-                 puid=None,
-                 local=None,
-                 uid=None,
-                 name=None,
-                 ha=None,
-                 kind=None,
-                 host=None,
-                 port=None,
                  bufcnt=2,
                  **kwa):
         """
@@ -1378,10 +1369,10 @@ class UdpStack(GramStack):
             nameRemotes is odict to hold remotes keyed by name if any
             haRemotes is odict to remotes keyed by ha if any
             stats is odict of stack statistics if any
-
-        Parameters:
             host is local udp host if ha not provided
             port is local udp port if ha not provided
+
+        Parameters:
             bufcnt is number of udp buffers equivalent for udp buffer to allocate
 
         Inherited Attributes:
@@ -1416,25 +1407,8 @@ class UdpStack(GramStack):
 
 
         """
-        if ha is None:
-            if (host is not None or port is not None):
-                host = host if host is not None else ''
-                port = port if port is not None else self.Port
-                ha = (host, port)
-            else:
-                ha = ('', self.Port)  # host all interfaces, bind with 0 port creates ephemeral port
-
         self.bufcnt = bufcnt  # used in createServer
-
-        if getattr(self, 'puid', None) is None:  # need .puid to make local
-            self.puid = puid if puid is not None else self.Uid
-
-        local = local if local is not None else devicing.IpLocalDevice(stack=self,
-                                                                        uid=uid,
-                                                                        name=name,
-                                                                        ha=ha,
-                                                                        kind=kind)
-        super(UdpStack, self).__init__(local=local, ha=ha, **kwa)
+        super(UdpStack, self).__init__(**kwa)
 
     def createServer(self, ha):
         """
