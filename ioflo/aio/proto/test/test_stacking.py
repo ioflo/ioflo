@@ -66,7 +66,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(stack.local.ha, stack.ha)
         self.assertEqual(stack.kind, None)
         self.assertEqual(stack.local.kind, stack.kind)
-        self.assertEqual(stack.server, None)
+        self.assertEqual(stack.handler, None)
         self.assertEqual(len(stack.remotes), 0)
         self.assertIs(stack.remotes, stack.uidRemotes)
         self.assertEqual(len(stack.nameRemotes), 0)
@@ -145,7 +145,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(alpha.name, "alpha")
         self.assertEqual(alpha.ha, ('127.0.0.1', 8000))
         self.assertEqual(alpha.aha, ('0.0.0.0', 8000))
-        self.assertIs(alpha.server.opened, True)
+        self.assertIs(alpha.handler.opened, True)
         self.assertEqual(len(alpha.remotes), 0)
 
         remote = devicing.IpRemoteDevice(stack=alpha,
@@ -162,7 +162,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(beta.name, "beta")
         self.assertEqual(beta.ha, ('127.0.0.1', 8002))
         self.assertEqual(beta.aha, ('0.0.0.0', 8002))
-        self.assertIs(beta.server.opened, True)
+        self.assertIs(beta.handler.opened, True)
         self.assertEqual(len(beta.remotes), 0)
 
         remote = devicing.IpRemoteDevice(stack=beta,

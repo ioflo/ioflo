@@ -44,7 +44,7 @@ class Stack(MixIn):
                  name=None,
                  ha=None,
                  kind=None,
-                 server=None,
+                 handler=None,
                  rxbs=None,
                  rxPkts=None,
                  rxMsgs=None,
@@ -72,7 +72,7 @@ class Stack(MixIn):
             name is name of local device shared with stack if local not given
             ha is host address of local device shared with stack if local not given
             kind is kind of local device shared with stack if local not given
-            server is interface server if any
+            handler is interface handler/server/listeniner/client/driver if any
             rxbs is bytearray buffer to hold rx data stream if any
             rxPkts is deque to hold received packet if any
             rxMsgs is deque to hold received msgs if any
@@ -91,7 +91,7 @@ class Stack(MixIn):
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
             .local is local device for this stack
-            .server is interface server if any
+            .handler is interface handler/server/listeniner/client/driver if any
             .rxbs is bytearray buffer to hold input data stream
             .rxPkts is deque of duples to hold received packets
             .rxMsgs is deque of duples to hold received msgs and remotes
@@ -137,16 +137,16 @@ class Stack(MixIn):
         self.nameRemotes = nameRemotes if nameRemotes is not None else odict()
         self.haRemotes =  haRemotes if haRemotes is not None else odict()
 
-        self.server = server if server is not None else self.createServer(ha=self.aha)
+        self.handler = handler if handler is not None else self.createHandler(ha=self.aha)
 
-        if self.server:
-            if not self.server.reopen():  # open interface
-                raise ValueError("Stack '{0}': Failed opening server at"
-                            " '{1}'\n".format(self.name, self.server.ha))
+        if self.handler:
+            if not self.handler.reopen():  # open interface
+                raise ValueError("Stack '{0}': Failed opening handler at"
+                            " '{1}'\n".format(self.name, self.handler.ha))
 
-            self.aha = self.server.ha  # update local host address after open
+            self.aha = self.handler.ha  # update local host address after open
 
-            console.verbose("Stack '{0}': Opened server at '{1}'\n".format(self.name,
+            console.verbose("Stack '{0}': Opened handler at '{1}'\n".format(self.name,
                                                                            self.aha))
         self.rxbs = rxbs if rxbs is not None else bytearray()
         self.rxPkts = rxPkts if rxPkts is not None else deque()
@@ -222,27 +222,27 @@ class Stack(MixIn):
         self.puid += 1
         return self.puid
 
-    def createServer(self, ha):
+    def createHandler(self, ha):
         """
-        Create and return server on ha
+        Create and return handler on ha
 
-        ha is the host address of the server
+        ha is the host address of the handler
         """
         return None
 
     def close(self):
         """
-        Close server if any
+        Close handler if any
         """
-        if self.server:
-            self.server.close()
+        if self.handler:
+            self.handler.close()
 
     def reopen(self):
         """
-        Reopen server if any
+        Reopen handler if any
         """
-        if self.server:
-            return self.server.reopen()
+        if self.handler:
+            return self.handler.reopen()
 
     def addRemote(self, remote):
         """
@@ -399,7 +399,7 @@ class Stack(MixIn):
             self.txbs.extend(pkt.packed)
 
         try:
-            count = self.server.send(self.txbs, ha)
+            count = self.handler.send(self.txbs, ha)
         except Exception as ex:
             errno = ex.args[0]  # args[0] is always errno for better compat
             if (errno in (errno.EAGAIN,
@@ -432,7 +432,7 @@ class Stack(MixIn):
         Service the .txPkts deque to send packets through server
         Override in subclass
         """
-        while self.server.opened and self.txPkts:
+        while self.handler.opened and self.txPkts:
             if not self._serviceOneTxPkt():
                 break  # blocked try again later
 
@@ -440,7 +440,7 @@ class Stack(MixIn):
         '''
         Service .txPkts deque once (one pkt)
         '''
-        if self.server.opened and self.txPkts:
+        if self.handler.opened and self.txPkts:
             self._serviceOneTxPkt()
 
     def transmit(self, pkt, ha=None):
@@ -558,7 +558,7 @@ class Stack(MixIn):
         ha = None # when no ha returned from receive
         while True:  # keep receiving until empty
             try:
-                raw = self.server.receive()
+                raw = self.handler.receive()
             except Exception as ex:
                 errno = ex.args[0]  # args[0] always errno for compat
                 if errno == errno.ECONNRESET:
@@ -581,7 +581,7 @@ class Stack(MixIn):
         """
         Retrieve from server all recieved and put on the rxes deque
         """
-        while self.server.opened:
+        while self.handler.opened:
             if not self._serviceOneReceived():
                 break
 
@@ -589,7 +589,7 @@ class Stack(MixIn):
         """
         Service recieves once (one reception)
         """
-        if self.server.opened:
+        if self.handler.opened:
             self._serviceOneReceived()
 
     def messagize(self, pkt, ha):
@@ -939,7 +939,7 @@ class IpStack(Stack):
             name is name of local device shared with stack if local not given
             ha is host address of local device shared with stack if local not given
             kind is kind of local device shared with stack if local not given
-            server is interface server if any
+            handler is interface handler/server/listeniner/client/driver if any
             rxbs is bytearray buffer to hold rx data stream if any
             rxPkts is deque to hold received packet if any
             rxMsgs is deque to hold received msgs if any
@@ -960,7 +960,7 @@ class IpStack(Stack):
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
             .local is local device for this stack
-            .server is interface server if any
+            .handler is interface handler/server/listeniner/client/driver if any
             .rxbs is bytearray buffer to hold input data stream
             .rxPkts is deque of duples to hold received packets
             .rxMsgs is deque of duples to hold received msgs and remotes
@@ -1027,7 +1027,7 @@ class StreamStack(Stack):
             name is name of local device shared with stack if local not given
             ha is host address of local device shared with stack if local not given
             kind is kind of local device shared with stack if local not given
-            server is interface server if any
+            handler is interface handler/server/listeniner/client/driver if any
             rxbs is bytearray buffer to hold rx data stream if any
             rxPkts is deque to hold received packet if any
             rxMsgs is deque to hold received msgs if any
@@ -1046,7 +1046,7 @@ class StreamStack(Stack):
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
             .local is local device for this stack
-            .server is interface server if any
+            .handler is interface handler/server/listeniner/client/driver if any
             .rxbs is bytearray buffer to hold input data stream
             .rxPkts is deque of duples to hold received packets
             .rxMsgs is deque of duples to hold received msgs and remotes
@@ -1076,90 +1076,6 @@ class StreamStack(Stack):
         super(StreamStack, self).__init__(**kwa)
 
 
-class TcpClientStack(IpStack, StreamStack):
-    """
-    Tcp Client Stream based stack object.
-
-    """
-    Port = 75321
-
-    def __init__(self,
-                 bufsize=16192,
-                 **kwa):
-        """
-        Setup Stack instance
-
-        Inherited Parameters:
-            stamper is relative time stamper for this stack
-            version is version tuple or string for this stack
-            puid is previous uid for devices managed by this stack
-            local is local device if any for this stack
-            uid is uid of local device shared with stack if local not given
-            name is name of local device shared with stack if local not given
-            ha is host address of local device shared with stack if local not given
-            kind is kind of local device shared with stack if local not given
-            server is interface server if any
-            rxbs is bytearray buffer to hold rx data stream if any
-            rxPkts is deque to hold received packet if any
-            rxMsgs is deque to hold received msgs if any
-            txbs is bytearray buffer to hold rx data stream if any
-            txPkts is deque to hold packet to be transmitted if any
-            txMsgs is deque to hold messages to be transmitted if any
-            remotes is odict to hold remotes keyed by uid if any
-            nameRemotes is odict to hold remotes keyed by name if any
-            haRemotes is odict to remotes keyed by ha if any
-            stats is odict of stack statistics if any
-            host is local tcp host if ha not provided
-            port is local tcp port if ha not provided
-
-        Parameters:
-            bufsize is tcp socket buffer size
-
-        Inherited Attributes:
-            .stamper is relative time stamper for this stack
-            .version is version tuple or string for this stack
-            .puid is previous uid for devices managed by this stack
-            .local is local device for this stack
-            .server is interface server if any
-            .rxbs is bytearray buffer to hold input data stream
-            .rxPkts is deque of duples to hold received packets
-            .rxMsgs is deque of duples to hold received msgs and remotes
-            .txbs is bytearray buffer to hold rx data stream if any
-            .txPkts is deque of duples to hold packets to be transmitted
-            .txMsgs is deque of duples to hold messages to be transmitted
-            .remotes is odict of remotes indexed by uid
-            .uidRemotes is alias for .remotes
-            .nameRemotes = odict  of remotes indexed by name
-            .haRemotes = odict of remotes indexed by ha
-            .stats is odict of stack statistics
-            .statTimer is relative timer for statistics
-            .aha is server accepting (listening) host address for .server
-
-        Attributes:
-            .bufsize is tcp socket buffer size
-
-        Inherited Properties:
-            .uid is local device unique id as stack uid
-            .name is local device name as stack name
-            .ha  is local device ha as stack ha
-            .kind is local device kind as stack kind
-
-        Properties:
-
-
-        """
-        self.bufsize = bufsize  # create server needs to setup before super call
-        super(TcpClientStack, self).__init__(**kwa)
-
-    def createServer(self, ha):
-        """
-        Create local listening server for stack
-        """
-        server = clienting.Client(ha=ha,
-                                         bufsize=self.bufsize)
-        return server
-
-
 class TcpServerStack(IpStack, StreamStack):
     """
     Tcp Server Stream based stack object.
@@ -1184,7 +1100,7 @@ class TcpServerStack(IpStack, StreamStack):
             name is name of local device shared with stack if local not given
             ha is host address of local device shared with stack if local not given
             kind is kind of local device shared with stack if local not given
-            server is interface server if any
+            handler is interface handler/server/listeniner/client/driver if any
             rxbs is bytearray buffer to hold rx data stream if any
             rxPkts is deque to hold received packet if any
             rxMsgs is deque to hold received msgs if any
@@ -1207,7 +1123,7 @@ class TcpServerStack(IpStack, StreamStack):
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
             .local is local device for this stack
-            .server is interface server if any
+            .handler is interface handler/server/listeniner/client/driver if any
             .rxbs is bytearray buffer to hold input data stream
             .rxPkts is deque of duples to hold received packets
             .rxMsgs is deque of duples to hold received msgs and remotes
@@ -1240,16 +1156,99 @@ class TcpServerStack(IpStack, StreamStack):
         self.bufsize = bufsize  # create server needs to setup before super call
         super(TcpServerStack, self).__init__(host=host, **kwa)
 
-    def createServer(self, ha):
+    def createHandler(self, ha):
         """
         Create local listening server for stack
         """
         server = serving.Server(ha=ha,
                                 eha=self.eha,
                                 bufsize=self.bufsize)
-        self.eha = self.server.eha  # update local copy after init
+        self.eha = self.handler.eha  # update local copy after init
         return server
 
+
+class TcpClientStack(IpStack, StreamStack):
+    """
+    Tcp Client Stream based stack object.
+
+    """
+    Port = 75321
+
+    def __init__(self,
+                 bufsize=16192,
+                 **kwa):
+        """
+        Setup Stack instance
+
+        Inherited Parameters:
+            stamper is relative time stamper for this stack
+            version is version tuple or string for this stack
+            puid is previous uid for devices managed by this stack
+            local is local device if any for this stack
+            uid is uid of local device shared with stack if local not given
+            name is name of local device shared with stack if local not given
+            ha is host address of local device shared with stack if local not given
+            kind is kind of local device shared with stack if local not given
+            handler is interface handler/server/listeniner/client/driver if any
+            rxbs is bytearray buffer to hold rx data stream if any
+            rxPkts is deque to hold received packet if any
+            rxMsgs is deque to hold received msgs if any
+            txbs is bytearray buffer to hold rx data stream if any
+            txPkts is deque to hold packet to be transmitted if any
+            txMsgs is deque to hold messages to be transmitted if any
+            remotes is odict to hold remotes keyed by uid if any
+            nameRemotes is odict to hold remotes keyed by name if any
+            haRemotes is odict to remotes keyed by ha if any
+            stats is odict of stack statistics if any
+            host is local tcp host if ha not provided
+            port is local tcp port if ha not provided
+
+        Parameters:
+            bufsize is tcp socket buffer size
+
+        Inherited Attributes:
+            .stamper is relative time stamper for this stack
+            .version is version tuple or string for this stack
+            .puid is previous uid for devices managed by this stack
+            .local is local device for this stack
+            .handler is interface handler/server/listeniner/client/driver if any
+            .rxbs is bytearray buffer to hold input data stream
+            .rxPkts is deque of duples to hold received packets
+            .rxMsgs is deque of duples to hold received msgs and remotes
+            .txbs is bytearray buffer to hold rx data stream if any
+            .txPkts is deque of duples to hold packets to be transmitted
+            .txMsgs is deque of duples to hold messages to be transmitted
+            .remotes is odict of remotes indexed by uid
+            .uidRemotes is alias for .remotes
+            .nameRemotes = odict  of remotes indexed by name
+            .haRemotes = odict of remotes indexed by ha
+            .stats is odict of stack statistics
+            .statTimer is relative timer for statistics
+            .aha is server accepting (listening) host address for .server
+
+        Attributes:
+            .bufsize is tcp socket buffer size
+
+        Inherited Properties:
+            .uid is local device unique id as stack uid
+            .name is local device name as stack name
+            .ha  is local device ha as stack ha
+            .kind is local device kind as stack kind
+
+        Properties:
+
+
+        """
+        self.bufsize = bufsize  # create server needs to setup before super call
+        super(TcpClientStack, self).__init__(**kwa)
+
+    def createHandler(self, ha):
+        """
+        Create local client for stack (unfortunate name for method in this case)
+        """
+        server = clienting.Client(ha=ha,
+                                         bufsize=self.bufsize)
+        return server
 
 
 class GramStack(Stack):
@@ -1272,7 +1271,7 @@ class GramStack(Stack):
             name is name of local device shared with stack if local not given
             ha is host address of local device shared with stack if local not given
             kind is kind of local device shared with stack if local not given
-            server is interface server if any
+            handler is interface handler/server/listeniner/client/driver if any
             rxbs is bytearray buffer to hold input data stream if any
             rxPkts is deque to hold received packet if any
             rxMsgs is deque to hold received msgs if any
@@ -1290,7 +1289,7 @@ class GramStack(Stack):
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
             .local is local device for this stack
-            .server is interface server if any
+            .handler is interface handler/server/listeniner/client/driver if any
             .rxbs is bytearray buffer to hold input data stream
             .rxPkts is deque of duples to hold received packets
             .rxMsgs is deque of duples to hold received msgs and remotes
@@ -1334,7 +1333,7 @@ class GramStack(Stack):
             return False  # blocked
 
         try:
-            count = self.server.send(pkt.packed, ha)  # datagram always sends all
+            count = self.handler.send(pkt.packed, ha)  # datagram always sends all
         except socket.error as ex:
             errno = ex.args[0]  # args[0] is always errno for better compat
             if (errno in (errno.EAGAIN,
@@ -1360,7 +1359,7 @@ class GramStack(Stack):
         Service the .txPcks deque to send packets through server
         Override in subclass
         """
-        if self.server.opened:
+        if self.handler.opened:
             laters = deque()
             blockeds = []
             while self.txPkts:
@@ -1374,7 +1373,7 @@ class GramStack(Stack):
         '''
         Service .txPkts deque once (one pkt)
         '''
-        if self.server.opened:
+        if self.handler.opened:
             laters = deque()
             blockeds = [] # will always be empty since only once
             if self.txPkts:
@@ -1389,7 +1388,7 @@ class GramStack(Stack):
         Override in subclass
         '''
         try:
-            raw, ha = self.server.receive()  # if no data the duple is (b'', None)
+            raw, ha = self.handler.receive()  # if no data the duple is (b'', None)
         except socket.error as ex:
             errno = ex.args[0]  # args[0] always errno for compat
             if errno == errno.ECONNRESET:
@@ -1425,7 +1424,7 @@ class UdpStack(IpStack, GramStack):
             name is name of local device shared with stack if local not given
             ha is host address of local udp device (host,port) shared with stack if local not given
             kind is kind of local device shared with stack if local not given
-            server is interface server if any
+            handler is interface handler/server/listeniner/client/driver if any
             rxbs is bytearray buffer to hold input data stream if any
             rxPkts is deque to hold received packet if any
             rxMsgs is deque to hold received msgs if any
@@ -1446,7 +1445,7 @@ class UdpStack(IpStack, GramStack):
             .version is version tuple or string for this stack
             .puid is previous uid for devices managed by this stack
             .local is local device for this stack
-            .server is interface server if any
+            .handler is interface handler/server/listeniner/client/driver if any
             .rxbs is bytearray buffer to hold input data stream
             .rxPkts is deque of duples to hold received packets
             .rxMsgs is deque of duples to hold received msgs and remotes
@@ -1473,10 +1472,10 @@ class UdpStack(IpStack, GramStack):
 
 
         """
-        self.bufcnt = bufcnt  # used in createServer
+        self.bufcnt = bufcnt  # used in createHandler
         super(UdpStack, self).__init__(**kwa)
 
-    def createServer(self, ha):
+    def createHandler(self, ha):
         """
         Create local listening server for stack
         """
