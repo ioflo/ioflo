@@ -1160,11 +1160,11 @@ class TcpServerStack(IpStack, StreamStack):
         """
         Create local listening server for stack
         """
-        server = serving.Server(ha=ha,
+        handler = serving.Server(ha=ha,
                                 eha=self.eha,
                                 bufsize=self.bufsize)
         self.eha = self.handler.eha  # update local copy after init
-        return server
+        return handler
 
 
 class TcpClientStack(IpStack, StreamStack):
@@ -1246,9 +1246,9 @@ class TcpClientStack(IpStack, StreamStack):
         """
         Create local client for stack (unfortunate name for method in this case)
         """
-        server = clienting.Client(ha=ha,
-                                         bufsize=self.bufsize)
-        return server
+        handler = clienting.Client(ha=ha,
+                                   bufsize=self.bufsize)
+        return handler
 
 
 class GramStack(Stack):
@@ -1479,9 +1479,9 @@ class UdpStack(IpStack, GramStack):
         """
         Create local listening server for stack
         """
-        server = udping.SocketUdpNb(ha=ha,
-                             bufsize=udping.UDP_MAX_PACKET_SIZE * self.bufcnt)
-        return server
+        handler = udping.SocketUdpNb(ha=ha,
+                                     bufsize=udping.UDP_MAX_PACKET_SIZE * self.bufcnt)
+        return handler
 
     def packetize(self, msg, remote):
         """
