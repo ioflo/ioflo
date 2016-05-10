@@ -973,7 +973,7 @@ class IpStack(Stack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-            .aha is server accepting (listening) host address for .server
+            .aha is normalized accepting (listening) host address for .handler if applicable
 
         Attributes:
 
@@ -1059,7 +1059,7 @@ class StreamStack(Stack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-            .aha is server accepting (listening) host address for .server
+            .aha is normalized accepting (listening) host address for .handler if applicable
 
         Attributes:
 
@@ -1081,7 +1081,7 @@ class TcpServerStack(IpStack, StreamStack):
     Tcp Server Stream based stack object.
 
     """
-    Port = 75321
+    Port = 12357
 
     def __init__(self,
                  host=u'',
@@ -1136,7 +1136,7 @@ class TcpServerStack(IpStack, StreamStack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-            .aha is server accepting (listening) host address for .server
+            .aha is normalized accepting (listening) host address for .handler if applicable
 
         Attributes:
             .eha is external host address used by server acceptor TLS if any
@@ -1163,7 +1163,7 @@ class TcpServerStack(IpStack, StreamStack):
         handler = serving.Server(ha=ha,
                                 eha=self.eha,
                                 bufsize=self.bufsize)
-        self.eha = self.handler.eha  # update local copy after init
+        self.eha = handler.eha  # update local copy after init
         return handler
 
 
@@ -1172,7 +1172,7 @@ class TcpClientStack(IpStack, StreamStack):
     Tcp Client Stream based stack object.
 
     """
-    Port = 75321
+    Port = 12357
 
     def __init__(self,
                  bufsize=16192,
@@ -1224,7 +1224,7 @@ class TcpClientStack(IpStack, StreamStack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-            .aha is server accepting (listening) host address for .server
+            .aha is normalized accepting (listening) host address for .handler if applicable
 
         Attributes:
             .bufsize is tcp socket buffer size
@@ -1237,10 +1237,16 @@ class TcpClientStack(IpStack, StreamStack):
 
         Properties:
 
-
+        For TcpClientStack the meaning of .local is different. It represents
+        the connection address to the remote server not the local address.
+        The actual local address is the ephemeral host port created when the connection
+        is made and is stored in .handler.ca
         """
         self.bufsize = bufsize  # create server needs to setup before super call
         super(TcpClientStack, self).__init__(**kwa)
+        self.aha = self.ha  # acceptance is not applicable to client
+        # .ha is .local.ha is not used until connect
+
 
     def createHandler(self, ha):
         """
@@ -1301,7 +1307,7 @@ class GramStack(Stack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-            .aha is host address of accepting (listening) by server
+            .aha is normalized accepting (listening) host address for .handler if applicable
 
         Attributes:
 
@@ -1457,7 +1463,7 @@ class UdpStack(IpStack, GramStack):
             .haRemotes = odict of remotes indexed by ha
             .stats is odict of stack statistics
             .statTimer is relative timer for statistics
-            .aha is host address of accepting (listening) by server
+            .aha is normalized accepting (listening) host address for .handler if applicable
 
         Attributes:
             .bufcnt is number of udp buffers equivalent for udp buffer to allocate

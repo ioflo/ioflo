@@ -225,6 +225,59 @@ class BasicTestCase(unittest.TestCase):
         alpha.close()
         beta.close()
 
+    def testTcpServerStack(self):
+        """
+        Test TcpServerStack class
+        """
+        console.terse("{0}\n".format(self.testTcpServerStack.__doc__))
+
+        stack = stacking.TcpServerStack()
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.TcpServerStack.Port))
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ('0.0.0.0', stacking.UdpStack.Port))
+        self.assertEqual(stack.eha, ('127.0.0.1', stacking.TcpServerStack.Port))
+        stack.close()
+
+        ha = ('127.0.0.1', 9000)
+        stack = stacking.TcpServerStack(ha=ha)
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ha)
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ha)
+        self.assertEqual(stack.eha, ha)
+        stack.close()
+
+    def testTcpClientStack(self):
+        """
+        Test TcpClientStack class
+        """
+        console.terse("{0}\n".format(self.testTcpClientStack.__doc__))
+
+        stack = stacking.TcpClientStack()
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.TcpServerStack.Port))
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ('127.0.0.1', stacking.TcpServerStack.Port))
+        stack.close()
+
+        ha = ('127.0.0.1', 9000)
+        stack = stacking.TcpClientStack(ha=ha)
+        self.assertIsInstance(stack.local, devicing.IpLocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, ha)
+        self.assertEqual(stack.local.kind, None)
+        self.assertEqual(stack.aha, ha)
+        stack.close()
+
+
 
 def runOne(test):
     '''
@@ -241,6 +294,8 @@ def runSome():
              'testStack',
              'testUdpStack',
              'testUdpStacks',
+             'testTcpServerStack',
+             'testTcpClientStack',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
