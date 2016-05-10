@@ -43,7 +43,9 @@ class Client(object):
                  wlog=None,
                  store=None,
                  timeout=None,
-                 reconnectable=None, ):
+                 reconnectable=None,
+                 txes=None,
+                 rxbs=None):
         """
         Initialization method for instance.
         name = user friendly name for connection
@@ -56,6 +58,8 @@ class Client(object):
         store = store reference
         timeout = auto reconnect timeout
         reconnectable = Boolean auto reconnect if timed out
+        txes = deque of data to send
+        rxbs = bytearray of data received
         """
         self.name = name
         self.uid = uid
@@ -72,8 +76,8 @@ class Client(object):
         self.ca = (None, None)  # host address of local connection
         self._accepted = False  # attribute to support accepted property
         self.cutoff = False  # True when detect connection closed on far side
-        self.txes = deque()  # deque of data to send
-        self.rxbs = bytearray()  # byte array of data recieved
+        self.txes = txes if txes is not None else deque()  # deque of data to send
+        self.rxbs = rxbs if rxbs is not None else bytearray()  # byte array of data recieved
         self.store = store or storing.Store(stamp=0.0)
         self.timeout = timeout if timeout is not None else self.Timeout
         self.timer = StoreTimer(self.store, duration=self.timeout)
