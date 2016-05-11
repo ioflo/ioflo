@@ -78,10 +78,7 @@ class PackerPart(Part):
     """
     Format = '!'  # default empty packer struct format string for packed
 
-    def __init__(self,
-                 fmt=None,
-                 raw=None,
-                 **kwa):
+    def __init__(self, fmt=None, raw=None, **kwa):
         """
         Initialization method for instance.
 
@@ -154,10 +151,7 @@ class PackifierPart(Part):
     """
     Format = ''  # default packer struct format string for packed
 
-    def __init__(self,
-                 fmt=None,
-                 raw=None,
-                 **kwa):
+    def __init__(self, fmt=None, raw=None, **kwa):
         """
         Initialization method for instance.
 
@@ -236,10 +230,7 @@ class PacketPart(Part):
     Allows PacketPart to reference other parts of its Packet
     """
 
-    def __init__(self,
-                 packet=None,
-                 **kwa
-                 ):
+    def __init__(self, packet=None, **kwa):
         """
         Initialization method for instance.
         Base class method to be overridden in subclass
@@ -280,10 +271,7 @@ class Packet(Part):
     Allows packet to reference its stack
     """
 
-    def __init__(self,
-                 stack=None,
-                 **kwa
-                 ):
+    def __init__(self, stack=None, **kwa):
         """
         Initialization method for instance.
         Base class method to be overridden in subclass

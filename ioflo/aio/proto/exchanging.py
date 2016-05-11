@@ -204,9 +204,7 @@ class Exchanger(Exchange):
     """
     Exchanger (pseudo transaction) base class for initiated exchanges
     """
-    def __init__(self,
-                 stack,
-                 **kwa):
+    def __init__(self, stack, **kwa):
         """
         Setup Exchanger instance
 
@@ -312,9 +310,7 @@ class Exchangent(Exchange):
     Timeout = 0.5  # default timeout
     RedoTimeout = 0.1
 
-    def __init__(self,
-                 stack,
-                 **kwa):
+    def __init__(self, stack, **kwa):
         """
         Setup Exchangent instance
 
