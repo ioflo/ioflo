@@ -87,8 +87,8 @@ class Exchange(MixIn):
         self.timer = StoreTimer(stack.stamper, duration=self.timeout)
         self.redoTimeout = redoTimeout if redoTimout is not None else self.RedoTimeout
         self.redoTimer = StoreTimer(stack.stamper, duration=self.redoTimeout)
-        self.rx = rx  # latest message received
-        self.tx = tx  # initial message to transmit
+        self.rx = rx  # latest received
+        self.tx = tx  # initial to transmit
         self.done = False
         self.failed = False
         self.acked = False
@@ -221,7 +221,7 @@ class Exchanger(Exchange):
 
         Parameters:
         
-        Class Attributes:
+        Inherited Class Attributes:
             .Timeout is overall exchange timeout
             .RedoTimeout is redo timeout
 
@@ -253,7 +253,30 @@ class Exchanger(Exchange):
     def start(self, tx=None):
         """
         Initiate exchange
+        tx is latest/next transmitted msg/pkt/data
+        
+        """
+        super(Exchanger, self).start()  # reset flags
 
+        self.timer.restart()
+        self.redoTimer.restart()
+        console.concise("{0}: Initiating {1} with {2} at {3}.\n".format(self.stack.name,
+                                            self.name,
+                                            self.device.name,
+                                            round(self.stack.stamper.stamp, 3)))
+        self.send(tx)
+
+class Exchangent(Exchange):
+    """
+    Exchangent (pseudo transaction) base class for correspondent exchanges
+    """
+    Timeout = 0.5  # default timeout
+    RedoTimeout = 0.1
+
+    def __init__(self, stack, **kwa):
+        """
+        Setup Exchangent instance
+        
         Inherited Parameters:
             stack is interface stack instance
             uid is Exchange unique id
@@ -267,7 +290,7 @@ class Exchanger(Exchange):
 
         Parameters:
         
-       Class Attributes:
+        Inherited Class Attributes:
             .Timeout is overall exchange timeout
             .RedoTimeout is redo timeout
 
@@ -292,27 +315,7 @@ class Exchanger(Exchange):
         Inherited Properties
 
         Properties
-        """
-        super(Exchanger, self).start()  # reset flags
 
-        self.timer.restart()
-        self.redoTimer.restart()
-        console.concise("{0}: Initiating {1} with {2} at {3}.\n".format(self.stack.name,
-                                            self.name,
-                                            self.device.name,
-                                            round(self.stack.stamper.stamp, 3)))
-        self.send(tx)
-
-class Exchangent(Exchange):
-    """
-    Exchangent (pseudo transaction) base class for correspondent exchanges
-    """
-    Timeout = 0.5  # default timeout
-    RedoTimeout = 0.1
-
-    def __init__(self, stack, **kwa):
-        """
-        Setup Exchangent instance
 
         """
         super(Exchangent, self).__init__(stack=stack, **kwa)
