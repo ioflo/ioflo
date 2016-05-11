@@ -373,13 +373,12 @@ class Client(object):
         """
         return (bytes(self.rxbs[index:]), len(self.rxbs))
 
-    def send(self, data, da=None):
+    def send(self, data):
         """
         Perform non blocking send on connected socket .cs.
         Return number of bytes sent
 
         data is string in python2 and bytes in python3
-        da is optional not used but for interface compat
         """
         try:
             result = self.cs.send(data) #result is number of bytes sent

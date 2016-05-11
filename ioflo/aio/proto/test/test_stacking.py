@@ -67,6 +67,27 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(stack.kind, None)
         self.assertEqual(stack.local.kind, stack.kind)
         self.assertEqual(stack.handler, None)
+
+
+    def testRemoteStack(self):
+        """
+        Test RemoteStack class
+        """
+        console.terse("{0}\n".format(self.testRemoteStack.__doc__))
+
+        stack = stacking.RemoteStack()
+        self.assertIs(stack.local.stack, stack)
+        self.assertEqual(stack.name, "Device1")
+        self.assertEqual(stack.local.name, stack.name)
+        self.assertEqual(stack.uid, 1)
+        self.assertEqual(stack.local.uid, stack.uid)
+        self.assertEqual(stack.ha, '')
+        self.assertEqual(stack.aha, '')
+        self.assertEqual(stack.local.ha, stack.ha)
+        self.assertEqual(stack.kind, None)
+        self.assertEqual(stack.local.kind, stack.kind)
+        self.assertEqual(stack.handler, None)
+
         self.assertEqual(len(stack.remotes), 0)
         self.assertIs(stack.remotes, stack.uidRemotes)
         self.assertEqual(len(stack.nameRemotes), 0)
@@ -292,6 +313,7 @@ def runSome():
     tests =  []
     names = [
              'testStack',
+             'testRemoteStack',
              'testUdpStack',
              'testUdpStacks',
              'testTcpServerStack',
