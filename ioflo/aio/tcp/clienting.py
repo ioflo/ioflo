@@ -305,14 +305,18 @@ class Client(object):
         Perform non blocking receive from connected socket .cs
 
         If no data then returns None
-        If connection closed then returns ''
+        If connection closed then returns empty
         Otherwise returns data
         """
         try:
             data = self.cs.recv(self.bs)
         except socket.error as ex:
-            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
-                return None
+            # ex.args[0] is always ex.errno for better compat
+            if  ex.args[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
+                return None  # blocked waiting for data
+            elif ex.args[0] in (errno.ECONNRESET,):
+                self.cutoff = True
+                return bytes()
             else:
                 emsg = ("socket.error = {0}: Outgoer at {1} while receiving "
                         "from {2}\n".format(ex, self.ca, self.ha))
@@ -327,7 +331,7 @@ class Client(object):
 
             if self.wlog:  # log over the wire rx
                 self.wlog.writeRx(self.ha, data)
-        else:  # data empty so connection closed on other end
+        else:  # data empty so connection closed on other end, whereas see above for blocked
             self.cutoff = True
 
         return data
@@ -384,7 +388,8 @@ class Client(object):
             result = self.cs.send(data) #result is number of bytes sent
         except socket.error as ex:
             result = 0
-            if ex.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
+            # ex.args[0] is always ex.errno for better compat
+            if ex.args[0] not in (errno.EAGAIN, errno.EWOULDBLOCK):
                 emsg = ("socket.error = {0}: Outgoer at {1} while sending "
                         "to {2} \n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)

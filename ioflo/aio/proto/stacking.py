@@ -284,14 +284,14 @@ class Stack(MixIn):
         try:
             count = self.handler.send(self.txbs, ha)
         except Exception as ex:
-            errno = ex.args[0]  # args[0] is always errno for better compat
-            if (errno in (errno.EAGAIN,
-                          errno.EWOULDBLOCK,
-                          errno.ENETUNREACH,
-                          errno.ETIME,
-                          errno.EHOSTUNREACH,
-                          errno.EHOSTDOWN,
-                          errno.ECONNRESET)):
+            # ex.args[0] is always ex.errno for better compat
+            if (ex.args[0] in (errno.EAGAIN,
+                                errno.EWOULDBLOCK,
+                                errno.ENETUNREACH,
+                                errno.ETIME,
+                                errno.EHOSTUNREACH,
+                                errno.EHOSTDOWN,
+                                errno.ECONNRESET)):
                 if pkt is not None:
                     self.txPkts.appendleft(pkt)  # requeue packet
                     self.clearTxbs()
@@ -421,8 +421,8 @@ class Stack(MixIn):
             try:
                 raw = self.handler.receive()
             except Exception as ex:
-                errno = ex.args[0]  # args[0] always errno for compat
-                if errno == errno.ECONNRESET:
+                # ex.args[0] always ex.errno for compat
+                if ex.args[0]  == errno.ECONNRESET:
                     return False  # no received data
                 else:
                     raise
@@ -431,7 +431,7 @@ class Stack(MixIn):
                 return False  # no received data
             self.rxbs.extend(raw)
 
-        packet = self.parserize(raw)
+        packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
             del self.rxbs[:packet.size]
@@ -1107,69 +1107,9 @@ class IpStack(Stack):
         super(IpStack, self).__init__(local=local, ha=ha, **kwa)
 
 
-class StreamStack(Stack):
-    """
-    Stream based stack object.
-    Should be subclassed for specific transport type
-    """
-
-    def __init__(self,
-                 **kwa):
-        """
-        Setup Stack instance
-
-        Inherited Parameters:
-            stamper is relative time stamper for this stack
-            version is version tuple or string for this stack
-            puid is previous uid for devices managed by this stack
-            local is local device if any for this stack
-            uid is uid of local device shared with stack if local not given
-            name is name of local device shared with stack if local not given
-            ha is host address of local device shared with stack if local not given
-            kind is kind of local device shared with stack if local not given
-            handler is interface handler/server/listeniner/client/driver if any
-            rxbs is bytearray buffer to hold rx data stream if any
-            rxPkts is deque to hold received packet if any
-            rxMsgs is deque to hold received msgs if any
-            txbs is bytearray buffer to hold rx data stream if any
-            txPkts is deque to hold packet to be transmitted if any
-            txMsgs is deque to hold messages to be transmitted if any
-            stats is odict of stack statistics if any
-
-        Parameters:
-
-        Inherited Attributes:
-            .stamper is relative time stamper for this stack
-            .version is version tuple or string for this stack
-            .puid is previous uid for devices managed by this stack
-            .local is local device for this stack
-            .handler is interface handler/server/listeniner/client/driver if any
-            .rxbs is bytearray buffer to hold input data stream
-            .rxPkts is deque to hold received packets
-            .rxMsgs is deque to hold received msgs and remotes
-            .txbs is bytearray buffer to hold rx data stream if any
-            .txPkts is deque to hold packets to be transmitted
-            .txMsgs is deque to hold messages to be transmitted
-            .stats is odict of stack statistics
-            .statTimer is relative timer for statistics
-            .aha is normalized accepting (listening) host address for .handler if applicable
-
-        Attributes:
-
-        Inherited Properties:
-            .uid is local device unique id as stack uid
-            .name is local device name as stack name
-            .ha  is local device ha as stack ha
-            .kind is local device kind as stack kind
-
-        Properties:
 
 
-        """
-        super(StreamStack, self).__init__(**kwa)
-
-
-class TcpServerStack(StreamStack, IpStack):
+class TcpServerStack(IpStack):
     """
     Tcp Server Stream based stack object.
 
@@ -1253,7 +1193,136 @@ class TcpServerStack(StreamStack, IpStack):
         return handler
 
 
-class TcpClientStack(StreamStack, IpStack):
+class ClientStreamStack(Stack):
+    """
+    Client Stream based stack object.
+    Should be subclassed for specific transport type
+    """
+
+    def __init__(self,
+                 **kwa):
+        """
+        Setup Stack instance
+
+        Inherited Parameters:
+            stamper is relative time stamper for this stack
+            version is version tuple or string for this stack
+            puid is previous uid for devices managed by this stack
+            local is local device if any for this stack
+            uid is uid of local device shared with stack if local not given
+            name is name of local device shared with stack if local not given
+            ha is host address of local device shared with stack if local not given
+            kind is kind of local device shared with stack if local not given
+            handler is interface handler/server/listeniner/client/driver if any
+            rxbs is bytearray buffer to hold rx data stream if any
+            rxPkts is deque to hold received packet if any
+            rxMsgs is deque to hold received msgs if any
+            txbs is bytearray buffer to hold rx data stream if any
+            txPkts is deque to hold packet to be transmitted if any
+            txMsgs is deque to hold messages to be transmitted if any
+            stats is odict of stack statistics if any
+
+        Parameters:
+
+        Inherited Attributes:
+            .stamper is relative time stamper for this stack
+            .version is version tuple or string for this stack
+            .puid is previous uid for devices managed by this stack
+            .local is local device for this stack
+            .handler is interface handler/server/listeniner/client/driver if any
+            .rxbs is bytearray buffer to hold input data stream
+            .rxPkts is deque to hold received packets
+            .rxMsgs is deque to hold received msgs and remotes
+            .txbs is bytearray buffer to hold rx data stream if any
+            .txPkts is deque to hold packets to be transmitted
+            .txMsgs is deque to hold messages to be transmitted
+            .stats is odict of stack statistics
+            .statTimer is relative timer for statistics
+            .aha is normalized accepting (listening) host address for .handler if applicable
+
+        Attributes:
+
+        Inherited Properties:
+            .uid is local device unique id as stack uid
+            .name is local device name as stack name
+            .ha  is local device ha as stack ha
+            .kind is local device kind as stack kind
+
+        Properties:
+
+
+        """
+        super(ClientStreamStack, self).__init__(**kwa)
+
+    def _serviceOneTxPkt(self):
+        """
+        Service one (packet, ha) duple on .txPkts deque
+        Packet is assumed to be packed already in .packed
+        Assumes there is a duple on the deque
+        Override in subclass
+        """
+        pkt = None
+        if not self.txbs:  # everything sent last time
+            pkt = self.txPkts.popleft()  # duple = (packet, destination address)
+            self.txbs.extend(pkt.packed)
+
+        try:
+            count = self.handler.send(self.txbs)
+        except Exception as ex:
+            # ex.args[0] is always ex.errno for better compat
+            if (ex.args[0] in (errno.EAGAIN,
+                                errno.EWOULDBLOCK,
+                                errno.ENETUNREACH,
+                                errno.ETIME,
+                                errno.EHOSTUNREACH,
+                                errno.EHOSTDOWN,
+                                errno.ECONNRESET)):
+                if pkt is not None:
+                    self.txPkts.appendleft(pkt)  # requeue packet
+                    self.clearTxbs()
+                return False  # blocked try again later
+            else:
+                raise
+
+        console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
+                                    hexlify(self.txbs[:count]).decode('ascii')))
+
+        if count < len(self.txbs):  # delete sent portion
+            del self.txbs[:count]
+            return False  # partially blocked try again later
+
+        self.clearTxbs()
+        return True  # not blocked
+
+    def _serviceOneReceived(self):
+        """
+        Service one received raw packet data or chunk from server
+        assumes that there is a server
+        Override in subclass
+        """
+        while True:  # keep receiving until empty
+            try:
+                raw = self.handler.receive()
+            except Exception as ex:
+                # ex.args[0] always ex.errno for compat
+                if ex.args[0] == errno.ECONNRESET:
+                    return False  # no received data
+                else:
+                    raise
+
+            if not raw:
+                return False  # no received data
+            self.rxbs.extend(raw)
+
+        packet = self.parserize(self.rxbs[:])
+
+        if packet is not None:  # queue packet
+            del self.rxbs[:packet.size]
+            self.rxPkts.append(packet)
+        return True  # received data
+
+
+class TcpClientStack(ClientStreamStack, IpStack):
     """
     Tcp Client Stream based stack object.
 
@@ -1340,46 +1409,6 @@ class TcpClientStack(StreamStack, IpStack):
                                    rxbs=self.rxbs)
         return handler
 
-    def _serviceOneTxPkt(self):
-        """
-        Service one (packet, ha) duple on .txPkts deque
-        Packet is assumed to be packed already in .packed
-        Assumes there is a duple on the deque
-        Override in subclass
-        """
-        pkt = None
-        if not self.txbs:  # everything sent last time
-            pkt = self.txPkts.popleft()  # duple = (packet, destination address)
-            self.txbs.extend(pkt.packed)
-
-        try:
-            count = self.handler.send(self.txbs)
-        except Exception as ex:
-            errno = ex.args[0]  # args[0] is always errno for better compat
-            if (errno in (errno.EAGAIN,
-                          errno.EWOULDBLOCK,
-                          errno.ENETUNREACH,
-                          errno.ETIME,
-                          errno.EHOSTUNREACH,
-                          errno.EHOSTDOWN,
-                          errno.ECONNRESET)):
-                if pkt is not None:
-                    self.txPkts.appendleft(pkt)  # requeue packet
-                    self.clearTxbs()
-                return False  # blocked try again later
-            else:
-                raise
-
-        console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
-                                    hexlify(self.txbs[:count]).decode('ascii')))
-
-        if count < len(self.txbs):  # delete sent portion
-            del self.txbs[:count]
-            return False  # partially blocked try again later
-
-        self.clearTxbs()
-        return True  # not blocked
-
     def serviceTxPkts(self):
         """
         Service the .txPkts deque of packed packets to send packets through server
@@ -1396,55 +1425,70 @@ class TcpClientStack(StreamStack, IpStack):
         if (self.txPkts and self.handler.connected and not self.handler.cutoff):
             self._serviceOneTxPkt()
 
-    def transmit(self, pkt, ha=None):
+    def parserize(self, raw):
         """
-        Pack and Append (pkt, ha) duple to .txPkts deque
-        Ignores ha not applicable
-        """
-        pkt.pack()
-        self.txPkts.append((pkt, ha))
-
-    def packetize(self, msg, remote=None):
-        """
-        Returns packed packet created from msg
+        Returns packet parsed from raw data
         Override in subclass
         """
         return None
 
-    def _serviceOneTxMsg(self):
+    def _serviceOneReceived(self):
         """
-        Handle one (message, remote) duple from .txMsgs deque
-        Assumes there is a duple on the deque
-        Appends (packed, ha) duple to txPkts deque
+        Service one received raw packet data or chunk from server
+        assumes that there is a server
+        Override in subclass
         """
-        msg, remote = self.txMsgs.popleft()  # duple (msg, destination uid
-        console.verbose("{0} sending to {1}\n{2}\n".format(self.name,
-                                                           remote.name,
-                                                           msg))
-        packet = self.packetize(msg, remote)
-        if packet is not None:
-            self.txPkts.append((packet, remote.ha))
+        while True:  # keep receiving until empty
+            try:
+                raw = self.handler.receive()
+            except Exception as ex:
+                # ex.args[0] always ex.errno for compat
+                if ex.args[0] == errno.ECONNRESET:
+                    return False  # no received data
+                else:
+                    raise
 
-    def serviceTxMsgs(self):
-        """
-        Service .txMsgs deque of outgoing  messages
-        """
-        while self.txMsgs:
-            self._serviceOneTxMsg()
+            if not raw:
+                return False  # no received data
+            self.rxbs.extend(raw)
 
-    def serviceTxMsgOnce(self):
-        """
-        Service .txMsgs deque once (one msg)
-        """
-        if self.txMsgs:
-            self._serviceOneTxMsg()
+        packet = self.parserize(self.rxbs[:])
 
-    def message(self, msg, remote=None):
+        if packet is not None:  # queue packet
+            del self.rxbs[:packet.size]
+            self.rxPkts.append(packet)
+        return True  # received data
+
+    def serviceReceives(self):
         """
-        Append (msg, remote) duple to .txMsgs deque
-        Ignores remote
+        Retrieve from server all recieved and put on the rxes deque
         """
-        self.txMsgs.append((msg, remote))
+        while self.handler.opened:
+            if not self._serviceOneReceived():
+                break
+
+    def serviceReceivesOnce(self):
+        """
+        Service recieves once (one reception)
+        """
+        if self.handler.opened:
+            self._serviceOneReceived()
+
+
+    def serviceReceives(self):
+        """
+        Retrieve from server all recieved and put on the rxes deque
+        """
+        while self.handler.connected and not self.handler.cutoff:
+            if not self._serviceOneReceived():
+                break
+
+    def serviceReceivesOnce(self):
+        """
+        Service recieves once (one reception)
+        """
+        if self.handler.opened:
+            self._serviceOneReceived()
 
 
 class GramStack(Stack):
@@ -1524,14 +1568,14 @@ class GramStack(Stack):
         try:
             count = self.handler.send(pkt.packed, ha)  # datagram always sends all
         except socket.error as ex:
-            errno = ex.args[0]  # args[0] is always errno for better compat
-            if (errno in (errno.EAGAIN,
-                          errno.EWOULDBLOCK,
-                          errno.ENETUNREACH,
-                          errno.ETIME,
-                          errno.EHOSTUNREACH,
-                          errno.EHOSTDOWN,
-                          errno.ECONNRESET)):
+            # ex.args[0] is always ex.errno for better compat
+            if (ex.args[0] in (errno.EAGAIN,
+                                errno.EWOULDBLOCK,
+                                errno.ENETUNREACH,
+                                errno.ETIME,
+                                errno.EHOSTUNREACH,
+                                errno.EHOSTDOWN,
+                                errno.ECONNRESET)):
                 # problem sending such as busy with last message. save it for later
                 laters.append((pkt, ha))
                 blockeds.append(ha)
@@ -1608,8 +1652,8 @@ class GramStack(Stack):
         try:
             raw, ha = self.handler.receive()  # if no data the duple is (b'', None)
         except socket.error as ex:
-            errno = ex.args[0]  # args[0] always errno for compat
-            if errno == errno.ECONNRESET:
+            # ex.args[0] always ex.errno for compat
+            if ex.args[0] == errno.ECONNRESET:
                 return False  # no received data
             else:
                 raise

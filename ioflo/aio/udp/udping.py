@@ -119,7 +119,8 @@ class SocketUdpNb(object):
         try:
             data, sa = self.ss.recvfrom(self.bs)  # sa is source (host, port)
         except socket.error as ex:
-            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
+            # ex.args[0] is always ex.errno for better compat
+            if ex.args[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return (b'', None) #receive has nothing empty string for data
             else:
                 emsg = "socket.error = {0}: receiving at {1}\n".format(ex, self.ha)
@@ -171,3 +172,4 @@ class SocketUdpNb(object):
 
 
 PeerUdp = SocketUdpNb  # alias
+

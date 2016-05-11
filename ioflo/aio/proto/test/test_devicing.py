@@ -67,9 +67,16 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(device.ha, '')
         self.assertEqual(device.kind, None)
 
+        stack = stacking.RemoteStack()
+        self.assertIsInstance(stack.local, devicing.LocalDevice)
+        self.assertEqual(stack.local.uid, 1)
+        self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
+        self.assertEqual(stack.local.ha, "")
+        self.assertEqual(stack.local.kind, None)
+
         device = devicing.RemoteDevice(stack=stack)
         self.assertIs(device.stack, stack)
-        self.assertEqual(device.uid, 3)
+        self.assertEqual(device.uid, 2)
         self.assertEqual(device.name, "Device{0}".format(device.uid))
         self.assertEqual(device.ha, '')
         self.assertEqual(device.kind, None)
