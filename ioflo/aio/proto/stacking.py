@@ -1254,6 +1254,13 @@ class ClientStreamStack(Stack):
         """
         super(ClientStreamStack, self).__init__(**kwa)
 
+    def packetize(self, msg, remote=None):
+        """
+        Returns packed packet created from msg destined for remote
+        Override in subclass
+        """
+        return packeting.Packet(packed=msg.encode('ascii'))
+
     def _serviceOneTxPkt(self):
         """
         Service one (packet, ha) duple on .txPkts deque
@@ -1293,6 +1300,13 @@ class ClientStreamStack(Stack):
 
         self.clearTxbs()
         return True  # not blocked
+
+    def parserize(self, raw):
+        """
+        Returns packet parsed from raw data
+        Override in subclass
+        """
+        return packeting.Packet(packed=raw)
 
     def _serviceOneReceived(self):
         """
@@ -1425,13 +1439,6 @@ class TcpClientStack(ClientStreamStack, IpStack):
         if (self.txPkts and self.handler.connected and not self.handler.cutoff):
             self._serviceOneTxPkt()
 
-    def parserize(self, raw):
-        """
-        Returns packet parsed from raw data
-        Override in subclass
-        """
-        return None
-
     def _serviceOneReceived(self):
         """
         Service one received raw packet data or chunk from server
@@ -1442,11 +1449,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
             try:
                 raw = self.handler.receive()
             except Exception as ex:
-                # ex.args[0] always ex.errno for compat
-                if ex.args[0] == errno.ECONNRESET:
-                    return False  # no received data
-                else:
-                    raise
+                raise
 
             if not raw:
                 return False  # no received data
@@ -1463,22 +1466,6 @@ class TcpClientStack(ClientStreamStack, IpStack):
         """
         Retrieve from server all recieved and put on the rxes deque
         """
-        while self.handler.opened:
-            if not self._serviceOneReceived():
-                break
-
-    def serviceReceivesOnce(self):
-        """
-        Service recieves once (one reception)
-        """
-        if self.handler.opened:
-            self._serviceOneReceived()
-
-
-    def serviceReceives(self):
-        """
-        Retrieve from server all recieved and put on the rxes deque
-        """
         while self.handler.connected and not self.handler.cutoff:
             if not self._serviceOneReceived():
                 break
@@ -1487,7 +1474,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         """
         Service recieves once (one reception)
         """
-        if self.handler.opened:
+        if self.handler.connected and not self.handler.cutoff:
             self._serviceOneReceived()
 
 
