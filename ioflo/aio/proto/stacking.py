@@ -33,7 +33,7 @@ class Stack(MixIn):
     Base stack object.
     Should be subclassed for specific transport type
     """
-    Uid = 0  # base for next unique id for local and remotes
+    Uid = 0  # base for next unique id
 
     def __init__(self,
                  stamper=None,
@@ -135,7 +135,14 @@ class Stack(MixIn):
 
         self.remotes = self.uidRemotes = remotes if remotes is not None else odict()
         self.nameRemotes = nameRemotes if nameRemotes is not None else odict()
-        self.haRemotes =  haRemotes if haRemotes is not None else odict()
+        self.haRemotes = haRemotes if haRemotes is not None else odict()
+
+        self.rxbs = rxbs if rxbs is not None else bytearray()
+        self.rxPkts = rxPkts if rxPkts is not None else deque()
+        self.rxMsgs = rxMsgs if rxMsgs is not None else deque()
+        self.txbs = txbs if txbs is not None else bytearray()
+        self.txPkts = txPkts if txPkts is not None else deque()
+        self.txMsgs = txMsgs if txMsgs is not None else deque()
 
         self.handler = handler if handler is not None else self.createHandler(ha=self.aha)
 
@@ -148,14 +155,8 @@ class Stack(MixIn):
 
             console.verbose("Stack '{0}': Opened handler at '{1}'\n".format(self.name,
                                                                            self.aha))
-        self.rxbs = rxbs if rxbs is not None else bytearray()
-        self.rxPkts = rxPkts if rxPkts is not None else deque()
-        self.rxMsgs = rxMsgs if rxMsgs is not None else deque()
-        self.txbs = txbs if txbs is not None else bytearray()
-        self.txPkts = txPkts if txPkts is not None else deque()
-        self.txMsgs = txMsgs if txMsgs is not None else deque()
 
-        self.stats = stats if stats is not None else odict() # udp statistics
+        self.stats = stats if stats is not None else odict() # communication statistics
         self.statTimer = StoreTimer(self.stamper)
 
 
@@ -420,7 +421,7 @@ class Stack(MixIn):
                                                              ha or '',
                                                              hexlify(self.txbs[:count]).decode('ascii')))
 
-        if count < len(self.txbs):
+        if count < len(self.txbs):  # delete sent portion
             del self.txbs[:count]
             return False  # partially blocked try again later
 
@@ -460,7 +461,7 @@ class Stack(MixIn):
         pkt.pack()
         self.txPkts.append((pkt, ha))
 
-    def packetize(self, msg, remote):
+    def packetize(self, msg, remote=None):
         """
         Returns packed packet created from msg destined for remote
         Override in subclass
@@ -542,7 +543,7 @@ class Stack(MixIn):
         """
         del self.rxbs[:]  # self.rxbs.clear() not supported before python 3.3
 
-    def parserize(self, raw, ha):
+    def parserize(self, raw, ha=None):
         """
         Returns packet parsed from raw data sourced from ha
         Override in subclass
@@ -685,6 +686,190 @@ class Stack(MixIn):
         """
         self.serviceReceives()
         self.serviceTxPkts()
+
+
+class RemoteStack(Stack):
+    """
+    RemoteStack provides support for multiple remote devices.
+    Should be subclassed for specific transport type
+    """
+    Uid = 0  # base for next unique id for local and remotes
+
+    def __init__(self,
+                 remotes=None,
+                 nameRemotes=None,
+                 haRemotes=None,
+                 **kwa
+                ):
+        """
+        Setup Stack instance
+
+        Inherited Parameters:
+
+
+        Parameters:
+            stamper is relative time stamper for this stack
+            version is version tuple or string for this stack
+            puid is previous uid for devices managed by this stack
+            local is local device created by subclass takes precedence
+            uid is uid of local device shared with stack if local not given
+            name is name of local device shared with stack if local not given
+            ha is host address of local device shared with stack if local not given
+            kind is kind of local device shared with stack if local not given
+            handler is interface handler/server/listeniner/client/driver if any
+            rxbs is bytearray buffer to hold rx data stream if any
+            rxPkts is deque to hold received packet if any
+            rxMsgs is deque to hold received msgs if any
+            txbs is bytearray buffer to hold rx data stream if any
+            txPkts is deque to hold packet to be transmitted if any
+            txMsgs is deque to hold messages to be transmitted if any
+            remotes is odict to hold remotes keyed by uid if any
+            nameRemotes is odict to hold remotes keyed by name if any
+            haRemotes is odict to remotes keyed by ha if any
+            stats is odict of stack statistics if any
+
+        Inherited Attributes:
+
+        Attributes:
+            .stamper is relative time stamper for this stack
+            .version is version tuple or string for this stack
+            .puid is previous uid for devices managed by this stack
+            .local is local device for this stack
+            .handler is interface handler/server/listeniner/client/driver if any
+            .rxbs is bytearray buffer to hold input data stream
+            .rxPkts is deque of duples to hold received packets
+            .rxMsgs is deque of duples to hold received msgs and remotes
+            .txbs is bytearray buffer to hold rx data stream if any
+            .txPkts is deque of duples to hold packets to be transmitted
+            .txMsgs is deque of duples to hold messages to be transmitted
+            .remotes is odict of remotes indexed by uid
+            .uidRemotes is alias for .remotes
+            .nameRemotes = odict  of remotes indexed by name
+            .haRemotes = odict of remotes indexed by ha
+            .stats is odict of stack statistics
+            .statTimer is relative timer for statistics
+            .aha is server accepting (listening) host address for .server
+
+        Inherited Properties:
+
+        Properties:
+            .uid is local device unique id as stack uid
+            .name is local device name as stack name
+            .ha  is local device ha as stack ha
+            .kind is local device kind as stack kind
+
+        """
+        self.remotes = self.uidRemotes = remotes if remotes is not None else odict()
+        self.nameRemotes = nameRemotes if nameRemotes is not None else odict()
+        self.haRemotes = haRemotes if haRemotes is not None else odict()
+
+        super(RemoteStack, self).__init__(**kwa)
+
+
+    def addRemote(self, remote):
+        """
+        Uniquely add a remote to indexes
+        """
+        if remote.uid in self.uidRemotes or remote.uid in (self.local.uid, ):
+            emsg = "Cannot add remote at uid '{0}', alreadys exists.".format(remote.uid)
+            raise ValueError(emsg)
+        if remote.name in self.nameRemotes or remote.name in (self.local.name, ):
+            emsg = "Cannot add remote at name '{0}', alreadys exists.".format(remote.name)
+            raise ValueError(emsg)
+        if remote.ha in self.haRemotes or remote.ha in (self.local.ha, ):
+            emsg = "Cannot add remote at ha '{0}', alreadys exists.".format(remote.ha)
+            raise ValueError(emsg)
+        remote.stack = self
+        self.uidRemotes[remote.uid] = remote
+        self.nameRemotes[remote.name] = remote
+        self.haRemotes[remote.ha] = remote
+        return remote
+
+    def moveRemote(self, remote, new):
+        """
+        Uniquely move remote at remote.uid to new uid but keep same index
+        """
+        old = remote.uid
+        if new != old:
+            if new in self.uidRemotes or new in (self.local.uid, ):
+                emsg = "Cannot move, remote to '{0}', already exists.".format(new)
+                raise ValueError(emsg)
+
+            if old not in self.uidRemotes:
+                emsg = "Cannot move remote at '{0}', does not exist.".format(old)
+                raise ValueError(emsg)
+
+            if remote is not self.uidRemotes[old]:
+                emsg = "Cannot move remote at '{0}', not identical.".format(old)
+                raise ValueError(emsg)
+
+            remote.uid = new
+            index = self.uidRemotes.keys().index(old)
+            del self.uidRemotes[old]
+            self.uidRemotes.insert(index, new, remote)
+
+    def renameRemote(self, remote, new):
+        """
+        Uniquely rename remote with old remote.name to new name but keep same index
+        """
+        old = remote.name
+        if new != old:
+            if new in self.nameRemotes or new in (self.local.name, ):
+                emsg = "Cannot rename remote to '{0}', already exists.".format(new)
+                raise ValueError(emsg)
+            if old not in self.nameRemotes:
+                emsg = "Cannot rename remote '{0}', does not exist.".format(old)
+                raise ValueError(emsg)
+            if remote is not self.nameRemotes[old]:
+                emsg = "Cannot rename remote '{0}', not identical.".format(old)
+                raise ValueError(emsg)
+            remote.name = new
+            index = self.nameRemotes.keys().index(old)
+            del self.nameRemotes[old]
+            self.nameRemotes.insert(index, new, remote)
+
+    def rehaRemote(self, remote, new):
+        """
+        Uniquely rename remote with old remote.name to new name but keep same index
+        """
+        old = remote.ha
+        if new != old:
+            if new in self.haRemotes or new in (self.local.ha, ):
+                emsg = "Cannot reha remote to '{0}', already exists.".format(new)
+                raise ValueError(emsg)
+            if old not in self.haRemotes:
+                emsg = "Cannot reha remote '{0}', does not exist.".format(old)
+                raise ValueError(emsg)
+            if remote is not self.haRemotes[old]:
+                emsg = "Cannot reha remote '{0}', not identical.".format(old)
+                raise ValueError(emsg)
+            remote.ha = new
+            index = self.haRemotes.keys().index(old)
+            del self.haRemotes[old]
+            self.haRemotes.insert(index, new, remote)
+
+    def removeRemote(self, remote):
+        """
+        Remove remote from all remote indexes
+        """
+        if remote.uid not in self.uidRemotes:
+            emsg = "Cannot remove remote '{0}', does not exist.".format(remote.uid)
+            raise ValueError(emsg)
+        if remote is not self.uidRemotes[remote.uid]:
+            emsg = "Cannot remove remote '{0}', not identical.".format(uid)
+            raise ValueError(emsg)
+
+        del self.uidRemotes[remote.uid]
+        del self.nameRemotes[remote.name]
+        del self.haRemotes[remote.ha]
+
+    def removeAllRemotes(self):
+        """
+        Remove all the remotes
+        """
+        remotes = self.remotes.values()  # copy so can delete in place
+        for remote in remotes:
+            self.removeRemote(remote)
 
 
 class KeepStack(Stack):
@@ -1237,24 +1422,95 @@ class TcpClientStack(IpStack, StreamStack):
 
         Properties:
 
+        Does not use remotes at all since only one possible connection
+
         For TcpClientStack the meaning of .local is different. It represents
         the connection address to the remote server not the local address.
         The actual local address is the ephemeral host port created when the connection
         is made and is stored in .handler.ca
+
+        The ha txPkts duple (pkt, ha) is not used and may be None
+        The remote in the txMsgs duple (msg, remote) is not used and may be None
         """
         self.bufsize = bufsize  # create server needs to setup before super call
         super(TcpClientStack, self).__init__(**kwa)
         self.aha = self.ha  # acceptance is not applicable to client
         # .ha is .local.ha is not used until connect
 
-
     def createHandler(self, ha):
         """
         Create local client for stack (unfortunate name for method in this case)
         """
         handler = clienting.Client(ha=ha,
-                                   bufsize=self.bufsize)
+                                   bufsize=self.bufsize,
+                                   rxbs=self.rxbs)
         return handler
+
+    def serviceTxPkts(self):
+        """
+        Service the .txPkts deque of packed packets to send packets through server
+        Override in subclass
+        """
+        while (self.txPkts and self.handler.connected and not self.handler.cutoff):
+            if not self._serviceOneTxPkt():
+                break  # blocked try again later
+
+    def serviceTxPktsOnce(self):
+        '''
+        Service .txPkts deque once (one pkt)
+        '''
+        if (self.txPkts and self.handler.connected and not self.handler.cutoff):
+            self._serviceOneTxPkt()
+
+    def transmit(self, pkt, ha=None):
+        """
+        Pack and Append (pkt, ha) duple to .txPkts deque
+        Ignores ha not applicable
+        """
+        pkt.pack()
+        self.txPkts.append((pkt, ha))
+
+    def packetize(self, msg, remote=None):
+        """
+        Returns packed packet created from msg
+        Override in subclass
+        """
+        return None
+
+    def _serviceOneTxMsg(self):
+        """
+        Handle one (message, remote) duple from .txMsgs deque
+        Assumes there is a duple on the deque
+        Appends (packed, ha) duple to txPkts deque
+        """
+        msg, remote = self.txMsgs.popleft()  # duple (msg, destination uid
+        console.verbose("{0} sending to {1}\n{2}\n".format(self.name,
+                                                           remote.name,
+                                                           msg))
+        packet = self.packetize(msg, remote)
+        if packet is not None:
+            self.txPkts.append((packet, remote.ha))
+
+    def serviceTxMsgs(self):
+        """
+        Service .txMsgs deque of outgoing  messages
+        """
+        while self.txMsgs:
+            self._serviceOneTxMsg()
+
+    def serviceTxMsgOnce(self):
+        """
+        Service .txMsgs deque once (one msg)
+        """
+        if self.txMsgs:
+            self._serviceOneTxMsg()
+
+    def message(self, msg, remote=None):
+        """
+        Append (msg, remote) duple to .txMsgs deque
+        Ignores remote
+        """
+        self.txMsgs.append((msg, remote))
 
 
 class GramStack(Stack):
@@ -1489,14 +1745,14 @@ class UdpStack(IpStack, GramStack):
                                      bufsize=udping.UDP_MAX_PACKET_SIZE * self.bufcnt)
         return handler
 
-    def packetize(self, msg, remote):
+    def packetize(self, msg, remote=None):
         """
         Returns packed packet created from msg destined for remote
         Override in subclass
         """
         return packeting.Packet(packed=msg.encode('ascii'))
 
-    def parserize(self, raw, ha):
+    def parserize(self, raw, ha=None):
         """
         Returns packet parsed from raw data sourced from ha
         Override in subclass
