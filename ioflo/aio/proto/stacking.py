@@ -1380,7 +1380,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
             .handler is interface handler/server/listeniner/client/driver if any
             .rxbs is bytearray buffer to hold input data stream
             .rxPkts is deque  to hold received packets
-            .rxMsgs is deque  to hold received msgs and remotes
+            .rxMsgs is deque  to hold received msgs
             .txbs is bytearray buffer to hold rx data stream if any
             .txPkts is deque  to hold packets to be transmitted
             .txMsgs is deque  to hold messages to be transmitted
