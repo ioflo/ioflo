@@ -389,15 +389,6 @@ class Stack(MixIn):
         self.serviceTxMsgOnce()
         self.serviceTxPktsOnce()
 
-    def serviceTimers(self):
-        """
-        Allow timer based processing
-        Call .process on all remotes to allow timer based processing
-        of their exchanges
-        """
-        for remote in self.remotes.values():
-            remote.process()
-
     def clearRxbs(self):
         """
         Clear .rxbs
@@ -494,8 +485,6 @@ class Stack(MixIn):
                         "\n     {3}\n".format(self.name,
                                               self.stamper.stamp,
                                               msg))
-        if remote:
-            remote.receive(msg)
 
     def serviceRxMsgs(self):
         """
@@ -510,6 +499,13 @@ class Stack(MixIn):
         """
         if self.rxMsgs:
             self._serviceOneRxMsg()
+
+    def serviceTimers(self):
+        """
+        Allow timer based processing
+        """
+        pass
+
 
     def serviceAllRx(self):
         """
@@ -672,6 +668,7 @@ class RemoteStack(Stack):
                 return
             remote = self.remotes.values()[0]
         self.txMsgs.append((msg, remote))
+        
 
     def _serviceOneRxMsg(self):
         """
@@ -685,7 +682,15 @@ class RemoteStack(Stack):
                                               msg))
         if remote:
             remote.receive(msg)
-
+            
+    def serviceTimers(self):
+        """
+        Allow timer based processing
+        Call .process on all remotes to allow timer based processing
+        of their exchanges
+        """
+        for remote in self.remotes.values():
+            remote.process()
 
     def addRemote(self, remote):
         """
@@ -1438,29 +1443,6 @@ class TcpClientStack(ClientStreamStack, IpStack):
         '''
         if (self.txPkts and self.handler.connected and not self.handler.cutoff):
             self._serviceOneTxPkt()
-
-    def _serviceOneReceived(self):
-        """
-        Service one received raw packet data or chunk from server
-        assumes that there is a server
-        Override in subclass
-        """
-        while True:  # keep receiving until empty
-            try:
-                raw = self.handler.receive()
-            except Exception as ex:
-                raise
-
-            if not raw:
-                return False  # no received data
-            self.rxbs.extend(raw)
-
-        packet = self.parserize(self.rxbs[:])
-
-        if packet is not None:  # queue packet
-            del self.rxbs[:packet.size]
-            self.rxPkts.append(packet)
-        return True  # received data
 
     def serviceReceives(self):
         """
