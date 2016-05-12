@@ -11,6 +11,9 @@ Bug fixes
 Refactor classes in Stacking and Devicing
 Added TCPStack
 
+Added more exception handling to tcp client and server
+
+
 
 --------
 20160506

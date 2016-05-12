@@ -283,20 +283,7 @@ class Stack(MixIn):
         try:
             count = self.handler.send(self.txbs, ha)
         except Exception as ex:
-            # ex.args[0] is always ex.errno for better compat
-            if (ex.args[0] in (errno.EAGAIN,
-                                errno.EWOULDBLOCK,
-                                errno.ENETUNREACH,
-                                errno.ETIME,
-                                errno.EHOSTUNREACH,
-                                errno.EHOSTDOWN,
-                                errno.ECONNRESET)):
-                if pkt is not None:
-                    self.txPkts.appendleft(pkt)  # requeue packet
-                    self.clearTxbs()
-                return False  # blocked try again later
-            else:
-                raise
+            raise
 
         console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
                                 hexlify(self.txbs[:count]).decode('ascii')))
@@ -411,11 +398,7 @@ class Stack(MixIn):
             try:
                 raw = self.handler.receive()
             except Exception as ex:
-                # ex.args[0] always ex.errno for compat
-                if ex.args[0]  == errno.ECONNRESET:
-                    return False  # no received data
-                else:
-                    raise
+                raise
 
             if not raw:
                 return False  # no received data
@@ -1280,21 +1263,7 @@ class ClientStreamStack(Stack):
         try:
             count = self.handler.send(self.txbs)
         except Exception as ex:
-            # ex.args[0] is always ex.errno for better compat
-            if (ex.args[0] in (errno.ENETUNREACH,
-                               errno.EHOSTUNREACH,
-                               errno.ENETDOWN,
-                               errno.EHOSTDOWN,
-                               errno.ETIME,
-                               errno.ETIMEDOUT,
-                               errno.ECONNREFUSED,
-                               errno.ECONNRESET)):
-                if pkt is not None:
-                    self.txPkts.appendleft(pkt)  # requeue packet
-                    self.clearTxbs()
-                return False  # blocked try again later
-            else:
-                raise
+            raise
 
         console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
                                     hexlify(self.txbs[:count]).decode('ascii')))
@@ -1323,11 +1292,7 @@ class ClientStreamStack(Stack):
             try:
                 raw = self.handler.receive()
             except Exception as ex:
-                # ex.args[0] always ex.errno for compat
-                if ex.args[0] == errno.ECONNRESET:
-                    return False  # no received data
-                else:
-                    raise
+                raise
 
             if not raw:
                 return False  # no received data
@@ -1443,23 +1408,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         try:
             count = self.handler.send(self.txbs)
         except socket.error as ex:
-            # ex.args[0] is always ex.errno for better compat
-            if (ex.args[0] in (errno.ENETUNREACH,
-                               errno.EHOSTUNREACH,
-                               errno.ENETDOWN,
-                               errno.EHOSTDOWN,
-                               errno.ETIME,
-                               errno.ETIMEDOUT,
-                               errno.ECONNREFUSED,
-                               errno.ECONNRESET),
-                               errno.ENETRESET):
-                emsg = ("socket.error = {0}: Client at {1} while sending "
-                        "to {2} \n".format(ex, self.handler.ca, self.handler.ha))
-                console.profuse(emsg)
-                self.handler.cutoff = True  # signal to close/reopen connection
-                return False  # blocked try again later
-            else:
-                raise
+            raise
 
         console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
                                     hexlify(self.txbs[:count]).decode('ascii')))
@@ -1497,21 +1446,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
             try:
                 raw = self.handler.receive()
             except socket.error as ex:
-                if ex.args[0] in (errno.ECONNRESET,
-                                    errno.ENETRESET,
-                                    errno.ENETUNREACH,
-                                    errno.EHOSTUNREACH,
-                                    errno.ENETDOWN,
-                                    errno.EHOSTDOWN,
-                                    errno.ETIMEDOUT,
-                                    errno.ECONNREFUSED):
-                    emsg = ("socket.error = {0}: Client at {1} while receiving "
-                            "from {2}\n".format(ex, self.handler.ca, self.handler.ha))
-                    console.profuse(emsg)
-                    self.handler.cutoff = True  # this signals need to close/reopen connection
-                    return False
-                else:
-                    raise
+                raise
 
             if not raw:
                 return False  # no received data
@@ -1618,15 +1553,15 @@ class GramStack(Stack):
             count = self.handler.send(pkt.packed, ha)  # datagram always sends all
         except socket.error as ex:
             # ex.args[0] is always ex.errno for better compat
-            if (ex.args[0] in (errno.ENETUNREACH,
+            if (ex.args[0] in (errno.ECONNREFUSED,
+                               errno.ECONNRESET,
+                               errno.ENETRESET,
+                               errno.ENETUNREACH,
                                errno.EHOSTUNREACH,
                                errno.ENETDOWN,
                                errno.EHOSTDOWN,
-                               errno.ETIME,
                                errno.ETIMEDOUT,
-                               errno.ECONNREFUSED,
-                               errno.ECONNRESET,
-                               errno.ENETRESET)):
+                               errno.ETIME)):
                 # problem sending such as busy with last message. save it for later
                 laters.append((pkt, ha))
                 blockeds.append(ha)
@@ -1704,7 +1639,15 @@ class GramStack(Stack):
             raw, ha = self.handler.receive()  # if no data the duple is (b'', None)
         except socket.error as ex:
             # ex.args[0] always ex.errno for compat
-            if ex.args[0] == errno.ECONNRESET:
+            if (ex.args[0] == (errno.ECONNREFUSED,
+                               errno.ECONNRESET,
+                               errno.ENETRESET,
+                               errno.ENETUNREACH,
+                               errno.EHOSTUNREACH,
+                               errno.ENETDOWN,
+                               errno.EHOSTDOWN,
+                               errno.ETIMEDOUT,
+                               errno.ETIME)):
                 return False  # no received data
             else:
                 raise
