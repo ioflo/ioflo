@@ -194,8 +194,22 @@ class Incomer(object):
         try:
             data = self.cs.recv(self.bs)
         except socket.error as ex:
-            if ex.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
+            # ex.args[0] is always ex.errno for better compat
+            if ex.args[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return None
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED):
+                emsg = ("socket.error = {0}: Incomer at {1} while receiving "
+                        "from {2}\n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                return bytes()  # data empty
             else:
                 emsg = ("socket.error = {0}: Incomer at {1} while receiving"
                         " from {2}\n".format(ex, self.ha, self.ca))
@@ -270,8 +284,23 @@ class Incomer(object):
         try:
             result = self.cs.send(data) #result is number of bytes sent
         except socket.error as ex:
-            result = 0
-            if ex.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
+            # ex.args[0] is always ex.errno for better compat
+            if ex.args[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
+                result = 0  # blocked try again
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED):
+                emsg = ("socket.error = {0}: Outgoer at {1} while sending "
+                        "to {2} \n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                result = 0
+            else:
                 emsg = ("socket.error = {0}: Incomer at {1} while "
                         "sending to {2}\n".format(ex, self.ha, self.ca))
                 console.profuse(emsg)
@@ -428,11 +457,26 @@ class IncomerTls(Incomer):
         """
         try:
             data = self.cs.recv(self.bs)
-        except ssl.SSLError as ex:
-            if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                return None
+        except socket.error as ex:  # ssl.SSLError is a subtype of socket.error
+            # ex.args[0] is always ex.errno for better compat
+            if  ex.args[0] in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                return None  # blocked waiting for data
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED,
+                                ssl.SSLEOFError):
+                emsg = ("socket.error = {0}: IncomerTLS at {1} while receiving"
+                        " from {2}\n".format(ex, self.ha, self.ca))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                return bytes()  # data empty
             else:
-                emsg = ("SSLError = {0}: IncomerTLS at {1} while receiving"
+                emsg = ("socket.error = {0}: IncomerTLS at {1} while receiving"
                         " from {2}\n".format(ex, self.ha, self.ca))
                 console.profuse(emsg)
                 raise  # re-raise
@@ -460,10 +504,26 @@ class IncomerTls(Incomer):
         """
         try:
             result = self.cs.send(data) #result is number of bytes sent
-        except ssl.SSLError as ex:
-            result = 0
-            if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
-                emsg = ("SSLError = {0}: IncomerTLS at {1} while "
+        except socket.error as ex:  # ssl.SSLError is a subtype of socket.error
+            # ex.args[0] is always ex.errno for better compat
+            if ex.args[0] in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                result = 0  # blocked try again
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED,
+                                ssl.SSLEOFError):
+                emsg = ("socket.error = {0}: IncomerTLS at {1} while "
+                        "sending to {2}\n".format(ex, self.ha, self.ca))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                result = 0
+            else:
+                emsg = ("socket.error = {0}: IncomerTLS at {1} while "
                         "sending to {2}\n".format(ex, self.ha, self.ca))
                 console.profuse(emsg)
                 raise

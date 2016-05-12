@@ -667,7 +667,7 @@ class RemoteStack(Stack):
                 return
             remote = self.remotes.values()[0]
         self.txMsgs.append((msg, remote))
-        
+
 
     def _serviceOneRxMsg(self):
         """
@@ -681,7 +681,7 @@ class RemoteStack(Stack):
                                               msg))
         if remote:
             remote.receive(msg)
-            
+
     def serviceTimers(self):
         """
         Allow timer based processing
@@ -1281,13 +1281,14 @@ class ClientStreamStack(Stack):
             count = self.handler.send(self.txbs)
         except Exception as ex:
             # ex.args[0] is always ex.errno for better compat
-            if (ex.args[0] in (errno.EAGAIN,
-                                errno.EWOULDBLOCK,
-                                errno.ENETUNREACH,
-                                errno.ETIME,
-                                errno.EHOSTUNREACH,
-                                errno.EHOSTDOWN,
-                                errno.ECONNRESET)):
+            if (ex.args[0] in (errno.ENETUNREACH,
+                               errno.EHOSTUNREACH,
+                               errno.ENETDOWN,
+                               errno.EHOSTDOWN,
+                               errno.ETIME,
+                               errno.ETIMEDOUT,
+                               errno.ECONNREFUSED,
+                               errno.ECONNRESET)):
                 if pkt is not None:
                     self.txPkts.appendleft(pkt)  # requeue packet
                     self.clearTxbs()
@@ -1427,6 +1428,49 @@ class TcpClientStack(ClientStreamStack, IpStack):
                                    rxbs=self.rxbs)
         return handler
 
+    def _serviceOneTxPkt(self):
+        """
+        Service one (packet, ha) duple on .txPkts deque
+        Packet is assumed to be packed already in .packed
+        Assumes there is a duple on the deque
+        Override in subclass
+        """
+        pkt = None
+        if not self.txbs:  # everything sent last time
+            pkt = self.txPkts.popleft()  # duple = (packet, destination address)
+            self.txbs.extend(pkt.packed)
+
+        try:
+            count = self.handler.send(self.txbs)
+        except socket.error as ex:
+            # ex.args[0] is always ex.errno for better compat
+            if (ex.args[0] in (errno.ENETUNREACH,
+                               errno.EHOSTUNREACH,
+                               errno.ENETDOWN,
+                               errno.EHOSTDOWN,
+                               errno.ETIME,
+                               errno.ETIMEDOUT,
+                               errno.ECONNREFUSED,
+                               errno.ECONNRESET),
+                               errno.ENETRESET):
+                emsg = ("socket.error = {0}: Client at {1} while sending "
+                        "to {2} \n".format(ex, self.handler.ca, self.handler.ha))
+                console.profuse(emsg)
+                self.handler.cutoff = True  # signal to close/reopen connection
+                return False  # blocked try again later
+            else:
+                raise
+
+        console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
+                                    hexlify(self.txbs[:count]).decode('ascii')))
+
+        if count < len(self.txbs):  # partially blocked try again later
+            del self.txbs[:count]  # delete sent portion
+            return False
+
+        self.clearTxbs()
+        return True  # not blocked
+
     def serviceTxPkts(self):
         """
         Service the .txPkts deque of packed packets to send packets through server
@@ -1442,6 +1486,43 @@ class TcpClientStack(ClientStreamStack, IpStack):
         '''
         if (self.txPkts and self.handler.connected and not self.handler.cutoff):
             self._serviceOneTxPkt()
+
+    def _serviceOneReceived(self):
+        """
+        Service one received raw packet data or chunk from server
+        assumes that there is a server
+        Override in subclass
+        """
+        while True:  # keep receiving until empty
+            try:
+                raw = self.handler.receive()
+            except socket.error as ex:
+                if ex.args[0] in (errno.ECONNRESET,
+                                    errno.ENETRESET,
+                                    errno.ENETUNREACH,
+                                    errno.EHOSTUNREACH,
+                                    errno.ENETDOWN,
+                                    errno.EHOSTDOWN,
+                                    errno.ETIMEDOUT,
+                                    errno.ECONNREFUSED):
+                    emsg = ("socket.error = {0}: Client at {1} while receiving "
+                            "from {2}\n".format(ex, self.handler.ca, self.handler.ha))
+                    console.profuse(emsg)
+                    self.handler.cutoff = True  # this signals need to close/reopen connection
+                    return False
+                else:
+                    raise
+
+            if not raw:
+                return False  # no received data
+            self.rxbs.extend(raw)
+
+        packet = self.parserize(self.rxbs[:])
+
+        if packet is not None:  # queue packet
+            del self.rxbs[:packet.size]
+            self.rxPkts.append(packet)
+        return True  # received data
 
     def serviceReceives(self):
         """
@@ -1537,13 +1618,15 @@ class GramStack(Stack):
             count = self.handler.send(pkt.packed, ha)  # datagram always sends all
         except socket.error as ex:
             # ex.args[0] is always ex.errno for better compat
-            if (ex.args[0] in (errno.EAGAIN,
-                                errno.EWOULDBLOCK,
-                                errno.ENETUNREACH,
-                                errno.ETIME,
-                                errno.EHOSTUNREACH,
-                                errno.EHOSTDOWN,
-                                errno.ECONNRESET)):
+            if (ex.args[0] in (errno.ENETUNREACH,
+                               errno.EHOSTUNREACH,
+                               errno.ENETDOWN,
+                               errno.EHOSTDOWN,
+                               errno.ETIME,
+                               errno.ETIMEDOUT,
+                               errno.ECONNREFUSED,
+                               errno.ECONNRESET,
+                               errno.ENETRESET)):
                 # problem sending such as busy with last message. save it for later
                 laters.append((pkt, ha))
                 blockeds.append(ha)

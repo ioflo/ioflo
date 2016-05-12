@@ -307,6 +307,7 @@ class Client(object):
         If no data then returns None
         If connection closed then returns empty
         Otherwise returns data
+        data is string in python2 and bytes in python3
         """
         try:
             data = self.cs.recv(self.bs)
@@ -314,9 +315,19 @@ class Client(object):
             # ex.args[0] is always ex.errno for better compat
             if  ex.args[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
                 return None  # blocked waiting for data
-            elif ex.args[0] in (errno.ECONNRESET,):
-                self.cutoff = True
-                return bytes()
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED):
+                emsg = ("socket.error = {0}: Outgoer at {1} while receiving "
+                        "from {2}\n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                return bytes()  # data empty
             else:
                 emsg = ("socket.error = {0}: Outgoer at {1} while receiving "
                         "from {2}\n".format(ex, self.ca, self.ha))
@@ -381,15 +392,28 @@ class Client(object):
         """
         Perform non blocking send on connected socket .cs.
         Return number of bytes sent
-
         data is string in python2 and bytes in python3
         """
         try:
             result = self.cs.send(data) #result is number of bytes sent
         except socket.error as ex:
-            result = 0
             # ex.args[0] is always ex.errno for better compat
-            if ex.args[0] not in (errno.EAGAIN, errno.EWOULDBLOCK):
+            if ex.args[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
+                result = 0  # blocked try again
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED):
+                emsg = ("socket.error = {0}: Outgoer at {1} while sending "
+                        "to {2} \n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                result = 0
+            else:
                 emsg = ("socket.error = {0}: Outgoer at {1} while sending "
                         "to {2} \n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)
@@ -603,14 +627,30 @@ class ClientTls(Client):
         If no data then returns None
         If connection closed then returns ''
         Otherwise returns data
+        data is string in python2 and bytes in python3
         """
         try:
             data = self.cs.recv(self.bs)
-        except ssl.SSLError as ex:
-            if ex.errno in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+        except socket.error as ex:  # ssl.SSLError is a subtype of socket.error
+            # ex.args[0] is always ex.errno for better compat
+            if ex.args[0] in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
                 return None
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED,
+                                ssl.SSLEOFError):
+                emsg = ("socket.error = {0}: OutgoerTLS at {1} receiving"
+                        " from {2}\n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                return bytes()  # data empty
             else:
-                emsg = ("SSLError = {0}: OutgoerTLS at {1} receiving"
+                emsg = ("socket.error = {0}: OutgoerTLS at {1} receiving"
                         " from {2}\n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)
                 raise  # re-raise
@@ -628,19 +668,33 @@ class ClientTls(Client):
 
         return data
 
-    def send(self, data, da=None):
+    def send(self, data):
         """
         Perform non blocking send on connected socket .cs.
         Return number of bytes sent
-
         data is string in python2 and bytes in python3
-        da is destination address not used for compatibility interface
         """
         try:
             result = self.cs.send(data) #result is number of bytes sent
-        except ssl.SSLError as ex:
-            result = 0
-            if ex.errno not in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+        except socket.error as ex:  # ssl.SSLError is a subtype of socket.error
+            # ex.args[0] is always ex.errno for better compat
+            if ex.args[0] in (ssl.SSL_ERROR_WANT_READ, ssl.SSL_ERROR_WANT_WRITE):
+                result = 0
+            elif ex.args[0] in (errno.ECONNRESET,
+                                errno.ENETRESET,
+                                errno.ENETUNREACH,
+                                errno.EHOSTUNREACH,
+                                errno.ENETDOWN,
+                                errno.EHOSTDOWN,
+                                errno.ETIMEDOUT,
+                                errno.ECONNREFUSED,
+                                ssl.SSLEOFError):
+                emsg = ("socket.error = {0}: OutgoerTLS at {1} while sending "
+                        "to {2} \n".format(ex, self.ca, self.ha))
+                console.profuse(emsg)
+                self.cutoff = True  # this signals need to close/reopen connection
+                result = 0
+            else:
                 emsg = ("socket.error = {0}: OutgoerTLS at {1} while sending "
                         "to {2} \n".format(ex, self.ca, self.ha))
                 console.profuse(emsg)
