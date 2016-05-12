@@ -148,7 +148,6 @@ class Stack(MixIn):
         self.stats = stats if stats is not None else odict() # communication statistics
         self.statTimer = StoreTimer(self.stamper)
 
-
     @property
     def uid(self):
         """
