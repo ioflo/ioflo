@@ -1315,6 +1315,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
     def __init__(self,
                  bufsize=16192,
+                 timeout=None,
                  **kwa):
         """
         Setup Stack instance
@@ -1341,6 +1342,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
         Parameters:
             bufsize is tcp socket buffer size
+            timeout is tcp handler reconnection timeout in seconds or None
 
         Inherited Attributes:
             .stamper is relative time stamper for this stack
@@ -1360,6 +1362,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
         Attributes:
             .bufsize is tcp socket buffer size
+            .timeout is tcp handler reconnection timeout in seconds or None
 
         Inherited Properties:
             .uid is local device unique id as stack uid
@@ -1380,6 +1383,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         The remote in the txMsgs duple (msg, remote) is not used and may be None
         """
         self.bufsize = bufsize  # create server needs to setup before super call
+        self.timeout = timeout
         super(TcpClientStack, self).__init__(**kwa)
         self.aha = self.ha  # acceptance is not applicable to client
         # .ha is .local.ha is not used until connect
@@ -1390,7 +1394,8 @@ class TcpClientStack(ClientStreamStack, IpStack):
         """
         handler = clienting.Client(ha=ha,
                                    bufsize=self.bufsize,
-                                   rxbs=self.rxbs)
+                                   rxbs=self.rxbs,
+                                   timeout=self.timeout)
         return handler
 
     def _serviceOneTxPkt(self):
