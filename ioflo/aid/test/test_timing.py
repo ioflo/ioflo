@@ -12,6 +12,7 @@ else:
     import unittest
 
 import os
+import datetime
 
 from ioflo.aid.sixing import *
 from ioflo.aid.odicting import odict
@@ -47,6 +48,19 @@ class BasicTestCase(unittest.TestCase):
         """
         super(BasicTestCase, self).tearDown()
         console.reinit(verbosity=console.Wordage.concise)
+
+    def testIso8601(self):
+        """
+        Test iso8601 generation
+        """
+        console.terse("{0}\n".format(self.testIso8601.__doc__))
+
+        stamp = timing.iso8601()
+        self.assertEqual(len(stamp), 26)
+
+        dt = datetime.datetime(2000, 1, 1)
+        stamp = timing.iso8601(dt)
+        self.assertEqual(stamp, "2000-01-01T00:00:00")
 
     def testTuuid(self):
         """
@@ -99,6 +113,7 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = [
+             'testIso8601',
              'testTuuid',
              'testStamper',
             ]

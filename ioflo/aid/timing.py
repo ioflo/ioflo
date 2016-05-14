@@ -26,12 +26,15 @@ def totalSeconds(td):
 
 TotalSeconds = totalSeconds
 
-def iso8601():
+def iso8601(dt=None):
     """
-    Returns string datetime stamp in iso 8601 format
+    Returns string datetime stamp in iso 8601 format from datetime object dt
+    If dt is missing then use utcnow
     YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
     """
-    return(datetime.datetime.utcnow().isoformat())
+    if dt is None:
+        dt = datetime.datetime.utcnow()
+    return(dt.isoformat())
 
 def tuuid(stamp=None):
     """
