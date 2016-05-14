@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import time
 import random
+import datetime
 
 
 # Import ioflo libs
@@ -24,6 +25,13 @@ def totalSeconds(td):
     return ((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6)
 
 TotalSeconds = totalSeconds
+
+def iso8601():
+    """
+    Returns string datetime stamp in iso 8601 format
+    YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
+    """
+    return(datetime.datetime.utcnow().isoformat())
 
 def tuuid(stamp=None):
     """

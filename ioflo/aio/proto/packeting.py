@@ -252,8 +252,9 @@ class PacketPart(Part):
             .size is length of .packed
 
         """
+        self.packet = packet  # do this first  in case mixin needs attribute
         super(PacketPart, self).__init__(**kwa)
-        self.packet = packet
+        
 
     def show(self):
         """
