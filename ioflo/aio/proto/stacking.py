@@ -652,7 +652,26 @@ class RemoteStack(Stack):
                 return
             remote = self.remotes.values()[0]
         self.txMsgs.append((msg, remote))
-
+            
+    def messagize(self, pkt, ha=None):
+        """
+        Returns messageconverted from packet pkt sourced from ha
+        Override in subclass
+        """
+        return None
+            
+    def _serviceOneRxPkt(self):
+        """
+        Service pkt from .rxPkts deque
+        Assumes that there is a message on the .rxes deque
+        """
+        pkt, ha = self.rxPkts.popleft()
+        console.verbose("{0} received packet from {1}\n{2}\n".format(self.name,
+                                                                     ha or '',
+                                                                     pkt.show()))
+        message = self.messagize(pkt, ha)
+        if message is not None:
+            self.rxMsgs.append(message)
 
     def _serviceOneRxMsg(self):
         """
@@ -1178,6 +1197,93 @@ class TcpServerStack(RemoteStack, IpStack):
                                 bufsize=self.bufsize)
         self.eha = handler.eha  # update local copy after init
         return handler
+    
+    def _serviceOneTxPkt(self):
+        """
+        Service one (packet, ha) duple on .txPkts deque
+        Packet is assumed to be packed already in .packed
+        """
+        pkt, ca = self.txPkts.popleft()
+        if ca not in self.handler.ixes:
+            return True  # connection closed so drop don't requeue
+
+        ix.tx(pkt.packed)  # so never blocks at this level
+        console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
+                                hexlify(pkt.packed).decode('ascii')))
+        return True  # not blocked
+    
+    def _serviceOneReceived(self, ix, ca):
+        """
+        Service one received raw packet data or chunk from handler
+        assumes that there is a handler
+        """
+        if not ix.rxbs:
+            return False  # no data
+
+        packet = self.parserize(ix.rxbs[:])
+        if packet is None:  # not enough for packet
+            return False
+
+        console.profuse("{0}: received\n    0x{1}\n".format(self.name,
+                            hexlify(ix.rxbs[:packet.size]).decode('ascii')))
+
+        del ix.rxbs[:packet.size]
+        self.rxPkts.append((packet, ca))  # queue packet
+        return True  # received data
+
+    def serviceReceives(self):
+        """
+        Retrieve from server all received and put on the rxes deque
+        """
+        while self.handler.opened:
+            for ca, ix in self.handler.ixes.items():
+                while self._serviceOneReceived(ix, ca):
+                    pass
+            break
+
+    def serviceReceivesOnce(self):
+        """
+        Service receives once (one reception)
+        """
+        if self.handler.opened:
+            for ca, ix in self.handler.ixes.items():
+                self._serviceOneReceived(ix, ca)
+
+    def closeConnection(self, ca):
+        """
+        Close and remove connection given by ca
+        """
+        self.handler.removeIx(ca)
+        if ca in self.haRemotes:
+            self.removeRemote(self.haRemotes[ca])
+
+    def serviceConnects(self):
+        """
+        Service new incoming connections
+        Create requestants
+        Timeout stale connections
+        """
+        self.handler.serviceConnects()
+        for ca, ix in self.handler.ixes.items():
+            if ix.cutoff:
+                self.closeConnection(ca)
+                continue
+
+            if ca not in self.haRemotes:
+                self.remotes[ca] = IpRemoteDevice(stack=self, ha=ca)
+
+            if ix.timeout > 0.0 and ix.timer.expired:
+                self.closeConnection(ca)
+
+    def serviceAll(self):
+        """
+        Service request response
+        """
+        self.serviceConnects()
+        self.handler.serviceReceivesAllIx()
+        self.serviceAllRx()
+        self.serviceAllTx()
+        self.handler.serviceTxesAllIx()
 
 
 class ClientStreamStack(Stack):
