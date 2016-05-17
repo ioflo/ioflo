@@ -702,7 +702,7 @@ class Valet(object):
             if requestant.parser:
                 try:
                     requestant.parse()
-                except httping.HTTPException as ex:
+                except httping.HTTPException as ex:  # this may be superfluous
                     #requestant.errored = True
                     #requestant.error = str(ex)
                     #requestant.ended = True
@@ -711,7 +711,8 @@ class Valet(object):
                     continue
 
                 if requestant.ended:
-                    if requestant.errored:  # parse may swallow error but set .errored
+                    if requestant.errored:  # parse may swallow error but set .errored and .error
+                        sys.stderr.write(requestant.error)
                         self.closeConnection(ca)
                         continue
 
