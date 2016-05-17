@@ -403,17 +403,19 @@ class Stack(MixIn):
             if not raw:
                 return False  # no received data
             self.rxbs.extend(raw)
-
+            
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
+            console.profuse("{0}: received\n    0x{1}\n".format(self.name,
+                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))            
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
         return True  # received data
 
     def serviceReceives(self):
         """
-        Retrieve from server all recieved and put on the rxes deque
+        Retrieve from server all received and queue up
         """
         while self.handler.opened:
             if not self._serviceOneReceived():
@@ -421,7 +423,7 @@ class Stack(MixIn):
 
     def serviceReceivesOnce(self):
         """
-        Service recieves once (one reception)
+        Service recieves once (one reception) and queue up
         """
         if self.handler.opened:
             self._serviceOneReceived()
@@ -1294,11 +1296,13 @@ class ClientStreamStack(Stack):
 
             if not raw:
                 return False  # no received data
-            self.rxbs.extend(raw)
+            self.rxbs.extend(raw)            
 
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
+            console.profuse("{0}: received\n    0x{1}\n".format(self.name,
+                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))            
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
         return True  # received data
@@ -1454,10 +1458,13 @@ class TcpClientStack(ClientStreamStack, IpStack):
             if not raw:
                 return False  # no received data
             self.rxbs.extend(raw)
+                         
 
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
+            console.profuse("{0}: received\n    0x{1}\n".format(self.name,
+                            hexlify(self.rxbs[:packet.size]).decode('ascii')))             
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
         return True  # received data
@@ -1657,8 +1664,11 @@ class GramStack(Stack):
 
         if not raw:  # no received data
             return False
+                 
         packet = self.parserize(raw, ha)
         if packet is not None:
+            console.profuse("{0}: received\n    0x{1}\n".format(self.name,
+                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))            
             self.rxPkts.append((packet, ha))     # duple = ( packed, source address)
         return True  # received data
 
