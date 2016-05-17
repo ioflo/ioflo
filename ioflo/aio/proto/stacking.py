@@ -390,8 +390,8 @@ class Stack(MixIn):
 
     def _serviceOneReceived(self):
         """
-        Service one received raw packet data or chunk from server
-        assumes that there is a server
+        Service one received raw packet data or chunk from .handler
+        assumes that there is a .handler
         Override in subclass
         """
         while True:  # keep receiving until empty
