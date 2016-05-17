@@ -522,7 +522,7 @@ class Valet(object):
         Initialization method for instance.
         app = wsgi application callable
         reqs = odict of Requestant instances keyed by ca
-        apps = odict of running Wsgi Responder instances keyed by ca
+        reps = odict of running Wsgi Responder instances keyed by ca
         servant = instance of Server or ServerTls or None
         store = Datastore for timers
 
