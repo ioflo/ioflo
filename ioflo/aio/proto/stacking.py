@@ -1094,9 +1094,7 @@ class IpStack(Stack):
         super(IpStack, self).__init__(local=local, ha=ha, **kwa)
 
 
-
-
-class TcpServerStack(IpStack):
+class TcpServerStack(RemoteStack, IpStack):
     """
     Tcp Server Stream based stack object.
 
