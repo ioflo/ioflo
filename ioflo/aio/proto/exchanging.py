@@ -100,14 +100,13 @@ class Exchange(MixIn):
         self.done = False
         self.failed = False
         self.acked = False
-        
+
     def start(self):
         """
         Startup first run when context is ready
         override in subclass
         """
         self.setupStart()
-        
 
     def run(self):
         """
