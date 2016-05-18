@@ -1578,7 +1578,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
     @property
     def ha(self):
         """
-        Property that returns local host address
+        Property that returns .remote host address
         """
         return self.remote.ha
 
