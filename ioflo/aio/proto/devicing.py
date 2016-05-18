@@ -141,6 +141,51 @@ class RemoteDevice(Device):
         super(RemoteDevice, self).__init__(stack=stack, uid=uid, **kwa)
 
 
+class SingleRemoteDevice(Device):
+    """
+    Remote Device Class when only one remote in stack .remote
+    """
+    def __init__(self,
+                 stack,
+                 uid=None,
+                 uids=None,
+                 **kwa):
+        """
+        Initialization method for instance
+
+        Inherited Parameters:
+            stack is Stack managing this device required
+            name is user friendly name of device
+            uid  is unique device id
+            ha is device host address
+            kind is type of device
+
+        Parameters:
+            uids is sequence or set of used uids to not use for remote if uid not provided
+
+        Inherited Attributes:
+            .stack is Stack managing this device required
+            .name is user friendly name of device
+            .uid  is unique device id per channel or site
+            .ha is device host address
+            .kind is type of device
+
+        Attributes:
+            .uids is sequence or set of used uids to not use for remote if uid not provided
+
+        """
+        if uid is None:
+            uids = set(uids) if uids is not None else set()
+            if hasattr(stack, 'local'):
+                uids.add(stack.local.uid)
+            uid = stack.nextUid()
+            while uid in uids:
+                uid = stack.nextUid()
+
+        super(SingleRemoteDevice, self).__init__(stack=stack, uid=uid, **kwa)
+
+
+
 class IpDevice(Device):
     """
     IP device
@@ -249,6 +294,40 @@ class IpLocalDevice(IpDevice, LocalDevice):
 
 
 class IpRemoteDevice(IpDevice, RemoteDevice):
+    """
+    Ip remote device
+    """
+
+    def __init__(self,
+                 stack,
+                 **kwa):
+        """
+        Initialization method for instance
+
+        Inherited Parameters:
+            stack is Stack managing this device required
+            name is user friendly name of device
+            uid  is unique device id
+            ha is device udp host address, a duple (host,port)
+            kind is type of device
+
+        Parameters:
+
+
+        Inherited Attributes:
+            .stack is Stack managing this device required
+            .name is user friendly name of device
+            .uid  is unique device id per channel or site
+            .ha is device udp host address, a duple (host,port)
+            .kind is type of device
+
+        Attributes:
+
+        """
+        super().__init__(stack=stack, **kwa)
+
+
+class IpSingleRemoteDevice(IpDevice, SingleRemoteDevice):
     """
     Ip remote device
     """

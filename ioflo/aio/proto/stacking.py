@@ -140,7 +140,7 @@ class Stack(MixIn):
                 raise ValueError("Stack '{0}': Failed opening handler at"
                             " '{1}'\n".format(self.name, self.handler.ha))
 
-            self.aha = self.handler.ha  # update local host address after open
+            self.aha = self.handler.ha  # update accepting host address after open
 
             console.verbose("Stack '{0}': Opened handler at '{1}'\n".format(self.name,
                                                                            self.aha))
@@ -403,12 +403,12 @@ class Stack(MixIn):
             if not raw:
                 return False  # no received data
             self.rxbs.extend(raw)
-            
+
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
             console.profuse("{0}: received\n    0x{1}\n".format(self.name,
-                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))            
+                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
         return True  # received data
@@ -652,14 +652,14 @@ class RemoteStack(Stack):
                 return
             remote = self.remotes.values()[0]
         self.txMsgs.append((msg, remote))
-            
+
     def messagize(self, pkt, ha=None):
         """
         Returns messageconverted from packet pkt sourced from ha
         Override in subclass
         """
         return None
-            
+
     def _serviceOneRxPkt(self):
         """
         Service pkt from .rxPkts deque
@@ -1197,7 +1197,7 @@ class TcpServerStack(RemoteStack, IpStack):
                                 bufsize=self.bufsize)
         self.eha = handler.eha  # update local copy after init
         return handler
-    
+
     def _serviceOneTxPkt(self):
         """
         Service one (packet, ha) duple on .txPkts deque
@@ -1211,7 +1211,7 @@ class TcpServerStack(RemoteStack, IpStack):
         console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
                                 hexlify(pkt.packed).decode('ascii')))
         return True  # not blocked
-    
+
     def _serviceOneReceived(self, ix, ca):
         """
         Service one received raw packet data or chunk from handler
@@ -1402,13 +1402,13 @@ class ClientStreamStack(Stack):
 
             if not raw:
                 return False  # no received data
-            self.rxbs.extend(raw)            
+            self.rxbs.extend(raw)
 
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
             console.profuse("{0}: received\n    0x{1}\n".format(self.name,
-                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))            
+                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
         return True  # received data
@@ -1422,8 +1422,17 @@ class TcpClientStack(ClientStreamStack, IpStack):
     Port = 12357
 
     def __init__(self,
+                 puid=None,
+                 local=None,
+                 uid=None,
+                 name=None,
+                 ha=None,
+                 kind=None,
+                 host=None,
+                 port=None,
                  bufsize=16192,
                  timeout=None,
+                 remote=None,
                  **kwa):
         """
         Setup Stack instance
@@ -1451,6 +1460,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         Parameters:
             bufsize is tcp socket buffer size
             timeout is tcp handler reconnection timeout in seconds or None
+            remote is Remote device instance if any
 
         Inherited Attributes:
             .stamper is relative time stamper for this stack
@@ -1471,6 +1481,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         Attributes:
             .bufsize is tcp socket buffer size
             .timeout is tcp handler reconnection timeout in seconds or None
+            .remote is remote device instance if any
 
         Inherited Properties:
             .uid is local device unique id as stack uid
@@ -1492,9 +1503,50 @@ class TcpClientStack(ClientStreamStack, IpStack):
         """
         self.bufsize = bufsize  # create server needs to setup before super call
         self.timeout = timeout
-        super(TcpClientStack, self).__init__(**kwa)
-        self.aha = self.ha  # acceptance is not applicable to client
-        # .ha is .local.ha is not used until connect
+
+        if ha is None:  # ha for remote not local
+            if (host is not None or port is not None):
+                host = host if host is not None else ''
+                port = port if port is not None else self.Port
+                ha = (host, port)
+            else:
+                ha = ('127.0.0.1', self.Port)  # local host
+
+        if getattr(self, 'puid', None) is None:  # need .puid to make local and remote
+            self.puid = puid if puid is not None else self.Uid
+
+
+        local = local if local is not None else devicing.IpLocalDevice(stack=self,
+                                                              uid=uid,
+                                                              name=name,
+                                                              kind=kind)
+
+        remote = remote if remote is not None else \
+                        devicing.IpSingleRemoteDevice(stack=self,
+                                                      ha=ha,
+                                                      uids=(local.uid, ))
+
+        super(TcpClientStack, self).__init__(local=local, remote=remote, ha=ha, **kwa)
+
+        if getattr(self, 'remote', None) is None:
+            self.remote = remote
+
+        # .local.ha is not valid until after connect
+
+
+    @property
+    def ha(self):
+        """
+        Property that returns local host address
+        """
+        return self.remote.ha
+
+    @ha.setter
+    def ha(self, value):
+        """
+        Setter for ha property
+        """
+        self.remote.ha = value
 
     def createHandler(self, ha):
         """
@@ -1564,13 +1616,13 @@ class TcpClientStack(ClientStreamStack, IpStack):
             if not raw:
                 return False  # no received data
             self.rxbs.extend(raw)
-                         
+
 
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
             console.profuse("{0}: received\n    0x{1}\n".format(self.name,
-                            hexlify(self.rxbs[:packet.size]).decode('ascii')))             
+                            hexlify(self.rxbs[:packet.size]).decode('ascii')))
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
         return True  # received data
@@ -1770,11 +1822,11 @@ class GramStack(Stack):
 
         if not raw:  # no received data
             return False
-                 
+
         packet = self.parserize(raw, ha)
         if packet is not None:
             console.profuse("{0}: received\n    0x{1}\n".format(self.name,
-                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))            
+                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))
             self.rxPkts.append((packet, ha))     # duple = ( packed, source address)
         return True  # received data
 
