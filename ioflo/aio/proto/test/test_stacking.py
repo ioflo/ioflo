@@ -283,7 +283,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIsInstance(stack.local, devicing.IpLocalDevice)
         self.assertEqual(stack.local.uid, 1)
         self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
-        self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.TcpServerStack.Port))
+        self.assertEqual(stack.local.ha, (None, None))  # not connected yet
         self.assertEqual(stack.local.kind, None)
         self.assertEqual(stack.aha, ('127.0.0.1', stacking.TcpServerStack.Port))
         self.assertEqual(stack.aha, stack.ha)
@@ -297,7 +297,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIsInstance(stack.local, devicing.IpLocalDevice)
         self.assertEqual(stack.local.uid, 1)
         self.assertEqual(stack.local.name, "Device{0}".format(stack.local.uid))
-        self.assertEqual(stack.local.ha, ('127.0.0.1', stacking.TcpServerStack.Port))
+        self.assertEqual(stack.local.ha, (None, None))
         self.assertEqual(stack.local.kind, None)
         self.assertEqual(stack.ha, ha)
         self.assertEqual(stack.aha, stack.ha)

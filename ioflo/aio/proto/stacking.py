@@ -1491,15 +1491,10 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
         Properties:
 
-        Does not use remotes at all since only one possible connection
-
-        For TcpClientStack the meaning of .local is different. It represents
-        the connection address to the remote server not the local address.
-        The actual local address is the ephemeral host port created when the connection
-        is made and is stored in .handler.ca
-
-        The ha txPkts duple (pkt, ha) is not used and may be None
-        The remote in the txMsgs duple (msg, remote) is not used and may be None
+        Device .local represents the local ephemeral Ip address of the .handler
+        connection to a TCP server from .handler.ca.
+        The non-ephemeral connection address to the remote server is held by .remote
+        and is provide by ha.
         """
         self.bufsize = bufsize  # create server needs to setup before super call
         self.timeout = timeout
@@ -1531,7 +1526,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         if getattr(self, 'remote', None) is None:
             self.remote = remote
 
-        # .local.ha is to hold the ephemeral ha after connect
+        self.local.ha = self.handler.ca  # the ephemeral ha after connect
 
 
     @property
@@ -1641,6 +1636,39 @@ class TcpClientStack(ClientStreamStack, IpStack):
         """
         if self.handler.connected and not self.handler.cutoff:
             self._serviceOneReceived()
+
+    def serviceTimers(self):
+        """
+        Allow timer based processing
+        """
+        self.remote.process()
+
+    def serviceConnect(self):
+        """
+        Service connection to server
+        """
+        if self.handler.cutoff:
+            if self.handler.reconnectable:  # wait for timeout between attempts before reconnecting
+                if self.handler.timeout > 0.0 and self.handler.timer.expired:  # timed out
+                    self.handler.reopen()
+                    self.handler.refresh()
+
+        else:
+            if not self.handler.connected:
+                self.handler.serviceConnect()
+                if self.handler.connected:
+                    self.local.ha = self.handler.ca  # ephemeral address
+
+    def serviceAll(self):
+        """
+        Service all Rx and Tx
+        """
+        self.serviceConnect()
+
+        if not self.handler.cutoff and self.handler.connected:
+            self.serviceAllRx()
+            self.serviceAllTx()
+
 
 
 class GramStack(Stack):
