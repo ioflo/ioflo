@@ -423,7 +423,7 @@ class Stack(MixIn):
 
     def serviceReceivesOnce(self):
         """
-        Service recieves once (one reception) and queue up
+        Service receives once (one reception) and queue up
         """
         if self.handler.opened:
             self._serviceOneReceived()
@@ -493,7 +493,7 @@ class Stack(MixIn):
 
     def serviceAllRx(self):
         """
-        Service recieve side of stack
+        Service receive side of stack
         """
         self.serviceReceives()
         self.serviceRxPkts()
@@ -502,7 +502,7 @@ class Stack(MixIn):
 
     def serviceAllRxOnce(self):
         """
-        Service recieve side of stack once (one reception)
+        Service receive side of stack once (one reception)
         """
         self.serviceReceivesOnce()
         self.serviceRxPktsOnce()
