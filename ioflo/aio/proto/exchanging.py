@@ -93,13 +93,21 @@ class Exchange(MixIn):
         self.failed = False
         self.acked = False
 
-    def start(self):
+    def setupStart(self):
         """
-        Startup first run when context is ready
+        Set flags for start
         """
         self.done = False
         self.failed = False
         self.acked = False
+        
+    def start(self):
+        """
+        Startup first run when context is ready
+        override in subclass
+        """
+        self.setupStart()
+        
 
     def run(self):
         """
@@ -263,7 +271,7 @@ class Exchanger(Exchange):
         tx is latest/next transmitted msg/pkt/data
 
         """
-        super(Exchanger, self).start()  # reset flags
+        self.setupStart()  # reset flags
 
         self.timer.restart()
         self.redoTimer.restart()
@@ -331,7 +339,7 @@ class Exchangent(Exchange):
         """
         Correspond to exchange
         """
-        super(Exchangent, self).start()  # reset flags
+        self.setupStart()  # reset flags
 
         self.timer.restart()
         self.redoTimer.restart()
