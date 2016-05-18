@@ -51,7 +51,7 @@ class Exchange(MixIn):
             redoTimeout is redo appropriate packet/message in exchange
             rx is latest received  msg/pkt/data
             tx is latest/next transmitted msg/pkt/data
-            
+
         Class Attributes:
             .Timeout is overall exchange timeout
             .RedoTimeout is redo timeout
@@ -127,11 +127,11 @@ class Exchange(MixIn):
             if self.tx is not None:
                 self.send(self.tx)
 
-    def send(self, tx=None):
+    def setupSend(self, tx=None):
         """
-        send tx
+        Setups flags and .tx for send.
         Extend in subclass to queue appropriately
-        
+
         Either:
            super().send(tx)
            self.stack.transmit(self.tx, self.device.ha)
@@ -146,7 +146,14 @@ class Exchange(MixIn):
             raise ValueError("{0}: {1} Cannot send. No .tx."
                                 "\n".format(self.stack.name,
                                             self.name))
-        
+
+    def send(self, tx=None):
+        """
+        Setup and transmit packet
+        """
+        self.setupSend(tx=tx)
+        self.transmit(pkt=tx)
+
     def transmit(self, pkt=None):
         """
         Queue pkt on stack packet queue
@@ -157,7 +164,7 @@ class Exchange(MixIn):
             raise ValueError("{0}: {1} Cannot transmit. No .tx."
                                 "\n".format(self.stack.name,
                                             self.name))
-        self.stack.transmit(self.tx, self.device.ha)
+        self.stack.transmit(self.tx)
 
     def message(self, msg=None):
         """
@@ -169,7 +176,7 @@ class Exchange(MixIn):
             raise ValueError("{0}: {1} Cannot message. No .tx."
                                 "\n".format(self.stack.name,
                                             self.name))
-        self.stack.message(self.tx, self.device)
+        self.stack.message(self.tx)
 
     def receive(self, rx):
         """
@@ -190,8 +197,8 @@ class Exchange(MixIn):
                                             self.name,
                                             self.device.name,
                                             'FAILURE' if self.failed else 'SUCCESS',
-                                            round(self.stack.stamper.stamp, 3)))        
-        
+                                            round(self.stack.stamper.stamp, 3)))
+
     def fail(self):
         """
         Exchange complete as failure
@@ -220,7 +227,7 @@ class Exchanger(Exchange):
             tx is latest/next transmitted msg/pkt/data
 
         Parameters:
-        
+
         Inherited Class Attributes:
             .Timeout is overall exchange timeout
             .RedoTimeout is redo timeout
@@ -254,7 +261,7 @@ class Exchanger(Exchange):
         """
         Initiate exchange
         tx is latest/next transmitted msg/pkt/data
-        
+
         """
         super(Exchanger, self).start()  # reset flags
 
@@ -276,7 +283,7 @@ class Exchangent(Exchange):
     def __init__(self, stack, **kwa):
         """
         Setup Exchangent instance
-        
+
         Inherited Parameters:
             stack is interface stack instance
             uid is Exchange unique id
@@ -289,7 +296,7 @@ class Exchangent(Exchange):
             tx is latest/next transmitted msg/pkt/data
 
         Parameters:
-        
+
         Inherited Class Attributes:
             .Timeout is overall exchange timeout
             .RedoTimeout is redo timeout
@@ -325,7 +332,7 @@ class Exchangent(Exchange):
         Correspond to exchange
         """
         super(Exchangent, self).start()  # reset flags
-        
+
         self.timer.restart()
         self.redoTimer.restart()
         console.concise("{0}: Corresponding {1} with {2} at {3}.\n".format(self.stack.name,

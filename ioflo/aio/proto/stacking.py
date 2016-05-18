@@ -1240,10 +1240,10 @@ class TcpServerStack(RemoteStack, IpStack):
         pkt, ca = self.txPkts.popleft()
         
         try:
-            transmitIx(self, pkt.packed, ca)
+            self.handler.transmitIx(self, pkt.packed, ca)
         except ValueError as ex:
             console.profuse("{0}: Error sending to {1}\n{2}\n".format(self.name,
-                                                                      ha,
+                                                                      ca,
                                                                       ex))
             raise 
         
