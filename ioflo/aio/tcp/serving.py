@@ -309,7 +309,7 @@ class Incomer(object):
         if result:
             if console._verbosity >=  console.Wordage.profuse:
                 cmsg = ("Incomer at {0} sent to {1}, {2} bytes\n"
-                        "{3}\n".format(self.ha, self.ha , result,
+                        "{3}\n".format(self.ha, self.ca , result,
                                        data[:result].decode('UTF-8')))
                 console.profuse(cmsg)
 
@@ -531,7 +531,7 @@ class IncomerTls(Incomer):
         if result:
             if console._verbosity >=  console.Wordage.profuse:
                 cmsg = ("Incomer at {0} sent to {1}, {2} bytes\n"
-                        "{3}\n".format(self.ha, self.ha , result,
+                        "{3}\n".format(self.ha, self.ca , result,
                                        data[:result].decode('UTF-8')))
                 console.profuse(cmsg)
 
