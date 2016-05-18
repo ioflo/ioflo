@@ -607,7 +607,7 @@ class RemoteStack(Stack):
         self.haRemotes = haRemotes if haRemotes is not None else odict()
 
         super(RemoteStack, self).__init__(**kwa)
-        
+
     def _serviceOneTxPkt(self):
         """
         Service one (packet, ha) duple on .txPkts deque
@@ -633,7 +633,7 @@ class RemoteStack(Stack):
 
         self.clearTxbs()
         return True  # not blocked
-        
+
     def transmit(self, pkt, ha=None):
         """
         Pack and Append (pkt, ha) duple to .txPkts deque
@@ -1238,17 +1238,17 @@ class TcpServerStack(RemoteStack, IpStack):
         Packet is assumed to be packed already in .packed
         """
         pkt, ca = self.txPkts.popleft()
-        
+
         try:
             self.handler.transmitIx(self, pkt.packed, ca)
         except ValueError as ex:
             console.profuse("{0}: Error sending to {1}\n{2}\n".format(self.name,
                                                                       ca,
                                                                       ex))
-            raise 
-        
+            raise
+
         console.profuse("{0}: sent to {1}\n    0x{2}\n".format(self.name,
-                                                               ca, 
+                                                               ca,
                                 hexlify(pkt.packed).decode('ascii')))
         return True  # never blocks
 
@@ -1435,21 +1435,26 @@ class ClientStreamStack(Stack):
         assumes that there is a server
         Override in subclass
         """
+        received = False
         while True:  # keep receiving until empty
             try:
                 raw = self.handler.receive()
-            except Exception as ex:
+            except socket.error as ex:
                 raise
 
             if not raw:
-                return False  # no received data
+                break  # no received data
+            received = True
             self.rxbs.extend(raw)
+
+        if not received:  # nothing changed
+            return False
 
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
             console.profuse("{0}: received\n    0x{1}\n".format(self.name,
-                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))
+                            hexlify(self.rxbs[:packet.size]).decode('ascii')))
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
         return True  # received data
@@ -1643,6 +1648,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         assumes that there is a server
         Override in subclass
         """
+        received = False
         while True:  # keep receiving until empty
             try:
                 raw = self.handler.receive()
@@ -1650,13 +1656,18 @@ class TcpClientStack(ClientStreamStack, IpStack):
                 raise
 
             if not raw:
-                return False  # no received data
+                break  # no received data
+            received = True
             self.rxbs.extend(raw)
+
+        if not received:  # nothing changed
+            return False
 
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
-            console.profuse("{0}: received\n    0x{1}\n".format(self.name,
+            console.profuse("{0}: received from {1}\n    0x{2}\n".format(self.name,
+                                                                     self.remote.ha,
                             hexlify(self.rxbs[:packet.size]).decode('ascii')))
             del self.rxbs[:packet.size]
             self.rxPkts.append(packet)
@@ -1664,7 +1675,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
     def serviceReceives(self):
         """
-        Retrieve from server all received 
+        Retrieve from server all received
         """
         while self.handler.connected and not self.handler.cutoff:
             if not self._serviceOneReceived():
