@@ -1612,7 +1612,6 @@ class TcpClientStack(ClientStreamStack, IpStack):
                 return False  # no received data
             self.rxbs.extend(raw)
 
-
         packet = self.parserize(self.rxbs[:])
 
         if packet is not None:  # queue packet
@@ -1624,7 +1623,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
     def serviceReceives(self):
         """
-        Retrieve from server all recieved and put on the rxes deque
+        Retrieve from server all received 
         """
         while self.handler.connected and not self.handler.cutoff:
             if not self._serviceOneReceived():
@@ -1632,7 +1631,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
     def serviceReceivesOnce(self):
         """
-        Service recieves once (one reception)
+        Service receives once (one reception)
         """
         if self.handler.connected and not self.handler.cutoff:
             self._serviceOneReceived()
