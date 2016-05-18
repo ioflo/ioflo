@@ -185,6 +185,12 @@ class Exchange(MixIn):
         Mark flags
         """
         self.done = True
+        console.concise("{0}: Finished {1} with {2} as {3}"
+                        " at {4}\n".format(self.stack.name,
+                                            self.name,
+                                            self.device.name,
+                                            'FAILURE' if self.failed else 'SUCCESS',
+                                            round(self.stack.stamper.stamp, 3)))        
         
     def fail(self):
         """
