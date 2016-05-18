@@ -1531,7 +1531,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         if getattr(self, 'remote', None) is None:
             self.remote = remote
 
-        # .local.ha is not valid until after connect
+        # .local.ha is to hold the ephemeral ha after connect
 
 
     @property
