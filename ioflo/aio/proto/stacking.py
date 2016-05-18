@@ -281,7 +281,7 @@ class Stack(MixIn):
             self.txbs.extend(pkt.packed)
 
         try:
-            count = self.handler.send(self.txbs, ha)
+            count = self.handler.send(self.txbs)
         except Exception as ex:
             raise
 
@@ -607,6 +607,40 @@ class RemoteStack(Stack):
         self.haRemotes = haRemotes if haRemotes is not None else odict()
 
         super(RemoteStack, self).__init__(**kwa)
+        
+    def _serviceOneTxPkt(self):
+        """
+        Service one (packet, ha) duple on .txPkts deque
+        Packet is assumed to be packed already in .packed
+        Override in subclass
+        """
+        pkt = None
+        if not self.txbs:  # everything sent last time
+            pkt, ha = self.txPkts.popleft()
+            self.txbs.extend(pkt.packed)
+
+        try:
+            count = self.handler.send(self.txbs, ha)
+        except Exception as ex:
+            raise
+
+        console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
+                                hexlify(self.txbs[:count]).decode('ascii')))
+
+        if count < len(self.txbs):  # delete sent portion
+            del self.txbs[:count]
+            return False  # partially blocked try again later
+
+        self.clearTxbs()
+        return True  # not blocked
+        
+    def transmit(self, pkt, ha=None):
+        """
+        Pack and Append (pkt, ha) duple to .txPkts deque
+        Override in subclass
+        """
+        pkt.pack()
+        self.txPkts.append((pkt, ha))
 
     def packetize(self, msg, remote=None):
         """
@@ -1204,13 +1238,19 @@ class TcpServerStack(RemoteStack, IpStack):
         Packet is assumed to be packed already in .packed
         """
         pkt, ca = self.txPkts.popleft()
-        if ca not in self.handler.ixes:
-            return True  # connection closed so drop don't requeue
-
-        ix.tx(pkt.packed)  # so never blocks at this level
-        console.profuse("{0}: sent\n    0x{1}\n".format(self.name,
+        
+        try:
+            transmitIx(self, pkt.packed, ca)
+        except ValueError as ex:
+            console.profuse("{0}: Error sending to {1}\n{2}\n".format(self.name,
+                                                                      ha,
+                                                                      ex))
+            raise 
+        
+        console.profuse("{0}: sent to {1}\n    0x{2}\n".format(self.name,
+                                                               ca, 
                                 hexlify(pkt.packed).decode('ascii')))
-        return True  # not blocked
+        return True  # never blocks
 
     def _serviceOneReceived(self, ix, ca):
         """
@@ -1270,7 +1310,8 @@ class TcpServerStack(RemoteStack, IpStack):
                 continue
 
             if ca not in self.haRemotes:
-                self.remotes[ca] = IpRemoteDevice(stack=self, ha=ca)
+                remote = IpRemoteDevice(stack=self, ha=ca)
+                self.addRemote(remote)
 
             if ix.timeout > 0.0 and ix.timer.expired:
                 self.closeConnection(ca)
