@@ -466,7 +466,7 @@ class Stack(MixIn):
         """
         msg = self.rxMsgs.popleft()
         console.concise("{0}: Servicing RxMsg at {1:.3f}:"
-                        "\n     {3}\n".format(self.name,
+                        "\n     {2}\n".format(self.name,
                                               self.stamper.stamp,
                                               msg))
 
