@@ -41,11 +41,11 @@ def eventify(tag, data=None, stamp=None, uid=None):
     Adds uid field if provided
     """
     event = odict([(u'tag', tag),
-                    (u'stamp', stamp if stamp is not None else
+                   (u'stamp', stamp if stamp is not None else
                          datetime.datetime.utcnow().isoformat()),
-                    (u'data', data if data is not None else odict())
                    ])
     if uid is not None:
         event['uid'] = uid
+    event['data'] = data if data is not None else odict()
     return event
 
