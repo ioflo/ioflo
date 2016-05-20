@@ -490,7 +490,6 @@ class Stack(MixIn):
         """
         pass
 
-
     def serviceAllRx(self):
         """
         Service receive side of stack
