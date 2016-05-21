@@ -10,6 +10,7 @@ import socket
 import errno
 import platform
 from collections import deque
+from binascii import hexlify
 
 try:
     import ssl
