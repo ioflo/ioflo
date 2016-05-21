@@ -132,8 +132,8 @@ class SocketUdpNb(object):
                 load = data.decode("UTF-8")
             except UnicodeDecodeError as ex:
                 load = "0x{0}".format(hexlify(data).decode("ASCII"))
-            cmsg = ("\nServer at {0}, received from {1}:\n------------\n"
-                       "{2}\n".format(self.ha, sa, load))
+            cmsg = ("Server at {0}, received from {1}:\n------------\n"
+                       "{2}\n\n".format(self.ha, sa, load))
             console.profuse(cmsg)
 
         if self.wlog:  # log over the wire rx
@@ -161,8 +161,8 @@ class SocketUdpNb(object):
                 load = data[:result].decode("UTF-8")
             except UnicodeDecodeError as ex:
                 load = "0x{0}".format(hexlify(data[:result]).decode("ASCII"))
-            cmsg = ("\nServer at {0}, sent {1} bytes to {2}:\n------------\n"
-                    "{3}\n".format(self.ha, result, da, load))
+            cmsg = ("Server at {0}, sent {1} bytes to {2}:\n------------\n"
+                    "{3}\n\n".format(self.ha, result, da, load))
             console.profuse(cmsg)
 
         if self.wlog:
