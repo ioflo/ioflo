@@ -138,8 +138,12 @@ class SocketUxdNb(object):
                 raise #re raise exception ex1
 
         if console._verbosity >= console.Wordage.profuse:  # faster to check
+            try:
+                load = data.decode("UTF-8")
+            except UnicodeDecodeError as ex:
+                load = "0x{0}".format(hexlify(data).decode("ASCII"))
             cmsg = ("\nServer at {0}, received from {1}:\n------------\n"
-                       "{2}\n".format(self.ha, sa, data.decode("UTF-8")))
+                    "{2}\n".format(self.ha, sa, load))
             console.profuse(cmsg)
 
         if self.wlog:
@@ -162,8 +166,12 @@ class SocketUxdNb(object):
             raise
 
         if console._verbosity >=  console.Wordage.profuse:
-            cmsg = ("Server at {0} sent to {1}, {2} bytes\n"
-                    "{3}\n".format(self.ha, da, result, data[:result].decode('UTF-8')))
+            try:
+                load = data[:result].decode("UTF-8")
+            except UnicodeDecodeError as ex:
+                load = "0x{0}".format(hexlify(data[:result]).decode("ASCII"))
+            cmsg = ("\nServer at {0}, sent {1} bytes to {2}:\n------------\n"
+                    "{3}\n".format(self.ha, result, da, load))
             console.profuse(cmsg)
 
         if self.wlog:

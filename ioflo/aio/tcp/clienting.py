@@ -336,8 +336,12 @@ class Client(object):
 
         if data:  # connection open
             if console._verbosity >= console.Wordage.profuse:  # faster to check
-                cmsg = ("\nOutGoer at {0}, received from {1}:\n------------\n"
-                           "{2}\n".format(self.ca, self.ha, data.decode("UTF-8")))
+                try:
+                    load = data.decode("UTF-8")
+                except UnicodeDecodeError as ex:
+                    load = "0x{0}".format(hexlify(data).decode("ASCII"))
+                cmsg = ("\Outgoer at {0}, received from {1}:\n------------\n"
+                        "{2}\n".format(self.ca, self.ha, load))
                 console.profuse(cmsg)
 
             if self.wlog:  # log over the wire rx
@@ -421,8 +425,12 @@ class Client(object):
 
         if result:
             if console._verbosity >= console.Wordage.profuse:
+                try:
+                    load = data[:result].decode("UTF-8")
+                except UnicodeDecodeError as ex:
+                    load = "0x{0}".format(hexlify(data[:result]).decode("ASCII"))
                 cmsg = ("\nOutgoer at {0}, sent {1} bytes to {2}:\n------------\n"
-                        "{3}\n".format(self.ca, result, self.ha, data[:result].decode('UTF-8')))
+                        "{3}\n".format(self.ca, result, self.ha, load))
                 console.profuse(cmsg)
 
             if self.wlog:
