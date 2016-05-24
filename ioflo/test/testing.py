@@ -18,7 +18,7 @@ import importlib
 from ..aid.consoling import getConsole
 console = getConsole()
 
-from ..aid.odicting import odict
+from ..aid import odict, oset
 
 from ..base import globaling
 from ..base import storing
@@ -139,7 +139,7 @@ class HouseIofloTestCase(IofloTestCase):
                  odict([('username', "Testee"), ('password', "Password")])),
                 ("failure", "meta.failure", odict(value="")),  # for failure reporting
                 ("framers", "meta.framers", odict()),  # for failure reporting
-                ("taskables", "meta.taskables", odict(value=set())),  # to add taskables at runtime
+                ("taskables", "meta.taskables", odict(value=oset())),  # to add taskables at runtime ordered
             ]
         self.setupMetas()
         self.preloads = [

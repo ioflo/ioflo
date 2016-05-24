@@ -11,8 +11,10 @@ import inspect
 
 
 from ..aid.sixing import *
-from .globaling import *
-from ..aid.odicting import odict
+from .globaling import STOP, START, RUN, ABORT, READY, ControlNames
+from .globaling import INACTIVE, ACTIVE, AUX, SLAVE, MOOT, ScheduleNames, ScheduleValues
+
+from ..aid import odict, oset
 from ..aid import aiding
 from . import excepting
 from . import registering
@@ -39,7 +41,7 @@ class Want(acting.Actor):
            since tasker may not be current framer at build time
         """
         parms = super(Want, self)._resolve( **kwa)
-        links = set()
+        links = oset()
         for tasker in taskers:
             if tasker == 'all':
                 for tasker in self.store.house.taskables:
@@ -73,7 +75,7 @@ class Want(acting.Actor):
             parms['source'] = None
             parms['sourceField'] = None
 
-        parms['taskers'] = links #replace with valid set/list
+        parms['taskers'] = links #replace with valid oset/list ordered
         parms['period'] = period
 
         return parms

@@ -10,7 +10,7 @@ from collections import deque
 import inspect
 
 from ..aid.sixing import *
-from ..aid.odicting import odict
+from ..aid import odict, oset
 from ..aid import aiding
 from . import excepting
 from . import registering
@@ -34,7 +34,7 @@ class Complete(acting.Actor):
         """
         parms = super(Complete, self)._resolve( **kwa)
 
-        links = set()
+        links = oset()  # preserve ordering
         for tasker in taskers:
             if tasker == 'me':
                 tasker = self._act.frame.framer
@@ -49,7 +49,7 @@ class Complete(acting.Actor):
                                                count=self._act.count)
                 links.add(tasker)
 
-        parms['taskers'] = links #replace with valid list
+        parms['taskers'] = links #replace with valid list/oset ordered
         return parms
 
 class CompleteDone(Complete):

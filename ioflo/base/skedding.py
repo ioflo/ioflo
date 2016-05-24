@@ -15,7 +15,7 @@ from ..aid.consoling import getConsole
 console = getConsole()
 
 from ..aid.sixing import *
-from ..aid.odicting import odict
+from ..aid import odict, oset
 from .globaling import *
 
 from ..aid import timing
@@ -151,7 +151,7 @@ class Skedder(object):
                      odict([('username', self.username), ('password', self.password)])),
                 ("failure", "meta.failure", odict(value="")), # for failure reporting
                 ("framers", "meta.framers", odict()), # for failure reporting
-                ("taskables", "meta.taskables", odict(value=set())), # to add taskables at runtime
+                ("taskables", "meta.taskables", odict(value=oset())), # to add taskables at runtime ordered
             ]
         if metas:
             self.metas.extend(metas)
