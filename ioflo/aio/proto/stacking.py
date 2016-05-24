@@ -1568,7 +1568,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
 
         super(TcpClientStack, self).__init__(local=local, remote=remote, ha=ha, **kwa)
 
-        if getattr(self, 'remote', None) is None:
+        if getattr(self, 'remote', None) is None:  # not assigned by superclass
             self.remote = remote
 
         self.local.ha = self.handler.ca  # the ephemeral ha after connect
@@ -1593,6 +1593,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
         Create local client for stack (unfortunate name for method in this case)
         """
         handler = clienting.Client(ha=ha,
+                                   store=self.stamper,
                                    bufsize=self.bufsize,
                                    rxbs=self.rxbs,
                                    timeout=self.timeout)
