@@ -74,14 +74,7 @@ class oset(collections.MutableSet):
         return '%s(%r)' % (self.__class__.__name__, list(self))
 
     def __eq__(self, other):
-        if isinstance(other, OrderedSet):
+        if isinstance(other, oset):
             return len(self) == len(other) and list(self) == list(other)
         return set(self) == set(other)
 
-
-if __name__ == '__main__':
-    s = oset('abracadaba')
-    t = oset('simsalabim')
-    print(s | t)
-    print(s & t)
-    print(s - t)
