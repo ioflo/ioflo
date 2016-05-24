@@ -264,7 +264,9 @@ class Client(object):
             console.terse("socket.error = {0}\n".format(ex))
             raise
 
-        if result not in [0, errno.EISCONN]:  # not yet connected
+        if result not in [0, errno.EISCONN]:  # not connected
+            if result in (errno.EINVAL, errno.ECONNREFUSED):  # server not listening so must reopen
+                self.reopen()
             return False  # try again later
 
         # now self.cs has new virtual port see self.cs.getsockname()
