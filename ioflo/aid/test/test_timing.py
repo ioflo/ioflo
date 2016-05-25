@@ -83,6 +83,14 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(len(randomized), 7)
         self.assertEqual(stamp[:16], '0000000000895440' )
 
+        tuid =  timing.tuuid(stamp=9, prefix="m")
+        self.assertEqual(len(tuid), 26)
+        prefix, stamp, randomized = tuid.split('_')
+        self.assertEqual(prefix, 'm')
+        self.assertEqual(len(stamp), 16)
+        self.assertEqual(len(randomized), 7)
+        self.assertEqual(stamp[:16], '0000000000895440' )
+
     def testStamper(self):
         """
         Test Stamper Class

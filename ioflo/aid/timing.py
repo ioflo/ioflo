@@ -36,12 +36,17 @@ def iso8601(dt=None):
         dt = datetime.datetime.utcnow()
     return(dt.isoformat())
 
-def tuuid(stamp=None):
+def tuuid(stamp=None, prefix=None):
     """
     Returns lexocographically sortable TUUID  (Time Universal Unique Identifier)
-    that as hex formated string of length 24
+    that is hex formated string of length 24
     stamp is float time since unix epoch (1970-1-1) as in time.time()
     If stamp not provided uses current system time UTC
+    
+    prefix is optional prefix string that is prepended to tuid with '_'
+    for example if prefix is 'm' then tuiid looks like
+    'm_0000014ddf1f2f9c_5e36738'
+    The length of the tuuid is now 24 + len(prefix) +1
 
     Format of of TUUID is hex string of form stamphex_randombyteshex
     Example:
@@ -64,12 +69,17 @@ def tuuid(stamp=None):
 
     Uses random.SystemRandom which is crytographically random
     """
+    parts = []
+    if prefix is not None:
+        parts.append(prefix)
     stamp = stamp if stamp is not None else time.mktime(time.gmtime())
     stamp = int(stamp * 1000000)
     stamp = "{0:016x}".format(stamp)[-16:]
+    parts.append(stamp)
     randomized = random.SystemRandom().randint(0, 0xFFFFFFF)
     randomized = "{0:07x}".format(randomized)[-7:]
-    return ("{0}_{1}".format(stamp, randomized))
+    parts.append(randomized)
+    return ("_".join(parts))
 
 
 class Timer(object):
