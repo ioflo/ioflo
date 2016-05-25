@@ -883,7 +883,7 @@ class Data(object):
         the fields
         Raises AttributeError if no entry in .__dict__ for a given field name 
         """
-        if not fields:
+        if fields is None:
             return odict(self.__dict__)
         
         stuff = odict()
