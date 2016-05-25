@@ -516,9 +516,9 @@ class Share(object):
 
     def __repr__(self):
         """    """
-        itemreprs = repr(self._data.__dict__)
+        itemreprs = repr(self._data)
         deckreprs = repr(self.deck)
-        return ("Share(name={0}, data=Data({1}), deck={2})".format(self.name, itemreprs, deckreprs))
+        return ("Share(name={0}, data={1}, deck={2})".format(self.name, itemreprs, deckreprs))
 
     def clear(self):
         """   """
@@ -825,6 +825,11 @@ class Data(object):
            Don't need __getattr__ override because __getattribute__ always
            looks in instance.__dict__ as last resort if can't find in
            class.__dict__ descriptor or elsewhere
+           
+           Methods that begin with '_' are allowd if created in class or subclass
+           definition since methods use descriptors and will already exist by
+           virtue of the class definition when the instance of Data or subclass
+           is created.
         """
         try: #see if super class already has attribute so don't shadow
             super(Data,self).__getattribute__(key)
@@ -835,7 +840,45 @@ class Data(object):
                 raise AttributeError("Invalid attribute name '%s'" % key)
         else: #pass on to superclass
             super(Data,self).__setattr__(key,value)
+            
+    def __repr__(self):
+        """    """
+        return ("{0}({1})".format(self.__class__.__name__, repr(self.__dict__)))
+            
+    def _dictify(self, fields=None):
+        """
+        Return odict of items keyed by field name strings provided in  optional
+        fields sequence in that order with each value given by the associated
+        item in .__dict__
+        If fields is not provided then return odict copy of .__dict__ with all
+        the fields
+        Raises AttributeError if no entry in .__dict__ for a given field name 
+        """
+        if not fields:
+            return odict(self.__dict__)
+        
+        stuff = odict()
+        for key in fields:
+            if key not in self.__dict__:
+                raise AttributeError("'{0}' object has no "
+                                     "attribute '{1}'".format(self.__class__.__name__,
+                                                              key))
+            stuff[key] = self.__dict__[key]
+        return stuff    
+            
+    def _show(self):
+        """
+        Returns descriptive string for display purposes
+        """
+        infix = []
+        for key in self.__dict__:  # Data superclass prevents leading underscores in .__dict__
+            val = getattr(self, key)
+            infix.append("{0}={1}".format(key, val))
 
+        result = "Data: {0}\n".format(" ".join(infix))
+        return result    
+    
+            
 
 class Deck(deque):
     """

@@ -88,9 +88,11 @@ class odict(dict):
             yield key
 
     def __repr__(self):
-        """ repr(x)"""
-        itemreprs = ('%r: %r' % (key, dict.__getitem__(self, key)) for key in self._keys)
-        return '{' + ', '.join(itemreprs) + '}'
+        """
+        odict representation
+        """
+        return ("{0}({1})".format(self.__class__.__name__,
+                                  repr(self.items())))
 
     def __setitem__(self, key, val):
         """ x[key]=val"""
