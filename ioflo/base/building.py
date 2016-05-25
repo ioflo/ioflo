@@ -3079,9 +3079,8 @@ class Builder(object):
               state [comparison goal [+- tolerance]]
 
            goal:
-              goal
-              value value
               boolnum
+              value value
               [(value, field) in] absolute
               [(value, field) in] relativegoal
 
