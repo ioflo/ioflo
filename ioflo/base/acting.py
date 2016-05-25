@@ -191,7 +191,7 @@ class Act(object):
         ipath may be path name of share or node
         or reference to Share or Node instance
 
-        This method resolves pathname strings into share and node references
+        This method resolves inline pathname strings into share and node references
         at resolve time.
 
         ival is optional value for share
@@ -201,7 +201,7 @@ class Act(object):
         if warn then will complain if the share is created.
 
         It allows for substitution into ipath of
-        frame, framer, actor, main frame, or main framer relative names.
+        inode, framer,  main framer, frame, main frame, or actor relative names.
         So that lexically relative pathnames can
         be dynamically resolved in support of framer cloning.
         It assumes that any implied variants have been reconciled.
@@ -214,17 +214,21 @@ class Act(object):
             If the path name starts with a leading '.' dot then path name is
             fully reconciled and no contextual substitutions are to be applied.
 
+            If the path name begins with 'me' then the path is inode relative
+
             Otherwise make subsitutions in pathname strings that begin
             with 'framer.'
-            Substitute for special path part 'framer' with names of 'me' or 'main'
-            Substitute for special path part 'frame' with names  of 'me' or 'main'
-            Substitute for special path part 'actor' with name of 'me'
+                Substitute for special path part 'framer' with names of 'me' or 'main'
+                Substitute for special path part 'frame' with names  of 'me' or 'main'
+                Substitute for special path part 'actor' with name of 'me'
 
-            'me' indicates substitute the current framer, frame, or actor name
-            respectively.
+                'me' indicates substitute the current framer, frame, or actor name
+                respectively.
 
-            'main' indicates substitute the current frame's main framer or main frame
-            name respectively obtained from
+                'main' indicates substitute the current frame's main framer or main frame
+                name respectively obtained from
+
+
 
         If ipath ends with a '.' then it resolves to a node
         Otherwise if not trailing dot it resolves to a share
