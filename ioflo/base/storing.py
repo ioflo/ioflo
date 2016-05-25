@@ -787,12 +787,13 @@ class Data(object):
         return self
 
     def __init__(self, *pa, **kwa):
-        """Data() -> new empty Data record.
+        """
+        Data() -> new empty Data record.
 
-           Data(pa1, pa2, ...) where pa = tuple of positional args, (pa1, pa2, ...)
+        Data(pa1, pa2, ...) where pa = tuple of positional args, (pa1, pa2, ...)
               each paX may be  a sequence of duples (k,v) or a dict
 
-           Data(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args, {k1: v1, k2 : v2, ...}
+        Data(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args, {k1: v1, k2 : v2, ...}
         """
         for a in pa:
             if isinstance(a, dict): #positional arg is dictionary
@@ -842,8 +843,36 @@ class Data(object):
             super(Data,self).__setattr__(key,value)
             
     def __repr__(self):
-        """    """
-        return ("{0}({1})".format(self.__class__.__name__, repr(self.__dict__)))
+        """
+        Representation 
+        """
+        return ("{0}({1})".format(self.__class__.__name__,
+                                  repr(self.__dict__.items())))
+    
+    def _change(self, *pa, **kwa):
+        """
+        Change attributes
+
+        ._change(pa1, pa2, ...) where pa = tuple of positional args, (pa1, pa2, ...)
+            each paX may be  a sequence of duples (k,v) or a dict
+
+        ._change(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args,
+            {k1: v1, k2 : v2, ...}
+        
+        Returns self so can chain
+        """
+        for a in pa:
+            if isinstance(a, dict): #positional arg is dictionary
+                for k, v in a.items():
+                    setattr(self, k, v)
+            else: #positional arg is sequence of duples (k,v)
+                for k, v in a:
+                    setattr(self, k, v)
+
+        for k,v in kwa.items():
+            setattr(self, k, v)
+            
+        return self
             
     def _dictify(self, fields=None):
         """
