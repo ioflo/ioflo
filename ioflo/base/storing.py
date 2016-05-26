@@ -693,7 +693,10 @@ class Share(object):
     def value(self, value):  # value property
         """Set value property """
         setattr(self._data, 'value', value)
-        self.stamp = self.store.stamp if self.store is not None else None
+        try:
+            self.stamp = self.store.stamp
+        except AttributeError as ex:
+            self.stamp = None
 
     @property
     def data(self):  # data property
@@ -706,7 +709,10 @@ class Share(object):
         if not isinstance(data, Data):
             raise ValueError("Not Data object %s" % data)
         self._data = data
-        self.stamp = self.store.stamp if self.store is not None else None
+        try:
+            self.stamp = self.store.stamp
+        except AttributeError as ex:
+            self.stamp = None
 
     def stampNow(self):
         """Force time stamp of this share to store.stamp if exists
@@ -714,7 +720,10 @@ class Share(object):
            update the stamp.
            so stampNow force updates the stamp.
         """
-        self.stamp = self.store.stamp if self.store is not None else None
+        try:
+            self.stamp = self.store.stamp
+        except AttributeError as ex:
+            self.stamp = None
         return self.stamp
 
     def change(self, *pa, **kwa):
@@ -738,7 +747,10 @@ class Share(object):
            set stamp to store.stamp if store
         """
         self.change(*pa, **kwa)
-        self.stamp = self.store.stamp if self.store is not None else None
+        try:
+            self.stamp = self.store.stamp
+        except AttributeError as ex:
+            self.stamp = None
         return self
 
     def create(self, *pa, **kwa):
@@ -763,7 +775,10 @@ class Share(object):
                 update = True
 
         if update:
-            self.stamp = self.store.stamp if self.store is not None else None
+            try:
+                self.stamp = self.store.stamp
+            except AttributeError as ex:
+                self.stamp = None
         return self
 
     def fetch(self, field, default = None):
