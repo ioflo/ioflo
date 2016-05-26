@@ -44,6 +44,35 @@ class BasicTestCase(unittest.TestCase):
         """
         super(BasicTestCase, self).tearDown()
 
+    def testODict(self):
+        """
+        Test the odict class
+        """
+        console.terse("{0}\n".format(self.testODict.__doc__))
+
+        x = odicting.odict()
+        x["a"] = 5
+        self.assertEqual(x.items(), [('a', 5)])
+        x["a"] = 6
+        self.assertEqual(x.items(), [('a', 6)])
+
+        items = [("x", 1),
+                 ("y", 2),
+                 ("a", 3)]
+        keys = [key for key, val in items]
+        values = [val for  key, val in  items]
+        od = odicting.odict(items)
+        self.assertEqual(od.keys(), keys)
+        self.assertEqual(od.values(), values)
+        self.assertEqual(od.items(), items)
+
+        fields = ['y', 'x']
+        stuff = od.sift(fields)
+        self.assertEqual(stuff.items(), [('y', 2), ('x', 1)])
+
+        stuff = od.sift()
+        self.assertEqual(stuff.items(), od.items())
+
     def testMoDict(self):
         """
         Test the modict
@@ -77,7 +106,9 @@ def runOne(test):
 def runSome():
     """ Unittest runner """
     tests =  []
-    names = ['testMoDict',
+    names = [
+                'testODict',
+                'testMoDict',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

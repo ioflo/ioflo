@@ -162,6 +162,22 @@ class odict(dict):
             if k not in self._keys:
                 self[k] = kwa[k]
 
+    def sift(self, fields=None):
+        """
+        Return shallaw copy odict of items keyed by field name strings
+        provided in optional fields sequence in that order with each value
+        given by the associated
+        item in self
+        If fields is not provided then return odict copy of self with all
+        the fields
+        Raises KeyError if no entry for a given field name
+        """
+        if fields is None:
+            return self.copy()
+
+        items = [(key, dict.__getitem__(self, key)) for key in fields]
+        return self.__class__(items) #creates new odict and populates with items
+
     def insert(self, index, key, val):
         """
         Insert val at index if key not in odict
@@ -223,8 +239,8 @@ class odict(dict):
 
     def reorder(self, other):
         """
-        Update values in this odict based on the `other` odict or dict.
-        reorder is ignored if other is not an odict
+        Update values in this odict based on the `other` odict.
+        Raises ValueError if other is not an odict
         """
         if not isinstance(other, odict):
             raise ValueError('other must be an odict')

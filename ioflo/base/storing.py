@@ -52,18 +52,21 @@ class Node(odict):
 
 
 class Store(registering.Registrar):
-    """global data store to be shared amoungst all taskers.
+    """
+    global data store to be shared amoungst all taskers.
 
-       Each object has the concept of ownership in the datashare.
+    Each object has the concept of ownership in the datashare.
 
-       inherited instance attributes:
-       .name  = unique data store name
+    inherited instance attributes:
+        .name  = unique data store name
 
-       instance attributes
-       .stamp = global time stamp for store
-       .house = reference to house owning this store
-       .shares = dictionary of shared data store items
-       .realtime = share for realtime when .stamp is updated
+    instance attributes:
+        .stamp = global time stamp for store
+        .house = reference to house owning this store
+        .shares = dictionary of shared data store items
+        .metaShr = share for meta data
+        .realTimeShr = share whose value is realtime time when .stamp is updated
+        .timeShr = share whose value is copy of stamp when .stamp is updated
 
     """
     Counter = 0
@@ -524,6 +527,12 @@ class Share(object):
         """   """
         self._data.__dict__.clear()
 
+    def copy(self):
+        """
+        Make a shallow copy of ._data.__dict__
+        """
+        return (self._data.__dict__.copy())
+
     def get(self, key, default = None):
         """D.get(k,d)"""
         if key in self:
@@ -564,21 +573,66 @@ class Share(object):
         """  """
         return [self[key] for key in self.keys()]
 
+    def pop(self, key, *default):
+        """
+        Remove key and the associated item and return the associated value
+        If key not found return default if given otherwise raise KeyError
+        """
+        value = self._data.__dict__.pop(self, key, *default)
+        return value
+
+    def popitem(self):
+        """
+        Remove and return last item (key, value) duple from ._data
+        If ._data is empty raise KeyError
+        """
+        return (self._data.__dict__.popitem())
+
+    def setdefault(self, key, default=None):
+        """
+        If key in ._data, return value at key
+        Otherwise set value at key to default and return default
+        """
+        value = self._data.__dict__.setdefault(self, key, default)
+        return value
+
+    def sift(self, fields=None):
+        """
+        Return odict of items keyed by field name strings provided in optional
+        fields sequence in that order with each value given by the associated
+        item in ._data
+        If fields is not provided then return odict copy of ._data with all
+        the fields
+        Raises AttributeError if no entry in ._data for a given field name
+        """
+        return (self._data._sift(fields=fields))
+
+    def reorder(self, other):
+        """
+        Reorder values in ._dict based on the other odict.
+        Raise ValueError if other is not an odict
+        """
+        if not isinstance(other, odict):
+            raise ValueError('other must be an odict')
+
+        if other is self:
+            #raise ValueError('other cannot be the same odict')
+            pass #updating with self makes no changes
+
+        dict.update(self, other)
+        keys = self._keys
+
+        for key in other:
+            if key in keys:
+                keys.remove(key)
+            keys.append(key)
+
     def changeStore(self, store = None):  # store management
         """Replace .store """
         if store is not None:
             if  not isinstance(store, Store):
                 raise ValueError("Not store %s" % store)
         self.store = store
-
-    def stampNow(self):
-        """Force time stamp of this share to store.stamp
-           This is useful when share field is a collection that is modified
-           in place, i.e. can't use update since update copies
-           so stampNow updates the stamp.
-        """
-        self.stamp = self.store.stamp
-        return self.stamp
 
     def push(self,  elem):
         """
@@ -639,7 +693,7 @@ class Share(object):
     def value(self, value):  # value property
         """Set value property """
         setattr(self._data, 'value', value)
-        self.stamp = self.store.stamp
+        self.stamp = self.store.stamp if self.store is not None else None
 
     @property
     def data(self):  # data property
@@ -652,7 +706,16 @@ class Share(object):
         if not isinstance(data, Data):
             raise ValueError("Not Data object %s" % data)
         self._data = data
-        self.stamp = self.store.stamp
+        self.stamp = self.store.stamp if self.store is not None else None
+
+    def stampNow(self):
+        """Force time stamp of this share to store.stamp if exists
+           This is useful when share data is changed in a way that does not
+           update the stamp.
+           so stampNow force updates the stamp.
+        """
+        self.stamp = self.store.stamp if self.store is not None else None
+        return self.stamp
 
     def change(self, *pa, **kwa):
         """Change data fields without affecting stamp.
@@ -672,11 +735,10 @@ class Share(object):
     def update(self, *pa, **kwa):
         """Update data fields of this share.
            create field if not already exist
-           set stamp to store.stamp
+           set stamp to store.stamp if store
         """
         self.change(*pa, **kwa)
-        #self.stamp = None #update stamp with default
-        self.stamp = self.store.stamp
+        self.stamp = self.store.stamp if self.store is not None else None
         return self
 
     def create(self, *pa, **kwa):
@@ -701,8 +763,7 @@ class Share(object):
                 update = True
 
         if update:
-            #self.stamp = None #update stamp with default
-            self.stamp = self.store.stamp
+            self.stamp = self.store.stamp if self.store is not None else None
         return self
 
     def fetch(self, field, default = None):
@@ -768,15 +829,21 @@ class Share(object):
 
     def show(self):
         """print name and data files"""
-        console.terse("Name {0} Value {1}\n".format(self.name, self.value))
-        msg = ""
+        result = "Name {0} Value {1}\n".format(self.name, self.value)
+        entries = []
         for key, value in self.data.__dict__.items():
-            msg += "{0} = (1)".format(key, value)
-        console.terse("{0}\n".format(msg))
+            entries.append( "{0} = {1}".format(key, value))
+        result = ("{0}{1}\n".format(result, " ".join(entries)))
+        return result
 
 class Data(object):
-    """Data class
+    """
+    Data class
+    Attributes may be any python public identifier, that is,
+    a string that starts with letter but not underscore
 
+    Attempting to set an attribute that is not a python public identifier raises
+    AttributeError
     """
 
     def __new__(cls, *pa, **kwa):
@@ -826,7 +893,7 @@ class Data(object):
            Don't need __getattr__ override because __getattribute__ always
            looks in instance.__dict__ as last resort if can't find in
            class.__dict__ descriptor or elsewhere
-           
+
            Methods that begin with '_' are allowd if created in class or subclass
            definition since methods use descriptors and will already exist by
            virtue of the class definition when the instance of Data or subclass
@@ -841,14 +908,14 @@ class Data(object):
                 raise AttributeError("Invalid attribute name '%s'" % key)
         else: #pass on to superclass
             super(Data,self).__setattr__(key,value)
-            
+
     def __repr__(self):
         """
-        Representation 
+        Representation
         """
         return ("{0}({1})".format(self.__class__.__name__,
                                   repr(self.__dict__.items())))
-    
+
     def _change(self, *pa, **kwa):
         """
         Change attributes
@@ -858,7 +925,7 @@ class Data(object):
 
         ._change(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args,
             {k1: v1, k2 : v2, ...}
-        
+
         Returns self so can chain
         """
         for a in pa:
@@ -871,21 +938,21 @@ class Data(object):
 
         for k,v in kwa.items():
             setattr(self, k, v)
-            
+
         return self
-            
-    def _dictify(self, fields=None):
+
+    def _sift(self, fields=None):
         """
         Return odict of items keyed by field name strings provided in  optional
         fields sequence in that order with each value given by the associated
         item in .__dict__
         If fields is not provided then return odict copy of .__dict__ with all
         the fields
-        Raises AttributeError if no entry in .__dict__ for a given field name 
+        Raises AttributeError if no entry in .__dict__ for a given field name
         """
         if fields is None:
             return odict(self.__dict__)
-        
+
         stuff = odict()
         for key in fields:
             if key not in self.__dict__:
@@ -893,8 +960,8 @@ class Data(object):
                                      "attribute '{1}'".format(self.__class__.__name__,
                                                               key))
             stuff[key] = self.__dict__[key]
-        return stuff    
-            
+        return stuff
+
     def _show(self):
         """
         Returns descriptive string for display purposes
@@ -904,10 +971,11 @@ class Data(object):
             val = getattr(self, key)
             infix.append("{0}={1}".format(key, val))
 
-        result = "Data: {0}\n".format(" ".join(infix))
-        return result    
-    
-            
+        result = "{0}: {1}\n".format(self.__class__.__name__,
+                                     " ".join(infix))
+        return result
+
+
 
 class Deck(deque):
     """
