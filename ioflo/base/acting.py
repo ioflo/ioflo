@@ -147,15 +147,15 @@ class Act(object):
                             parms[field] = src[field]
 
             ioinits.update(self.ioinits or odict())
-            if self.prerefs: # preinits ioinits dict items
+            if self.prerefs: # preinits ioinits dict items  'do for'
                 # each key is share src path, and value is list of src fields
                 for src, fields in self.prerefs.get('ioinits', {}).items():
                     src = self.resolvePath(ipath=src, warn=True) # now a share
                     if not fields:  # default is use existing fields
                         fields = self._prepareSrcFields(src, fields)
-                    for field in fields:  # requires src pre inited
+                    for field in fields:  # each src fld value pre inited with ipath
                         if field in src:  # only update if src has field
-                            ioinits[field] = src[field]
+                            ioinits[field] = src[field]  # clobbers ioinit odict() with ipath
             if ioinits:
                 iois = actor._initio(**ioinits)
                 if iois:
