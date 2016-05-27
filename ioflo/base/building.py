@@ -3068,12 +3068,11 @@ class Builder(object):
            [not] need
 
            need:
-              always
               done taskername
               done (any, all) [in frame [(me, framename)] [of framer [(me, framername)]]]
               status tasker is (readied, started, running, stopped, aborted)
-              update [in frame] share
-              change [in frame] share
+              update [in (me,framename)] share
+              change [in (me, framename)] share
               elapsed comparison goal [+- tolerance]
               recurred comparison goal [+- tolerance]
               state [comparison goal [+- tolerance]]
@@ -3103,7 +3102,7 @@ class Builder(object):
             index += 1 #eat token
             kind = tokens[index] #get a new kind
 
-        if kind in ['always', 'done', 'status', 'update', 'change']: #special needs
+        if kind in ['done', 'status', 'update', 'change']: #special needs
             index += 1 #eat token
             method = 'make' + kind.capitalize() + 'Need'
             if not hasattr(self, method):
@@ -3156,29 +3155,6 @@ class Builder(object):
                               parms=act.parms,
                               human=self.currentHuman,
                               count=self.currentCount)
-
-        return (act, index)
-
-    def makeAlwaysNeed(self, kind, tokens, index):
-        """Need that is true always
-
-           method must be wrapped in appropriate try excepts
-
-           always
-        """
-        actorName = 'Need' + kind.capitalize()
-
-        if actorName not in needing.Need.Registry:
-            msg = "ParseError: Need '%s' can't find actor named '%s'" %\
-                (kind, actorName)
-            raise excepting.ParseError(msg, tokens, index)
-
-        parms = {}
-        act = acting.Act(   actor=actorName,
-                            registrar=needing.Need,
-                            parms=parms,
-                            human=self.currentHuman,
-                            count=self.currentCount)
 
         return (act, index)
 
