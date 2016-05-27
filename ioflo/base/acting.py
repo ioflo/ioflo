@@ -146,7 +146,7 @@ class Act(object):
                         if field in src:  # only update if src has field
                             parms[field] = src[field]
 
-            ioinits.update(self.ioinits or odict())
+            ioinits.update(self.ioinits or odict())  # self.ioinits 'do per'
             if self.prerefs: # preinits ioinits dict items  'do for'
                 # each key is share src path, and value is list of src fields
                 for src, fields in self.prerefs.get('ioinits', {}).items():
