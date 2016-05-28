@@ -153,6 +153,7 @@ class NeedStatus(Need):
           tasker
           status
         """
+        # maybe should add check for auxiliary since status never changes for auxiliary
 
         result = (tasker.status == status)
         console.profuse("Need Tasker {0} status is {1} = {2}\n".format(
