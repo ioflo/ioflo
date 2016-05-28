@@ -10,9 +10,9 @@ framer test be active first start
       set goal.speed from .speed
       put 30 into .heading
       put green 4 blue 30 into .color
-      inc .heading to 5
-      inc .heading by green in .color
-      inc blue in .color by .goal.depth
+      inc .heading with 5
+      inc .heading from green in .color
+      inc blue in .color from .goal.depth
       copy green in .color into red in .tint
       do doer at enter
       do doer

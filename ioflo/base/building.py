@@ -2085,7 +2085,7 @@ class Builder(object):
     def buildInc(self, command, tokens, index):
         """Build inc command to inc share by data or from source
 
-           inc destination by data
+           inc destination with data
            inc destination from source
 
            destination:
@@ -2108,7 +2108,7 @@ class Builder(object):
             connective = tokens[index]
             index += 1
 
-            if connective in ['to', 'with']:
+            if connective in ('with', ):
                 srcData, index = self.parseDirect(tokens, index)
 
                 for field, value in srcData.items():
@@ -2120,7 +2120,7 @@ class Builder(object):
 
                 act = self.makeIncDirect(dstPath, dstFields, srcData)
 
-            elif connective in ['by', 'from']:
+            elif connective in ('from', ):
                 srcFields, index = self.parseFields(tokens, index)
                 srcPath, index = self.parseIndirect(tokens, index)
 
