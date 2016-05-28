@@ -12,9 +12,9 @@ framer test be active first test0
 
     frame test0 in timeout
       print "Hello World"
-      do doer at enter to stuff 5
-      do doer at enter by depth in .trial
-      do doer at enter by .trial
+      do doer at enter with stuff 5
+      do doer at enter from depth in .trial
+      do doer at enter from .trial
       do doer at enter per trial ".trial"
       do doer at enter for trial in .init.test
       do doer at enter for .init.test
@@ -22,9 +22,9 @@ framer test be active first test0
       do doer at enter qua width in .trial
       do doer at enter qua .trial
 
-      do doer param at enter to stuff 5
-      do doer param at enter by depth in .trial
-      do doer param at enter by .trial
+      do doer param at enter with stuff 5
+      do doer param at enter from depth in .trial
+      do doer param at enter from .trial
       do doer param at enter per trial ".trial"
       do doer param at enter for trial in .init.test
       do doer param at enter for .init.test
@@ -32,7 +32,7 @@ framer test be active first test0
       do doer param at enter qua width in .trial
       do doer param at enter qua .trial
 
-      set elapsed to 1.0
+      set elapsed with 1.0
       go next if elapsed >= goal
 
     frame test1 in timeout
@@ -53,7 +53,7 @@ framer test be active first test0
       go next if height in .sink == 10 and width in .sink == 15
 
     frame test5 in timeout
-      set goal.dims to height 5 width 10
+      set goal.dims with height 5 width 10
       go next if height in .trial >= height in goal.dims and \
                  width in .trial >= width in goal.dims
 

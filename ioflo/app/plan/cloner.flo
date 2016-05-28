@@ -1,5 +1,5 @@
-#example mission marker.flo
-# shows use of if update and if change syntax
+#example mission cloner.flo
+# shows use of cloning syntax
 
 house cloner
 
@@ -13,33 +13,33 @@ frame start
 frame clone
    print clone
    enter
-      #do cloner framer to framer "cloned" frame "run_clone" 
-      #do as framer cloner to framer "cloned" frame "run_clone" 
-   go next 
+      #do cloner framer with framer "cloned" frame "run_clone"
+      #do as framer cloner with framer "cloned" frame "run_clone"
+   go next
    go abort if recurred >= 2
-   
+
 frame run_clone
    recur
       print run_clone
-   
+
    go next if recurred >= 4
-   
+
 frame clone_again
    print clone again
    enter
-      #do cloner framer to framer "cloned" frame "run_clone_again" 
-      #do as framer cloner to framer "cloned" frame "run_clone_again" 
-   go next 
+      #do cloner framer with framer "cloned" frame "run_clone_again"
+      #do as framer cloner with framer "cloned" frame "run_clone_again"
+   go next
    go abort if recurred >= 2
-   
+
 frame run_clone_again
    recur
        print run_clone_again
    go next if recurred >= 4
 
-frame abort 
+frame abort
    bid stop all
-   
+
 framer cloned be aux first clone1
 
 frame clone1
@@ -48,8 +48,8 @@ frame clone1
    inc accumulator of framer with 1
    put true into test of frame
    put true into .test
-   go next 
-   
+   go next
+
 frame clone2
    print clone2
    inc counter of framer with 1

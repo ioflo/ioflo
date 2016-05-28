@@ -13,15 +13,15 @@ frame timeout
    go abort if elapsed > 30
 
    frame mission_start in timeout
-      set elapsed to 20.0
-      set goal.heading to 0.0
-      set goal.depth to 5.0
-      set goal.speed to 2.5
+      set elapsed with 20.0
+      set goal.heading with 0.0
+      set goal.depth with 5.0
+      set goal.speed with 2.5
 
       put true into stuff of framer
       put true into stuff of frame
-      set state.test of framer to true
-      set state.test of frame to true
+      set state.test of framer with true
+      set state.test of frame with true
       put true into junk of frame of root
       put true into junk of frame autopilot_run of framer autopilot
       go next if state.test of framer and state.test of frame

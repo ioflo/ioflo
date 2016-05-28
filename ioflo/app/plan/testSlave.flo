@@ -13,7 +13,7 @@ framer testmeta be active first testmeta
 
 frame testmeta
    print "Hello World"
-   set elapsed to 1.0
+   set elapsed with 1.0
    go next if elapsed >= goal
 
 frame testtimeout
@@ -22,7 +22,7 @@ frame testtimeout
 
 frame testrecurred
    print "recurred"
-   set recurred to 4
+   set recurred with 4
    recur
       print "recurred again"
    go next if recurred >= goal

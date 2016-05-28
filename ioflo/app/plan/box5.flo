@@ -22,10 +22,10 @@ frame depthmax
    go abort if state.depth >= .max.depth
 
 frame leg in depthmax
-   set elapsed to 20.0
+   set elapsed with 20.0
    set goal.heading from boxer.heading
-   set goal.depth to 5.0
-   set goal.speed to 2.5
+   set goal.depth with 5.0
+   set goal.speed with 2.5
    go gpsfix if elapsed >= goal
    go mission_stop if .boxer.leg >= .boxer.nlegs
 
@@ -37,8 +37,8 @@ frame gpsfix
       inc boxer.leg with 1.0
 
 frame abort
-   set goal.depth to 0.0
-   set goal.speed to 2.5
+   set goal.depth with 0.0
+   set goal.speed with 2.5
    go mission_stop if state.depth == 0.0 +- 0.25
 
 frame mission_stop

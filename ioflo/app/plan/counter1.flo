@@ -8,8 +8,8 @@ house uuv
 framer mission be active first leg
 
 frame setup
-   set .leg to 0
-   set .nlegs to 3
+   set .leg with 0
+   set .nlegs with 3
    go abort if elapsed >= 3
 
    frame leg in setup

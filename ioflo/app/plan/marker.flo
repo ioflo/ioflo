@@ -11,10 +11,10 @@ frame vehicle_run
 framer mission be active first change1
 
 frame start
-    set elapsed to 2.0
-    set goal.heading to 0.0
-    set goal.depth to 5.0
-    set goal.speed to 2.5
+    set elapsed with 2.0
+    set goal.heading with 0.0
+    set goal.depth with 5.0
+    set goal.speed with 2.5
 
     go abort if elapsed >= goal
 

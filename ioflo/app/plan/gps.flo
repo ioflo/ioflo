@@ -4,11 +4,11 @@
 framer gps be aux first gps1
 
 frame gps1
-   set goal.depth to 0.0
+   set goal.depth with 0.0
    go next if state.depth == 0.0 +- 0.25
 
 frame gps2
-   set goal.speed to 0.0
+   set goal.speed with 0.0
    go next if elapsed >= 10.0
 
 frame gps3

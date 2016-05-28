@@ -13,10 +13,10 @@ framer mission be active first mission_start
     go abort if elapsed > 30
 
   frame mission_start in timeout
-    set elapsed to 20.0
-    set goal.heading to 0.0
-    set goal.depth to 5.0
-    set goal.speed to 2.5
+    set elapsed with 20.0
+    set goal.heading with 0.0
+    set goal.depth with 5.0
+    set goal.speed with 2.5
 
     put true
       into stuff of framer  # connective continuation ending comment
@@ -24,11 +24,11 @@ framer mission be active first mission_start
       of frame
     set state.test
       # connective continutaion with comment line
-      of framer to true
+      of framer with true
     set state.test
 
 
-      of frame to true  # blank lines
+      of frame with true  # blank lines
 
     put true into junk of frame of root
     put true into junk of frame autopilot_run of framer autopilot

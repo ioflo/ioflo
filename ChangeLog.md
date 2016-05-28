@@ -4,7 +4,7 @@ CHANGE LOG
 --------
 201605XX
 --------
-1.5.5
+1.6.0
 
 Bug fixes
 
@@ -13,7 +13,21 @@ Added TCPStack
 
 Added more exception handling to tcp client and server
 
+FloScript Breaking Changes
+   Reducing some redundancy and normalizing connective use across verbs
+
+These may break some floscripts
 Removed "if always" need form since its never needed anymore
+
+Dropped 'to' and 'by' connectives from 'inc' verb syntax
+as redundant to "with" and 'from'
+
+Dropped 'to' and 'by' connectives from 'set' verb syntax
+as redundant to "with" and 'from'
+
+
+
+
 
 --------
 20160506

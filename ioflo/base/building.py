@@ -2226,7 +2226,7 @@ class Builder(object):
     def buildSet(self, command, tokens, index):
         """Build set command to generate goal actions
 
-           set goal to data
+           set goal with data
            set goal from source
 
            goal:
@@ -2260,12 +2260,12 @@ class Builder(object):
                 connective = tokens[index]
                 index += 1
 
-                if connective in ['to', 'with']: #data direct
+                if connective in ('with', ): #data direct
                     srcData, index = self.parseDirect(tokens, index)
 
                     act = self.makeGoalDirect(dstPath, dstFields, srcData)
 
-                elif connective in ['by', 'from']: #source indirect
+                elif connective in ('from', ): #source indirect
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
 
@@ -2453,10 +2453,12 @@ class Builder(object):
 
     def buildDo(self, command, tokens, index):
         """ do kind [part ...] [as name [part ...]] [at context] [via inode]
-               [to data][by source]
-               [with data] [from source]
-               [per data] [for source]
-               [cum data] [qua source]
+               [with data]
+               [from source]
+               [per data]
+               [for source]
+               [cum data]
+               [qua source]
 
             deed:
                 name [part ...]
@@ -2503,7 +2505,7 @@ class Builder(object):
             context = self.currentContext
 
             while index < len(tokens):
-                if (tokens[index] in ['as', 'at', 'via', 'to', 'by', 'with', 'from',
+                if (tokens[index] in ['as', 'at', 'via', 'with', 'from',
                                       'per', 'for', 'cum', 'qua']): # end of parts
                     break
                 parts.append(tokens[index])
@@ -2516,7 +2518,7 @@ class Builder(object):
                 connective = tokens[index]
                 index += 1
 
-                if connective == 'as':
+                if connective in ('as', ):
                     parts = []
                     while index < len(tokens): # kind parts end when connective
                         if tokens[index] in ['as', 'at', 'to','by', 'with', 'from', 'per', 'for']: # end of parts
@@ -2529,7 +2531,7 @@ class Builder(object):
                         msg = "ParseError: Building verb '%s'. Missing name for connective 'as'" % (command)
                         raise excepting.ParseError(msg, tokens, index)
 
-                elif connective in ['at']:
+                elif connective in ('at', ):
                     context = tokens[index]
                     index += 1
                     if context not in ActionContextValues:
@@ -2538,32 +2540,32 @@ class Builder(object):
                         raise excepting.ParseError(msg, tokens, index)
                     context = ActionContextValues[context]
 
-                elif connective in ['via']:
+                elif connective in ('via', ):
                     inode, index = self.parseIndirect(tokens, index, node=True)
 
-                elif connective in ['to', 'with']:
-                    data, index = self.parseDirect(tokens, index)
-                    parms.update(data)
-
-                elif connective in ['by', 'from']:
-                    srcFields, index = self.parseFields(tokens, index)
-                    srcPath, index = self.parseIndirect(tokens, index)
-                    prerefs['parms'][srcPath] = srcFields
-
-                elif connective in ['per']:
+                elif connective in ('per', ):
                     data, index = self.parseDirect(tokens, index)
                     ioinits.update(data)
 
-                elif connective in ['for']:
+                elif connective in ('for', ):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['ioinits'][srcPath] = srcFields
 
-                elif connective in ['cum']:
+                elif connective in ('with', ):
+                    data, index = self.parseDirect(tokens, index)
+                    parms.update(data)
+
+                elif connective in ('from', ):
+                    srcFields, index = self.parseFields(tokens, index)
+                    srcPath, index = self.parseIndirect(tokens, index)
+                    prerefs['parms'][srcPath] = srcFields
+
+                elif connective in ('cum', ):
                     data, index = self.parseDirect(tokens, index)
                     inits.update(data)
 
-                elif connective in ['qua']:
+                elif connective in ('qua', ):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['inits'][srcPath] = srcFields
