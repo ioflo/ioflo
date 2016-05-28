@@ -3074,8 +3074,8 @@ class Builder(object):
               done taskername
               done (any, all) [in frame [(me, framename)] [of framer [(me, framername)]]]
               status tasker is (readied, started, running, stopped, aborted)
-              update [in (me,framename)] share
-              change [in (me, framename)] share
+              update [in frame (me, framename)] share
+              change [in frame (me, framename)] share
               elapsed comparison goal [+- tolerance]
               recurred comparison goal [+- tolerance]
               state [comparison goal [+- tolerance]]
@@ -3297,7 +3297,7 @@ class Builder(object):
             method must be wrapped in appropriate try excepts
 
             Syntax:
-                if update [in frame] sharepath
+                if update [in frame (me, framename)] sharepath
 
         """
         return (self.makeMarkerNeed(kind, tokens, index))
@@ -3308,7 +3308,7 @@ class Builder(object):
             method must be wrapped in appropriate try excepts
 
             Syntax:
-                if change [in frame] sharepath
+                if change [in frame (me, framename)] sharepath
 
         """
         return (self.makeMarkerNeed(kind, tokens, index))
@@ -3316,17 +3316,28 @@ class Builder(object):
     def makeMarkerNeed(self, kind, tokens, index):
         """ Support method to make either NeedUpdate or NeedChange
             as determined by kind
+            
+            Syntax:
+                if (update, change) [in frame (me, framename)] sharepath
         """
-        frame = "" # name of marked frame
+        frame = "me" # name of marked frame
 
         connective = tokens[index]
         if connective == 'in': #optional in frame clause
             index += 1 #eat token
-            frame = tokens[index] #need to resolve
-            index += 1 #eat token
 
-        if not frame: #default to current frame
-            frame = 'me'
+            place = tokens[index] #need to resolve
+            index += 1  # eat token
+
+            if place != 'frame':
+                msg = ("ParseError: Building verb '{0}'. Invalid "
+                       " '{1}' clause. Expected 'frame' got "
+                       "'{2}'".format(command, connective, place))
+                raise excepting.ParseError(msg, tokens, index)
+
+            # if index < len(tokens): # makes optional
+            frame = tokens[index] #need to resolve
+            index += 1  #eat token
 
         sharePath, index = self.parseIndirect(tokens, index)
 

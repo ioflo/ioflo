@@ -30,13 +30,13 @@ frame update2 in start
     go next if update .state.heading
 
 frame change2 in start
-    go next if change .state.depth
+    go next if change in frame change2 .state.depth
 
 frame update3 in start
-    go next if update in update3 .state.heading
+    go next if update in frame update3 .state.heading
 
 frame update4 in start
-    go next if update in start .state.heading
+    go next if update in frame start .state.heading
 
 frame update5 in start
     go next if update .marked.updated
