@@ -1,12 +1,12 @@
 house test
 
-init meta.test to value "test"
-init meta.spot to when "now" where "here"
-init meta.stuff to value "test2"
-init .cop.pit to value 5
-init .pop.cop.kit to value 10
-init .top.cop.wit to value 15
-init .top.pop.cop.fit to value 20
+init meta.test with value "test"
+init meta.spot with when "now" where "here"
+init meta.stuff with value "test2"
+init .cop.pit with value 5
+init .pop.cop.kit with value 10
+init .top.cop.wit with value 15
+init .top.pop.cop.fit with value 20
 
 framer test be active first test0 via .top.
   frame timeout

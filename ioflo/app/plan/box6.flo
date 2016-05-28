@@ -3,14 +3,14 @@
 
 house box6
 
-init limit.depth.max to 50.0
-init limit.depth.shallow to 10.0
-init limit.depth.cruise to 5.0
+init limit.depth.max with 50.0
+init limit.depth.shallow with 10.0
+init limit.depth.cruise with 5.0
 
-init boxer.heading to 0.0
-init boxer.turn to 90.0
-init boxer.leg to 0.0
-init boxer.nlegs to 4.0
+init boxer.heading with 0.0
+init boxer.turn with 90.0
+init boxer.leg with 0.0
+init boxer.nlegs with 4.0
 
 framer vehiclesim be active first vehicle_run
 

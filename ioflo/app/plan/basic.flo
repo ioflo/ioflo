@@ -1,7 +1,7 @@
 
 house basic
 
-init .speed to 20
+init .speed with 20
 
 framer test be active first start
 

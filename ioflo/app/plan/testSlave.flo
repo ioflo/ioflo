@@ -5,9 +5,9 @@
 
 house test_slave
 
-init meta.test to value "test"
-init meta.spot to when "now" where "here"
-init meta.stuff to value "test2"
+init meta.test with value "test"
+init meta.spot with when "now" where "here"
+init meta.stuff with value "test2"
 
 framer testmeta be active first testmeta
 

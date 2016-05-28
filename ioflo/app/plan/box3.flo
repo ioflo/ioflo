@@ -3,7 +3,7 @@
 
 house box3
 
-init max.depth to 50.0
+init max.depth with 50.0
 
 framer vehiclesim be active first vehicle_run
 

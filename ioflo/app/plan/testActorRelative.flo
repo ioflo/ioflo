@@ -3,7 +3,7 @@
 
 house test
 
-init .box to depth 5 height 10 width 15
+init .box with depth 5 height 10 width 15
 
 framer test be active first start
   frame start

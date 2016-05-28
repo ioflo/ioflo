@@ -574,7 +574,8 @@ class Builder(object):
     def buildInit(self, command, tokens, index):
         """Initialize share in current store
 
-           init destination to data
+           init destination with data
+           init indirect from source
 
            destination:
               absolute
@@ -583,9 +584,7 @@ class Builder(object):
            data:
               direct
 
-           init destination from source
-
-           destination:
+           indirect:
               [(value, fields) in] absolute
               [(value, fields) in] path
 
@@ -612,7 +611,9 @@ class Builder(object):
             connective = tokens[index]
             index += 1
 
-            if connective in ['to', 'with']:
+            if connective in ('with', 'to'):  # to form deprecated eventually remove
+                if connective == 'to':
+                    console.terse("Warning: Connective 'to' in 'init' verb depricated. Use 'with' instead.\n")
                 if destinationFields: #fields not allowed so error
                     msg = "ParseError: Building verb '%s'. Unexpected fields '%s in' clause " %\
                         (command, destinationFields)
@@ -626,7 +627,7 @@ class Builder(object):
                 destination.update(data)
                 console.profuse("     Inited share {0} to data = {1}\n".format(destination.name, data))
 
-            elif connective in ['by', 'from']:
+            elif connective in ('from', ):
                 sourceFields, index = self.parseFields(tokens, index)
                 sourcePath, index = self.parsePath(tokens, index)
 

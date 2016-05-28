@@ -1,10 +1,10 @@
 house test
 
-init meta.test to value "test"
-init meta.spot to when "now" where "here"
-init meta.stuff to value "test2"
-init .trial to depth 5 height 10 width 15
-init .init.test to trial ".trial"
+init meta.test with value "test"
+init meta.spot with when "now" where "here"
+init meta.stuff with value "test2"
+init .trial with depth 5 height 10 width 15
+init .init.test with trial ".trial"
 
 framer test be active first test0
   frame timeout

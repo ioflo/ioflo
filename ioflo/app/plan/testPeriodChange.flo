@@ -1,11 +1,11 @@
-# Example periodChange.flo  uses bid to change period
+# Example periodChange.flo  uses bid with change period
 
 house pchange
 
-init .runs.fastslow to 0
-init .runs.slowfast to 0
-init .periods.fastslow to 0.75
-init .periods.slowfast to 0.25
+init .runs.fastslow with 0
+init .runs.slowfast with 0
+init .periods.fastslow with 0.75
+init .periods.slowfast with 0.25
 
 framer mission be active first start at 0.25
     frame timeout
