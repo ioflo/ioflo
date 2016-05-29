@@ -1,10 +1,11 @@
 ------------------
 CHANGE LOG
 -------------------
+
 --------
-201605XX
+20160528
 --------
-1.6.0
+1.5.5
 
 Bug fixes
 
@@ -19,13 +20,20 @@ FloScript Breaking Changes
 These may break some floscripts
 Removed "if always" need form since its never needed anymore
 
-Dropped 'to' and 'by' connectives from 'inc' verb syntax
-as redundant to "with" and 'from'
+Dropped 'by' connective from 'inc' verb syntax
+as redundant with 'from'  connective
+
+Deprecated 'to' connective of 'inc' verb syntax
+as redundant with 'with'  connective
 
 Dropped 'to' and 'by' connectives from 'set' verb syntax
 as redundant to "with" and 'from'
 
+Dropped 'to' and 'by' connectives from 'do' verb syntax
+as redundant to "with" and 'from'
 
+Added "frame" modifier to if update/change need syntax to be consistent with
+rear raze
 
 
 
