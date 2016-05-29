@@ -3,6 +3,25 @@ CHANGE LOG
 -------------------
 
 --------
+201605XX
+--------
+1.6.0
+
+Made some breaking changes to the Need Floscript syntax. This code was getting
+cumbersome and difficult to augment/enhance so needed refinement in the syntax
+
+This may break some floscripts. Hopefully this will solidify the syntax going
+forward and allow for easier enhancement of new needs
+
+Added 're' as connective 're' means about or in regard or in reference to
+Used for framer state and frame goal references in Needs and 'set' verb we
+we can disambiguate
+
+Expanded use of 'is' as a connective to also be a comparison like connective
+Added it to reserved connectives list (bug not to be there already)
+
+
+--------
 20160528
 --------
 1.5.5

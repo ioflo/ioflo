@@ -238,7 +238,7 @@ VerbList = ['load', 'house', 'init',
 #reserved tokens
 Comparisons = ['==', '<', '<=', '>=', '>', '!=']
 Connectives = ['to', 'with', 'by', 'from', 'per', 'for', 'cum', 'qua', 'via',
-               'as', 'at', 'in', 'of', 'on',
+               'as', 'at', 'in', 'of', 'on', 're', 'is',
                'if', 'be', 'into', 'and', 'not', '+-', ]
 Reserved = Connectives + Comparisons  #concatenate to get reserved words
 ReservedFrameNames = ['next', 'prev']  # frame names with special meaning as target of goto
@@ -3316,7 +3316,7 @@ class Builder(object):
     def makeMarkerNeed(self, kind, tokens, index):
         """ Support method to make either NeedUpdate or NeedChange
             as determined by kind
-            
+
             Syntax:
                 if (update, change) [in frame (me, framename)] sharepath
         """
