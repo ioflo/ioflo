@@ -3059,54 +3059,88 @@ class Builder(object):
         return act
 
     def makeNeed(self, tokens, index):
-        """Parse a need
-
-           method must be wrapped in try except indexError
-           method assumes already checked for currentStore
-           method assumes already checked for currentFramer
-           method assumes already checked for currentFrame
-
-           Need forms:
-
-           [not] need
-
-           need:
-              done taskername
-              done (any, all) [in frame [(me, framename)] [of framer [(me, framername)]]]
-              status tasker is (readied, started, running, stopped, aborted)
-              update [in frame (me, framename)] share
-              change [in frame (me, framename)] share
-              elapsed comparison goal [+- tolerance]
-              recurred comparison goal [+- tolerance]
-              state [comparison goal [+- tolerance]]
-
-           goal:
-              boolnum
-              value value
-              [(value, field) in] absolute
-              [(value, field) in] relativegoal
-
-           comparison:
-              (==, !=, <, <=, >=, >)
-
-           state:
-              [(value, field) in] absolute
-              [(value, field) in] relativestate
-
-           tolerance:
-              number (the absolute value is used)
         """
-        Negate = False
+        Parse a need
 
-        kind = tokens[index]
+        method must be wrapped in try except indexError
+        method assumes already checked for currentStore
+        method assumes already checked for currentFramer
+        method assumes already checked for currentFrame
 
-        if kind == 'not':
-            Negate = True
+        Need forms:
+
+        [not] need
+
+        need:
+            basic need:
+                if [(value, field) in] path [[of relation] ...] [comparison goal [+- tolerance]]
+
+            simple need:
+                if framerstate [re [me, framername]] comparison framergoal [+- tolerance]
+
+                if framerstate re [me] is TBD  # not supported yet
+
+            special need:
+
+                if path [[of relation] ...] is updated  [by frame (me, framename)]
+                if path [[of relation] ...] is changed  [by frame (me, framename)]
+
+                if taskername is (readied, started, running, stopped, aborted)
+                if taskername is done
+                if ([auxname, any, all) [in frame [(me, framename)]
+                                  [in framer [(me, framername)]]] is done
+
+
+            sharepath:
+                path [[of relation] ...]
+
+            framerstate:
+                (elapsed, recurred)
+
+            goal:
+                value
+                [(value, field) in] indirect
+
+            framergoal:
+                goal
+                value
+                [(value, field) in] indirect
+
+            comparison:
+               (==, !=, <, <=, >=, >)
+
+            state:
+                [(value, field) in] indirect
+
+            indirect:
+                path [[of relation] ...]
+
+            tolerance:
+               number (the absolute value is used)
+        """
+        kind = None
+        negate = False
+
+        if tokens[index] == 'not':
+            negate = True
             index += 1 #eat token
-            kind = tokens[index] #get a new kind
 
-        if kind in ['done', 'status', 'update', 'change']: #special needs
-            index += 1 #eat token
+        if 'is' in tokens:  # check for 'is participle' form, special needs
+            place = tokens.index('is') # is
+            participle = tokens[place + 1]  # participle modifier to is
+
+            if participle in ('done', ):
+                kind = 'done'
+            elif participle in (readied, started, running, stopped, aborted):
+                kind = 'status'
+            elif participle in ('updated', 'changed'):
+                kind = participle[:-1]  # remove 'd' suffix
+            else:
+                msg = "ParseError: Unexpected 'is' participle '%s' for need" %\
+                                    (participle)
+                raise excepting.ParseError(msg, tokens, index)
+
+
             method = 'make' + kind.capitalize() + 'Need'
             if not hasattr(self, method):
                 msg = "ParseError: No parse method called '%s' for need %s" %\
@@ -3115,44 +3149,64 @@ class Builder(object):
 
             act, index = getattr(self, method)(kind, tokens, index)
 
-        elif kind in ['elapsed', 'recurred']: #simple needs, direct and indirect, state is always framer relative
-            index +=1 #eat token
-            act, index = self.makeFramerNeed(kind, tokens, index)
+        else:  # either simple need  or basic need
+            state, framer, index = self.parseFramerState(tokens, index)
+            if state is not None:  # 're' clause present,  simple need
+                if state not  in  ('elapsed', 'recurred'):
+                    msg = "ParseError: Unsupported framer state '%s'" %\
+                                        (state)
+                    raise excepting.ParseError(msg, tokens, index)
 
-        else: #basic needs dynamic (boolean, direct, & indirect)
-            #parse  optional field and required statepath
-            statePath, stateField, index = self.parseNeedState(tokens, index)
+                kind = state
+                act, index = self.makeFramerNeed(kind, tokens, index)
+                # in the future we could support framer need for a different framer
+                # not me or current framer
+                # currently ignoring framer, because only allow 'me' or currentFramer
 
-            #parse optional comparison
-            comparison, index = self.parseComparisonOpt(tokens,index)
+            else:  # basic need with support for deprecated form of simple need
+                simple = False  # found deprecated simple need form
+                statefield, index = self.parseField(tokens, index)
+                if statefield is None:  # no 'in' clause
+                    state = tokens['index']  # look for bare framer state
+                    if state in ('elapsed', 'recurred'):  # deprecated
+                        index += 1
+                        kind = state
+                        simple = True
+                        act, index = self.makeFramerNeed(kind, tokens, index)
 
-            if not comparison: #no comparison so make a boolean need
-                act = self.makeBoolenNeed(statePath, stateField)
+                if not simple:  # basic need either path not elapsed,recurred or 'in' clause
+                    statepath, index = self.parseIndirect(tokens, index)
 
-            else: #valid comparison so required goal
-                #parse required goal
-                direct, goal, goalPath, goalField, index = \
-                       self.parseNeedGoal(statePath, stateField, tokens, index)
+                    #parse optional comparison
+                    comparison, index = self.parseComparisonOpt(tokens,index)
 
-                #parse optional tolerance
-                tolerance, index = self.parseTolerance(tokens, index)
+                    if not comparison: #no comparison so make a boolean need
+                        act = self.makeBoolenNeed(statePath, stateField)
 
-                if direct: #make a direct need
-                    act = self.makeDirectNeed(statePath,
-                                              stateField,
-                                              comparison,
-                                              goal,
-                                              tolerance)
+                    else: #valid comparison so required goal
+                        #parse required goal
+                        direct, goal, goalPath, goalField, index = \
+                               self.parseNeedGoal(statePath, stateField, tokens, index)
 
-                else: #make an indirect need
-                    act = self.makeIndirectNeed(statePath,
-                                                stateField,
-                                                comparison,
-                                                goalPath,
-                                                goalField,
-                                                tolerance)
+                        #parse optional tolerance
+                        tolerance, index = self.parseTolerance(tokens, index)
 
-        if Negate:
+                        if direct: #make a direct need
+                            act = self.makeDirectNeed(statePath,
+                                                      stateField,
+                                                      comparison,
+                                                      goal,
+                                                      tolerance)
+
+                        else: #make an indirect need
+                            act = self.makeIndirectNeed(statePath,
+                                                        stateField,
+                                                        comparison,
+                                                        goalPath,
+                                                        goalField,
+                                                        tolerance)
+
+        if negate:
             act = acting.Nact(actor=act.actor,
                               registrar=act.registrar,
                               parms=act.parms,
@@ -3162,67 +3216,89 @@ class Builder(object):
         return (act, index)
 
     def makeDoneNeed(self, kind, tokens, index):
-        """Need to check if tasker completed by .done truthy
+        """
+        Need to check if tasker completed by .done truthy
            method must be wrapped in appropriate try excepts
 
+        Syntax:
+           if taskername is done
+           if ([auxname, any, all) [in frame [(me, framename)]
+                          [in framer [(me, framername)]]] is done
            done tasker
         """
-        frame = "" # name of frame where aux resides
-        framer = "" # name of framer where aux resides
+        frame = "" # name of frame where aux resides if applicable
+        framer = "" # name of framer where aux resides if applicable
 
         tasker = tokens[index]
+        if not REO_IdentPub.match(tasker):
+            msg = "ParseError: Invalid format of tasker name '%s'" % (tasker)
+            raise excepting.ParseError(msg, tokens, index)
         index += 1
 
-        if index < len(tokens): #options
-            connective = tokens[index]
-
-            if connective == 'in': #optional in frame or in framer clause
-                index += 1 #eat token only otherwise save for next need
-                place = tokens[index] #need to resolve
-                index += 1 #eat token
-
-                if place != 'frame':
-                    msg = ("ParseError: Building verb '{0}'. Invalid "
-                        " '{1}' clause. Expected 'frame' got "
-                        "'{2}'".format(command, connective, place))
-                    raise excepting.ParseError(msg, tokens, index)
-
-                if index < len(tokens):
-                    frame = tokens[index]
-                    index += 1
-
-                    if index < len(tokens): #options
-                        connective = tokens[index]
-
-                        if connective == 'of':
-                            index += 1 #eat token
-                            place = tokens[index] #need to resolve
-                            index += 1 #eat token
-
-                            if place != 'framer':
-                                msg = ("ParseError: Building verb '{0}'. Invalid "
-                                       " '{1}' clause. Expected 'framer' got "
-                                       "'{2}'".format(command, connective, place))
-                                raise excepting.ParseError(msg, tokens, index)
-
-                            if index < len(tokens):
-                                framer = tokens[index]
-                                index += 1
-                            else:
-                                framer = 'me'
-
-                else:
-                    frame = 'me'
-                    framer = 'me'
-
-        if frame and tasker not in ['any', 'all']:
-            msg = ("ParseError: Building verb '{0}'. Named tasker '{1}'  not "
-                "allowed with 'in frame' clause.".format(command, tasker))
-            raise excepting.ParseError(msg, tokens, index)
-
-        if not frame and tasker in ['any', 'all']:
+        if tasker in ['any', 'all']:  # auxilary case applicable so default
             frame = 'me'
             framer = 'me'
+
+        # optional in clauses followed by is clause
+        # in clause existence means auxilary case
+        connective = tokens[index]
+        if connective == 'in':  # optional 'in frame [(me, framename)]' clause
+            framer = 'me'  # if frame clause then framer default unless framer clause
+            index += 1  # eat 'in' connective
+            place = tokens[index]  # required place frame
+            index += 1  # eat place token
+
+            if place != 'frame':
+                msg = ("ParseError: Expected 'frame' got "
+                    "'{0}'".format(place))
+                raise excepting.ParseError(msg, tokens, index)
+
+            connective = tokens[index]
+            if connective not in Required:  # assume must be name
+                frame = connective
+                if not REO_IdentPub.match(frame):
+                    msg = "ParseError: Invalid format of frame name '%s'" % (frame)
+                    raise excepting.ParseError(msg, tokens, index)
+                index += 1
+                connective = tokens[index]
+
+            else:  # frame name not given so default
+                frame = 'me'
+
+            if connective == 'in':  # optional 'in framer [(me, framername)]' clause
+                index += 1  # eat 'in' connective
+                place = tokens[index]  # required place framer
+                index += 1  # eat place token
+
+                if place != 'framer':
+                    msg = ("ParseError: Expected 'framer' got "
+                           "'{0}'".format(place))
+                    raise excepting.ParseError(msg, tokens, index)
+
+                connective = tokens[index]
+                if connective not in Required:  # assume must be name
+                    framer = connective
+                    if not REO_IdentPub.match(framer):
+                        msg = "ParseError: Invalid format of framer name '%s'" % (framer)
+                        raise excepting.ParseError(msg, tokens, index)
+                    index += 1
+                    connective = tokens[index]
+                else:
+                    framer = 'me'
+
+        if connective not in ('is', ):  # missing 'is'
+            msg = ("ParseError: Expected 'is' connective got "
+                                       "'{0}'".format(connective))
+            raise excepting.ParseError(msg, tokens, index)
+
+        index += 1  # eat 'is' connective token
+
+        participle = tokens[index]
+        if participle not in ('done', ):  # wrong 'participle'
+            msg = ("ParseError: Expected 'done' participle got "
+                                       "'{0}'".format(participle))
+            raise excepting.ParseError(msg, tokens, index)
+
 
         # a frame of me is nonsensical if framer is not current framer
         if (frame == 'me' and
@@ -3250,23 +3326,29 @@ class Builder(object):
         return (act, index)
 
     def makeStatusNeed(self, kind, tokens, index):
-        """Need to check if tasker named tasker status' is status
+        """
+        Need to check if tasker named tasker status' is status
 
-           method must be wrapped in appropriate try excepts
+        method must be wrapped in appropriate try excepts
 
-           status (me, tasker) is (readied, started, running, stopped, aborted)
+        Syntax:
+            if taskername is (readied, started, running, stopped, aborted)
+
         """
         tasker = tokens[index]
+        if not REO_IdentPub.match(tasker):
+            msg = "ParseError: Invalid format of tasker name '%s'" % (tasker)
+            raise excepting.ParseError(msg, tokens, index)
         index += 1
 
         connective = tokens[index]
         index += 1
-        if connective != 'is':
+        if connective not in ('is', ):
             msg = "ParseError: Need status invalid connective '%s'" %\
                 (kind, connective)
             raise excepting.ParseError(msg, tokens, index)
 
-        status = tokens[index]
+        status = tokens[index]  # participle
         index += 1
         if status.capitalize() not in StatusValues:
             msg = "ParseError: Need status invalid status '%s'" %\
@@ -3314,32 +3396,61 @@ class Builder(object):
         return (self.makeMarkerNeed(kind, tokens, index))
 
     def makeMarkerNeed(self, kind, tokens, index):
-        """ Support method to make either NeedUpdate or NeedChange
+        """
+        Support method to make either NeedUpdate or NeedChange
             as determined by kind
 
-            Syntax:
-                if (update, change) [in frame (me, framename)] sharepath
+        Syntax:
+            if path [[of relation] ...] is updated  [by frame [(me, framename)]]
+            if path [[of relation] ...] is changed  [by frame [(me, framename)]]
+
+            sharepath:
+                path [[of relation] ...]
+
         """
         frame = "me" # name of marked frame
 
-        connective = tokens[index]
-        if connective == 'in': #optional in frame clause
-            index += 1 #eat token
-
-            place = tokens[index] #need to resolve
-            index += 1  # eat token
-
-            if place != 'frame':
-                msg = ("ParseError: Building verb '{0}'. Invalid "
-                       " '{1}' clause. Expected 'frame' got "
-                       "'{2}'".format(command, connective, place))
-                raise excepting.ParseError(msg, tokens, index)
-
-            # if index < len(tokens): # makes optional
-            frame = tokens[index] #need to resolve
-            index += 1  #eat token
-
         sharePath, index = self.parseIndirect(tokens, index)
+
+        connective = tokens[index]
+        if connective not in ('is', ):
+            msg = ("ParseError: Unexpected connective '{0}' not 'is, "
+                    "while building need".format(connective))
+            raise excepting.ParseError(msg, tokens, index)
+        index += 1
+
+        participle = tokens[index]
+        if participle not in ('updated', 'changed' ):
+            msg = ("ParseError: Unexpected 'is' participle '{0}', "
+                    " not 'updated' or 'changed', "
+                    "while building need".format(participle))
+            raise excepting.ParseError(msg, tokens, index)
+        index += 1
+
+        while  index < len(tokens):  # optional 'by frame' clause
+            connective = tokens[index]
+            if connective == 'by':
+                index += 1 #eat token
+
+                place = tokens[index] #need to resolve
+                index += 1  # eat token
+
+                if place != 'frame':
+                    msg = ("ParseError: Building verb '{0}'. Invalid "
+                           " '{1}' clause. Expected 'frame' got "
+                           "'{2}'".format(command, connective, place))
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if index < len(tokens): # makes optional
+                    frame = tokens[index] #need to resolve
+                    if not REO_IdentPub.match(frame):
+                        msg = "ParseError: Invalid format of frame name '%s'" % (frame)
+                        raise excepting.ParseError(msg, tokens, index)
+                    index += 1  #eat token
+
+        # ensure kind and participle match legacy to pass in kind so we fix here
+        # for now
+        kind = participle[:-1]  # remove 'd' suffix
 
         # assign marker type actual marker Act created in need's resolve
         marker = 'Marker' + kind.capitalize()
@@ -3656,33 +3767,33 @@ class Builder(object):
 
 
     def parseFields(self, tokens, index):
-        """Parse optional field list for Indirect address
+        """
+        Parse optional field list for Indirect address
 
-           parms:
-              tokens = list of tokens for command
-              index = current index into tokens
+        parms:
+           tokens = list of tokens for command
+           index = current index into tokens
 
-           returns:
-              fields
-              index
+        returns:
+           (fields,index)
 
-           method must be wrapped in appropriate try excepts
 
-           Syntax:
+        method must be wrapped in appropriate try excepts
 
-           [(value, fields) in] indirect
+        Syntax:
 
-           fields:
-              field [field ...]
+        [(value, fields) in] indirect
 
-           valid fields only when encounter token 'in' after fields
+        fields:
+           field [field ...]
 
-           parsing end conditions that signify no fields
-           if encounter before 'in':
-              no more tokens (init, put, copy, set)
-              token 'to'  (init, set)
-              token 'from' (init, set)
-              token 'into' (copy)
+        valid fields only when encounter token 'in' after fields
+        consumes fields and the 'in' so subsequent parsePath starts with indirect path
+
+        parsing end conditions that signify no fields
+        if encounter before 'in':
+           no more tokens
+           reserved token
 
         """
         indexSave = index #save it since welookahead to see if "in"
@@ -3720,35 +3831,34 @@ class Builder(object):
         return (fields, index)
 
     def parseField(self, tokens, index):
-        """Parse optional field  for Indirect address
+        """
+        Parse optional field  for Indirect address
 
-           parms:
-              tokens = list of tokens for command
-              index = current index into tokens
+        parms:
+           tokens = list of tokens for command
+           index = current index into tokens
 
-           returns:
-              field
-              index
+        returns:
+           (field, index)
 
-           method must be wrapped in appropriate try excepts
+        method must be wrapped in appropriate try excepts
 
-           Syntax:
+        Syntax:
 
-           [(value, field) in] indirect
+        [(value, field) in] indirect
 
-           valid fields only when encounter token 'in' after fields
+        valid field only when encounter token 'in' after first field
+        consumes field and the 'in' so subsequent parsePath starts with indirect path
 
-           parsing end conditions that signify no fields
-           if encounter before 'in':
-              no more tokens (init, put, copy, set)
-              token 'to'  (init, set)
-              token 'from' (init, set)
-              token 'into' (copy)
+        parsing end conditions that signify no fields
+        if encounter before 'in':
+           no more tokens
+           reserved token
 
         """
         indexSave = index #save it since welookahead to see if "in"
         fields = []
-        found = False #flag to indicate found 'in' wich indicates fields clause
+        found = False #flag to indicate found 'in' which indicates fields clause
 
         while index < len(tokens):
             field = tokens[index]
@@ -4105,6 +4215,87 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
 
         return (comparison, index)
+
+    def parseFramerState(self, tokens, index):
+        """Parse framer state expression
+
+           parms:
+              tokens = list of tokens for command
+              index = current index into tokens
+
+           returns:
+              (state, framer, index)
+
+           method must be wrapped in appropriate try excepts
+
+           Syntax:
+
+           state re [(me, framername)]
+
+           valid state only when encounter token 're' after first state
+
+           parsing end conditions that signify no state
+           if encounter before 're':
+              no more tokens
+              reserved token
+              multiple states
+
+        """
+        indexSave = index  # save it since we lookahead to see if "re"
+        states = []
+        found = False  #f lag to indicate found 'in' wich indicates fields clause
+        framer = None
+
+        while index < len(tokens):
+            state = tokens[index]
+            if state == 're':  # state list completed
+                index += 1  # eat 're' token
+                found = True
+                break  # do not append state == 're' to states
+
+            if state in Reserved: #field list not present
+                break  # do not append state == reserved to states
+
+            index += 1  # eat last state token
+            state = StripQuotes(state)  # candidate state
+            states.append(state)  # save it
+
+        if not found:  # no state clause 're'
+            index = indexSave #so restore index
+            states = [] #empty states list
+
+        #prevent using multiple fields
+        if (len(states) > 1):
+            msg = "ParseError: More than one state = '%s'" % (states)
+            raise excepting.ParseError(msg, tokens, index)
+
+        if states:
+            state = states[0]
+            if not REO_IdentPub.match(state):
+                msg = "ParseError: Invalid format of state '%s'" % (state)
+                raise excepting.ParseError(msg, tokens, index)
+
+        else:
+            state = None
+
+        if state is not None:  # get optional framer
+            framer = 'me'
+            while index < len(tokens):
+                framer = tokens(index)
+                if framer in Reserved:  # framer not present
+                    break
+
+                if not REO_IdentPub.match(framer):
+                    msg = "ParseError: Invalid format of framer name '%s'" % (framer)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if framer != 'me' and framer != self.currentFramer.name:
+                    msg = "ParseError: Framer name '%s' for state need not current framer" % (framer)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                index += 1
+
+        return (state, framer, index)
 
     def parseNeedState(self, tokens, index):
         """Parse required need state

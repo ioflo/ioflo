@@ -118,12 +118,16 @@ class NeedDone(Need):
                 result = any([aux.done for aux in frame.auxes ])
             elif tasker == 'all':
                 result = frame.auxes and all([aux.done for aux in frame.auxes])
+            elif tasker in frame.auxes:
+                result = tasker.done
             else:
                 result = False
+            name = tasker if tasker in ('any', 'all') else tasker.name
+            console.profuse("Need Aux {0} done = {1}\n".format(name, result))
 
         else:
             result = tasker.done
-            console.profuse("Need Framer {0} done = {1}\n".format(tasker.name, result))
+            console.profuse("Need Tasker {0} done = {1}\n".format(tasker.name, result))
 
         return result
 
