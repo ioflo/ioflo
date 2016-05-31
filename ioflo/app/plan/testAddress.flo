@@ -1,0 +1,48 @@
+#example mission address.flo
+
+house address
+
+framer vehiclesim be active first vehicle_run
+
+frame vehicle_run
+   do simulator motion uuv
+
+framer mission be active first mission_start
+
+frame timeout
+  go abort if elapsed > 30
+
+  frame mission_start in timeout
+   set elapsed with 20.0
+   set goal.heading with 0.0
+   set goal.depth with 5.0
+   set goal.speed with 2.5
+
+   put true into stuff of framer
+   put true into stuff of frame
+   set state.test of framer with true
+   set state.test of frame with true
+   put true into junk of frame of root
+   put true into junk of frame autopilot_run of framer autopilot
+   go next if state.test of framer and state.test of frame
+   #go next if elapsed >= goal
+
+frame mission_stop
+  print "Success"
+  bid stop vehiclesim
+  bid stop autopilot
+  bid stop me
+
+frame abort
+  print "Failure"
+  put "Address" into meta.failure
+  bid stop all
+
+
+framer autopilot be active first autopilot_run
+
+frame autopilot_run
+  do controller pid speed
+  do controller pid heading
+  do controller pid depth
+  do controller pid pitch

@@ -17,7 +17,7 @@ house cloner
             print clonage1
             put 0 into counter of framer
             put 1 into limit of frame
-            go next if done all
+            go next if all is done
 
          frame pruner1 in start
             print pruner1
@@ -37,7 +37,7 @@ house cloner
             put 1 into limit of frame
             raze last
             raze first
-            go next if done all
+            go next if all is done
 
          frame pruner2 in start
             print pruner2
@@ -76,7 +76,7 @@ house cloner
          print R
          put 0 into counter of framer
          aux orig3 as RCloneOrig3
-         go next if done RCloneOrig3
+         go next if RCloneOrig3 is done
 
       frame S
          print S
@@ -108,7 +108,7 @@ house cloner
          print D
          put 0 into counter of framer
          aux orig5 as mine
-         go next if done all
+         go next if all is done
 
       frame E
          print E

@@ -23,67 +23,67 @@ framer test be active first test0 via .top.
 
     frame sub1 in timeout
       aux sub as sub1
-      go next if done sub1
+      go next if sub1 is done
 
     frame sub2 in timeout
       aux sub as mine
-      go next if done all
+      go next if all is done
 
     frame pub1 in timeout
       aux pub as pub1
-      go next if done pub1
+      go next if pub1 is done
 
     frame pub2 in timeout
       aux pub as pub2 via main
-      go next if done pub2
+      go next if pub2 is done
 
     frame pub3 in timeout
       aux pub as pub3 via mine
-      go next if done pub3
+      go next if pub3 is done
 
     frame pub4 in timeout
       aux pub as pub4 via pop
-      go next if done pub4
+      go next if pub4 is done
 
     frame pub5 in timeout
       aux pub as pub5 via .pop
-      go next if done pub5
+      go next if pub5  is done
 
     frame cub1 in timeout
       aux cub as cub1
-      go next if done cub1
+      go next if cub1 is done
 
     frame cub2 in timeout
       aux cub as cub2 via mine
-      go next if done cub2
+      go next if cub2 is done
 
     frame bub1 in timeout
       aux bub as bub1 via mine
-      go next if done bub1
+      go next if bub1 is done
 
     frame bub2 in timeout
       aux bub as bub2
-      go next if done bub2
+      go next if bub2 is done
 
     frame bub3 in timeout
       aux bub as bub3 via main
-      go next if done bub3
+      go next if bub3 is done
 
     frame lub1 in timeout
       aux lub as lub1 via mine
-      go next if done lub1
+      go next if lub1 is done
 
     frame lub2 in timeout
       aux lub as lub2 via pop
-      go next if done lub2
+      go next if lub2 is done
 
     frame lub3 in timeout
       aux lub as lub3
-      go next if done lub3
+      go next if lub3 is done
 
     frame lub4 in timeout
       aux lub as lub4 via main
-      go next if done lub4
+      go next if lub4 is done
 
   frame done
     print "Success"

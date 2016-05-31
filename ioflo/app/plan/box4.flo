@@ -30,7 +30,7 @@ frame leg in depthmax
 
 frame gpsfix
    aux gps
-   go next if done gps
+   go next if gps is done
 
 frame turn in depthmax
    inc boxer.heading from boxer.turn

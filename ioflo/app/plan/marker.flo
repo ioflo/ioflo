@@ -20,26 +20,26 @@ frame start
 
 frame change1 in start
     put 6 into .marked.changed
-    go next if change .marked.changed
+    go next if .marked.changed is changed
 
 frame update1 in start
     put true into .marked.updated
-    go next if update .marked.updated
+    go next if .marked.updated is updated
 
 frame update2 in start
-    go next if update .state.heading
+    go next if .state.heading is updated
 
 frame change2 in start
-    go next if change in frame change2 .state.depth
+    go next if .state.depth is changed by frame change2
 
 frame update3 in start
-    go next if update in frame update3 .state.heading
+    go next if .state.heading is updated by frame update3
 
 frame update4 in start
-    go next if update in frame start .state.heading
+    go next if .state.heading is updated by frame start
 
 frame update5 in start
-    go next if update .marked.updated
+    go next if .marked.updated is updated
     go next if recurred >= 3
 
 frame done

@@ -64,11 +64,11 @@ framer test be active first test0
 
     frame test7 in timeout
       put 6 into .marked.changed
-      go next if change .marked.changed
+      go next if .marked.changed is changed
 
     frame test8 in timeout
       put true into .marked.updated
-      go next if update .marked.updated
+      go next if .marked.updated is updated
 
     frame test9 in timeout
       do doer at enter via .rooted

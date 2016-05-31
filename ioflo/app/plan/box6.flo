@@ -35,7 +35,7 @@ framer mission be active first leg
 
   frame gpsfix
     aux gps
-    go leg if done gps
+    go leg if gps is done
     exit
       inc boxer.heading from boxer.turn
       inc boxer.leg with 1.0

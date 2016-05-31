@@ -24,7 +24,7 @@ frame northleg in depthmax
 
 frame gpsfixnorth
    aux gps
-   go next if done gps
+   go next if gps is done
 
 frame eastleg in depthmax
    set elapsed with 20.0
@@ -35,7 +35,7 @@ frame eastleg in depthmax
 
 frame gpxfixeast
    aux gps
-   go next if done gps
+   go next if gps is done
 
 frame southleg in depthmax
    set elapsed with 20.0
@@ -46,7 +46,7 @@ frame southleg in depthmax
 
 frame gpxfixsouth
    aux gps
-   go next if done gps
+   go next if gps is done
 
 frame westleg in depthmax
    set elapsed with 20.0
@@ -57,7 +57,7 @@ frame westleg in depthmax
 
 frame gpxfixwest
    aux gps
-   go next if done gps
+   go next if gps is done
 
 frame mission_stop
    bid stop vehiclesim

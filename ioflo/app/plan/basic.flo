@@ -22,7 +22,7 @@ framer test be active first start
       ready testslave #benter
       start testslave # enter
       run testslave # recur
-      go next if done testslave
+      go next if testslave is done
       stop testslave # exit
 
    frame abort

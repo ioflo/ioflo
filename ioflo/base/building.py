@@ -3072,51 +3072,52 @@ class Builder(object):
         [not] need
 
         need:
+
             basic need:
-                if [(value, field) in] path [[of relation] ...] [comparison goal [+- tolerance]]
+                if state [comparison goal [+- tolerance]]
 
             simple need:
-                if framerstate [re [me, framername]] comparison framergoal [+- tolerance]
+                if framerstate [re [(me, framername)]] comparison framergoal [+- tolerance]
 
                 if framerstate re [me] is TBD  # not supported yet
 
             special need:
 
-                if path [[of relation] ...] is updated  [by frame (me, framename)]
-                if path [[of relation] ...] is changed  [by frame (me, framename)]
+                if indirect is (updated,changed)  [by frame (me, framename)]
 
                 if taskername is (readied, started, running, stopped, aborted)
+
                 if taskername is done
                 if ([auxname, any, all) [in frame [(me, framename)]
                                   [in framer [(me, framername)]]] is done
 
 
-            sharepath:
-                path [[of relation] ...]
+        state:
+            [(value, field) in] indirect
 
-            framerstate:
-                (elapsed, recurred)
 
-            goal:
-                value
-                [(value, field) in] indirect
+        goal:
+            value
+            [(value, field) in] indirect
 
-            framergoal:
-                goal
-                value
-                [(value, field) in] indirect
+        indirect:
+            path [[of relation] ...]
 
-            comparison:
-               (==, !=, <, <=, >=, >)
+        comparison:
+            (==, !=, <, <=, >=, >)
 
-            state:
-                [(value, field) in] indirect
+        tolerance:
+            number (the absolute value is used)
 
-            indirect:
-                path [[of relation] ...]
+        framerstate:
+            (elapsed, recurred)
 
-            tolerance:
-               number (the absolute value is used)
+        framergoal:
+            goal
+            value
+            [(value, field) in] indirect
+
+
         """
         kind = None
         negate = False
@@ -3131,23 +3132,17 @@ class Builder(object):
 
             if participle in ('done', ):
                 kind = 'done'
-            elif participle in (readied, started, running, stopped, aborted):
+                act, index = self.makeDoneNeed(kind, tokens, index)
+            elif participle in ('readied', 'started', 'running', 'stopped', 'aborted'):
                 kind = 'status'
+                act, index = self.makeStatusNeed(kind, tokens, index)
             elif participle in ('updated', 'changed'):
                 kind = participle[:-1]  # remove 'd' suffix
+                act, index = self.makeMarkerNeed(kind, tokens, index)
             else:
                 msg = "ParseError: Unexpected 'is' participle '%s' for need" %\
                                     (participle)
                 raise excepting.ParseError(msg, tokens, index)
-
-
-            method = 'make' + kind.capitalize() + 'Need'
-            if not hasattr(self, method):
-                msg = "ParseError: No parse method called '%s' for need %s" %\
-                    (method, kind)
-                raise excepting.ParseError(msg, tokens, index)
-
-            act, index = getattr(self, method)(kind, tokens, index)
 
         else:  # either simple need  or basic need
             state, framer, index = self.parseFramerState(tokens, index)
@@ -3165,9 +3160,9 @@ class Builder(object):
 
             else:  # basic need with support for deprecated form of simple need
                 simple = False  # found deprecated simple need form
-                statefield, index = self.parseField(tokens, index)
-                if statefield is None:  # no 'in' clause
-                    state = tokens['index']  # look for bare framer state
+                stateField, index = self.parseField(tokens, index)
+                if stateField is None:  # no 'in' clause
+                    state = tokens[index]  # look for bare framer state
                     if state in ('elapsed', 'recurred'):  # deprecated
                         index += 1
                         kind = state
@@ -3175,7 +3170,7 @@ class Builder(object):
                         act, index = self.makeFramerNeed(kind, tokens, index)
 
                 if not simple:  # basic need either path not elapsed,recurred or 'in' clause
-                    statepath, index = self.parseIndirect(tokens, index)
+                    statePath, index = self.parseIndirect(tokens, index)
 
                     #parse optional comparison
                     comparison, index = self.parseComparisonOpt(tokens,index)
@@ -3254,7 +3249,7 @@ class Builder(object):
                 raise excepting.ParseError(msg, tokens, index)
 
             connective = tokens[index]
-            if connective not in Required:  # assume must be name
+            if connective not in Reserved:  # assume must be name
                 frame = connective
                 if not REO_IdentPub.match(frame):
                     msg = "ParseError: Invalid format of frame name '%s'" % (frame)
@@ -3276,7 +3271,7 @@ class Builder(object):
                     raise excepting.ParseError(msg, tokens, index)
 
                 connective = tokens[index]
-                if connective not in Required:  # assume must be name
+                if connective not in Reserved:  # assume must be name
                     framer = connective
                     if not REO_IdentPub.match(framer):
                         msg = "ParseError: Invalid format of framer name '%s'" % (framer)
@@ -3294,6 +3289,7 @@ class Builder(object):
         index += 1  # eat 'is' connective token
 
         participle = tokens[index]
+        index += 1
         if participle not in ('done', ):  # wrong 'participle'
             msg = ("ParseError: Expected 'done' participle got "
                                        "'{0}'".format(participle))
@@ -3303,8 +3299,8 @@ class Builder(object):
         # a frame of me is nonsensical if framer is not current framer
         if (frame == 'me' and
                 not (framer == 'me' or  framer == self.currentFramer.name)):
-            msg = ("Error building {0}. Frame '{0}' nonsensical given"
-                   " Framer '{1}'.".format(command, frame, framer))
+            msg = ("Error: Frame '{0}' nonsensical given"
+                   " Framer '{1}'.".format(frame, framer))
             raise excepting.ParseError(msg, tokens, index)
 
         actorName = 'Need' + kind.capitalize()
@@ -3427,6 +3423,12 @@ class Builder(object):
             raise excepting.ParseError(msg, tokens, index)
         index += 1
 
+        # ensure kind and participle match
+        if participle[:-1] != kind:  # remove 'd' suffix
+            msg = ("ParseError: Mismatching participle. Expected '{0}' got "
+                                       "'{1}'".format(kind + 'd', participle))
+            raise excepting.ParseError(msg, tokens, index)
+
         while  index < len(tokens):  # optional 'by frame' clause
             connective = tokens[index]
             if connective == 'by':
@@ -3436,9 +3438,9 @@ class Builder(object):
                 index += 1  # eat token
 
                 if place != 'frame':
-                    msg = ("ParseError: Building verb '{0}'. Invalid "
-                           " '{1}' clause. Expected 'frame' got "
-                           "'{2}'".format(command, connective, place))
+                    msg = ("ParseError: Invalid "
+                           " '{0}' clause. Expected 'frame' got "
+                           "'{1}'".format(connective, place))
                     raise excepting.ParseError(msg, tokens, index)
 
                 if index < len(tokens): # makes optional
@@ -3447,10 +3449,6 @@ class Builder(object):
                         msg = "ParseError: Invalid format of frame name '%s'" % (frame)
                         raise excepting.ParseError(msg, tokens, index)
                     index += 1  #eat token
-
-        # ensure kind and participle match legacy to pass in kind so we fix here
-        # for now
-        kind = participle[:-1]  # remove 'd' suffix
 
         # assign marker type actual marker Act created in need's resolve
         marker = 'Marker' + kind.capitalize()
@@ -4247,17 +4245,17 @@ class Builder(object):
         framer = None
 
         while index < len(tokens):
-            state = tokens[index]
-            if state == 're':  # state list completed
+            connective = tokens[index]
+            if connective == 're':  # state list completed
                 index += 1  # eat 're' token
                 found = True
                 break  # do not append state == 're' to states
 
-            if state in Reserved: #field list not present
+            if connective in Reserved: #field list not present
                 break  # do not append state == reserved to states
 
             index += 1  # eat last state token
-            state = StripQuotes(state)  # candidate state
+            state = StripQuotes(connective)  # candidate state
             states.append(state)  # save it
 
         if not found:  # no state clause 're'
@@ -4281,10 +4279,11 @@ class Builder(object):
         if state is not None:  # get optional framer
             framer = 'me'
             while index < len(tokens):
-                framer = tokens(index)
-                if framer in Reserved:  # framer not present
+                connective = tokens[index]
+                if connective in Reserved:  # framer not present
                     break
 
+                framer = connective
                 if not REO_IdentPub.match(framer):
                     msg = "ParseError: Invalid format of framer name '%s'" % (framer)
                     raise excepting.ParseError(msg, tokens, index)
@@ -4294,6 +4293,7 @@ class Builder(object):
                     raise excepting.ParseError(msg, tokens, index)
 
                 index += 1
+
 
         return (state, framer, index)
 

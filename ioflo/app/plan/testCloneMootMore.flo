@@ -9,12 +9,12 @@ house cloner
          frame cloner4 in start
             print cloner4
             aux orig4 as clone1
-            go next if done all
+            go next if all is done
 
          #frame cloner5 in start
          #   print cloner5
          #   aux orig4 as mine
-         #   go next if done all
+         #   go next if all is done
 
       frame done
           print "Success"
@@ -30,8 +30,9 @@ house cloner
 
       frame D
          print D
+         put 0 into counter of framer
          aux orig5 as clone2
-         go next if done all
+         go next if all is done
 
       frame E
          print E

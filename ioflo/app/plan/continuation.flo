@@ -32,7 +32,8 @@ framer mission be active first mission_start
 
     put true into junk of frame of root
     put true into junk of frame autopilot_run of framer autopilot
-    go next if state.test of framer and state.test of frame
+    go next if state.test of framer
+      and state.test of frame
 
   frame mission_stop
     print "Success"

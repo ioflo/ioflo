@@ -11,30 +11,40 @@ house cloner
             put 0 into counter of framer
             put 1 into limit of frame
             aux orig1 as mine
-            go next if done all
+            go next if all is done
 
          frame cloner2 in start
             print cloner2
             put 0 into counter of framer
             aux orig2 as mine
-            go next if done all
+            go next if all in frame is done
 
          frame cloner3 in start
             print cloner3
             put 0 into counter of framer
             put 1 into limit of frame
             aux orig1 as mine
-            go next if done all
+            go next if all in frame me is done
 
          frame cloner4 in start
             print cloner4
             aux orig4 as mine
-            go next if done all
+            go next if all in frame me in framer me is done
 
          frame cloner5 in start
             print cloner5
             aux orig4 as mine
-            go next if done all
+            go next if all in frame in framer is done
+
+         frame cloner6 in start
+            print cloner6
+            aux orig4 as mine
+            go next if all in frame cloner6 in framer mission is done
+
+         frame cloner7 in start
+            print cloner7
+            aux orig4 as mine
+            go next if all in frame me in framer mission is done
 
       frame done
           print "Success"
@@ -66,8 +76,9 @@ house cloner
 
       frame R
          print R
+         put 0 into counter of framer
          aux orig3 as RCloneOrig3
-         go next if done RCloneOrig3
+         go next if RCloneOrig3 is done
 
       frame S
          print S
@@ -97,8 +108,9 @@ house cloner
 
       frame D
          print D
+         put 0 into counter of framer
          aux orig5 as mine
-         go next if done all
+         go next if all is done
 
       frame E
          print E

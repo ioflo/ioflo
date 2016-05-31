@@ -14,7 +14,7 @@ frame setup
 
    frame leg in setup
       aux myaux
-      go me if done myaux  #forced exit entry
+      go me if myaux is done  #forced exit entry
       go finish if .leg >= .nlegs
       exit
          inc .leg with 1
