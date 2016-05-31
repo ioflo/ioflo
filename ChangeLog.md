@@ -46,7 +46,7 @@ New Syntax:
     (elapsed, recurred) [re [me]] comparison framergoal
         [+- tolerance]
 
-    indirect is (updated, changed) [by frame (me, framename)]
+    indirect is (updated, changed) [in frame (me, framename)]
 
     tasker is done
 
