@@ -979,7 +979,7 @@ class Transiter(Interrupter):
         exits, enters, reexens = framing.Framer.ExEn(framer.actives, far)
 
         #check enters, if successful, perform transition
-        if not framer.checkEnter(enters):
+        if not framer.checkEnter(enters, exits):
             return None
 
         msg = "To: {0}<{1} at {2} Via: {3} ({4}) From: {5} after {6:0.3f}\n".format(
@@ -1076,8 +1076,8 @@ class Suspender(Interrupter):
             # if aux.main is not None then it has not been released and so
             # we can't enter unless it is our act's frame
             if aux.main and (aux.main is not self._act.frame):
-                console.concise("    Invalid aux '{0}' in use "
-                        "by another frame '{1}'\n".format(aux.name, aux.main.name))
+                console.concise("    Invalid aux '{0}' in use by another frame"
+                        " '{1}'\n".format(aux.name, aux.main.name))
                 return None
 
             if not aux.checkStart(): #performs entry checks

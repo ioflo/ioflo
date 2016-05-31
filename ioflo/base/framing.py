@@ -372,13 +372,14 @@ class Framer(tasking.Tasker):
            returns result of checkEnter()
 
         """
-        return self.checkEnter(self.first.outline)
+        return self.checkEnter(enters=self.first.outline)
 
-    def checkEnter(self, enters = []):
+    def checkEnter(self, enters=[], exits=[]):
         """checks beacts for frames in enters list
            return on first failure do not keep testing
            assumes enters outline in top down order
-
+           exits list is used by frame.checkEnters to test for original auxiliaries
+           that would be exited from thier main frame if transition where allowed
         """
         console.profuse("{0}Check enters of {1} Framer {2}\n".format(
             '    ' if self.schedule == AUX or self.schedule == SLAVE else '',
@@ -390,7 +391,7 @@ class Framer(tasking.Tasker):
             return False
 
         for frame in enters:
-            if not frame.checkEnter():
+            if not frame.checkEnter(exits=exits):
                 return False
         console.profuse("    True all {0}\n".format(self.name))
         return True
@@ -1211,8 +1212,10 @@ class Frame(registering.StoriedRegistrar):
         self.headHuman = human
         return human
 
-    def checkEnter(self):
+    def checkEnter(self, exits=[]):
         """Check beacts for self and auxes
+           exits is list of exit frames to test if aux main frame would be exited
+           if transition allowed
         """
         console.profuse("    Check enter into {0}\n".format(self.name))
 
@@ -1221,11 +1224,12 @@ class Frame(registering.StoriedRegistrar):
                 return False #return False on first failure
 
         for aux in self.auxes:
-            #if aux.main is not None then it has not been released and so
-            #we can't enter unless its ourself for forced re-entry
-            if aux.main and (aux.main is not self): # does aux belong to another frame
-                console.concise("    False. Invalid aux '{0}' in use "
-                        "by another frame '{1}'\n".format(aux.name, aux.main.name))
+            # if aux.main is not None then it has not been released and so
+            # we can't enter unless its ourself for forced re-entry
+            # verify that aux does not belong to another frame
+            if aux.main and (aux.main is not self) and (aux.main not in exits):
+                console.concise("    False. Invalid aux '{0}' in use by another frame"
+                        " '{1}'\n".format(aux.name, aux.main.name))
                 return False
 
             if not aux.checkStart(): #performs entry checks beacts
