@@ -3083,7 +3083,7 @@ class Builder(object):
 
             special need:
 
-                if indirect is (updated,changed)  [by frame (me, framename)]
+                if indirect is (updated,changed)  [in frame (me, framename)]
 
                 if taskername is (readied, started, running, stopped, aborted)
 
@@ -3429,9 +3429,9 @@ class Builder(object):
                                        "'{1}'".format(kind + 'd', participle))
             raise excepting.ParseError(msg, tokens, index)
 
-        while  index < len(tokens):  # optional 'by frame' clause
+        while  index < len(tokens):  # optional 'in frame' clause
             connective = tokens[index]
-            if connective == 'by':
+            if connective == 'in':
                 index += 1 #eat token
 
                 place = tokens[index] #need to resolve
