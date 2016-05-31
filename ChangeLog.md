@@ -20,6 +20,60 @@ we can disambiguate
 Expanded use of 'is' as a connective to also be a comparison like connective
 Added it to reserved connectives list (bug not to be there already)
 
+Conditionals (Need) are used in the following verbs
+
+go target [if conditional [and conditional ...]]
+let target [if conditional [and conditional ...]]
+aux target [if conditional [and conditional ...]]
+
+
+Old Syntax:
+    always
+    done tasker
+    done (any, all) [in frame [(me, framename)][of framer [(me, framername)]]]
+    status (me, tasker) is (readied, started, running, stopped, aborted)
+    update [in frame (me, framename)] indirect
+    change [in frame (me, framename)] indirect
+    elapsed comparison framergoal [+- tolerance]
+    recurred comparison framergoal [+- tolerance]
+    state [comparison goal [+- tolerance]]
+
+    [(value, field) in] indirect [comparison goal [+- tolerance]]
+
+New Syntax:
+    state [comparison goal [+- tolerance]]
+
+    (elapsed, recurred) [re [me]] comparison framergoal
+        [+- tolerance]
+
+    indirect is (updated, changed) [by frame (me, framename)]
+
+    tasker is done
+
+    (auxname, any, all)
+        [in frame [(me, framename)]
+        [in framer [(me,framername)]]] is done
+
+    (me, tasker) is (readied, started, running, stopped, aborted)
+
+    state:
+        [(value, field) in] indirect
+
+    goal:
+        value
+        [(value, field) in] indirect
+
+    comparison:
+        (==, !=, <, <=, >=, >)
+
+    tolerance:
+        number (the absolute value is used)
+
+    framergoal:
+        goal
+        value
+        [(value, field) in] indirect
+
 
 --------
 20160528
