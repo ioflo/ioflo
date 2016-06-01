@@ -23,7 +23,7 @@ framer test be active first test0 via .top.
 
     frame sub1 in timeout
       aux sub as sub1
-      go next if sub1 is done
+      go next if sub1 is done and elapsed >= 0.0
 
     frame sub2 in timeout
       aux sub as mine
@@ -31,7 +31,7 @@ framer test be active first test0 via .top.
 
     frame pub1 in timeout
       aux pub as pub1
-      go next if pub1 is done
+      go next if elapsed >= 0.0 and pub1 is done
 
     frame pub2 in timeout
       aux pub as pub2 via main

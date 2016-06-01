@@ -1,0 +1,34 @@
+# testServer.flo
+
+house test_slave
+
+  init meta.test with value "test"
+  init meta.spot with when "now" where "here"
+  init meta.stuff with value "test2"
+
+  framer testmeta be active
+    frame timeout
+      go abort if elapsed >= 2.0
+
+      frame wait in timeout
+        repeat 3
+
+    frame done
+      print "Success"
+      bid stop all
+
+    frame abort
+      print "Failure"
+      put "Test Slave" into meta.failure
+      bid stop all
+
+
+  server one to /var/tmp/log/ioflo/ rx :55551 per stuff 5
+  server two  to /var/tmp/log/ioflo/ \
+    rx :55552 \
+    for value in .meta.name # trailing comment
+  server server to /var/tmp/log/ioflo/ # trailing comment
+
+  logger logger to /var/tmp/log/ioflo/
+    log meta on once
+      loggee name meta.name version meta.version period meta.period

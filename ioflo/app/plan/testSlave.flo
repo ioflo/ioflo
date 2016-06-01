@@ -6,38 +6,39 @@ house test_slave
   init meta.spot with when "now" where "here"
   init meta.stuff with value "test2"
 
-  framer testmeta be active first testmeta
+  framer testmeta be active first doslave1
     frame timeout
-      go abort if elapsed >= 3.0
+      go abort if elapsed >= 5.0
 
-      frame testmeta in timeout
-        print "Hello World"
-        set elapsed with 1.0
-        go next if elapsed >= goal
-
-      frame testtimeout in timeout
-        print "timeout"
-        timeout 1.0
-
-      frame testrecurred in timeout
-        print "recurred"
-        set recurred with 4
-        recur
-          print "recurred again"
-        go next if recurred >= goal
-
-      frame testrepeat in timeout
-        print "repeat"
-        recur
-          print "repeated again"
-        repeat 2
-
-      frame doslave in timeout
+      frame doslave1 in timeout
         ready testslave #benter
+        print Slave until done
         start testslave # enter
         run testslave # recur
         go next if testslave is done
         stop testslave # exit
+
+      frame gap in timeout  # need exit above not precluded by benter
+        go next
+
+      frame doslave2 in timeout
+        ready testslave #benter
+        go next if testslave is readied
+
+      frame doslave3 in timeout
+        start testslave # enter
+        go next if not testslave is readied
+                and testslave is started
+
+      frame doslave4 in timeout
+        run testslave # recur
+        go next if not testslave is readied
+                and not testslave is started
+                and testslave is running
+        stop testslave # exit
+
+      frame doslave5 in timeout
+        go next if testslave is stopped
 
       frame abortslave in timeout
         print abortslave
@@ -55,12 +56,6 @@ house test_slave
       bid stop all
 
 
-
-  logger logger to /var/tmp/log/ioflo/
-  log meta on once
-  loggee name meta.name version meta.version period meta.period
-
-
   framer testslave be slave first slave1 # slave framer
     frame slave1
       print slave1
@@ -75,9 +70,3 @@ house test_slave
     frame slave3 #so complete
       print slave3
       done
-
-  server one to /var/tmp/log/ioflo/ rx :55551 per stuff 5
-  server two  to /var/tmp/log/ioflo/ \
-     rx :55552 \
-     for value in .meta.name # trailing comment
-  server server to /var/tmp/log/ioflo/ # trailing comment

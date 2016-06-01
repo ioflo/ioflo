@@ -3126,9 +3126,15 @@ class Builder(object):
             negate = True
             index += 1 #eat token
 
-        if 'is' in tokens:  # check for 'is participle' form, special needs
-            place = tokens.index('is') # is
-            participle = tokens[place + 1]  # participle modifier to is
+        # find back end of current clause
+        if 'and' in tokens[index:]:  # conjunction
+            back = tokens[index:].index('and') + index + 1
+        else:
+            back = len(tokens)
+
+        if 'is' in tokens[index:back]:  # check for 'is participle' form, special needs
+            place = tokens[index:back].index('is') # is
+            participle = tokens[index + place + 1]  # participle modifier to is
 
             if participle in ('done', ):
                 kind = 'done'
@@ -3429,7 +3435,7 @@ class Builder(object):
                                        "'{1}'".format(kind + 'd', participle))
             raise excepting.ParseError(msg, tokens, index)
 
-        while  index < len(tokens):  # optional 'in frame' clause
+        if index < len(tokens):  # optional 'in frame' clause
             connective = tokens[index]
             if connective == 'in':
                 index += 1 #eat token
