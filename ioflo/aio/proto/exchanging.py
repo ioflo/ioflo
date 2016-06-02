@@ -155,7 +155,7 @@ class Exchange(MixIn):
            self.prepSend(tx)
            self.stack.transmit(self.tx, self.device.ha)
         Or
-           super().prepSend(tx)
+           self.prepSend(tx)
            self.stack.message(self.tx, self.device)
         """
         self.prepSend(tx=tx)
