@@ -112,7 +112,7 @@ class PackerPart(Part):
         """
         Return True if len(raw) is at least long enough for packed size
         """
-        return (len(raw) >= (self.size))
+        return (len(raw) >= (self.packer.size))
 
     def parse(self, raw):
         """Parse raw bytearray and assign to fields
@@ -167,25 +167,36 @@ class PackifierPart(Part):
 
         Attributes:
             .fmt is packify format string
+            .fmtSize is size given by format string
 
         Inherited Properties:
             .size is length of .packed
+            
+        Properties
+            .fmtSize is size given by .fmt
 
         """
         self.fmt = fmt if fmt is not None else self.Format
-        tbfl = sum((int(x) for x in self.fmt.split()))
-        size = (tbfl // 8) + 1 if tbfl % 8 else tbfl // 8
-        kwa['size'] = size  # override size to match packify size of whole bytes
+        kwa['size'] = self.fmtSize  # override size to match packify size of whole bytes
         super(PackifierPart, self).__init__(**kwa)
 
         if raw is not None:
             self.parse(raw=raw)
-
+            
+    @property
+    def fmtSize(self):
+        """
+        Property fmtSize
+        """
+        tbfl = sum((int(x) for x in self.fmt.split()))
+        size = (tbfl // 8) + 1 if tbfl % 8 else tbfl // 8        
+        return size
+    
     def verifySize(self, raw=bytearray(b'')):
         """
         Return True if len(raw) is at least long enough for packed size
         """
-        return (len(raw) >= (self.size))
+        return (len(raw) >= (self.fmtSize))
 
     def parse(self, raw):
         """Parse raw bytearray and assign to fields
@@ -197,7 +208,7 @@ class PackifierPart(Part):
                              "Need {0} bytes, got {1} bytes.".format(self.size,
                                                                      len(raw)))
 
-        result = unpackify(self.fmt, raw, boolean=True, size=self.size)  # empty result
+        result = unpackify(self.fmt, raw, boolean=True, size=self.fmtSize)  # empty result
         self.packed[:] = raw[0:self.size]
 
         return self.size #return offset to start of unparsed portion of data

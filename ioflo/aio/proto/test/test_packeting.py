@@ -148,8 +148,10 @@ class BasicTestCase(unittest.TestCase):
 
         part = packeting.PackifierPart(fmt="8 8 8")
         self.assertEqual(part.fmt, "8 8 8")
+        self.assertEqual(part.fmtSize, 3)
         self.assertEqual(part.size, 3)
         self.assertEqual(part.size, len(part))
+        self.assertEqual(part.fmtSize, part.size)
         self.assertEqual(part.packed, bytearray([0, 0, 0]))
         show = part.show()
         self.assertEqual(show, '    PackifierPart: packed=0x000000\n')
