@@ -201,13 +201,19 @@ class Exchange(MixIn):
         self.prepReceive(rx)
 
 
+    def prepFinish(self):
+        """
+        Mark flags
+        """
+        self.done = True
+
     def finish(self):
         """
         Exchange complete
         Default is as success unless .failed
         Mark flags
         """
-        self.done = True
+        self.prepFinish()
         console.concise("{0}: Finished {1} with {2} as {3}"
                         " at {4}\n".format(self.stack.name,
                                             self.name,
