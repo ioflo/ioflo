@@ -93,7 +93,7 @@ class Exchange(MixIn):
         self.failed = False
         self.acked = False
 
-    def setupStart(self):
+    def prepStart(self):
         """
         Set flags for start
         """
@@ -106,7 +106,7 @@ class Exchange(MixIn):
         Startup first run when context is ready
         override in subclass
         """
-        self.setupStart()
+        self.prepStart()
 
     def run(self):
         """
@@ -134,18 +134,9 @@ class Exchange(MixIn):
             if self.tx is not None:
                 self.send(self.tx)
 
-    def setupSend(self, tx=None):
+    def prepSend(self, tx=None):
         """
         Setups flags and .tx for send.
-        Extend in subclass to queue appropriately
-
-        Either:
-           super().send(tx)
-           self.stack.transmit(self.tx, self.device.ha)
-        Or
-           super().send(tx)
-           self.stack.message(self.tx, self.device)
-
         """
         if tx is not None:
             self.tx = tx  # always last transmitted msg/pkt/data
@@ -157,8 +148,17 @@ class Exchange(MixIn):
     def send(self, tx=None):
         """
         Setup and transmit packet
+
+        Extend in subclass to queue appropriately
+
+        Either:
+           self.prepSend(tx)
+           self.stack.transmit(self.tx, self.device.ha)
+        Or
+           super().prepSend(tx)
+           self.stack.message(self.tx, self.device)
         """
-        self.setupSend(tx=tx)
+        self.prepSend(tx=tx)
         self.transmit(pkt=tx)
 
     def transmit(self, pkt=None):
@@ -185,12 +185,21 @@ class Exchange(MixIn):
                                             self.name))
         self.stack.message(self.tx)
 
+    def prepReceive(self, rx):
+        """
+        Setups .rx for receive. And flags if any
+        extend in subclass
+        """
+        self.rx = rx
+
     def receive(self, rx):
         """
         Process received msg/pkt/data.
-        Subclasses should extend with super call and additional handling
+        Subclasses should extend with call to .prepReceive
+        and additional handling
         """
-        self.rx = rx
+        self.prepReceive(rx)
+
 
     def finish(self):
         """
@@ -270,7 +279,7 @@ class Exchanger(Exchange):
         tx is latest/next transmitted msg/pkt/data
 
         """
-        self.setupStart()  # reset flags
+        self.prepStart()  # reset flags
 
         self.timer.restart()
         self.redoTimer.restart()
@@ -338,7 +347,7 @@ class Exchangent(Exchange):
         """
         Correspond to exchange
         """
-        self.setupStart()  # reset flags
+        self.prepStart()  # reset flags
 
         self.timer.restart()
         self.redoTimer.restart()
