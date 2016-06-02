@@ -94,6 +94,17 @@ class BasicTestCase(unittest.TestCase):
         b = byting.bytify(n, 2, reverse=True)
         self.assertEqual(b, bytearray([1, 2, 3]))
 
+        n = -1
+        b = byting.bytify(n)
+        self.assertEqual(b, bytearray([0xff]))
+        b = byting.bytify(n, 4)
+        self.assertEqual(b, bytearray([0xff, 0xff, 0xff, 0xff]))
+        n = -2
+        b = byting.bytify(n)
+        self.assertEqual(b, bytearray([0xfe]))
+        b = byting.bytify(n, 2)
+        self.assertEqual(b, bytearray([0xff, 0xfe]))
+
     def testPackifyUnpackify(self):
         """
         Test the packbits
