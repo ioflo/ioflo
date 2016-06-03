@@ -2052,6 +2052,7 @@ class UdpStack(GramStack, RemoteStack, IpStack):
         except KeyError as ex:
             console.concise(("{0}: Dropping packet received from unknown remote "
                              "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
+            return None
         return (msg, remote)
 
     def _serviceOneRxMsg(self):
