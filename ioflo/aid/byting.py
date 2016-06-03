@@ -105,17 +105,19 @@ def unhexify(h=u''):
         b.append(int(s, 16))
     return b
 
-def bytify(n=0, size=1, reverse=False):
+def bytify(n=0, size=1, reverse=False, strict=False):
     """
     Returns bytearray of at least size bytes equivalent of integer n that is
-    left zero padded to at least size bytes. For n positive, if the bytearray
-    equivalent of n is longer than size the bytearray is extended to the length
-    needed to represent n. For n negative only the lower size bytes are converted.
+    left zero padded to size bytes. For n positive, if the bytearray
+    equivalent of n is longer than size  and strict is False the bytearray
+    is extended to the length needed to fully represent n. Otherwise if strict
+    is True or n is negative it is truncated to the least significant size bytes.
+
     Big endian is the default.
     If reverse is true then it reverses the order of the bytes in the resultant
     bytearray for little endian with right zero padding.
     """
-    if n < 0:
+    if n < 0 or strict:
         n =  n & (2 ** (size * 8) - 1)
     b = bytearray()
     count = 0
@@ -124,10 +126,7 @@ def bytify(n=0, size=1, reverse=False):
         count += 1
         n >>=  8
     if (count < size):
-        if reverse:
-            b =  b + bytearray([0]*(size-count))
-        else:
-            b = bytearray([0]*(size-count)) + b
+        b = bytearray([0]*(size-count)) + b
     if reverse:
         b.reverse()
     return b
@@ -200,7 +199,7 @@ def packify(fmt=u'8', fields=[0x00], size=None, reverse=False):
         n |= bits  # bit-or in bits
         bfp -= bfl #adjust bit field position for next element
 
-    return bytify(n=n, size=size, reverse=reverse)
+    return bytify(n=n, size=size, reverse=reverse, strict=True)
 
 def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0, reverse=False):
     """
@@ -260,7 +259,7 @@ def packifyInto(b, fmt=u'8', fields=[0x00], size=None, offset=0, reverse=False):
         n |= bits  # bit-or in bits
         bfp -= bfl #adjust bit field position for next element
 
-    bp = bytify(n=n, size=size, reverse=reverse)
+    bp = bytify(n=n, size=size, reverse=reverse, strict=True)
 
     b[offset:offset + len(bp)] = bp
 

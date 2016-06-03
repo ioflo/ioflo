@@ -78,6 +78,8 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(b, bytearray([0, 1, 2, 3]))
         b = byting.bytify(n, 2)
         self.assertEqual(b, bytearray([1, 2, 3]))
+        b = byting.bytify(n, 2, strict=True)
+        self.assertEqual(b, bytearray([2, 3]))
 
         b = bytearray([1, 2, 3])
         n = byting.unbytify(b, reverse=True)
@@ -90,9 +92,11 @@ class BasicTestCase(unittest.TestCase):
         b = byting.bytify(n, reverse=True)
         self.assertEqual(b, bytearray([1, 2, 3]))
         b = byting.bytify(n, 4, reverse=True)
-        self.assertEqual(b, bytearray([0, 1, 2, 3]))
+        self.assertEqual(b, bytearray([1, 2, 3, 0]))
         b = byting.bytify(n, 2, reverse=True)
         self.assertEqual(b, bytearray([1, 2, 3]))
+        b = byting.bytify(n, 2, reverse=True, strict=True)
+        self.assertEqual(b, bytearray([1, 2]))
 
         n = -1
         b = byting.bytify(n)
@@ -104,6 +108,13 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(b, bytearray([0xfe]))
         b = byting.bytify(n, 2)
         self.assertEqual(b, bytearray([0xff, 0xfe]))
+
+        n = 0x007ffb
+        b = byting.bytify(n, 3)
+        self.assertEqual(b, bytearray([0x00, 0x7f, 0xfb]))
+        b = byting.bytify(n, 3, reverse=True)
+        self.assertEqual(b, bytearray([0xfb, 0x7f, 0x00]))
+
 
     def testPackifyUnpackify(self):
         """
