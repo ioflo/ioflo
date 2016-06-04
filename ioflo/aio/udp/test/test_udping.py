@@ -13,6 +13,7 @@ import os
 import time
 import tempfile
 import shutil
+import socket
 
 from ioflo.aid.sixing import *
 from ioflo.aid.consoling import getConsole
@@ -115,6 +116,66 @@ class BasicTestCase(unittest.TestCase):
         shutil.rmtree(tempDirpath)
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testBroadcast(self):
+        """
+        Test Class SocketUdpNb
+        """
+        console.terse("{0}\n".format(self.testBroadcast.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+        unicast = socket.gethostbyname(socket.gethostname())
+        parts = unicast.split('.')
+        parts[3] = '255'
+        broadcast = ".".join(parts)  # make broadcast send address
+        bha = (broadcast, 6102)
+
+        alpha = udping.SocketUdpNb(host=unicast,
+                                   port = 6101,
+                                   bcast=True)
+        self.assertIs(alpha.opened, False)
+        self.assertIs(alpha.reopen(), True)
+        self.assertIs(alpha.opened, True)
+        self.assertIs(alpha.bcast, True)
+        self.assertEqual(alpha.ha, (unicast, 6101))
+
+        beta = udping.SocketUdpNb(host="",  # any
+                                  port=6102)
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.bcast, False)
+        self.assertEqual(beta.ha, ("0.0.0.0", 6102))
+        self.assertEqual(beta.ha[1], bha[1])  # same port
+
+        console.terse("Broadcasting alpha to beta\n")
+        msgOut = b"alpha broadcasts to beta"
+        alpha.send(msgOut, bha)
+        time.sleep(0.1)
+        msgIn, src = beta.receive()
+        self.assertEqual(msgIn, msgOut)
+        self.assertEqual(src, alpha.ha)
+
+        alpha.close()
+        beta.close()
+
+        beta = udping.SocketUdpNb(host="",  # any
+                                  port=6102,
+                                  bcast=True)
+        self.assertIs(beta.reopen(), True)
+        self.assertIs(beta.bcast, True)
+        self.assertEqual(beta.ha, ("0.0.0.0", 6102))
+        self.assertEqual(beta.ha[1], bha[1])  # same port
+
+        console.terse("Broadcasting beta to beta\n")
+        msgOut = b"beta broadcasts to beta"
+        beta.send(msgOut, bha)
+        time.sleep(0.1)
+        msgIn, src = beta.receive()
+        self.assertEqual(msgIn, msgOut)
+        self.assertEqual(src[1], beta.ha[1])
+
+        beta.close()
+        self.assertIs(alpha.opened, False)
+        self.assertIs(beta.opened, False)
+        console.reinit(verbosity=console.Wordage.concise)
 
 
 def runOne(test):
@@ -130,6 +191,7 @@ def runSome():
     tests =  []
     names = [
              'testSocketUdpNb',
+             'testBroadcast',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

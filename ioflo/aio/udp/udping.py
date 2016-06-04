@@ -29,10 +29,11 @@ class SocketUdpNb(object):
 
     def __init__(self,
                  ha=None,
-                 host = '',
-                 port = 55000,
-                 bufsize = 1024,
-                 wlog=None):
+                 host='',
+                 port=55000,
+                 bufsize=1024,
+                 wlog=None,
+                 bcast=False):
         """
         Initialization method for instance.
 
@@ -42,10 +43,12 @@ class SocketUdpNb(object):
         bs = buffer size
         path = path to log file directory
         wlog = WireLog reference for debug logging or over the wire tx and rx
+        bcast = Flag if True enables sending to broadcast addresses on socket
         """
-        self.ha = ha or (host,port) #ha = host address
+        self.ha = ha or (host, port)  # ha = host address duple (host, port)
         self.bs = bufsize
         self.wlog = wlog
+        self.bcast = bcast
 
         self.ss = None #server's socket needs to be opened
         self.opened = False
@@ -71,9 +74,13 @@ class SocketUdpNb(object):
         #create socket ss = server socket
         self.ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+        if self.bcast:  # enable sending to broadcast addresses
+            self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
         # make socket address reusable. doesn't seem to have an effect.
         # the SO_REUSEADDR flag tells the kernel to reuse a local socket in
         # TIME_WAIT state, without waiting for its natural timeout to expire.
+        # may want to look at SO_REUSEPORT
         self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if self.ss.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF) <  self.bs:
             self.ss.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.bs)
