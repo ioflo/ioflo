@@ -1099,6 +1099,9 @@ class IpStack(Stack):
         Parameters:
             host is local tcp host if ha not provided
             port is local tcp port if ha not provided
+            
+        Class Attributes:
+            .Port is default port
 
         Inherited Attributes:
             .stamper is relative time stamper for this stack
@@ -1186,6 +1189,9 @@ class TcpServerStack(RemoteStack, IpStack):
         Parameters:
             eha is external host address used by server acceptor TLS if any
             bufsize is tcp socket buffer size
+            
+        Inherited Class Attributes:
+            .Port is default port
 
         Inherited Attributes:
             .stamper is relative time stamper for this stack
@@ -1506,6 +1512,9 @@ class TcpClientStack(ClientStreamStack, IpStack):
             bufsize is tcp socket buffer size
             timeout is tcp handler reconnection timeout in seconds or None
             remote is Remote device instance if any
+            
+        Inherited Class Attributes:
+            .Port is default port
 
         Inherited Attributes:
             .stamper is relative time stamper for this stack
@@ -1965,6 +1974,9 @@ class UdpStack(GramStack, RemoteStack, IpStack):
 
         Parameters:
             bufcnt is number of udp buffers equivalent for udp buffer to allocate
+            
+        Inherited Class Attributes:
+            .Port is default port
 
         Inherited Attributes:
             .stamper is relative time stamper for this stack

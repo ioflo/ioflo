@@ -144,6 +144,7 @@ class RemoteDevice(Device):
 class SingleRemoteDevice(Device):
     """
     Remote Device Class when only one remote in stack .remote
+    Affects how uid is assigned
     """
     def __init__(self,
                  stack,
@@ -183,7 +184,6 @@ class SingleRemoteDevice(Device):
                 uid = stack.nextUid()
 
         super(SingleRemoteDevice, self).__init__(stack=stack, uid=uid, **kwa)
-
 
 
 class IpDevice(Device):
@@ -329,7 +329,8 @@ class IpRemoteDevice(IpDevice, RemoteDevice):
 
 class IpSingleRemoteDevice(IpDevice, SingleRemoteDevice):
     """
-    Ip remote device
+    Ip Single Remote Device Class when only one remote in stack .remote
+    Affects how uid is assigned
     """
 
     def __init__(self,
