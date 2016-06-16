@@ -568,7 +568,7 @@ class Actor(object):
         The default inode is  'framer.me.frame.me.actor.me.'
             This occurs if the framer inode (finode) is empty
                 (which occurs when the via clause is missing for the framer)
-            and the ioinit inode paramter passed in is also empty
+            and the ioinit inode parameter passed in is also empty
 
         When a via clause exists for the framer then finode is not empty
             so the default is not used
