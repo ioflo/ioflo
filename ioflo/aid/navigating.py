@@ -19,7 +19,7 @@ TWOPI = 2.0 * math.pi  # two times pi
 DEGTORAD = math.pi / 180.0  # r = DEGTORAD * d
 RADTODEG = 180.0 / math.pi  # d = RADTODEG * r
 
-def Sign(x):
+def sign(x):
     """Calculates the sign of a number and returns
        1 if positive
        -1 if negative
@@ -33,19 +33,9 @@ def Sign(x):
     else:
         return 0.0
 
+Sign = sign
 
-def Delta(desired, actual, wrap = 180.0):
-    """Calculate the short rotation for delta = desired - actual
-       and delta wraps around at wrap
-
-    """
-    #delta = desired  - actual  so
-    #desired  = actual  + delta
-
-    return Wrap2(angle = (desired - actual), wrap = wrap)
-
-
-def Wrap2(angle, wrap = 180.0):
+def wrap2(angle, wrap = 180.0):
     """Wrap2 = (2 sided one positive one negative) wrap of angle to
        signed interval [-wrap, + wrap] wrap is half circle
        if wrap = 0 then don't wrap
@@ -77,6 +67,21 @@ def Wrap2(angle, wrap = 180.0):
             angle = (angle - wrap) % (- wrap) #wrap extra on reversed half circle
 
     return angle
+
+Wrap2 = wrap2
+
+
+def delta(desired, actual, wrap = 180.0):
+    """Calculate the short rotation for delta = desired - actual
+       and delta wraps around at wrap
+
+    """
+    #delta = desired  - actual  so
+    #desired  = actual  + delta
+
+    return wrap2(angle = (desired - actual), wrap = wrap)
+
+Delta = delta
 
 
 def MoveByHSD(heading = 0.0, speed = 1.0, duration = 0.0):
@@ -148,11 +153,11 @@ def AlongCrossTrack(track = 0.0, north = 0.0, east = 0.0,
        a negative cross track is to the west of the track
     """
     if mag is not None and heading is not None:
-        heading = Wrap2(heading)
+        heading = wrap2(heading)
         north = mag * math.cos(DEGTORAD * heading)
         east = mag * math.sin(DEGTORAD * heading)
 
-    track = Wrap2(track)
+    track = wrap2(track)
 
     #along track component
     trackNorth = math.cos(DEGTORAD * track)
@@ -202,11 +207,11 @@ def CrabSpeed(track = 0.0,  speed = 2.0, north = 0.0, east = 0.0,
        of the desired course
     """
     if mag is not None and heading is not None:
-        heading = Wrap2(heading)
+        heading = wrap2(heading)
         north = mag * math.cos(DEGTORAD * heading)
         east = mag * math.sin(DEGTORAD * heading)
 
-    track = Wrap2(track)
+    track = wrap2(track)
     (A,C) = AlongCrossTrack(track = track, north = north, east = east)
     #current compensated course crab = track + delta crab angle
     delta = - RADTODEG * math.asin(C / speed)
@@ -413,10 +418,10 @@ def DegMinToFracDeg(latDeg, latMin, lonDeg, lonMin):
        lonDeg are in signed degrees East positive West Negative
        lonMin are in signed minutes East positive West Negative
     """
-    if Sign(latDeg) != Sign(latMin):
+    if sign(latDeg) != sign(latMin):
         latMin = - latMin
 
-    if Sign(lonDeg) != Sign(lonMin):
+    if sign(lonDeg) != sign(lonMin):
         lonMin =  - lonMin
 
     lat = latDeg + (latMin / 60.0)

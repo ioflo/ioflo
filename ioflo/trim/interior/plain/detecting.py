@@ -109,7 +109,7 @@ class DetectorPositionBox(doing.Doer):
             parms = dict(track = 0.0, width = 1000, length = 10000,
                          north = 0.0, east = 0.0, turn = 45.0)
 
-        parms['turn'] = abs(navigating.Wrap2(parms['turn']))
+        parms['turn'] = abs(navigating.wrap2(parms['turn']))
         self.parm.create(**parms)
 
         turnleft = self.parm.data.track - self.parm.data.turn
@@ -126,8 +126,8 @@ class DetectorPositionBox(doing.Doer):
            and rotated about center bottom by -track
         """
         #compute turns
-        turnleft = navigating.Wrap2(self.parm.data.track - self.parm.data.turn)
-        turnright = navigating.Wrap2(self.parm.data.track + self.parm.data.turn)
+        turnleft = navigating.wrap2(self.parm.data.track - self.parm.data.turn)
+        turnright = navigating.wrap2(self.parm.data.track + self.parm.data.turn)
 
         self.output.update(turnleft = turnleft, turnright = turnright)
 

@@ -145,7 +145,7 @@ class ControllerPid(doing.DoerLapse):
         pe = self.e.value #prior error
         # update error, unwrap error if setpoint wraps
         #error = input - self.rsp but may wrap so wan't shortest error if wraps
-        e = navigating.Wrap2(angle = (input - rsp), wrap = self.parm.data.wrap)
+        e = navigating.wrap2(angle = (input - rsp), wrap = self.parm.data.wrap)
         self.e.value = e
 
         if self.parm.data.calcRate: #calculate error rate with time derivative
