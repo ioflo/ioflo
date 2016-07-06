@@ -1,4 +1,5 @@
-"""aiding.py constants and basic functions
+"""
+navigating.py constants and basic functions for navigation
 
 """
 from __future__ import absolute_import, division, print_function

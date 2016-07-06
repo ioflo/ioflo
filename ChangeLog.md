@@ -7,6 +7,9 @@ CHANGE LOG
 --------
 1.6.0
 
+Some refactoring of aid.navigating module
+
+
 Made some breaking changes to the Need Floscript syntax. This code was getting
 cumbersome and difficult to augment/enhance so needed refinement in the syntax
 
