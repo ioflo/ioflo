@@ -7,6 +7,9 @@ CHANGE LOG
 --------
 1.6.0
 
+Added aid.vectoring module with some simple operations on vectors:
+  mag, mag2, norm, dot
+
 Some refactoring of aid.navigating module
 
 
