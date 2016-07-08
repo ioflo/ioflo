@@ -152,6 +152,12 @@ class BasicTestCase(unittest.TestCase):
         for e1, e2 in zip(n, z):
             self.assertAlmostEqual(e1, e2)
 
+        v = (0.49999999999999994, 0.8660254037844386)
+        n = norm(v, check=True)
+        m = mag(n)
+        self.assertEqual(m, 1.0)
+
+
     def testDotProduct(self):
         """
         Test the dot function
