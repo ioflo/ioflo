@@ -578,7 +578,7 @@ class Share(object):
         Remove key and the associated item and return the associated value
         If key not found return default if given otherwise raise KeyError
         """
-        value = self._data.__dict__.pop(self, key, *default)
+        value = self._data.__dict__.pop(key, *default)
         return value
 
     def popitem(self):
@@ -593,7 +593,7 @@ class Share(object):
         If key in ._data, return value at key
         Otherwise set value at key to default and return default
         """
-        value = self._data.__dict__.setdefault(self, key, default)
+        value = self._data.__dict__.setdefault(key, default)
         return value
 
     def sift(self, fields=None):
