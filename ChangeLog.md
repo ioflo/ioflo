@@ -7,7 +7,7 @@ CHANGE LOG
 --------
 1.6.0
 
-
+Added aid.quaternioning module with some simple quaternion operations
 
 Added aid.vectoring module with some simple operations on vectors:
   mag, mag2, norm, dot
