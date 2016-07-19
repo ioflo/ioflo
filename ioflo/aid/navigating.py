@@ -85,7 +85,7 @@ def delta(desired, actual, wrap = 180.0):
 Delta = delta
 
 
-def MoveByHSD(heading = 0.0, speed = 1.0, duration = 0.0):
+def moveByHSD(heading = 0.0, speed = 1.0, duration = 0.0):
     """
        Returns change in position after moving on heading at speed for duration
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
@@ -94,6 +94,8 @@ def MoveByHSD(heading = 0.0, speed = 1.0, duration = 0.0):
     deltaEast = duration * (speed * math.sin(DEGTORAD * heading))
 
     return (deltaNorth, deltaEast)
+
+MoveByHSD = moveByHSD
 
 def MoveToHSD(north = 0.0, east = 0.0,
               heading = 0.0, speed = 1.0, duration = 0.0):
