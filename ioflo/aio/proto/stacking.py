@@ -465,7 +465,7 @@ class Stack(MixIn):
         Service one duple from .rxMsgs deque
         """
         msg = self.rxMsgs.popleft()
-        console.concise("{0}: Servicing RxMsg at {1:.3f}:"
+        console.verbose("{0}: Servicing RxMsg at {1:.3f}:"
                         "\n     {2}\n".format(self.name,
                                               self.stamper.stamp,
                                               msg))
@@ -711,7 +711,7 @@ class RemoteStack(Stack):
         Service one duple from .rxMsgs deque
         """
         msg, remote = self.rxMsgs.popleft()
-        console.concise("{0}: Servicing RxMsg from {1} at {2:.3f}:"
+        console.verbose("{0}: Servicing RxMsg from {1} at {2:.3f}:"
                         "\n     {3}\n".format(self.name,
                                               remote.name,
                                               self.stamper.stamp,
@@ -1099,7 +1099,7 @@ class IpStack(Stack):
         Parameters:
             host is local tcp host if ha not provided
             port is local tcp port if ha not provided
-            
+
         Class Attributes:
             .Port is default port
 
@@ -1189,7 +1189,7 @@ class TcpServerStack(RemoteStack, IpStack):
         Parameters:
             eha is external host address used by server acceptor TLS if any
             bufsize is tcp socket buffer size
-            
+
         Inherited Class Attributes:
             .Port is default port
 
@@ -1512,7 +1512,7 @@ class TcpClientStack(ClientStreamStack, IpStack):
             bufsize is tcp socket buffer size
             timeout is tcp handler reconnection timeout in seconds or None
             remote is Remote device instance if any
-            
+
         Inherited Class Attributes:
             .Port is default port
 
@@ -1974,7 +1974,7 @@ class UdpStack(GramStack, RemoteStack, IpStack):
 
         Parameters:
             bufcnt is number of udp buffers equivalent for udp buffer to allocate
-            
+
         Inherited Class Attributes:
             .Port is default port
 
@@ -2062,7 +2062,7 @@ class UdpStack(GramStack, RemoteStack, IpStack):
         try:
             remote = self.haRemotes[ha]
         except KeyError as ex:
-            console.concise(("{0}: Dropping packet received from unknown remote "
+            console.verbose(("{0}: Dropping packet received from unknown remote "
                              "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
             return None
         return (msg, remote)
@@ -2072,7 +2072,7 @@ class UdpStack(GramStack, RemoteStack, IpStack):
         Service one duple from .rxMsgs deque
         """
         msg, remote = self.rxMsgs.popleft()
-        console.concise("{0}: Servicing RxMsg from {1} at {2:.3f}:"
+        console.verbose("{0}: Servicing RxMsg from {1} at {2:.3f}:"
                         "\n     {3}\n".format(self.name,
                                               remote.name,
                                               self.stamper.stamp,

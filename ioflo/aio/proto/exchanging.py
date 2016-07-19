@@ -119,14 +119,14 @@ class Exchange(MixIn):
         Process time based handling of exchange like timeout or retries
         """
         if self.timeout > 0.0 and self.timer.expired:
-            console.concise("{0}. Timed out with {1} at {2}\n".format(
+            console.verbose("{0}. Timed out with {1} at {2}\n".format(
                     self.stack.name, self.device.name, round(self.stack.stamper.stamp, 3)))
             self.fail()
             return
 
         if self.redoTimeout > 0.0 and self.redoTimer.expired:
             self.redoTimer.restart()
-            console.concise("{0}: Redoing {1} with {2} at {3}\n".format(
+            console.verbose("{0}: Redoing {1} with {2} at {3}\n".format(
                                             self.stack.name,
                                             self.name,
                                             self.device.name,
@@ -214,7 +214,7 @@ class Exchange(MixIn):
         Mark flags
         """
         self.prepFinish()
-        console.concise("{0}: Finished {1} with {2} as {3}"
+        console.verbose("{0}: Finished {1} with {2} as {3}"
                         " at {4}\n".format(self.stack.name,
                                             self.name,
                                             self.device.name,
@@ -289,7 +289,7 @@ class Exchanger(Exchange):
 
         self.timer.restart()
         self.redoTimer.restart()
-        console.concise("{0}: Initiating {1} with {2} at {3}.\n".format(self.stack.name,
+        console.verbose("{0}: Initiating {1} with {2} at {3}.\n".format(self.stack.name,
                                             self.name,
                                             self.device.name,
                                             round(self.stack.stamper.stamp, 3)))
@@ -357,7 +357,7 @@ class Exchangent(Exchange):
 
         self.timer.restart()
         self.redoTimer.restart()
-        console.concise("{0}: Corresponding {1} with {2} at {3}.\n".format(self.stack.name,
+        console.verbose("{0}: Corresponding {1} with {2} at {3}.\n".format(self.stack.name,
                                             self.name,
                                             self.device.name,
                                             round(self.stack.stamper.stamp, 3)))
