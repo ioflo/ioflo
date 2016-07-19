@@ -21,7 +21,7 @@ from ioflo.aid.consoling import getConsole
 
 console = getConsole()
 
-from ioflo.aid import quating
+from ioflo.aid import quaternioning
 
 
 def setUpModule():
@@ -54,7 +54,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testQMag.__doc__))
 
-        from ioflo.aid.quating import qmag, qmag2
+        from ioflo.aid.quaternioning import qmag, qmag2
 
         q = [1, 1, 2, 3]  # list
         m = qmag(q)
@@ -90,7 +90,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testQNorm.__doc__))
 
-        from ioflo.aid.quating import qnorm, qmag
+        from ioflo.aid.quaternioning import qnorm, qmag
 
         q = [1, 1, 2, 3]  # list
         n = qnorm(q)
@@ -126,7 +126,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testQConj.__doc__))
 
-        from ioflo.aid.quating import qnorm, qmag, qconj
+        from ioflo.aid.quaternioning import qnorm, qmag, qconj
 
         q = [1, 1, 2, 3]  # list
         cq = qconj(q)
@@ -153,7 +153,7 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testQMul.__doc__))
 
-        from ioflo.aid.quating import qnorm, qmag, qconj, qmul
+        from ioflo.aid.quaternioning import qnorm, qmag, qconj, qmul
 
         q1 = (1, 2, 3, 4)
         q2 = (4, 3, 2, 1)

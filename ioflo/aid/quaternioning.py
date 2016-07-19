@@ -1,5 +1,5 @@
 """
-quating.py basic quaternion functions on 4D seqences
+quaternioning.py basic quaternion functions on 4D seqences
 
 """
 from __future__ import absolute_import, division, print_function
