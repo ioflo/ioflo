@@ -237,7 +237,7 @@ VerbList = ['load', 'house', 'init',
 
 #reserved tokens
 Comparisons = ['==', '<', '<=', '>=', '>', '!=']
-Connectives = ['to',  'by', 'per', 'for', 'with', 'from', 'via',
+Connectives = ['to',  'by', 'with', 'from', 'per', 'for', 'cum', 'qua', 'via',
                'as', 'at', 'in', 'of', 'on', 're', 'is',
                'if', 'be', 'into', 'and', 'not', '+-', ]
 Reserved = Connectives + Comparisons  #concatenate to get reserved words
@@ -2454,12 +2454,12 @@ class Builder(object):
 
     def buildDo(self, command, tokens, index):
         """ do kind [part ...] [as name [part ...]] [at context] [via inode]
-               [to data]
-               [by source]
-               [per data]
-               [for source]
                [with data]
                [from source]
+               [per data]
+               [for source]
+               [cum data]
+               [qua source]
 
             deed:
                 name [part ...]
@@ -2506,8 +2506,8 @@ class Builder(object):
             context = self.currentContext
 
             while index < len(tokens):
-                if (tokens[index] in ['as', 'at', 'via', 'to', 'by',
-                                      'per', 'for', 'with', 'from']): # end of parts
+                if (tokens[index] in ['as', 'at', 'via', 'with', 'from',
+                                      'per', 'for', 'cum', 'qua' ]): # end of parts
                     break
                 parts.append(tokens[index])
                 index += 1 #eat token
@@ -2522,8 +2522,8 @@ class Builder(object):
                 if connective in ('as', ):
                     parts = []
                     while index < len(tokens): # kind parts end when connective
-                        if tokens[index] in ['as', 'at', 'to','by', 'per',
-                                             'for', 'with', 'from']: # end of parts
+                        if tokens[index] in ['as', 'at', 'with', 'from' 'per',
+                                             'for', 'cum', 'qua' ]: # end of parts
                             break
                         parts.append(tokens[index])
                         index += 1 #eat token
@@ -2545,11 +2545,11 @@ class Builder(object):
                 elif connective in ('via', ):
                     inode, index = self.parseIndirect(tokens, index, node=True)
 
-                elif connective in ('to', ):
+                elif connective in ('with', ):
                     data, index = self.parseDirect(tokens, index)
                     parms.update(data)
 
-                elif connective in ('by', ):
+                elif connective in ('from', ):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['parms'][srcPath] = srcFields
@@ -2563,11 +2563,11 @@ class Builder(object):
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['ioinits'][srcPath] = srcFields
 
-                elif connective in ('with', ):
+                elif connective in ('cum', ):
                     data, index = self.parseDirect(tokens, index)
                     inits.update(data)
 
-                elif connective in ('from', ):
+                elif connective in ('qua', ):
                     srcFields, index = self.parseFields(tokens, index)
                     srcPath, index = self.parseIndirect(tokens, index)
                     prerefs['inits'][srcPath] = srcFields

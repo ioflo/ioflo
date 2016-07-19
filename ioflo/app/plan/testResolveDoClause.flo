@@ -12,27 +12,27 @@ framer test be active first test0
 
     frame test0 in timeout
       print "Hello World"
-      do doer at enter to stuff 5
-      do doer at enter by depth in .trial
-      do doer at enter by .trial
+      do doer at enter with stuff 5
+      do doer at enter from depth in .trial
+      do doer at enter from .trial
       do doer at enter per trial ".trial"
       do doer at enter per trial .trial
       do doer at enter for trial in .init.test
       do doer at enter for .init.test
-      do doer at enter with stuff 7
-      do doer at enter from width in .trial
-      do doer at enter from .trial
+      do doer at enter cum stuff 7
+      do doer at enter qua width in .trial
+      do doer at enter qua .trial
 
-      do doer param at enter to stuff 5
-      do doer param at enter by depth in .trial
-      do doer param at enter by .trial
+      do doer param at enter with stuff 5
+      do doer param at enter from depth in .trial
+      do doer param at enter from .trial
       do doer param at enter per trial ".trial"
       do doer param at enter per trial .trial
       do doer param at enter for trial in .init.test
       do doer param at enter for .init.test
-      do doer param at enter with stuff 7
-      do doer param at enter from width in .trial
-      do doer param at enter from .trial
+      do doer param at enter cum stuff 7
+      do doer param at enter qua width in .trial
+      do doer param at enter qua .trial
 
       set elapsed with 1.0
       go next if elapsed >= goal
