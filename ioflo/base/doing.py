@@ -24,20 +24,20 @@ from ..aid.classing import nonStringIterable
 from ..aid.aiding import  just, nameToPath
 
 def doify(name,
-            base=None,
-            registry=None,
-            parametric=None,
-            inits=None,
-            ioinits=None,
-            parms=None):
+          base=None,
+          registry=None,
+          parametric=None,
+          inits=None,
+          ioinits=None,
+          parms=None):
     """ Parametrized decorator function that converts the decorated function
         into an Actor sub class with .action method and with class name name
         and registers the new subclass in the registry under name.
-        If base is provided then register as subclass of base. Default base is Doer
+        If base is provided then register as subclass of base.
+        Default base is Doer
 
-        The parameters  registry, parametric, inits, ioinits, and parms if provided,
+        The parameters registry, parametric, inits, ioinits, and parms if provided,
         are used to create the class attributes for the new subclass
-
     """
     base = base or Doer
     if not issubclass(base, Doer):
