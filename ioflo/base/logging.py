@@ -138,7 +138,7 @@ class Logger(tasking.Tasker):
            creates physical directories on disk
         """
         try:
-            #if repened too quickly could be same so we make a do until kludge
+            #if reopened too quickly could be same so we make a do until kludge
             path = self.path
 
             i = 0
