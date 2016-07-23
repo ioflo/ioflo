@@ -312,13 +312,17 @@ def SphereLLLLToDNDE(lat0,lon0,lat1,lon1):
 
     return (dn, de)
 
-def SphereLLByDNDEToLL(lat0,lon0,dn,de):
-    """Computes new lat lon location on sphere
-       from the flat earth approx of  change in position dn (north) meters
-       and de (east) meters from the given location lat0 lon0
-       point lat0 lon0  in total fractional degrees north east positive
-       returns tuple (lat1,lon1)
-       Uses sphere 1 nm = 1 minute 1852 meters per nautical mile
+def sphereLLByDNDEToLL(lat0, lon0, dn, de):
+    """
+    Returns new lat lon location on sphere in total fractional
+    degrees north east positive
+    Using the flat earth approx of sphere
+    given relative position dn (north) meters and de (east) meters
+    from the given location lat0 lon0
+
+    returns tuple (lat1,lon1)
+
+    Uses sphere 1 nm = 1 minute 1852 meters per nautical mile
     """
     r = 6366710.0 #radius of earth in meters = 1852 * 60 * 180/pi
 
@@ -336,6 +340,8 @@ def SphereLLByDNDEToLL(lat0,lon0,dn,de):
     avlat = (lat1 + lat0)/2.0
 
     return (lat1, lon1)
+
+SphereLLByDNDEToLL = sphereLLByDNDEToLL
 
 def SphereLLbyRBtoLL(lat0,lon0,range,bearing):
     """Computes new lat lon location on sphere
