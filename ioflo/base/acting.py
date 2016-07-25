@@ -40,10 +40,9 @@ class Act(object):
     def __init__(self, frame=None, context=None, act=None, actor=None,
                  registrar=None, inits=None, ioinits=None, parms=None,
                  prerefs=None, human='', count=0, **kwa ):
-        """
-        Initialization method for instance.
+        """ Initialization method for instance.
 
-        Attributes:
+            Attributes:
             .frame = ref to Frame holding this Act
             .context = name string of actioning context set when added to frame
             .act = ref to super Act if self is embedded in another Act such as Need
@@ -56,13 +55,6 @@ class Act(object):
             .prerefs = dictionary of init, ioinit, and parm refs to resolve
             .human = human friendly version of action declaration
             .count = line count in floscript of action declaration
-
-        Share path resolution
-            act.resolve aggregates ioinits from registry,  act.ioinits, and act.prerefs
-            act.resolve calls .actor._initio with ionits as parameters to get iois
-            then for each ioi act.resolve calls .resolvePath to get share or node
-            and then assigns share/node to to attribute/parameter of .actor
-
         """
         super(Act,self).__init__(**kwa) # in case of MRO
 
@@ -222,7 +214,7 @@ class Act(object):
             If the path name starts with a leading '.' dot then path name is
             fully reconciled and no contextual substitutions are to be applied.
 
-            If the path name begins with 'me' then the path is framer inode relative
+            If the path name begins with 'me' then the path is inode relative
 
             Otherwise make subsitutions in pathname strings that begin
             with 'framer.'
@@ -293,8 +285,6 @@ class Act(object):
                             if not finode.startswith('.') and minode:  # prepend if relative
                                 finode = '.'.join([minode, finode])
                     finode = finode.rstrip('.')
-                    if not finode:  # empty finode so use default actor relative
-                        finode = "framer.me.frame.me.actor.me"
                     if finode:
                         finparts = finode.split('.')
                         if finparts:
@@ -676,8 +666,6 @@ class Actor(object):
         finode = finode.rstrip('.')
 
         if not inode.startswith('.') and finode:  # not absolute and finode so prepend
-            if inode.startswith('me.') or inode == 'me':
-                raise ValueError("Invalid inode '{0}', first part == 'me'".format(inode))
             inode = ".".join([finode, inode])
 
         if not inode:  # empty or missing use default actor relative
@@ -718,20 +706,17 @@ class Actor(object):
 
             if ipath:
                 if not ipath.startswith('.'): # full path is inode joined to ipath
-                    if not(ipath.startswith('me.') or ipath == 'me'):  # do not override inode
-                        ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
-                    # any paths starting with me with have the framer inode (finode) substituted
-                    # in actor.resolvePath later this allows override of doer inode appendix
+                    ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
             else: # empty ipath
                 ipath = '.'.join((inode.rstrip('.'), key))  # when ipath empty create default from key
 
-            #if ipath.startswith('me.') or ipath == 'me':
-            #    raise ValueError("Invalid ipath '{0}', first part == 'me'".format(ipath))
+            if ipath.startswith('me.') or ipath == 'me':
+                raise ValueError("Invalid ipath '{0}', first part == 'me'".format(ipath))
 
             ioi = odict(ipath=ipath, ival=ival, iown=iown)
             iois[key] = ioi
 
-        ioi = odict(ipath=inode)  # create ioi for the inode
+        ioi = odict(ipath=inode)
         iois['inode'] = ioi
 
         return iois # non-empty when _parametric
