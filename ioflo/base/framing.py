@@ -966,7 +966,7 @@ class Frame(registering.StoriedRegistrar):
                assign aux.main to self
         """
         for i, aux in enumerate(self.auxes):
-            if isinstance(aux, Mapping):
+            if isinstance(aux, Mapping):  # Indicates an insular clone  (see builder.buildAux)
                 clone = aux['clone']
                 original = aux['original']
                 schedule = aux['schedule']
@@ -1020,7 +1020,7 @@ class Frame(registering.StoriedRegistrar):
 
                 self.auxes[i] = aux = clone
                 self.store.house.resolvables.append(clone)
-            else:
+            else:  # not insular has given name
                 self.auxes[i] = aux = resolveFramer(aux,
                                                 who=self.name,
                                                 desc='aux',
