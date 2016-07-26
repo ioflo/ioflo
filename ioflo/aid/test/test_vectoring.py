@@ -187,6 +187,60 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(m, -3)
         self.assertEqual(m, -u[2])
 
+    def testPerp2Product(self):
+        """
+        Test the perp2 function
+        """
+        console.terse("{0}\n".format(self.testPerp2Product.__doc__))
+
+        from ioflo.aid.vectoring import perp2, ccw, cw
+
+        u = (1, 1)
+        v = (-1, 1)
+        m = perp2(u, v)
+        self.assertEqual(m, 2)
+        l = ccw(u, v)
+        self.assertTrue(l)
+        r = cw(u, v)
+        self.assertFalse(r)
+
+        n = perp2(v, u)
+        self.assertEqual(n, -m)
+        l = ccw(v, u)
+        self.assertFalse(l)
+        r = cw(v, u)
+        self.assertTrue(r)
+
+        p = perp2(u, u)
+        self.assertEqual(p, 0)
+        l = ccw(u, u)
+        self.assertFalse(l)
+        r = cw(u, u)
+        self.assertFalse(r)
+
+    def testCross3Product(self):
+        """
+        Test the dot function
+        """
+        console.terse("{0}\n".format(self.testCross3Product.__doc__))
+
+        from ioflo.aid.vectoring import cross3
+
+        u = (1, 2, 3)
+        v = (-1, -2, 3)
+        w = cross3(u, v)
+        self.assertEqual(w, (12, -6, 0))
+
+        u = (1, 1, 0)
+        v = (-1, 1, 0)
+        w = cross3(u, v)
+        self.assertEqual(w, (0, 0, 2))
+
+        w = cross3(v, u)
+        self.assertEqual(w, (0, 0, -2))
+
+
+
 
 def runOne(test):
     '''
@@ -203,6 +257,8 @@ def runSome():
              'testMagnitude',
              'testNormalize',
              'testDotProduct',
+             'testPerp2Product',
+             'testCross3Product',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

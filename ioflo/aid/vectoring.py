@@ -50,3 +50,47 @@ def norm(v, check=False):
         if mag(nv) != 1.0:
             nv = norm(nv, check=check)
     return (nv)
+
+def perp2(u, v):
+    """
+    Returns the scalar 2D perpendicular product of vectors u and v.
+    The convention is u perp v.
+    The product is:
+        positive if v is to the left of u, that is,
+          the shortest rotation from u to v is ccw
+        negative if v is to the right of u, that is,
+          the shortest rotation from u to v is cw
+        zero if v is colinear with u
+    Essentially perp2 is the scalar 2D cross product
+    """
+    return (u[0] * v[1] - u[1] * v[0])
+
+def ccw(u, v):
+    """
+    Returns True if v is to the left of u, that is,
+          the shortest rotation from u to v is ccw
+    False otherwise
+    """
+    return ((u[0] * v[1] - u[1] * v[0]) > 0)
+
+left = ccw  # alias
+
+def cw(u, v):
+    """
+    Returns True if v is to the right of u, that is,
+          the shortest rotation from u to v is cw
+    False otherwise
+    """
+    return ((u[0] * v[1] - u[1] * v[0]) < 0)
+
+right = cw  #alias
+
+
+def cross3(u, v):
+    """
+    Returns 3 tuple that is  the 3 dimentional vector cross product of
+    3 vector u crossed onto 3 vector v
+    """
+    return ((u[1] * v[2] - v[1] * u[2],
+             u[2] * v[0] - v[2] * u[0],
+             u[0] * v[1] - v[0] * u[1]))
