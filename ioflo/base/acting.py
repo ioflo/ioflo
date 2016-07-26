@@ -283,8 +283,12 @@ class Act(object):
                     framer = self.frame.framer
                     finode = framer.inode
                     if framer.main:  # aux framer so special meaning of main or mine
+                        mainer = framer.main.framer  # main frame's framer eg main framer
                         if finode == "main":  # replace finode with main framer inode
-                            finode = framer.main.framer.inode
+                            finode = mainer.inode
+                            while finode == "main" and mainer.main:  # inode is main and has a main frame
+                                mainer = mainer.main.framer # walk up mainer links
+                                finode = mainer.inode  # substitude main for mainer.inode
                         elif finode == "mine":  # don't prepend main framer inode
                             finode = ""
                         else:  # possibly prepend main framer inode if finode relative
@@ -659,15 +663,19 @@ class Actor(object):
             raise ValueError("Nonstring inode arg '{0}'".format(inode))
 
         finode = ''  # inode of framer
-        if self._act.frame.framer:
+        if self._act.frame.framer: # framer has been assigned
             framer = self._act.frame.framer
             finode = framer.inode  # could be empty
             if framer.main:  # aux framer so special meaning of main or mine
+                mainer = framer.main.framer  # main frame's framer eg main framer
                 if finode == "main":  # replace finode with main framer inode
-                    finode = framer.main.framer.inode
+                    finode = mainer.inode
+                    while finode == "main" and mainer.main:  # inode is main and has a main frame
+                        mainer = mainer.main.framer # walk up mainer links
+                        finode = mainer.inode  # substitude main for mainer.inode
                 elif finode == "mine":  # don't prepend main framer inode
                     finode = ""  # effectively empty inode
-                else:  # possibly prepend main framer inode if finode relative
+                else:  # otherwise just prepend main framer inode if relative
                     minode = framer.main.framer.inode  # could be empty
                     minode = minode.rstrip('.')
                     if not finode.startswith('.') and minode:  # prepend if relative
