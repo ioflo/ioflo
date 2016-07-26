@@ -35,6 +35,21 @@ def dot(u, v):
                                                                   len(v)))
     return (sum(e*g for e, g in zip(u, v)))
 
+def add(u, v):
+    """
+    Returns the vector addition of vectors u + v
+    """
+    if len(u) != len(v):
+        raise ValueError("Vectors lengths differ {} != {}".format(len(u),
+                                                                  len(v)))
+    return tuple(e + g for e, g in zip(u, v))
+
+def neg(v):
+    """
+    Returns the negative of v
+    """
+    return tuple(-e for e in v)
+
 def norm(v, check=False):
     """
     Returns normalized (euclidean norm) copy of vector v as list
@@ -94,3 +109,26 @@ def cross3(u, v):
     return ((u[1] * v[2] - v[1] * u[2],
              u[2] * v[0] - v[2] * u[0],
              u[0] * v[1] - v[0] * u[1]))
+
+
+def pipwind(p, vs):
+    """
+    Returns integer winding number of point-in-polygon test for point p in
+    the closed polygon formed by connecting the vertex points in sequence vs
+    where each element of vs is a point.
+    Points are sequences (tuples, lists etc)
+
+    If the winding number is zero then p is not inside the polygon.
+    If the winding number is positive then p is inside and the polygon is
+      wound counter clockwise around p
+    If the winding number is negative then p is inside and the polygon is
+      wound clockwise around p
+
+    Algorithm from Aciatore and Miranda A Winding Number and
+    Point-in-Polygon Algorithm Jan 1995
+
+    This algorithm handles the case where p lies on a boundary or vertex
+    of the polygon and in that case p is considered to lie within the polygon
+
+    """
+    qs = tuple(tuple())

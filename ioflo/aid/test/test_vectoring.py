@@ -157,7 +157,6 @@ class BasicTestCase(unittest.TestCase):
         m = mag(n)
         self.assertEqual(m, 1.0)
 
-
     def testDotProduct(self):
         """
         Test the dot function
@@ -239,6 +238,27 @@ class BasicTestCase(unittest.TestCase):
         w = cross3(v, u)
         self.assertEqual(w, (0, 0, -2))
 
+    def testAddNeg(self):
+        """
+        Test the vector add and neg functions
+        """
+        console.terse("{0}\n".format(self.testAddNeg.__doc__))
+
+        from ioflo.aid.vectoring import add, neg
+
+        u = (1, 2, 3)
+        v = (4, 5, 6)
+        w = add(u, v)
+        self.assertEqual(w, (5, 7, 9))
+
+        w = neg(u)
+        self.assertEqual(w, (-1, -2, -3))
+
+        w = add(u, neg(v))
+        self.assertEqual(w, (-3, -3, -3))
+
+
+
 
 
 
@@ -259,6 +279,7 @@ def runSome():
              'testDotProduct',
              'testPerp2Product',
              'testCross3Product',
+             'testAddNeg',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
