@@ -383,7 +383,8 @@ class NeedUpdate(NeedMarker):
     """ NeedUpdate Need Special Need """
     def action(self, share, frame, **kw):
         """
-        Check if share updated while in frame/mark denoted by name key if any
+        Check if share updated since mark in share was updated by marker in
+        frame upon frame entry. 
             Default is False
 
         parameters:
@@ -396,8 +397,13 @@ class NeedUpdate(NeedMarker):
         if mark and mark.stamp is not None and share.stamp is not None:
             result = share.stamp >= mark.stamp #equals so catch updates on enter
 
-        console.profuse("Need Share {0} update in Frame {1} = {2}\n".format(
-            share.name, frame.name, result))
+        console.profuse("Marker update {0} in Frame {1} of Share {2} ={3} "
+                        "mark={4} at {5}\n".format(result,
+                                                     frame.name,
+                                                     share.name,
+                                                     share.stamp,
+                                                     mark.stamp,
+                                                     self.store.stamp))
 
         return result
 
