@@ -41,6 +41,6 @@ house test_slave
       put "Test Slave" into meta.failure
       bid stop all
 
-  logger logger to /var/tmp/log/ioflo/
+  logger logger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
     log meta on once
       loggee name meta.name version meta.version period meta.period

@@ -67,7 +67,7 @@ framer shallow be aux first shallow1 # conditional auxiliary
     let me if state.depth <= .limit.depth.cruise # dumb beact
     done
 
-logger logger to /var/tmp/log/ioflo/
+logger logger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
   log state   on update
   loggee position state.position heading state.heading depth state.depth speed state.speed
 

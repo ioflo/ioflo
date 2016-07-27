@@ -23,12 +23,12 @@ house test_slave
       bid stop all
 
 
-  server one to /var/tmp/log/ioflo/ rx :55551 per stuff 5
-  server two  to /var/tmp/log/ioflo/ \
+  server one to /tmp/log/ioflo/ rx :55551 per stuff 5
+  server two  to /tmp/log/ioflo/ \
     rx :55552 \
     for value in .meta.name # trailing comment
-  server server to /var/tmp/log/ioflo/ # trailing comment
+  server server to /tmp/log/ioflo/ # trailing comment
 
-  logger logger to /var/tmp/log/ioflo/
+  logger logger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
     log meta on once
       loggee name meta.name version meta.version period meta.period

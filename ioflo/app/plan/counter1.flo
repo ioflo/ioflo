@@ -30,7 +30,7 @@ frame abort
    bid stop all
 
 
-logger uuvlogger to /var/tmp/log/ioflo/
+logger uuvlogger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
 log leg on update
 loggee leg leg
 

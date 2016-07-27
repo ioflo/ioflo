@@ -52,7 +52,7 @@ frame autopilot_run
    do controller pid depth
    do controller pid pitch
 
-logger logger to /var/tmp/log/ioflo/
+logger logger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
 log state   on update
 loggee position state.position heading state.heading depth state.depth speed state.speed
 
