@@ -7,6 +7,9 @@ CHANGE LOG
 --------
 1.6.0
 
+Added "aft" connective to is updated need so can change the comparison to > instead
+of default >=
+
 Added aid.quaternioning module with some simple quaternion operations
 
 Added aid.vectoring module with some simple operations on vectors:
