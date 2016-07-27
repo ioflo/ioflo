@@ -1005,8 +1005,8 @@ class Transiter(Interrupter):
         if not framer.checkEnter(enters, exits):
             return None
 
-        msg = "To: {0}<{1} at {2:0.5f} Via: {3} ({4}) From: {5} after {6:0.3f}\n".format(
-            framer.name, far.human, framer.store.stamp, near.name, human,
+        msg = "To: {0}<{1} at {2} Via: {3} ({4}) From: {5} after {6:0.3f}\n".format(
+            framer.name, far.human, round(framer.store.stamp, 6), near.name, human,
             framer.human, framer.elapsed)
         console.terse(msg)
 
@@ -1106,8 +1106,8 @@ class Suspender(Interrupter):
             if not aux.checkStart(): #performs entry checks
                 return None
 
-            msg = "To: {0} in {1}<{2} at {3:.5f} Via: {4} ({5}) From: {6} after {7:0.3f}\n".format(
-                aux.name, framer.name, main.headHuman, framer.store.stamp, main.name,
+            msg = "To: {0} in {1}<{2} at {3} Via: {4} ({5}) From: {6} after {7:0.3f}\n".format(
+                aux.name, framer.name, main.headHuman, round(framer.store.stamp, 6), main.name,
                 human, framer.human, framer.elapsed)
             console.terse(msg)
 

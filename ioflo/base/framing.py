@@ -625,9 +625,9 @@ class Framer(tasking.Tasker):
 
                         if self.checkStart(): #checks enters
                             console.terse("   Starting Framer '{0}' ...\n".format(self.name))
-                            msg = "To: {0}<{1} at {2:0.5f}\n".format(self.name,
+                            msg = "To: {0}<{1} at {2}\n".format(self.name,
                                                                      self.first.human,
-                                                                     self.store.stamp)
+                                                                     round(self.store.stamp, 6))
                             console.terse(msg)
                             self.desire = RUN
                             self.enterAll() #activates, resets .done state also .desire may change here
@@ -1250,9 +1250,9 @@ class Frame(registering.StoriedRegistrar):
             act() #call entryAction
 
         for aux in self.auxes:
-            msg = "To: {0}<{1} at {2:0.5f}\n".format(aux.name,
+            msg = "To: {0}<{1} at {2}\n".format(aux.name,
                                              aux.first.human,
-                                             aux.store.stamp)
+                                             round(aux.store.stamp, 6))
             console.terse(msg)
             if aux.original:
                 aux.main = self  #assign aux's main to this frame
