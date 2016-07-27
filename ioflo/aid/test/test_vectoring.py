@@ -112,6 +112,31 @@ class BasicTestCase(unittest.TestCase):
         m2 = mag2(v)
         self.assertEqual(m2, 7.5)
 
+    def testAddNegSubMult(self):
+        """
+        Test the vector add and neg and sub multfunctions
+        """
+        console.terse("{0}\n".format(self.testAddNegSubMult.__doc__))
+
+        from ioflo.aid.vectoring import add, neg, sub, mult
+
+        u = (1, 2, 3)
+        v = (4, 5, 6)
+        w = add(u, v)
+        self.assertEqual(w, (5, 7, 9))
+
+        w = neg(u)
+        self.assertEqual(w, (-1, -2, -3))
+
+        w = add(u, neg(v))
+        self.assertEqual(w, (-3, -3, -3))
+
+        w = sub(u, v)
+        self.assertEqual(w, (-3, -3, -3))
+
+        w = mult(2, u)
+        self.assertEqual(w, (2, 4, 6))
+
     def testNormalize(self):
         """
         Test the norm function
@@ -186,36 +211,167 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(m, -3)
         self.assertEqual(m, -u[2])
 
-    def testPerp2Product(self):
+    def testProjection(self):
         """
-        Test the perp2 function
+        Test the proj function
         """
-        console.terse("{0}\n".format(self.testPerp2Product.__doc__))
+        console.terse("{0}\n".format(self.testProjection.__doc__))
 
-        from ioflo.aid.vectoring import perp2, ccw, cw
+        from ioflo.aid.vectoring import proj
+
+        u = [1, 2, 3]  # list
+        v = [4, 5, 6]
+        w = proj(u, v)
+        vv = (1.6623376623376622, 2.0779220779220777, 2.493506493506493)
+        for e1, e2 in zip(w, vv):
+            self.assertAlmostEqual(e1, e2)
+
+        u = [0, 0, 1]
+        v = [0, 0, 2]
+        w = proj(u, v)
+        self.assertEqual(w, (0.0, 0.0, 1.0))
+
+        u = [0, 0, 1]
+        v = [0, 0, 0]
+        w = proj(u, v)
+        self.assertEqual(w, (0, 0, 0))
+
+    def testTrip(self):
+        """
+        Test the trip function
+        """
+        console.terse("{0}\n".format(self.testTrip.__doc__))
+
+        from ioflo.aid.vectoring import trip, ccw, cw
 
         u = (1, 1)
         v = (-1, 1)
-        m = perp2(u, v)
+        m = trip(u, v)
         self.assertEqual(m, 2)
         l = ccw(u, v)
         self.assertTrue(l)
         r = cw(u, v)
         self.assertFalse(r)
 
-        n = perp2(v, u)
+        n = trip(v, u)
         self.assertEqual(n, -m)
         l = ccw(v, u)
         self.assertFalse(l)
         r = cw(v, u)
         self.assertTrue(r)
 
-        p = perp2(u, u)
+        p = trip(u, u)
         self.assertEqual(p, 0)
         l = ccw(u, u)
         self.assertFalse(l)
         r = cw(u, u)
         self.assertFalse(r)
+
+    def testTween(self):
+        """
+        Test the tween functions
+        """
+        console.terse("{0}\n".format(self.testTween.__doc__))
+
+        from ioflo.aid.vectoring import tween, tween2
+
+        p = (3, 3, 3)
+        u = (2, 2, 2)
+        v = (4, 4, 4)
+        result = tween(p, u, v)
+        self.assertTrue(result)
+
+        p = (5, 5, 5)
+        u = (2, 2, 2)
+        v = (4, 4, 4)
+        result = tween(p, u, v)
+        self.assertFalse(result)
+
+        p = (1, 1, 1)
+        u = (2, 2, 2)
+        v = (4, 4, 4)
+        result = tween(p, u, v)
+        self.assertFalse(result)
+
+        p = (3, 3, 0)
+        u = (2, 2, 2)
+        v = (4, 4, 4)
+        result = tween(p, u, v)
+        self.assertFalse(result)
+
+        p = (2, 2, 2)
+        u = (2, 2, 2)
+        v = (4, 4, 4)
+        result = tween(p, u, v)
+        self.assertTrue(result)
+
+        p = (4, 4, 4)
+        u = (2, 2, 2)
+        v = (4, 4, 4)
+        result = tween(p, u, v)
+        self.assertTrue(result)
+
+        p = (2, 2, 2)
+        u = (2, 2, 2)
+        v = (2, 2, 2)
+        result = tween(p, u, v)
+        self.assertTrue(result)
+
+        p = (4, 4, 4)
+        u = (2, 2, 2)
+        v = (2, 2, 2)
+        result = tween(p, u, v)
+        self.assertFalse(result)
+
+        p = (3, 3)
+        u = (2, 2)
+        v = (4, 4)
+        result = tween2(p, u, v)
+        self.assertTrue(result)
+
+        p = (5, 5)
+        u = (2, 2)
+        v = (4, 4)
+        result = tween2(p, u, v)
+        self.assertFalse(result)
+
+        p = (1, 1)
+        u = (2, 2)
+        v = (4, 4)
+        result = tween2(p, u, v)
+        self.assertFalse(result)
+
+        p = (3, 0)
+        u = (2, 2)
+        v = (4, 4)
+        result = tween2(p, u, v)
+        self.assertFalse(result)
+
+        p = (2, 2)
+        u = (2, 2)
+        v = (4, 4)
+        result = tween2(p, u, v)
+        self.assertTrue(result)
+
+        p = (4, 4)
+        u = (2, 2)
+        v = (4, 4)
+        result = tween2(p, u, v)
+        self.assertTrue(result)
+
+        p = (2, 2)
+        u = (2, 2)
+        v = (2, 2)
+        result = tween2(p, u, v)
+        self.assertTrue(result)
+
+        p = (4, 4)
+        u = (2, 2)
+        v = (2, 2)
+        result = tween2(p, u, v)
+        self.assertFalse(result)
+
+
 
     def testCross3Product(self):
         """
@@ -238,26 +394,84 @@ class BasicTestCase(unittest.TestCase):
         w = cross3(v, u)
         self.assertEqual(w, (0, 0, -2))
 
-    def testAddNeg(self):
+
+    def testWind(self):
         """
-        Test the vector add and neg functions
+        Test the winding count of point in polygon test
         """
-        console.terse("{0}\n".format(self.testAddNeg.__doc__))
+        console.terse("{0}\n".format(self.testWind.__doc__))
 
-        from ioflo.aid.vectoring import add, neg
+        from ioflo.aid.vectoring import wind, inside
 
-        u = (1, 2, 3)
-        v = (4, 5, 6)
-        w = add(u, v)
-        self.assertEqual(w, (5, 7, 9))
+        # counter clockwise wind
+        p = (1, 1)
+        vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
+        ccw = wind(p, vs)
+        self.assertEqual(ccw, 1)
+        self.assertTrue(inside(p, vs))
 
-        w = neg(u)
-        self.assertEqual(w, (-1, -2, -3))
+        # clockwise wind
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0)) # cw
+        cw = wind(p, vs)
+        self.assertEqual(cw, -1)
+        self.assertEqual(cw, -ccw)
+        self.assertTrue(inside(p, vs))
 
-        w = add(u, neg(v))
-        self.assertEqual(w, (-3, -3, -3))
+        # point not in polygon
+        p = (-1, -1)
+        vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+        self.assertFalse(inside(p, vs))
 
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0)) # cw
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+        self.assertFalse(inside(p, vs))
 
+        # point is vertex and is not in polygon
+        p = (2, 0)
+        vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
+        self.assertTrue(p in vs)
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0))  # ccw
+        self.assertTrue(p in vs)
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+
+        # point is vertex and is not in polygon
+        p = (1, 1)
+        vs = ((0, 0), (1, 1), (2, 0), (2, 2), (0, 2))  # ccw
+        self.assertTrue(p in vs)
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0), (1, 1))  # ccw
+        self.assertTrue(p in vs)
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+
+        # point on side and is not in polygon
+        p = (1, 0)
+        vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0))  # ccw
+        w = wind(p, vs)
+        self.assertEqual(w, 0)
+
+        # side collinear with p y intercept
+        p = (0.5, 1)
+        vs = ((0, 0), (1, 1), (2, 1), (2, 2), (0, 2))  # ccw
+        w = wind(p, vs)
+        self.assertEqual(w, 1)
+
+        vs = ((0, 0), (0, 2), (2, 2), (2, 1), (1, 1))  # ccw
+        w = wind(p, vs)
+        self.assertEqual(w, -1)
 
 
 
@@ -275,11 +489,14 @@ def runSome():
     tests =  []
     names = [
              'testMagnitude',
+             'testAddNegSubMult',
              'testNormalize',
              'testDotProduct',
-             'testPerp2Product',
+             'testProjection',
+             'testTrip',
+             'testTween',
              'testCross3Product',
-             'testAddNeg',
+             'testWind',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
