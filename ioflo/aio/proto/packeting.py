@@ -95,6 +95,9 @@ class PackerPart(Part):
         Attributes:
             .fmt is struct format string
             .packer is compiled struct packer
+            
+        Class Attributes:
+            .Format is struct packer format string for packed
 
         Inherited Properties:
             .size is length of .packed

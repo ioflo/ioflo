@@ -252,6 +252,12 @@ class Client(object):
 
     close = shutclose  # alias
 
+    def refresh(self):
+        """
+        Restart timer
+        """
+        self.timer.restart()
+
     def accept(self):
         """
         Attempt nonblocking acceptance connect to .ha
