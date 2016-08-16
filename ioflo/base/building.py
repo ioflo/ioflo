@@ -82,7 +82,6 @@ def Convert2Num(text):
     raise ValueError("Expected Number got '{0}'".format(text))
     # return None
 
-
 def Convert2CoordNum(text):
     """converts text to python type in order
        FracDeg, Int, hex, Float, Complex
@@ -104,8 +103,7 @@ def Convert2CoordNum(text):
     try:
         return (Convert2Num(text))
     except ValueError:
-        raise ValueError("Expected CoordNum got '{0}'".format(text))
-
+        raise ValueError("Expected CoordPointNum got '{0}'".format(text))
 
 def Convert2BoolCoordNum(text):
     """converts text to python type in order
@@ -125,7 +123,7 @@ def Convert2BoolCoordNum(text):
     try:
         return (Convert2CoordNum(text))
     except ValueError:
-        raise ValueError("Expected PathBoolCoordNum got '{0}'".format(text))
+        raise ValueError("Expected BoolCoordPointNum got '{0}'".format(text))
 
     return None
 
@@ -133,6 +131,8 @@ def Convert2StrBoolCoordNum(text):
     """converts text to python type in order
        Boolean, Int, Float, complex or double quoted string
        ValueError if can't
+
+       Need goal wants unitary type not path or point
     """
 
     if REO_Quoted.match(text): #text is double quoted string
@@ -144,11 +144,98 @@ def Convert2StrBoolCoordNum(text):
     try:
         return (Convert2BoolCoordNum(text))
     except ValueError:
-        raise ValueError("Expected StrBoolNum got '{0}'".format(text))
+        raise ValueError("Expected StrBoolCoordNum got '{0}'".format(text))
 
     return None
 
-def Convert2PathCoordNum(text):
+def Convert2PointNum(text):
+    """
+    Converts text to python type in order
+       Pxy, Pne,Pfs,Pxyz,Pned,Pfsb, Int, hex, Float, Complex
+       ValueError if can't
+    """
+    # convert to on of the Point classes if possible
+    match = REO_PointXY.findall(text)
+    if match:
+        x, y = match[0]
+        return Pxy(x=float(x), y=float(y))
+
+    match = REO_PointNE.findall(text)
+    if match:
+        n, e = match[0]
+        return Pne(n=float(n), e=float(e))
+
+    match = REO_PointFS.findall(text)
+    if match:
+        f, s = match[0]
+        return Pfs(f=float(f), s=float(s))
+
+    match = REO_PointXYZ.findall(text)
+    if match:
+        x, y, z = match[0]
+        return Pxyz(x=float(x), y=float(y), z=float(z))
+
+    match = REO_PointNED.findall(text)
+    if match:
+        n, e, d = match[0]
+        return Pned(n=float(n), e=float(e), d=float(d))
+
+    match = REO_PointFSB.findall(text)
+    if match:
+        f, s, b = match[0]
+        return Pfsb(f=float(f), s=float(s), b=float(b))
+
+    try:
+        return (Convert2Num(text))
+    except ValueError:
+        raise ValueError("Expected PointNum got '{0}'".format(text))
+
+def Convert2CoordPointNum(text):
+    """converts text to python type in order
+       FracDeg, Int, hex, Float, Complex
+       ValueError if can't
+    """
+    #convert to FracDeg Coord if possible
+    dm = REO_LatLonNE.findall(text) #returns list of tuples of groups [(deg,min)]
+    if dm:
+        deg = float(dm[0][0])
+        min_ = float(dm[0][1])
+        return (deg + min_/60.0)
+
+    dm = REO_LatLonSW.findall(text) #returns list of tuples of groups [(deg,min)]
+    if dm:
+        deg = float(dm[0][0])
+        min_ = float(dm[0][1])
+        return (-(deg + min_/60.0))
+
+    try:
+        return (Convert2PointNum(text))
+    except ValueError:
+        raise ValueError("Expected CoordPointNum got '{0}'".format(text))
+
+def Convert2BoolCoordPointNum(text):
+    """converts text to python type in order
+       None, Boolean, Int, Float, Complex
+       ValueError if can't
+    """
+    #convert to None if possible
+    if text.lower() == 'none':
+        return None
+
+    #convert to boolean if possible
+    if text.lower() in ['true', 'yes']:
+        return (True)
+    if text.lower() in ['false', 'no']:
+        return (False)
+
+    try:
+        return (Convert2CoordPointNum(text))
+    except ValueError:
+        raise ValueError("Expected BoolCoordPointNum got '{0}'".format(text))
+
+    return None
+
+def Convert2PathCoordPointNum(text):
     """converts text to python type in order
        Boolean, Int, Float, Complex
        ValueError if can't
@@ -158,14 +245,13 @@ def Convert2PathCoordNum(text):
         return (text)
 
     try:
-        return (Convert2CoordNum(text))
+        return (Convert2CoordPointNum(text))
     except ValueError:
-        raise ValueError("Expected BoolCoordNum got '{0}'".format(text))
+        raise ValueError("Expected PathCoordPointNum got '{0}'".format(text))
 
     return None
 
-
-def Convert2BoolPathCoordNum(text):
+def Convert2BoolPathCoordPointNum(text):
     """converts text to python type in order
        Boolean, Int, Float, Complex
        ValueError if can't
@@ -181,14 +267,13 @@ def Convert2BoolPathCoordNum(text):
         return (False)
 
     try:
-        return (Convert2PathCoordNum(text))
+        return (Convert2PathCoordPointNum(text))
     except ValueError:
-        raise ValueError("Expected PathBoolCoordNum got '{0}'".format(text))
+        raise ValueError("Expected PathBoolCoordPointNum got '{0}'".format(text))
 
     return None
 
-
-def Convert2StrBoolPathCoordNum(text):
+def Convert2StrBoolPathCoordPointNum(text):
     """converts text to python type in order
        Boolean, Int, Float, complex or double quoted string
        ValueError if can't
@@ -201,9 +286,9 @@ def Convert2StrBoolPathCoordNum(text):
         return text.strip("'")  #strip off quotes
 
     try:
-        return (Convert2BoolPathCoordNum(text))
+        return (Convert2BoolPathCoordPointNum(text))
     except ValueError:
-        raise ValueError("Expected StrBoolNum got '{0}'".format(text))
+        raise ValueError("Expected StrBoolPathCoordPointNum got '{0}'".format(text))
 
     return None
 
@@ -3758,7 +3843,7 @@ class Builder(object):
                 field = StripQuotes(field)
                 index += 1 #eat token
 
-        data[field] = Convert2StrBoolPathCoordNum(value) #convert to BoolNumStr, load data
+        data[field] = Convert2StrBoolPathCoordPointNum(value) #convert to BoolNumStr, load data
 
         #parse rest if any
         while index < len(tokens): #must be in pairs unless first is ending token
@@ -3774,7 +3859,7 @@ class Builder(object):
                 msg = "ParseError: Encountered reserved '{0}' instead of value." % (value)
                 raise excepting.ParseError(msg, tokens, index)
             index += 1
-            data[field] = Convert2StrBoolPathCoordNum(value) #convert to BoolNumStr, load data
+            data[field] = Convert2StrBoolPathCoordPointNum(value) #convert to BoolNumStr, load data
 
         #prevent using multiple fields if one of them is 'value'
         if (len(data) > 1) and ('value' in data):

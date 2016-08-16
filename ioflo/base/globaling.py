@@ -6,6 +6,7 @@
 import sys
 import math
 import re
+from collections import namedtuple
 
 from ..aid.sixing import *  # Python2to3 support
 
@@ -138,3 +139,19 @@ REO_LatLonSW = re.compile(r'^(\d+)[S,W,s,w](\d+\.\d+)$')
 #   fracdeg = deg + min/60.0
 
 
+#  Various Point namedtuple objects
+Pxy = namedtuple('Pxy', 'x y')  # Cartesian
+Pxyz = namedtuple('Pxyz', 'x y z')  # Cartesian right hand order
+Pne = namedtuple('Pne', 'n e')  # World mapping North East
+Pned = namedtuple('Pned', 'n e d')  # World mapping North East Down right hand order
+Pfs = namedtuple('Pfs', 'f s')  # Body Forward Starboard
+Pfsb = namedtuple('Pfsb', 'f s b')  # Body Forward Starboard Below right hand order
+
+REO_PointXY = re.compile(r'^([-+]?\d+\.\d*|[-+]?\d+)?[X,x]([-+]?\d+\.\d*|[-+]?\d+)[Y,y]$')
+REO_PointXYZ = re.compile(r'^([-+]?\d+\.\d*|[-+]?\d+)[X,x]([-+]?\d+\.\d*|[-+]?\d+)[Y,y]([-+]?\d+\.\d*|[-+]?\d+)[Z,z]$')
+
+REO_PointNE = re.compile(r'^([-+]?\d+\.\d*|[-+]?\d+)[N,n]([-+]?\d+\.\d*|[-+]?\d+)[E,e]$')
+REO_PointNED = re.compile(r'^([-+]?\d+\.\d*|[-+]?\d+)[N,n]([-+]?\d+\.\d*|[-+]?\d+)[E,e]([-+]?\d+\.\d*|[-+]?\d+)[D,d]$')
+
+REO_PointFS = re.compile(r'^([-+]?\d+\.\d*|[-+]?\d+)[F,f]([-+]?\d+\.\d*|[-+]?\d+)[S,s]$')
+REO_PointFSB = re.compile(r'^([-+]?\d+\.\d*|[-+]?\d+)[F,f]([-+]?\d+\.\d*|[-+]?\d+)[S,s]([-+]?\d+\.\d*|[-+]?\d+)[B,b]$')

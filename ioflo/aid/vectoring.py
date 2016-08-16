@@ -6,13 +6,17 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 import math
+from collections import namedtuple
 
 # Import ioflo libs
 from .sixing import *
 
+from ..base.globaling import Pxy, Pxyz, Pne, Pned,  Pfs,  Pfsb  # namedtuple points
+
 from .consoling import getConsole
 
 console = getConsole()
+
 
 def mag(v):
     """
@@ -212,7 +216,7 @@ def wind(p, vs):
     Returns integer winding number of 2D point-in-polygon test for point p in
     the closed polygon whose sides are formed by connecting the vertex points
     in sequence vs where each element of vs is a point.
-    Points are 2D sequences (tuples, lists etc)
+    Points are 2D sequences (tuples, namedtuples, lists etc)
 
     If the winding number is zero then p is not inside the polygon.
     If the winding number is positive then p is inside and the polygon is
@@ -277,7 +281,7 @@ def inside(p, vs):
     Returns True if 2D point p satisfies point-in-polygon test for the
     the closed polygon whose sides are formed by connecting the vertex points
     in sequence vs where each element of vs is a point.
-    Points are 2D sequences (tuples, lists etc)
+    Points are 2D sequences (tuples, namedtuples, lists etc)
 
     If p is on a vertex or edge of polygon it is considered outside
     """

@@ -1,0 +1,31 @@
+#example mission testPoint.flo
+
+house point
+
+
+init .points with p1 10n5e p2 15n10e p3 -5n0e
+init .coords with lat 120N10.5 lon 80W30.75
+
+framer mission be active first start
+
+  frame timeout
+    go abort if elapsed > 2
+
+    frame start in timeout
+      go next if lat in .coords == 120.175 and lon in .coords == -80.5125
+
+    frame burp in timeout
+      put p1 30.5n10.4e4.2d p2 1.25n100.5e0d into .points
+      put lat 10n10.5 lon 50E30.75 into .coords
+      go next if lat in .coords == 10.175 and lon in .coords == 50.5125
+
+
+  frame mission_stop
+    print "Success"
+    bid stop all
+
+  frame abort
+    print "Failure"
+    put "Address" into meta.failure
+    bid stop all
+
