@@ -7,6 +7,13 @@ CHANGE LOG
 --------
 1.6.0
 
+Added syntax to FloScript for setting field values to namedtuple Point type classes.
+6 classes supported for three 2D and three 3D for the XY, XYZ, NE, NED, FS, and
+FSB coordinate systems.  Syntax is to include letters with the axis as in
+10x5y3z
+
+
+
 Added "aft" connective to is updated need so can change the comparison to > instead
 of default >=
 
