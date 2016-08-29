@@ -162,7 +162,7 @@ def tween(p, u, v):
     for e, g in zip(a, b):
         if e == 0:
             if g != 0:
-               return False
+                return False
             else:
                 continue
         k = g / e
