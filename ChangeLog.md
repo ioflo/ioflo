@@ -7,6 +7,11 @@ CHANGE LOG
 --------
 1.6.0
 
+Fixed log so that only the fields present in share when log prepare (during startup)
+is called are logged by default. This prevents inadvertent additon of fields to share
+from messing up log columns
+
+
 Added syntax to FloScript for setting field values to namedtuple Point type classes.
 6 classes supported for three 2D and three 3D for the XY, XYZ, NE, NED, FS, and
 FSB coordinate systems.  Syntax is to include letters with the axis as in
