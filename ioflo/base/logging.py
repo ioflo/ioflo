@@ -61,8 +61,6 @@ class Logger(tasking.Tasker):
           .path = full path name of log directory
 
     """
-    #Counter = 0
-    #Names = {}
 
     def __init__(self, flushPeriod = 30.0, prefix = './', **kw):
         """Initialize instance.
@@ -72,7 +70,7 @@ class Logger(tasking.Tasker):
               prefix = prefix used to create log directory
 
         """
-        super(Logger,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
+        super(Logger, self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
 
         self.logs = [] #list of logs
         self.flushStamp = 0.0
@@ -81,7 +79,9 @@ class Logger(tasking.Tasker):
         self.path = '' #log directory path created on .reopen()
 
     def log(self):
-        """    """
+        """
+        Perform one log action
+        """
         for log in self.logs:
             log()
 
@@ -92,11 +92,13 @@ class Logger(tasking.Tasker):
                 self.flush()
                 self.flushStamp = self.store.stamp
 
-        except TypeError:
-            self.flushStamp = self.store.stamp #forces flushStamp to be a number once store.stamp is
+        except TypeError:  # stamps may be None so handle
+            self.flushStamp = self.store.stamp  # force flushStamp to be store.stamp
 
     def reopen(self):
-        """    """
+        """
+        Reopen all log files
+        """
         if not self.createPath(prefix = self.prefix):
             return False
 
@@ -109,33 +111,43 @@ class Logger(tasking.Tasker):
         return True
 
     def close(self):
-        """      """
+        """
+        Close all log files
+        """
         for log in self.logs:
             log.close()
 
     def flush(self):
-        """      """
+        """
+        Flush all log files
+        """
         for log in self.logs:
             log.flush()
 
     def prepare(self):
-        """Called in runner on control = START    """
+        """
+        Called in runner on control = START
+        """
         for log in self.logs:
             log.prepare()
 
     def resolve(self):
-        """    """
+        """
+        Called by house to resolve links in tasker
+        """
         for log in self.logs:
             log.resolve()
 
     def addLog(self, log):
-        """   """
+        """
+        Add log to list of logs
+        """
         self.logs.append(log)
-        #log.prepare()
 
     def createPath(self, prefix = './'):
-        """creates log directory path
-           creates physical directories on disk
+        """
+        creates unique log directory path
+        creates physical directories on disk
         """
         try:
             #if reopened too quickly could be same so we make a do until kludge
@@ -164,7 +176,8 @@ class Logger(tasking.Tasker):
         return True
 
     def makeRunner(self):
-        """generator factory function to create generator to run this logger
+        """
+        generator factory function to create generator to run this logger
         """
         #do any on creation initialization here
         console.profuse("     Making Logger Task Runner {0}\n".format(self.name))
@@ -232,33 +245,37 @@ class Logger(tasking.Tasker):
             self.status = ABORTED
 
 class Log(registering.StoriedRegistrar):
-    """Log Class for logging to file
-
-       Iherited instance attributes:
-          .name = unique name for log (group)
-          .store = data store
-
-       Instance attributes:
-          .stamp = time stamp last time logged used by once and update actions
-          .kind = text or binary
-          .fileName = file name only
-          .path = full dir path name of file
-          .file = file where log is written
-          .rule = log rule conditions for log
-          .action = function to use when logging
-          .header = header for log file
-          .formats = ordered dictionary of log format strings
-          .loggees = ordered dictionary of shares to be logged
     """
-    Counter = 0
+    Log Class for logging to file
+
+    Iherited instance attributes:
+       .name = unique name for log (group)
+       .store = data store
+
+    Instance attributes:
+       .stamp = time stamp last time logged used by once and update actions
+       .kind = text or binary
+       .fileName = file name only
+       .path = full dir path name of file
+       .file = file where log is written
+       .rule = log rule conditions for log
+       .action = function to use when logging
+       .header = header for log file
+
+       .loggees = ordered dictionary of loggee shares to be logged
+       .formats = ordered dictionary of loggee format strings
+       .lasts = ordered dictionary of loggee last value items
+    """
+    Counter = 0  # Logs have their own namespace
     Names = {}
 
     def __init__(self, kind = 'text', fileName = '', rule = NEVER, loggees = None, **kw):
-        """Initialize instance.
-           Parameters:
-           kind = text or binary
-           rule = log rule conditions (NEVER, ONCE, ALWAYS, UPDATE, CHANGE)
-           loggees = ordered dictionary of shares to be logged with tags
+        """
+        Initialize instance.
+        Parameters:
+        kind = text or binary
+        rule = log rule conditions (NEVER, ONCE, ALWAYS, UPDATE, CHANGE)
+        loggees = ordered dictionary of shares to be logged with tags
         """
         if 'preface' not in kw:
             kw['preface'] = 'Log'
@@ -280,9 +297,11 @@ class Log(registering.StoriedRegistrar):
         self.assignRuleAction() #assign log action function
 
         self.header = ''
-        self.formats = odict() #ordered dictionary of log format strings by tag
-        self.loggees = odict() #ordered dict of shares to be logged (loggees) by tag
-        self.lasts = odict()   #ordered dict of last values for loggees by tag
+
+        self.loggees = odict()  # odict of share refs to be logged (loggees) keyed by tag
+        self.formats = odict()  # odict of format string odicts keyed by tag
+                                # each entry value is odict of format strings keyed by data field
+        self.lasts = odict()  # odict of data instances of last values  keyed by tag
 
         if loggees:
             if '_time' in loggees:
@@ -290,15 +309,15 @@ class Log(registering.StoriedRegistrar):
             self.loggees.update(loggees)
 
     def __call__(self, **kw):
-        """run .action
-
+        """
+        run .action
         """
         self.action(**kw)
         console.profuse("     Log {0} at {1}\n".format(self.name, self.stamp))
 
     def createPath(self, prefix):
-        """creates full path name of file
-
+        """
+        creates full path name of file
         """
         if self.kind == 'text':
             suffix = '.txt'
@@ -309,7 +328,8 @@ class Log(registering.StoriedRegistrar):
         self.path = os.path.abspath(self.path) #convert to proper absolute path
 
     def reopen(self):
-        """closes if open then reopens
+        """
+        closes if open then reopens
         """
         self.close()  #innocuous to call close() on unopened file
         try:
@@ -325,22 +345,24 @@ class Log(registering.StoriedRegistrar):
         return True
 
     def close(self):
-        """ close self.file if open except stdout
+        """
+        close self.file if open except stdout
         """
         if self.file and not self.file.closed:
             self.file.close()
             self.file = None
 
     def flush(self):
-        """ flush self.file if open except stdout
+        """
+        flush self.file if open except stdout
         """
         if self.file and not self.file.closed:
             self.file.flush()
             os.fsync(self.file.fileno())
 
     def assignRuleAction(self, rule = None):
-        """Assigns correct log action based on rule
-
+        """
+        Assigns correct log action based on rule
         """
         #should be different if binary kind
         if rule is not None:
@@ -362,12 +384,12 @@ class Log(registering.StoriedRegistrar):
             self.action = self.never
 
     def prepare(self):
-        """Prepare log formats and values
-
+        """
+        Prepare log formats and values
         """
         console.profuse("     Preparing formats for Log {0}\n".format(self.name))
 
-        #build header
+        # build first line header with kind rule and file name
         cf = io.StringIO()
         cf.write(ns2u(self.kind))
         cf.write(u'\t')
@@ -375,9 +397,10 @@ class Log(registering.StoriedRegistrar):
         cf.write(u'\t')
         cf.write(ns2u(self.fileName))
         cf.write(u'\n')
+        # build second lind header with field names
         cf.write(u'_time')
         for tag, loggee in self.loggees.items():
-            if len(loggee) > 1:
+            if len(loggee) > 1:  # len of share is number of data fields
                 for field in loggee:
                     cf.write(u'\t')
                     cf.write(ns2u(tag))
@@ -409,8 +432,8 @@ class Log(registering.StoriedRegistrar):
             self.file.write(self.header)
 
     def format(self, value):
-        """returns format string for value type
-
+        """
+        returns format string for value type
         """
         if isinstance(value, float):
             return '\t%0.4f'
@@ -422,8 +445,9 @@ class Log(registering.StoriedRegistrar):
             return '\t%s'
 
     def log(self):
-        """called by conditional actions
-
+        """
+        log loggees
+        called by conditional actions
         """
         self.stamp = self.store.stamp
 
@@ -436,16 +460,17 @@ class Log(registering.StoriedRegistrar):
         cf.write(ns2u(text))
 
         for tag, loggee in self.loggees.items():
-            if loggee: #len non zero
-                for field, value in loggee.items():
+            for field, fmt in self.formats[tag].items():
+                if field in loggee:
+                    value = loggee[field]
                     try:
-                        text = self.formats[tag][field] % value
+                        text = fmt % value
                     except TypeError:
                         text = '%s' % value
                     cf.write(ns2u(text))
 
-            else: #no items so just write tab
-                cf.write(u'\t')
+                else:  # field no longer present in loggee so just tab
+                    cf.write(u'\t')
 
         cf.write(u'\n')
 
@@ -457,13 +482,14 @@ class Log(registering.StoriedRegistrar):
         cf.close()
 
     def logSequence(self, fifo=False):
-        """ called by conditional actions
-            Log and remove all elements of sequence
-            Default is lifo order
-            If fifo Then log in fifo order
-            head is left tail is right
-            lifo is log tail to head
-            fifo is log head to tail
+        """
+        called by conditional actions
+        Log and remove all elements of sequence
+        Default is lifo order
+        If fifo Then log in fifo order
+        head is left tail is right
+        lifo is log tail to head
+        fifo is log head to tail
         """
         self.stamp = self.store.stamp
 
@@ -510,39 +536,45 @@ class Log(registering.StoriedRegistrar):
         cf.close()
 
     def never(self):
-        """log never
-           This if for manual logging by frame action
+        """
+        log never
+        This if for manual logging by frame action
         """
         pass
 
     def once(self):
-        """log once
-           Good for logging paramters that don't change but want record
+        """
+        log once
+        Good for logging paramters that don't change but want record
         """
         if self.stamp is None:
             self.log()
 
     def always(self):
-        """log always
-
+        """
+        log always
+        Good for logging every time logger runs unconditionally
         """
         self.log()
 
     def lifo(self):
-        """log lifo sequence
-            log elements in lifo order from sequence until empty
+        """
+        log lifo sequence
+        log elements in lifo order from sequence until empty
         """
         self.logSequence()
 
     def fifo(self):
-        """log fifo sequence
-            log elements in fifo order from sequence until empty
+        """
+        log fifo sequence
+        log elements in fifo order from sequence until empty
         """
         self.logSequence(fifo=True)
 
     def update(self):
-        """log if updated
-           logs once and then only if updated
+        """
+        log if updated
+        logs once and then only if updated after first time
         """
         if self.stamp is None: #Always log at least once even if not updated
             self.log()
@@ -554,10 +586,11 @@ class Log(registering.StoriedRegistrar):
                 return  #first update triggers log once per cycle
 
     def change(self):
-        """log if changed
-           logs once and then only if changed
-           requires that self.prepare has been called otherwise fields in
-           self.lasts won't match fields in log
+        """
+        log if changed
+        logs once and then only if changed after first time
+        requires that self.prepare has been called otherwise fields in
+        self.lasts won't match fields in log
         """
         if self.stamp is None: #Always log at least once even if not updated
             self.log()
@@ -589,7 +622,8 @@ class Log(registering.StoriedRegistrar):
             self.loggees[tag] = loggee
 
     def resolve(self):
-        """resolves links to loggees
+        """
+        resolves links to loggees
 
         """
         console.profuse("     Resolving links for Log {0}\n".format(self.name))
