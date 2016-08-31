@@ -269,7 +269,7 @@ class Log(registering.StoriedRegistrar):
     Counter = 0  # Logs have their own namespace
     Names = {}
 
-    def __init__(self, kind = 'text', fileName = '', rule = NEVER, loggees = None, **kw):
+    def __init__(self, kind='text', fileName='', rule=NEVER, loggees=None, **kw):
         """
         Initialize instance.
         Parameters:
@@ -304,9 +304,8 @@ class Log(registering.StoriedRegistrar):
         self.lasts = odict()  # odict of data instances of last values  keyed by tag
 
         if loggees:
-            if '_time' in loggees:
-                raise excepting.ResolveError("Bad loggee tag '_time'", self.name, loggee['_time'].name)
-            self.loggees.update(loggees)
+            for tag, loggee in loggees.items():
+                self.addLoggee(tag, loggee)
 
     def __call__(self, **kw):
         """
@@ -376,10 +375,10 @@ class Log(registering.StoriedRegistrar):
             self.action = self.update
         elif self.rule == CHANGE:
             self.action = self.change
-        elif self.rule == LIFO:
-            self.action = self.lifo
-        elif self.rule == FIFO:
-            self.action = self.fifo
+        elif self.rule == STREAK:
+            self.action = self.streak
+        elif self.rule == DECK:
+            self.action = self.deck
         else:
             self.action = self.never
 
@@ -481,15 +480,12 @@ class Log(registering.StoriedRegistrar):
 
         cf.close()
 
-    def logSequence(self, fifo=False):
+    def logStreak(self):
         """
         called by conditional actions
-        Log and remove all elements of sequence
-        Default is lifo order
-        If fifo Then log in fifo order
-        head is left tail is right
-        lifo is log tail to head
-        fifo is log head to tail
+        Log and remove all elements of sequence in fifo order
+        head is left tail is right, Fifo is head to tail
+
         """
         self.stamp = self.store.stamp
 
@@ -517,10 +513,7 @@ class Log(registering.StoriedRegistrar):
                     d.appendleft(value)
 
                 while d: # not empty
-                    if fifo:
-                        element = d.popleft()
-                    else: #lifo
-                        element = d.pop()
+                    element = d.popleft()
 
                     try:
                         text = self.formats[tag][field] % (element, )
@@ -534,6 +527,53 @@ class Log(registering.StoriedRegistrar):
             console.terse("{0}\n".format(ex))
 
         cf.close()
+
+    def logDeck(self):
+        """
+        called by conditional actions
+        Log and remove all elements of deck in fifo order which is pull
+        """
+        self.stamp = self.store.stamp
+
+        #should be different if binary kind
+        cf = io.StringIO() #use string io faster than concatenation
+        try:
+            stamp = self.formats['_time'] % self.stamp
+        except TypeError:
+            stamp = '%s' % self.stamp
+
+        if self.loggees:
+            tag, loggee = self.loggees.items()[0] # only works for one loggee
+            if loggee: # not empty
+                field, value = loggee.items()[0] # only first item
+                d = deque()
+                if isinstance(value, MutableSequence): #has pop method
+                    while value: # not empty
+                        d.appendleft(value.pop()) #remove and copy in order
+
+                elif isinstance(value, MutableMapping): # has popitem method
+                    while value: # not empty
+                        d.appendleft(value.popitem()) #remove and copy in order
+
+                else: #not mutable sequence or mapping so log normally
+                    d.appendleft(value)
+
+                while d: # not empty
+                    element = d.popleft()
+
+                    try:
+                        text = self.formats[tag][field] % (element, )
+                    except TypeError:
+                        text = '%s' % element
+                    cf.write(u"%s\t%s\n" % (stamp, text))
+
+        try:
+            self.file.write(cf.getvalue())
+        except ValueError as ex: #if self.file already closed then ValueError
+            console.terse("{0}\n".format(ex))
+
+        cf.close()
+
 
     def never(self):
         """
@@ -557,19 +597,20 @@ class Log(registering.StoriedRegistrar):
         """
         self.log()
 
-    def lifo(self):
+    def streak(self):
         """
-        log lifo sequence
-        log elements in lifo order from sequence until empty
-        """
-        self.logSequence()
-
-    def fifo(self):
-        """
-        log fifo sequence
+        log sequence of first field of first loggee only
         log elements in fifo order from sequence until empty
         """
-        self.logSequence(fifo=True)
+        self.logStreak()
+
+    def deck(self):
+        """
+        log deck
+        log elements in fifo order from deck until empty
+        """
+        self.logDeck()
+
 
     def update(self):
         """
@@ -614,9 +655,11 @@ class Log(registering.StoriedRegistrar):
 
     def addLoggee(self, tag, loggee):
         """
-
+        Add a loggee at tag to .loggees
         """
         if self.stamp is None: #only add if not logged even once yet
+            if tag ==  '_time':
+                raise excepting.ResolveError("Bad loggee tag '_time'", self.name, loggee.name)
             if tag in self.loggees: #only add if not already there
                 raise excepting.ResolveError("Duplicate tag", tag, loggee)
             self.loggees[tag] = loggee

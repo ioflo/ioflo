@@ -1031,15 +1031,15 @@ class Builder(object):
         """create log in current logger
 
            log name  [to fileName] [as (text, binary)] [on rule]
-           rule: (once, never, always, update, change)
+           rule: (once, never, always, update, change, streak, deck)
            default fileName is log's name
            default type is text
-           default rule  is update
+           default rule  is never
 
-           for manual logging use tally command with rule once or never
+           for manual logging use tout command with rule once or never
 
 
-           log autopilot (text, binary, console) to './logs/' on (never, once, update, change, always)
+           log autopilot text to './logs/' on update
         """
         if not self.currentLogger:
             msg = "Error building %s. No current logger." % (command,)
@@ -1096,8 +1096,11 @@ class Builder(object):
                       (command, name)
                 raise excepting.ParseError(msg, tokens, index)
 
-            log = logging.Log(name = name, store = self.currentStore, kind = kind,
-                              fileName = fileName, rule = rule)
+            log = logging.Log(name=name,
+                              store=self.currentStore,
+                              kind=kind,
+                              fileName=fileName,
+                              rule=rule)
             self.currentLogger.addLog(log)
             self.currentLog = log
 
@@ -1142,6 +1145,12 @@ class Builder(object):
                 if tag in self.currentLog.loggees:
                     msg = "Error building %s. Loggee %s already exists in Log %s." %\
                           (command, tag, self.currentLog.name)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if self.currentLog.rule in (STREAK, DECK) and self.currentLog.loggees:
+                    # only one loggee allowed when rule is streak or deck
+                    msg = ("Error building {0}. Only one loggee allowed when "
+                          "rule is streak or deck.".format(command))
                     raise excepting.ParseError(msg, tokens, index)
 
                 self.currentLog.addLoggee(tag = tag, loggee = share)

@@ -40,12 +40,12 @@ ONCE = 1
 ALWAYS = 2
 UPDATE = 3
 CHANGE = 4
-LIFO = 5
-FIFO = 6
+STREAK = 5
+DECK = 6
 LogRuleNames = {NEVER : 'Never', ONCE : 'Once', ALWAYS : 'Always',
-                UPDATE : 'Update', CHANGE : 'Change', LIFO : 'Lifo', FIFO: 'Fifo',}
+                UPDATE : 'Update', CHANGE : 'Change', STREAK : 'Streak', DECK: 'Deck',}
 LogRuleValues = {'Never' : NEVER, 'Once' : ONCE,  'Always' : ALWAYS,
-                 'Update' : UPDATE, 'Change' : CHANGE, 'Lifo' : LIFO, 'Fifo' : FIFO,}
+                 'Update' : UPDATE, 'Change' : CHANGE, 'Streak' : STREAK, 'Deck' : DECK,}
 
 #Task schedule context
 INACTIVE = 0
