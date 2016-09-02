@@ -7,7 +7,11 @@ See:
     https://bitbucket.org/pypa/setuptools
 
 
-python setup.py register sdist upload
+$ python setup.py register sdist upload
+
+More secure to use twine to upload  $ pip3 install twine
+$ python setup.py sdist
+$ twine upload dist/ioflo-1.5.5.tar.gz
 
 """
 import sys

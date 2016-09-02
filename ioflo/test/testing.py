@@ -23,6 +23,7 @@ from ..aid import odict, oset
 from ..base import globaling
 from ..base import storing
 from ..base import housing
+from ..base import logging
 from ..base import framing
 from ..base import acting
 from ..base import doing
@@ -87,7 +88,7 @@ def verifyShareFields(share, fields):
 
 class IofloTestCase(unittest.TestCase):
     """
-    Base TestCase for Ioflo TestCases
+    Base TestCase for Ioflo TestCases with cleared house class registried
     """
 
     def setUp(self, behaviors=None):
@@ -105,7 +106,7 @@ class IofloTestCase(unittest.TestCase):
 
 class StoreIofloTestCase(IofloTestCase):
     """
-    TestCase with only .store and .timer
+    TestCase with only .store
     """
 
     def setUp(self):
@@ -118,7 +119,8 @@ class StoreIofloTestCase(IofloTestCase):
 
 class HouseIofloTestCase(IofloTestCase):
     """
-    TestCase with  .house and .store from .house
+    TestCase with .store from .house, .metas, and .preloads
+    Sets up .house with .metas and .preloads and resolves
     """
 
     def setUp(self):
@@ -189,6 +191,24 @@ class HouseIofloTestCase(IofloTestCase):
         """
         self.house.resolve()
 
+class LoggerIofloTestCase(HouseIofloTestCase):
+    """
+    TestCase with .logger in .house and .store from .house
+    """
+
+    def setUp(self):
+        super(LoggerIofloTestCase, self).setUp()
+        prefix = "/tmp/log/ioflo"
+        self.logger = logging.Logger(name="LoggerTest",
+                                     store=self.store,
+                                     schedule=globaling.ACTIVE,
+                                     prefix=prefix)
+        self.house.taskers.append(self.logger)
+        self.house.mids.append(self.logger)
+        self.house.orderTaskables()
+
+    def tearDown(self):
+        super(LoggerIofloTestCase, self).tearDown()
 
 class FramerIofloTestCase(HouseIofloTestCase):
     """

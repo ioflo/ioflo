@@ -954,8 +954,8 @@ class Builder(object):
                     period = abs(Convert2Num(tokens[index]))
                     index +=1
 
-                elif connective == 'to':
-                    prefix = tokens[index]
+                elif connective == 'to':  #  base directory path for log files
+                    prefix = tokens[index]  # house name is post pended as sub directory
                     index +=1
 
                 elif connective == 'be':
@@ -987,16 +987,16 @@ class Builder(object):
                           (command, connective)
                     raise excepting.ParseError(msg, tokens, index)
 
-            prefix += '/' + self.currentHouse.name #extra slashes are ignored
-
             if name in logging.Logger.Names:
                 msg = "Error building %s. Task %s already exists." %\
                       (command, name)
                 raise excepting.ParseError(msg, tokens, index)
 
-            logger = logging.Logger(name = name, store = self.currentStore,
-                                    period = period, flushPeriod = interval,
-                                    prefix = prefix)
+            logger = logging.Logger(name=name,
+                                    store=self.currentStore,
+                                    period=period,
+                                    flushPeriod=interval,
+                                    prefix=prefix)
             logger.schedule = schedule
 
             self.currentHouse.taskers.append(logger)
@@ -1092,14 +1092,21 @@ class Builder(object):
                     raise excepting.ParseError(msg, tokens, index)
 
             if name in logging.Log.Names:
-                msg = "Error building %s. Log %s already exists." %\
+                msg = "Error building %s. Log named %s already exists." %\
                       (command, name)
                 raise excepting.ParseError(msg, tokens, index)
+
+            if fileName:
+                for log in self.currentLogger.logs:
+                    if fileName == log.baseFilename:
+                        msg = ("Error building {0}. Log named {1} file named {2} "
+                              "already exists.".format(command, name, fileName))
+                        raise excepting.ParseError(msg, tokens, index)
 
             log = logging.Log(name=name,
                               store=self.currentStore,
                               kind=kind,
-                              fileName=fileName,
+                              baseFilename=fileName,
                               rule=rule)
             self.currentLogger.addLog(log)
             self.currentLog = log

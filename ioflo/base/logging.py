@@ -1,23 +1,14 @@
-"""logging.py log file making module
-
-
 """
-#print("module {0}".format(__name__))
+logging.py log file making module
+"""
+from __future__ import absolute_import, division, print_function
 
 import sys
-if sys.version < '3':
-    def b(x):
-        return x
-else:
-    def b(x):
-        return x.encode('ISO-8859-1')
-    xrange = range
 import os
 import time
 import datetime
 import copy
 import io
-
 
 from collections import deque, MutableSequence, MutableMapping
 
@@ -99,13 +90,12 @@ class Logger(tasking.Tasker):
         """
         Reopen all log files
         """
-        if not self.createPath(prefix = self.prefix):
-            return False
+        if not self.path:  # not created yet
+            if not self.createPath(prefix = self.prefix):
+                return False
 
         for log in self.logs:
-            log.createPath(prefix = self.path)
-
-            if not log.reopen():
+            if not log.reopen(prefix=self.path):
                 return False
 
         return True
@@ -150,27 +140,25 @@ class Logger(tasking.Tasker):
         creates physical directories on disk
         """
         try:
-            #if reopened too quickly could be same so we make a do until kludge
-            path = self.path
-
             i = 0
-            while path == self.path: #do until keep trying until different
+            while True:  # do until keep trying until different
                 dt = datetime.datetime.now()
-                path = "{0}_{1}_{2:04d}{3:02d}{4:02d}_{5:02d}{6:02d}{7:02d}".format(
-                        prefix, self.name, dt.year, dt.month, dt.day, dt.hour,
-                        dt.minute, dt.second + i)
+                dirname = "{0}_{1:04d}{2:02d}{3:02d}_{4:02d}{5:02d}{6:02d}_{7:03d}".format(
+                           self.name, dt.year, dt.month, dt.day, dt.hour,
+                           dt.minute, dt.second, dt.microsecond // 1000 + i )
+                path = os.path.join(prefix, self.store.house.name, dirname)
                 path = os.path.abspath(path) #convert to proper absolute path
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                    break
                 i +=1
-
-            if not os.path.exists(path):
-                os.makedirs(path)
 
         except OSError as ex:
             console.terse("Error: creating log directory '{0}'\n".format(ex))
             return False
 
         self.path = path
-        console.concise("     Created Logger {0} Directory= '{1}'\n".format(
+        console.concise("     Created Logger {0} Directory at '{1}'\n".format(
                 self.name, self.path))
 
         return True
@@ -269,7 +257,7 @@ class Log(registering.StoriedRegistrar):
     Counter = 0  # Logs have their own namespace
     Names = {}
 
-    def __init__(self, kind='text', fileName='', rule=NEVER, loggees=None, **kw):
+    def __init__(self, kind='text', baseFilename='', rule=NEVER, loggees=None, **kw):
         """
         Initialize instance.
         Parameters:
@@ -285,10 +273,10 @@ class Log(registering.StoriedRegistrar):
         self.stamp = None #time stamp last logged, None means never logged
 
         self.kind = kind
-        if fileName:
-            self.fileName = fileName #file name only
+        if baseFilename:
+            self.baseFilename = baseFilename #file name only
         else:
-            self.fileName = self.name
+            self.baseFilename = self.name
         self.path = '' #full dir path name of file
         self.file = None #file where log is written
 
@@ -307,6 +295,20 @@ class Log(registering.StoriedRegistrar):
             for tag, loggee in loggees.items():
                 self.addLoggee(tag, loggee)
 
+    def resolve(self):
+        """
+        resolves links to loggees
+
+        """
+        console.profuse("     Resolving links for Log {0}\n".format(self.name))
+
+        for tag, loggee in self.loggees.items():
+            if not isinstance(loggee, storing.Share):
+                share = self.store.fetch(loggee)
+                if not share:
+                    raise excepting.ResolveError("Loggee not in store", loggee, self.name)
+                self.loggees[tag] = share #replace link name with link
+
     def __call__(self, **kw):
         """
         run .action
@@ -319,27 +321,32 @@ class Log(registering.StoriedRegistrar):
         creates full path name of file
         """
         if self.kind == 'text':
-            suffix = '.txt'
+            ext = '.txt'
         elif self.kind == 'binary':
-            suffix = '.log'
+            ext = '.log'
 
-        self.path = "%s/%s%s" % (prefix,self.fileName,suffix)
-        self.path = os.path.abspath(self.path) #convert to proper absolute path
+        filename= "{0}{1}".format(self.baseFilename, ext)
+        self.path = os.path.join(prefix, filename)
+        self.path = os.path.abspath(self.path)  # convert to proper absolute path
 
-    def reopen(self):
+    def reopen(self, prefix=''):
         """
+        creates if .path empty with prefix
         closes if open then reopens
         """
+        if not self.path:
+            self.createPath(prefix=prefix)
+
         self.close()  #innocuous to call close() on unopened file
         try:
-            self.file = open(self.path, 'a+')
+            self.file = open(self.path, 'a+')  # append pick up where left off
 
         except IOError as ex:
-            console.terse("Error: creating log file '{0}'\n".format(ex))
+            console.terse("Error: creating/opening log file '{0}'\n".format(ex))
             self.file = None
             return False
 
-        console.concise("     Created Log file '{0}'\n".format(self.path))
+        console.concise("     Created/Opened Log file '{0}'\n".format(self.path))
 
         return True
 
@@ -348,6 +355,7 @@ class Log(registering.StoriedRegistrar):
         close self.file if open except stdout
         """
         if self.file and not self.file.closed:
+            self.flush()  # close does not necessarily fsync
             self.file.close()
             self.file = None
 
@@ -394,7 +402,7 @@ class Log(registering.StoriedRegistrar):
         cf.write(u'\t')
         cf.write(ns2u(LogRuleNames[self.rule]))
         cf.write(u'\t')
-        cf.write(ns2u(self.fileName))
+        cf.write(ns2u(self.baseFilename))
         cf.write(u'\n')
         # build second lind header with field names
         cf.write(u'_time')
@@ -663,18 +671,4 @@ class Log(registering.StoriedRegistrar):
             if tag in self.loggees: #only add if not already there
                 raise excepting.ResolveError("Duplicate tag", tag, loggee)
             self.loggees[tag] = loggee
-
-    def resolve(self):
-        """
-        resolves links to loggees
-
-        """
-        console.profuse("     Resolving links for Log {0}\n".format(self.name))
-
-        for tag, loggee in self.loggees.items():
-            if not isinstance(loggee, storing.Share):
-                share = self.store.fetch(loggee)
-                if not share:
-                    raise excepting.ResolveError("Loggee not in store", loggee, self.name)
-                self.loggees[tag] = share #replace link name with link
 
