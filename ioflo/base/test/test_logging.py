@@ -146,11 +146,11 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         log.close()
 
 
-    def testLoggerSend(self):
+    def testLogAlways(self):
         """
         Test creating a logger with a log and loggees
         """
-        console.terse("{0}\n".format(self.testLoggerSend.__doc__))
+        console.terse("{0}\n".format(self.testLogAlways.__doc__))
 
         self.assertEqual(self.house.store, self.store)
         self.assertIsInstance(self.logger, logging.Logger)
@@ -286,6 +286,124 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         log.file.close()
 
 
+    def testLogUpdate(self):
+        """
+        Test log with update rule
+        """
+        console.terse("{0}\n".format(self.testLogUpdate.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.UPDATE)
+
+        self.assertEqual(log.rule, globaling.UPDATE)
+        self.assertEqual(log.action, log.update)
+
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {
+                                       '_time': '%0.4f',
+                                       'heading': odict([('value', '\t%0.4f')])
+                                      })
+        self.assertTrue('heading' in log.lasts)
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        heading.value += 0.0  # updated but same value
+        status = self.logger.runner.send(globaling.RUN)  # logs since updated
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        heading.value += 5.0  # update with different value
+        status = self.logger.runner.send(globaling.RUN)  # logs since updated
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tUpdate\ttest\n',
+                                '_time\theading\n',
+                                '0.0000\t0.0000\n',
+                                '0.2500\t0.0000\n',
+                                '0.5000\t5.0000\n'])
+        log.file.close()
+
+    def testLogChange(self):
+        """
+        Test log with change rule
+        """
+        console.terse("{0}\n".format(self.testLogChange.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.CHANGE)
+
+        self.assertEqual(log.rule, globaling.CHANGE)
+        self.assertEqual(log.action, log.change)
+
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {
+                                       '_time': '%0.4f',
+                                       'heading': odict([('value', '\t%0.4f')])
+                                      })
+        self.assertTrue('heading' in log.lasts)
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        heading.value += 0.0  # updated but same value
+        status = self.logger.runner.send(globaling.RUN)  # no log since updated but not changed
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        heading.value += 5.0  # update with different value
+        status = self.logger.runner.send(globaling.RUN)  # logs since changed
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tChange\ttest\n',
+                                '_time\theading\n',
+                                '0.0000\t0.0000\n',
+                                '0.5000\t5.0000\n'])
+        log.file.close()
+
+
 
 def runOne(test):
     '''
@@ -299,7 +417,9 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = ['testLogger',
-             'testLoggerSend',
+             'testLogAlways',
+             'testLogUpdate',
+             'testLogChange',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
