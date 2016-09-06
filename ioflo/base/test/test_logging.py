@@ -93,8 +93,6 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         self.assertEqual(log.formats, {'_time': '%0.4f',
                                         'heading': odict([('value', '\t%0.4f')]),
                                         'pos': odict([('north', '\t%0.4f'), ('east', '\t%0.4f')])})
-        self.assertTrue('heading' in log.lasts)
-        self.assertTrue('pos' in log.lasts)
 
         self.house.store.changeStamp(0.0)
 
@@ -191,10 +189,6 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         self.assertEqual(log.formats, {'_time': '%0.4f',
                                        'heading': odict([('value', '\t%0.4f')]),
                                        'pos': odict([('north', '\t%0.4f'), ('east', '\t%0.4f')])})
-        self.assertTrue('heading' in log.lasts)
-        self.assertTrue('pos' in log.lasts)
-
-        #status = logger.runner.send(RUN)
 
         for i in range(20):
             self.store.advanceStamp(0.125)
@@ -285,6 +279,114 @@ class BasicTestCase(testing.LoggerIofloTestCase):
                                 '3.0000\t24.0000\t46.0000\t-22.0000\n'])
         log.file.close()
 
+    def testLogOnce(self):
+        """
+        Test log with once rule
+        """
+        console.terse("{0}\n".format(self.testLogOnce.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.ONCE)
+
+        self.assertEqual(log.rule, globaling.ONCE)
+        self.assertEqual(log.action, log.once)
+
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {
+                                       '_time': '%0.4f',
+                                       'heading': odict([('value', '\t%0.4f')])
+                                      })
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        heading.value += 0.0  # updated but same value
+        status = self.logger.runner.send(globaling.RUN)  # logs since updated
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        heading.value += 5.0  # update with different value
+        status = self.logger.runner.send(globaling.RUN)  # logs since updated
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tOnce\ttest\n', '_time\theading\n', '0.0000\t0.0000\n'])
+        log.file.close()
+
+    def testLogNever(self):
+        """
+        Test log with never rule
+        """
+        console.terse("{0}\n".format(self.testLogNever.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.NEVER)
+
+        self.assertEqual(log.rule, globaling.NEVER)
+        self.assertEqual(log.action, log.never)
+
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {
+                                       '_time': '%0.4f',
+                                       'heading': odict([('value', '\t%0.4f')])
+                                      })
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        heading.value += 0.0  # updated but same value
+        status = self.logger.runner.send(globaling.RUN)  # logs since updated
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        heading.value += 5.0  # update with different value
+        status = self.logger.runner.send(globaling.RUN)  # logs since updated
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tNever\ttest\n', '_time\theading\n'])
+        log.file.close()
+
 
     def testLogUpdate(self):
         """
@@ -318,7 +420,6 @@ class BasicTestCase(testing.LoggerIofloTestCase):
                                        '_time': '%0.4f',
                                        'heading': odict([('value', '\t%0.4f')])
                                       })
-        self.assertTrue('heading' in log.lasts)
 
         self.store.advanceStamp(0.125)
         status = self.logger.runner.send(globaling.RUN)  # no log since not updated
@@ -343,6 +444,67 @@ class BasicTestCase(testing.LoggerIofloTestCase):
                                 '0.0000\t0.0000\n',
                                 '0.2500\t0.0000\n',
                                 '0.5000\t5.0000\n'])
+        log.file.close()
+
+
+    def testLogUpdateFields(self):
+        """
+        Test log with update rule and passed in fields list
+        """
+        console.terse("{0}\n".format(self.testLogUpdateFields.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.UPDATE)
+
+        self.assertEqual(log.rule, globaling.UPDATE)
+        self.assertEqual(log.action, log.update)
+
+        ned = self.store.create('pose.ned').create(north = 0.0, east=0.0, down=0.0)
+        log.addLoggee(tag = 'ned', loggee = 'pose.ned', fields=['north', 'east'])
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {'_time': '%0.4f',
+                                       'ned': odict([('north', '\t%0.4f'),
+                                                     ('east', '\t%0.4f')])})
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        ned.update(north=0.0)  # updated but same value
+        status = self.logger.runner.send(globaling.RUN)  # log since updated
+        self.store.advanceStamp(0.125)
+        ned.update(down=0.0)  # updated a field but not loggee field
+        status = self.logger.runner.send(globaling.RUN)  # log since updated any field
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        ned.update(north=5.0, east=7.0)  # update with different values
+        status = self.logger.runner.send(globaling.RUN)  # log since updated
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tUpdate\ttest\n',
+                                '_time\tned.north\tned.east\n',
+                                '0.0000\t0.0000\t0.0000\n',
+                                '0.2500\t0.0000\t0.0000\n',
+                                '0.3750\t0.0000\t0.0000\n',
+                                '0.5000\t5.0000\t7.0000\n']
+                               )
         log.file.close()
 
     def testLogChange(self):
@@ -403,6 +565,177 @@ class BasicTestCase(testing.LoggerIofloTestCase):
                                 '0.5000\t5.0000\n'])
         log.file.close()
 
+    def testLogChangeFields(self):
+        """
+        Test log with update rule and passed in fields list
+        """
+        console.terse("{0}\n".format(self.testLogChangeFields.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.CHANGE)
+
+        self.assertEqual(log.rule, globaling.CHANGE)
+        self.assertEqual(log.action, log.change)
+
+        ned = self.store.create('pose.ned').create(north = 0.0, east=0.0, down=0.0)
+        fields = ['north', 'east']
+        log.addLoggee(tag = 'ned', loggee = 'pose.ned', fields=fields)
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {'_time': '%0.4f',
+                                       'ned': odict([('north', '\t%0.4f'),
+                                                     ('east', '\t%0.4f')])})
+        self.assertTrue('ned' in log.lasts)
+        last = log.lasts['ned']
+        for field in fields:
+            self.assertEqual(getattr(last, field), 0.0)
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        ned.update(north=0.0)  # updated but same value
+        status = self.logger.runner.send(globaling.RUN)  # not log since not changed
+        self.store.advanceStamp(0.125)
+        ned.update(down=4.0)  # updated a field but not loggee field
+        status = self.logger.runner.send(globaling.RUN)  # not log since not changed given field
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        ned.update(north=5.0, east=7.0)  # update with different values
+        status = self.logger.runner.send(globaling.RUN)  # log since changed given field
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not changed
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tChange\ttest\n',
+                                '_time\tned.north\tned.east\n',
+                                '0.0000\t0.0000\t0.0000\n',
+                                '0.5000\t5.0000\t7.0000\n']
+                            )
+        log.file.close()
+
+    def testLogStreak(self):
+        """
+        Test log with streak rule
+        """
+        console.terse("{0}\n".format(self.testLogStreak.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.STREAK)
+
+        self.assertEqual(log.rule, globaling.STREAK)
+        self.assertEqual(log.action, log.streak)
+
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {
+                                       '_time': '%0.4f',
+                                       'heading': odict([('value', '\t%s')])
+                                      })
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        heading.value += 0.0  # updated but same value
+        status = self.logger.runner.send(globaling.RUN)  # no log since updated but not changed
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        heading.value += 5.0  # update with different value
+        status = self.logger.runner.send(globaling.RUN)  # logs since changed
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tStreak\ttest\n',
+                                '_time\theading\n',
+                                '0.0000\t\t0.0\n',
+                                '0.1250\t\t0.0\n',
+                                '0.2500\t\t0.0\n',
+                                '0.3750\t\t0.0\n',
+                                '0.5000\t\t5.0\n',
+                                '0.6250\t\t5.0\n'])
+        log.file.close()
+
+        heading.value = ["hello", "how", "are", "you", 5.0, 6, 7]
+
+        self.assertEqual(log.stamp, 0.625)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {
+                                       '_time': '%0.4f',
+                                       'heading': odict([('value', '\t%s')])
+                                      })
+        #self.assertTrue('heading' in log.lasts)
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        heading.value.append(10.0)
+        status = self.logger.runner.send(globaling.RUN)  # no log since updated but not changed
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        heading.value.append(15)
+        heading.value.append(20)
+        status = self.logger.runner.send(globaling.RUN)  # logs since changed
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tStreak\ttest\n',
+                                '_time\theading\n',
+                                '0.0000\t\t0.0\n',
+                                '0.1250\t\t0.0\n',
+                                '0.2500\t\t0.0\n',
+                                '0.3750\t\t0.0\n',
+                                '0.5000\t\t5.0\n',
+                                '0.6250\t\t5.0\n',
+                                '0.6250\t\thello\n',
+                                '0.6250\t\thow\n',
+                                '0.6250\t\tare\n',
+                                '0.6250\t\tyou\n',
+                                '0.6250\t\t5.0\n',
+                                '0.6250\t\t6\n',
+                                '0.6250\t\t7\n',
+                                '0.8750\t\t10.0\n',
+                                '1.1250\t\t15\n',
+                                '1.1250\t\t20\n'])
+        log.file.close()
+
 
 
 def runOne(test):
@@ -418,8 +751,13 @@ def runSome():
     tests =  []
     names = ['testLogger',
              'testLogAlways',
+             'testLogOnce',
+             'testLogNever',
              'testLogUpdate',
+             'testLogUpdateFields',
              'testLogChange',
+             'testLogChangeFields',
+             'testLogStreak',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

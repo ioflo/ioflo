@@ -250,20 +250,30 @@ class Log(registering.StoriedRegistrar):
        .action = function to use when logging
        .header = header for log file
 
-       .loggees = ordered dictionary of loggee shares to be logged
-       .formats = ordered dictionary of loggee format strings
-       .lasts = ordered dictionary of loggee last value items
+       .loggees = odict of loggee shares to be logged keyed by tag
+       .formats = odict of loggee format string odicts keyed by tag
+                  each format string odict is are format strings keyed by data field
+       .lasts = odict of loggee Data instances of last values keyed by tag
+                  each Data instance attribute is data field
     """
     Counter = 0  # Logs have their own namespace
     Names = {}
 
-    def __init__(self, kind='text', baseFilename='', rule=NEVER, loggees=None, **kw):
+    def __init__(self,
+                 kind='text',
+                 baseFilename='',
+                 rule=NEVER,
+                 loggees=None,
+                 fields=None,
+                 **kw):
         """
         Initialize instance.
         Parameters:
         kind = text or binary
+        baseFilename = base for log file name, extension added later when path created
         rule = log rule conditions (NEVER, ONCE, ALWAYS, UPDATE, CHANGE)
-        loggees = ordered dictionary of shares to be logged with tags
+        loggees = odict of shares to be logged keyed by tags
+        fields = odict of field name lists keyed by loggee tag
         """
         if 'preface' not in kw:
             kw['preface'] = 'Log'
@@ -287,6 +297,8 @@ class Log(registering.StoriedRegistrar):
         self.header = ''
 
         self.loggees = odict()  # odict of share refs to be logged (loggees) keyed by tag
+        # odict of lists of field names for loggee keyed by tag
+        self.fields =  fields if fields is not None else odict()
         self.formats = odict()  # odict of format string odicts keyed by tag
                                 # each entry value is odict of format strings keyed by data field
         self.lasts = odict()  # odict of data instances of last values  keyed by tag
@@ -396,6 +408,11 @@ class Log(registering.StoriedRegistrar):
         """
         console.profuse("     Preparing formats for Log {0}\n".format(self.name))
 
+        if self.rule not in (DECK, ):  # default fields from loggee
+            for tag, loggee in self.loggees.items():
+                if tag not in self.fields:  # if fields not given use all fields in loggee
+                    self.fields[tag] = [field for field in loggee]
+
         # build first line header with kind rule and file name
         cf = io.StringIO()
         cf.write(ns2u(self.kind))
@@ -404,18 +421,14 @@ class Log(registering.StoriedRegistrar):
         cf.write(u'\t')
         cf.write(ns2u(self.baseFilename))
         cf.write(u'\n')
-        # build second lind header with field names
+        # build second line header with field names
         cf.write(u'_time')
-        for tag, loggee in self.loggees.items():
-            if len(loggee) > 1:  # len of share is number of data fields
-                for field in loggee:
-                    cf.write(u'\t')
-                    cf.write(ns2u(tag))
-                    cf.write(u'.')
-                    cf.write(ns2u(field))
+        for tag, fields in self.fields.items():
+            if len(fields) > 1:  # multiple data fields so prepend with tag.
+                for field in fields:
+                    cf.write(u"\t{0}.{1}".format(tag, field))
             else:
-                cf.write(u'\t')
-                cf.write(ns2u(tag))
+                cf.write(u"\t{0}".format(tag))
 
         cf.write(u'\n')
         self.header = cf.getvalue()
@@ -425,15 +438,32 @@ class Log(registering.StoriedRegistrar):
         #build formats
         self.formats.clear()
         self.formats['_time'] = '%0.4f'
-        for tag, loggee in self.loggees.items():
-            self.formats[tag] = odict()
-            for field, value in loggee.items():
-                self.formats[tag][field] = self.format(value)
 
-        #build last copies for if changed
-        self.lasts.clear()
-        for tag, loggee in self.loggees.items():
-            self.lasts[tag] = storing.Data(loggee.items())  #make copy of loggee data
+        if self.rule in (STREAK, DECK, ):  # no way to know data so default fmt
+            for tag, fields in self.fields.items():
+                self.formats[tag] = odict()
+                for field in fields:
+                    fmt = '\t%s'
+                    self.formats[tag][field] = fmt
+
+        else:  # formats from loggee fields if present
+            for tag, fields in self.fields.items():
+                self.formats[tag] = odict()
+                loggee = self.loggees[tag]
+                for field in fields:
+                    if field in loggee:
+                        fmt = self.format(loggee[field])
+                    else:
+                        fmt = '\t%s'
+                    self.formats[tag][field] = fmt
+
+
+        if self.rule in (CHANGE, ):  # build last copies for if changed
+            self.lasts.clear()
+            for tag, fields in self.fields.items():  # list of fields by tag
+                loggee = self.loggees[tag]
+                lasts = [(key, loggee[key]) for key in fields if key in loggee]
+                self.lasts[tag] = storing.Data(lasts)  # in both loggee and fields
 
         if self.stamp is None: #never logged so log headers
             self.file.write(self.header)
@@ -509,7 +539,7 @@ class Log(registering.StoriedRegistrar):
             if loggee: # not empty
                 field, value = loggee.items()[0] # only first item
                 d = deque()
-                if isinstance(value, MutableSequence): #has pop method
+                if isinstance(value, MutableSequence): # has pop method
                     while value: # not empty
                         d.appendleft(value.pop()) #remove and copy in order
 
@@ -517,6 +547,7 @@ class Log(registering.StoriedRegistrar):
                     while value: # not empty
                         d.appendleft(value.popitem()) #remove and copy in order
 
+                # should check for non string sequence
                 else: #not mutable sequence or mapping so log normally
                     d.appendleft(value)
 
@@ -646,24 +677,39 @@ class Log(registering.StoriedRegistrar):
             return
 
         change = False
-        for tag, loggee in self.loggees.items():
-            last = self.lasts[tag] #get last Data object for each loggee
-            for field, value in loggee.items():
-                try:
-                    if getattr(last, field) != value:
-                        change = True
-                        setattr(last, field, value)
-                except AttributeError as ex: #
-                    console.terse("Warning: Log {0}, new runtime field"
-                                  " '{1}' for loggee {2}\n".format(
-                                      self.name, field, loggee.name))
+        for tag, fields in self.fields.items():
+            last = self.lasts[tag]  # get last Data object for each loggee
+            loggee = self.loggees[tag]  # get loggee for tag
+
+            try:
+                for field in fields:
+                    if not hasattr(last, field):  # was not present in prepare
+                        if field in loggee:  # now present
+                            change = True
+                            setattr(last, field, loggee[field])
+
+                    else:  # was present in prepare
+                        if loggee[field] != getattr(last, field):
+                            change = True
+                            setattr(last, field, loggee[field])
+
+            except AttributeError as ex: #
+                console.terse("Warning: Log {0}, missing field"
+                              " '{1}' for last value of loggee {2}\n".format(
+                                  self.name, field, loggee.name))
+
+            except KeyError as ex: #
+                console.terse("Warning: Log {0}, missing field"
+                              " '{1}' for loggee {2}\n".format(
+                                  self.name, field, loggee.name))
 
         if change:
             self.log()
 
-    def addLoggee(self, tag, loggee):
+    def addLoggee(self, tag, loggee, fields=None):
         """
         Add a loggee at tag to .loggees
+        Optional fields is list of field name strings to sub select fields in loggee
         """
         if self.stamp is None: #only add if not logged even once yet
             if tag ==  '_time':
@@ -671,4 +717,6 @@ class Log(registering.StoriedRegistrar):
             if tag in self.loggees: #only add if not already there
                 raise excepting.ResolveError("Duplicate tag", tag, loggee)
             self.loggees[tag] = loggee
+            if fields:
+                self.fields[tag] = fields
 
