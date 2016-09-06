@@ -317,7 +317,7 @@ class Log(registering.StoriedRegistrar):
         for tag, loggee in self.loggees.items():
             if not isinstance(loggee, storing.Share):
                 share = self.store.fetch(loggee)
-                if not share:
+                if share is None:
                     raise excepting.ResolveError("Loggee not in store", loggee, self.name)
                 self.loggees[tag] = share #replace link name with link
 
@@ -583,9 +583,6 @@ class Log(registering.StoriedRegistrar):
         """
         self.stamp = self.store.stamp
 
-        #should be different if binary kind
-
-
         if self.loggees:
             tag, loggee = self.loggees.items()[0]  # only works for first loggee
             fields = self.fields[tag]
@@ -594,9 +591,10 @@ class Log(registering.StoriedRegistrar):
                 cf = io.StringIO() #use string io faster than concatenation
 
                 while loggee.deck:  # while not empty deck
+                    entry = loggee.pull()  # assumed a dict
                     if not isinstance(entry, Mapping):
-                        log.concise("Log {0}: Deck entry of '{1}' = '{2}' not a "
-                                    "mapping.".format(self.name, loggee.name, entry))
+                        console.concise("Log {0}: Deck entry of '{1}' = '{2}' not a "
+                                    "mapping.\n".format(self.name, loggee.name, entry))
                         continue
 
                     try:
@@ -605,10 +603,10 @@ class Log(registering.StoriedRegistrar):
                         text = '%s' % self.stamp
                     cf.write(ns2u(text))
 
-                    entry = d.popleft()  # assumed a dict
-
                     for field in fields:
                         if field in entry:
+                            fmt = self.formats[tag][field]
+                            value = entry[field]
                             try:
                                 text = fmt % value
                             except TypeError:
@@ -620,10 +618,10 @@ class Log(registering.StoriedRegistrar):
 
                     cf.write(u'\n')
 
-                    try:
-                        self.file.write(cf.getvalue())
-                    except ValueError as ex: #if self.file already closed then ValueError
-                        console.terse("{0}\n".format(ex))
+                try:
+                    self.file.write(cf.getvalue())
+                except ValueError as ex: #if self.file already closed then ValueError
+                    console.terse("{0}\n".format(ex))
 
                 cf.close()
 

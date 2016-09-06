@@ -16,7 +16,7 @@ from ioflo.aid.sixing import *
 from ioflo.aid import odict
 from ioflo.test import testing
 from ioflo.base import globaling
-from ioflo.base import Data
+from ioflo.base import Data, Deck
 
 from ioflo.aid.consoling import getConsole
 
@@ -736,6 +736,87 @@ class BasicTestCase(testing.LoggerIofloTestCase):
                                 '1.1250\t20\n'])
         log.file.close()
 
+    def testLogDeck(self):
+        """
+        Test log with deck rule
+        """
+        console.terse("{0}\n".format(self.testLogDeck.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.DECK)
+
+        self.assertEqual(log.rule, globaling.DECK)
+        self.assertEqual(log.action, log.deck)
+
+        ned = self.store.create('pose.ned')
+        fields = ['north', 'east']
+        log.addLoggee(tag = 'ned', loggee = 'pose.ned', fields=fields)
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        ned.push(odict(north=0.0, east=0.0, down=0.0))
+        ned.push(odict(north=5.0, east=4.0, down=3.0))
+        ned.push(odict(north=6.0, east=3.0, down=2.0))
+        ned.push(odict(east=2.0, down=1.0))
+        ned.push(odict(down=0.0))
+        ned.push(odict(north=7.0, east=4.0, down=3.0))
+        ned.push(["hi", "there"])
+        ned.push(odict(north=8.0, east=5.0, down=4.0))
+
+        self.assertEqual(ned.deck, Deck([odict([('down', 0.0),('north', 0.0), ('east', 0.0)]),
+                                         odict([('down', 3.0), ('north', 5.0), ('east', 4.0)]),
+                                         odict([('down', 2.0), ('north', 6.0), ('east', 3.0)]),
+                                         odict([('down', 1.0), ('east', 2.0)]),
+                                         odict([('down', 0.0)]),
+                                         odict([('down', 3.0), ('north', 7.0), ('east', 4.0)]),
+                                         ['hi', 'there'],
+                                         odict([('down', 4.0), ('north', 8.0), ('east', 5.0)])]))
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, {'_time': '%0.4f',
+                                       'ned': odict([('north', '\t%s'), ('east', '\t%s')])})
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since not updated
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        ned.push(odict(north=9.0, east=6.0, down=5.0))  # push another
+        status = self.logger.runner.send(globaling.RUN)  # not log since not changed
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # not log since not changed given field
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        ned.push(odict(north=10.0, east=7.0, down=6.0))  # push
+        status = self.logger.runner.send(globaling.RUN)  # log since changed given field
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not changed
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tDeck\ttest\n',
+                                '_time\tned.north\tned.east\n',
+                                '0.0000\t0.0\t0.0\n',
+                                '0.0000\t5.0\t4.0\n',
+                                '0.0000\t6.0\t3.0\n',
+                                '0.0000\t\t2.0\n',
+                                '0.0000\t\t\n',
+                                '0.0000\t7.0\t4.0\n',
+                                '0.0000\t8.0\t5.0\n',
+                                '0.2500\t9.0\t6.0\n',
+                                '0.5000\t10.0\t7.0\n'])
+        log.file.close()
+
 
 
 def runOne(test):
@@ -758,6 +839,7 @@ def runSome():
              'testLogChange',
              'testLogChangeFields',
              'testLogStreak',
+             'testLogDeck',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
@@ -777,4 +859,4 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testBasic')
+    #runOne('testLogDeck')
