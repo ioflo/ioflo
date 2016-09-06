@@ -10,7 +10,7 @@ import datetime
 import copy
 import io
 
-from collections import deque, MutableSequence, MutableMapping
+from collections import deque, MutableSequence, MutableMapping, Mapping
 
 from ..aid.sixing import *
 from .globaling import *
@@ -412,6 +412,13 @@ class Log(registering.StoriedRegistrar):
             for tag, loggee in self.loggees.items():
                 if tag not in self.fields:  # if fields not given use all fields in loggee
                     self.fields[tag] = [field for field in loggee]
+        else:
+            tag, loggee = self.loggees.items()[0]  # first loggee
+            fields = self.fields.get(tag)
+            if not fields:
+                raise ValueError("Log {0}: Rule '{1}' requires field list.".format(
+                                 self.name,
+                                 LogRuleNames[DECK]))
 
         # build first line header with kind rule and file name
         cf = io.StringIO()
@@ -503,7 +510,7 @@ class Log(registering.StoriedRegistrar):
                     try:
                         text = fmt % value
                     except TypeError:
-                        text = '%s' % value
+                        text = '\t%s' % value
                     cf.write(ns2u(text))
 
                 else:  # field no longer present in loggee so just tab
@@ -529,10 +536,6 @@ class Log(registering.StoriedRegistrar):
 
         #should be different if binary kind
         cf = io.StringIO() #use string io faster than concatenation
-        try:
-            stamp = self.formats['_time'] % self.stamp
-        except TypeError:
-            stamp = '%s' % self.stamp
 
         if self.loggees:
             tag, loggee = self.loggees.items()[0] # only works for one loggee
@@ -552,18 +555,24 @@ class Log(registering.StoriedRegistrar):
                     d.appendleft(value)
 
                 while d: # not empty
-                    element = d.popleft()
+                    try:
+                        text = self.formats['_time'] % self.stamp
+                    except TypeError:
+                        text = '%s' % self.stamp
+                    cf.write(ns2u(text))
 
+                    element = d.popleft()
                     try:
                         text = self.formats[tag][field] % (element, )
                     except TypeError:
-                        text = '%s' % element
-                    cf.write(u"%s\t%s\n" % (stamp, text))
+                        text = '\t%s' % element
+                    cf.write(ns2u(text))
+                    cf.write(u'\n')
 
-        try:
-            self.file.write(cf.getvalue())
-        except ValueError as ex: #if self.file already closed then ValueError
-            console.terse("{0}\n".format(ex))
+                try:
+                    self.file.write(cf.getvalue())
+                except ValueError as ex: #if self.file already closed then ValueError
+                    console.terse("{0}\n".format(ex))
 
         cf.close()
 
@@ -575,44 +584,48 @@ class Log(registering.StoriedRegistrar):
         self.stamp = self.store.stamp
 
         #should be different if binary kind
-        cf = io.StringIO() #use string io faster than concatenation
-        try:
-            stamp = self.formats['_time'] % self.stamp
-        except TypeError:
-            stamp = '%s' % self.stamp
+
 
         if self.loggees:
-            tag, loggee = self.loggees.items()[0] # only works for one loggee
-            if loggee: # not empty
-                field, value = loggee.items()[0] # only first item
-                d = deque()
-                if isinstance(value, MutableSequence): #has pop method
-                    while value: # not empty
-                        d.appendleft(value.pop()) #remove and copy in order
+            tag, loggee = self.loggees.items()[0]  # only works for first loggee
+            fields = self.fields[tag]
 
-                elif isinstance(value, MutableMapping): # has popitem method
-                    while value: # not empty
-                        d.appendleft(value.popitem()) #remove and copy in order
+            if loggee.deck:  # something to log
+                cf = io.StringIO() #use string io faster than concatenation
 
-                else: #not mutable sequence or mapping so log normally
-                    d.appendleft(value)
-
-                while d: # not empty
-                    element = d.popleft()
+                while loggee.deck:  # while not empty deck
+                    if not isinstance(entry, Mapping):
+                        log.concise("Log {0}: Deck entry of '{1}' = '{2}' not a "
+                                    "mapping.".format(self.name, loggee.name, entry))
+                        continue
 
                     try:
-                        text = self.formats[tag][field] % (element, )
+                        text = self.formats['_time'] % self.stamp
                     except TypeError:
-                        text = '%s' % element
-                    cf.write(u"%s\t%s\n" % (stamp, text))
+                        text = '%s' % self.stamp
+                    cf.write(ns2u(text))
 
-        try:
-            self.file.write(cf.getvalue())
-        except ValueError as ex: #if self.file already closed then ValueError
-            console.terse("{0}\n".format(ex))
+                    entry = d.popleft()  # assumed a dict
 
-        cf.close()
+                    for field in fields:
+                        if field in entry:
+                            try:
+                                text = fmt % value
+                            except TypeError:
+                                text = '\t%s' % value
+                            cf.write(ns2u(text))
 
+                        else:  # field not in element
+                            cf.write(u'\t')
+
+                    cf.write(u'\n')
+
+                    try:
+                        self.file.write(cf.getvalue())
+                    except ValueError as ex: #if self.file already closed then ValueError
+                        console.terse("{0}\n".format(ex))
+
+                cf.close()
 
     def never(self):
         """

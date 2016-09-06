@@ -681,12 +681,12 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tStreak\ttest\n',
                                 '_time\theading\n',
-                                '0.0000\t\t0.0\n',
-                                '0.1250\t\t0.0\n',
-                                '0.2500\t\t0.0\n',
-                                '0.3750\t\t0.0\n',
-                                '0.5000\t\t5.0\n',
-                                '0.6250\t\t5.0\n'])
+                                '0.0000\t0.0\n',
+                                '0.1250\t0.0\n',
+                                '0.2500\t0.0\n',
+                                '0.3750\t0.0\n',
+                                '0.5000\t5.0\n',
+                                '0.6250\t5.0\n'])
         log.file.close()
 
         heading.value = ["hello", "how", "are", "you", 5.0, 6, 7]
@@ -718,22 +718,22 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tStreak\ttest\n',
                                 '_time\theading\n',
-                                '0.0000\t\t0.0\n',
-                                '0.1250\t\t0.0\n',
-                                '0.2500\t\t0.0\n',
-                                '0.3750\t\t0.0\n',
-                                '0.5000\t\t5.0\n',
-                                '0.6250\t\t5.0\n',
-                                '0.6250\t\thello\n',
-                                '0.6250\t\thow\n',
-                                '0.6250\t\tare\n',
-                                '0.6250\t\tyou\n',
-                                '0.6250\t\t5.0\n',
-                                '0.6250\t\t6\n',
-                                '0.6250\t\t7\n',
-                                '0.8750\t\t10.0\n',
-                                '1.1250\t\t15\n',
-                                '1.1250\t\t20\n'])
+                                '0.0000\t0.0\n',
+                                '0.1250\t0.0\n',
+                                '0.2500\t0.0\n',
+                                '0.3750\t0.0\n',
+                                '0.5000\t5.0\n',
+                                '0.6250\t5.0\n',
+                                '0.6250\thello\n',
+                                '0.6250\thow\n',
+                                '0.6250\tare\n',
+                                '0.6250\tyou\n',
+                                '0.6250\t5.0\n',
+                                '0.6250\t6\n',
+                                '0.6250\t7\n',
+                                '0.8750\t10.0\n',
+                                '1.1250\t15\n',
+                                '1.1250\t20\n'])
         log.file.close()
 
 
