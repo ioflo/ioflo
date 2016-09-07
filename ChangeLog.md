@@ -7,6 +7,8 @@ CHANGE LOG
 --------
 1.6.0
 
+Fixed log so does not store last values unles rule on change is used
+
 Fixed log so that only the fields present in share when log prepare (during startup)
 is called are logged by default. This prevents inadvertent additon of fields to share
 from messing up log columns
