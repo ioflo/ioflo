@@ -1156,8 +1156,6 @@ class Builder(object):
         log name on deck
           loggee fields in path [as tag]
 
-
-
         """
         if not self.currentLog:
             msg = "Error building %s. No current log." % (command,)

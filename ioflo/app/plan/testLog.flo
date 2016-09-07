@@ -60,3 +60,15 @@ logger test to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
 
   log frame on update
     loggee framer.mission.state.active framer.mission.state.human
+
+  log errors on streak
+    loggee value in .errors
+
+  log notices on streak
+    loggee .notices
+
+  log targets on deck
+    loggee north east down in .targets
+
+  log tracks on deck
+    loggee stamp north east down in .tracks as track
