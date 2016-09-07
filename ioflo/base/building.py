@@ -1191,6 +1191,10 @@ class Builder(object):
                     if connective == 'as':
                         index += 1  # eat token
                         tag = tokens[index]
+                        if tag in Reserved:
+                            msg = "ParseError: Invalid tag '{0}' using reserved".format(tag)
+                            raise excepting.ParseError(msg, tokens, index)
+                        tag = StripQuotes(tag)
                         index += 1
 
                 if not tag:
