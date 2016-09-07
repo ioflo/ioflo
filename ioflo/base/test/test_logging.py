@@ -736,6 +736,68 @@ class BasicTestCase(testing.LoggerIofloTestCase):
                                 '1.1250\t20\n'])
         log.file.close()
 
+    def testLogStreakFields(self):
+        """
+        Test log with streak rule and fields
+        """
+        console.terse("{0}\n".format(self.testLogStreakFields.__doc__))
+
+        self.assertEqual(self.house.store, self.store)
+        self.assertIsInstance(self.logger, logging.Logger)
+        self.assertEqual(self.logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(self.logger.runner)  # runner generator is made when logger created
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.STREAK)
+
+        self.assertEqual(log.rule, globaling.STREAK)
+        self.assertEqual(log.action, log.streak)
+
+        stuff = self.store.create('big.stuff').create([('sack', []),
+                                                   ('bag', [])])
+        fields = ['bag', 'dummy']  # reorder to second field gets logged
+        log.addLoggee(tag = 'puff', loggee = 'big.stuff', fields=fields)
+        self.logger.addLog(log)
+        self.logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+        status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
+        self.assertEqual(log.formats, odict([('_time', '%0.4f'),
+                                             ('puff', odict([('bag', '\t%s')]))]))
+
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since empty
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.25)
+        stuff.data.bag.extend(["Rain", "Falls"])
+        stuff.data.sack.extend(["Sun", "Shines"])
+        status = self.logger.runner.send(globaling.RUN)  # log since not empty
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.RUN)  # no log since empty
+        self.store.advanceStamp(0.125)
+        self.assertEqual(self.store.stamp, 0.5)
+        stuff.data.bag.extend(["Sky", "Blue", "Tree", "Green"])
+        status = self.logger.runner.send(globaling.RUN)  # logs since not empty
+        self.store.advanceStamp(0.125)
+        status = self.logger.runner.send(globaling.STOP)  # not log since not updated
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tStreak\ttest\n',
+                                '_time\tpuff\n',
+                                '0.2500\tRain\n',
+                                '0.2500\tFalls\n',
+                                '0.5000\tSky\n',
+                                '0.5000\tBlue\n',
+                                '0.5000\tTree\n',
+                                '0.5000\tGreen\n'])
+        log.close()
+
     def testLogDeck(self):
         """
         Test log with deck rule
@@ -839,6 +901,7 @@ def runSome():
              'testLogChange',
              'testLogChangeFields',
              'testLogStreak',
+             'testLogStreakFields',
              'testLogDeck',
             ]
     tests.extend(map(BasicTestCase, names))

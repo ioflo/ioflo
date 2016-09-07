@@ -408,17 +408,29 @@ class Log(registering.StoriedRegistrar):
         """
         console.profuse("     Preparing formats for Log {0}\n".format(self.name))
 
-        if self.rule not in (DECK, ):  # default fields from loggee
-            for tag, loggee in self.loggees.items():
-                if tag not in self.fields:  # if fields not given use all fields in loggee
-                    self.fields[tag] = [field for field in loggee]
-        else:
-            tag, loggee = self.loggees.items()[0]  # first loggee
+        if self.rule in (DECK, ):
+            tag, loggee = self.loggees.items()[0]  # first loggee only
             fields = self.fields.get(tag)
             if not fields:
                 raise ValueError("Log {0}: Rule '{1}' requires field list.".format(
-                                 self.name,
-                                 LogRuleNames[DECK]))
+                    self.name,
+                    LogRuleNames[DECK]))
+
+        if self.rule in (STREAK, ):
+            tag, loggee = self.loggees.items()[0]  # first loggee only
+            if tag in self.fields:
+                if self.fields[tag]:  # at least one field
+                    self.fields[tag] = self.fields[tag][:1]  # only one field allowed
+            else:  # fields not given use first fields in loggee if present
+                self.fields[tag] = [loggee.keys()[0]] if loggee else []
+
+
+        else:  # default fields from loggee
+            for tag, loggee in self.loggees.items():
+                if tag not in self.fields:  # if fields not given use all fields in loggee
+                    self.fields[tag] = [field for field in loggee]
+
+
 
         # build first line header with kind rule and file name
         cf = io.StringIO()
@@ -539,40 +551,47 @@ class Log(registering.StoriedRegistrar):
 
         if self.loggees:
             tag, loggee = self.loggees.items()[0] # only works for one loggee
-            if loggee: # not empty
-                field, value = loggee.items()[0] # only first item
-                d = deque()
-                if isinstance(value, MutableSequence): # has pop method
-                    while value: # not empty
-                        d.appendleft(value.pop()) #remove and copy in order
+            if loggee: # not empty has at least one field
+                if not self.fields[tag]:  # field was not prepared
+                    field = loggee.keys()[0]  # first field
+                    fmt = "\t%s"  # default
+                else:
+                    field = self.fields[tag][0]  # first prepared field
+                    fmt = self.formats[tag][field]
 
-                elif isinstance(value, MutableMapping): # has popitem method
-                    while value: # not empty
-                        d.appendleft(value.popitem()) #remove and copy in order
+                if field in loggee:
+                    value = loggee[field]
+                    d = deque()
+                    if isinstance(value, MutableSequence): # has pop method
+                        while value: # not empty
+                            d.appendleft(value.pop()) #remove and copy in order
 
-                # should check for non string sequence
-                else: #not mutable sequence or mapping so log normally
-                    d.appendleft(value)
+                    elif isinstance(value, MutableMapping): # has popitem method
+                        while value: # not empty
+                            d.appendleft(value.popitem()) #remove and copy in order
 
-                while d: # not empty
+                    else: #not mutable sequence or mapping so log normally
+                        d.appendleft(value)
+
+                    while d: # not empty
+                        try:
+                            text = self.formats['_time'] % self.stamp
+                        except TypeError:
+                            text = '%s' % self.stamp
+                        cf.write(ns2u(text))
+
+                        element = d.popleft()
+                        try:
+                            text = fmt % (element, )
+                        except TypeError:
+                            text = '\t%s' % element
+                        cf.write(ns2u(text))
+                        cf.write(u'\n')
+
                     try:
-                        text = self.formats['_time'] % self.stamp
-                    except TypeError:
-                        text = '%s' % self.stamp
-                    cf.write(ns2u(text))
-
-                    element = d.popleft()
-                    try:
-                        text = self.formats[tag][field] % (element, )
-                    except TypeError:
-                        text = '\t%s' % element
-                    cf.write(ns2u(text))
-                    cf.write(u'\n')
-
-                try:
-                    self.file.write(cf.getvalue())
-                except ValueError as ex: #if self.file already closed then ValueError
-                    console.terse("{0}\n".format(ex))
+                        self.file.write(cf.getvalue())
+                    except ValueError as ex: #if self.file already closed then ValueError
+                        console.terse("{0}\n".format(ex))
 
         cf.close()
 

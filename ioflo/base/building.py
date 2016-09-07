@@ -917,14 +917,15 @@ class Builder(object):
 
     #Logger specific builders
     def buildLogger(self, command, tokens, index):
-        """create logger in current house
+        """
+        Create logger in current house
 
 
-           logger logname [to prefix] [at period] [be scheduled] [flush interval]
-           scheduled: (active, inactive, slave)
+        logger logname [to prefix] [at period] [be scheduled] [flush interval]
+        scheduled: (active, inactive, slave)
 
-           logger basic at 0.125
-           logger basic
+        logger basic at 0.125
+        logger basic
 
         """
         if not self.currentHouse:
@@ -1028,18 +1029,19 @@ class Builder(object):
 
 
     def buildLog(self, command, tokens, index):
-        """create log in current logger
+        """
+        Create log in current logger
 
-           log name  [to fileName] [as (text, binary)] [on rule]
-           rule: (once, never, always, update, change, streak, deck)
-           default fileName is log's name
-           default type is text
-           default rule  is never
+        log name  [to fileName] [as (text, binary)] [on rule]
+        rule: (once, never, always, update, change, streak, deck)
+        default fileName is log's name
+        default type is text
+        default rule  is never
 
-           for manual logging use tout command with rule once or never
+        for manual logging use tout command with rule once or never
 
 
-           log autopilot text to './logs/' on update
+        log autopilot text to './logs/' on update
         """
         if not self.currentLogger:
             msg = "Error building %s. No current logger." % (command,)
@@ -1125,9 +1127,40 @@ class Builder(object):
         return True
 
     def buildLoggee(self, command, tokens, index):
-        """add loggee(s) to current log
+        """
+        Add loggee(s) to current log
 
-           loggee tag sharepath tag sharepath ...
+        Syntax:
+
+        loggee [fields in] path [as tag] [[fields in] path [as tag]] ...
+
+            path: share path
+            fields: field list
+
+
+        If fields not provided use all fields
+        If tag not provide use last segment of path as tag
+
+        If log rule is streak then only one loggee per log is allowed and only
+        the first field is used.
+
+        Syntax:
+        log name on streak
+          loggee [fields]
+
+
+
+        If log rule is deck then only one loggee per log is allowed and
+        fields clause is required.
+
+        Syntax:
+        log name on deck
+          loggee fields in path [as tag]
+
+
+
+
+
         """
         if not self.currentLog:
             msg = "Error building %s. No current log." % (command,)
@@ -2555,7 +2588,10 @@ class Builder(object):
         return True
 
     def buildDo(self, command, tokens, index):
-        """ do kind [part ...] [as name [part ...]] [at context] [via inode]
+        """
+        Syntax:
+
+        do kind [part ...] [as name [part ...]] [at context] [via inode]
                [with data]
                [from source]
                [per data]
@@ -2563,31 +2599,31 @@ class Builder(object):
                [cum data]
                [qua source]
 
-            deed:
-                name [part ...]
+        deed:
+            name [part ...]
 
-            kind:
-                name [part ...]
+        kind:
+            name [part ...]
 
-            context:
-                (native, benter, enter, recur, exit, precur, renter, rexit)
+        context:
+            (native, benter, enter, recur, exit, precur, renter, rexit)
 
-            inode:
-                indirect
+        inode:
+            indirect
 
-            data:
-                direct
+        data:
+            direct
 
-            source:
-                [(value, fields) in] indirect
+        source:
+            [(value, fields) in] indirect
 
 
 
-            do controller pid depth   --> controllerPIDDepth
-            do arbiter switch heading  --> arbiterSwitchHeading
+        do controller pid depth   --> controllerPIDDepth
+        do arbiter switch heading  --> arbiterSwitchHeading
 
-            do controller pid depth with foobar 1
-            do controller pid depth from value in .max.depth
+        do controller pid depth with foobar 1
+        do controller pid depth from value in .max.depth
 
 
         """
