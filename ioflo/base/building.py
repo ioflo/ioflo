@@ -1142,12 +1142,11 @@ class Builder(object):
         If tag not provide use last segment of path as tag
 
         If log rule is streak then only one loggee per log is allowed and only
-        the first field is used.
+        the first field from fields clause is used.
 
         Syntax:
         log name on streak
-          loggee [fields]
-
+          loggee [fields in] path [as tag]
 
 
         If log rule is deck then only one loggee per log is allowed and
@@ -1156,8 +1155,6 @@ class Builder(object):
         Syntax:
         log name on deck
           loggee fields in path [as tag]
-
-
 
 
 
@@ -1172,10 +1169,34 @@ class Builder(object):
 
         try:
             while index < len(tokens):
-                tag = tokens[index]
+                tag = ""
+                fields, index = self.parseFields(tokens, index)
+                path = tokens[index]
                 index +=1
-                path = tokens[index] #share path
-                index +=1
+
+                if path in Reserved:
+                    msg = "ParseError: Invalid path '{0}' using reserved".format(path)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if not (REO_DotPath.match(path) or REO_RelPath.match(path)):
+                    #valid absolute or relative path segment without relation clause
+                    msg = "ParseError: Invalid path format'{0}'".format(path)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                parts = path.split(".")
+                if "me" in parts:
+                    msg = "ParseError: Invalid path format'{0}', 'me' undefined".format(path)
+                    raise excepting.ParseError(msg, tokens, index)
+
+                if index < len(tokens):
+                    connective = tokens[index]
+                    if connective == 'as':
+                        index += 1  # eat token
+                        tag = tokens[index]
+                        index += 1
+
+                if not tag:
+                    tag = parts[-1]
 
                 share = self.currentStore.create(path) #create so no errors at runtime
                 if not isinstance(share, storing.Share): #verify path ends in share not node
@@ -1193,10 +1214,10 @@ class Builder(object):
                           "rule is streak or deck.".format(command))
                     raise excepting.ParseError(msg, tokens, index)
 
-                self.currentLog.addLoggee(tag = tag, loggee = share)
+                self.currentLog.addLoggee(tag=tag, loggee=share, fields=fields)
 
-                console.profuse("     Added loggee {0} with tag {1} loggees {2}\n".format(
-                    share.name, tag, self.currentLog.loggees))
+                console.profuse("     Added loggee {0} with tag {1} fields {2}\n".format(
+                    share.name, tag, fields))
 
         except IndexError:
             msg = "Error building %s. Not enough tokens." % (command,)

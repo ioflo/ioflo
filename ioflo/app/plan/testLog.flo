@@ -53,10 +53,10 @@ house testLog
 
 logger test to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
   log state on update
-    loggee position state.position heading state.heading depth state.depth speed state.speed
+    loggee .state.position .state.heading .state.depth .state.speed
 
   log goal on update
-    loggee heading goal.heading depth goal.depth speed goal.speed
+    loggee goal.heading as head goal.depth as depth goal.speed as speed
 
   log frame on update
-    loggee active framer.mission.state.active human framer.mission.state.human
+    loggee framer.mission.state.active framer.mission.state.human

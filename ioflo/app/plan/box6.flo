@@ -68,10 +68,10 @@ framer shallow be aux first shallow1 # conditional auxiliary
     done
 
 logger logger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
-  log state   on update
-  loggee position state.position heading state.heading depth state.depth speed state.speed
+  log state  on update
+    loggee state.position state.heading state.depth state.speed
 
-  log goal   on update
-  loggee heading goal.heading depth goal.depth speed goal.speed duration goal.duration
+  log goal on update
+    loggee goal.heading goal.depth goal.speed goal.duration
 
 load gps.flo

@@ -55,11 +55,12 @@ frame autopilot_run
 
 
 logger logger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
-log state on update
-loggee position state.position heading state.heading depth state.depth speed state.speed
+  log state on update
+    loggee state.position as position state.heading as heading \
+           state.depth as depth state.speed as  speed
 
-log goal on update
-loggee heading goal.heading depth goal.depth speed goal.speed
+  log goal on update
+    loggee goal.heading as heading goal.depth as depth goal.speed as speed
 
-log frame on update
-loggee active framer.mission.state.active human framer.mission.state.human
+  log frame on update
+    loggee framer.mission.state.active as active framer.mission.state.human as human

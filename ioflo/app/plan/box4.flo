@@ -54,11 +54,11 @@ frame autopilot_run
    do controller pid pitch
 
 logger logger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
-log state  on update
-loggee position state.position heading state.heading depth state.depth speed state.speed
+  log state on update
+    loggee state.position state.heading state.depth state.speed
 
-log goal on update
-loggee heading goal.heading depth goal.depth speed goal.speed
+  log goal on update
+    loggee goal.heading goal.depth goal.speed
 
 framer gps be aux first gps1
 

@@ -31,8 +31,8 @@ frame abort
 
 
 logger uuvlogger to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
-log leg on update
-loggee leg leg
+  log leg on update
+    loggee leg as leg
 
 framer myaux be aux first myaux1
 
