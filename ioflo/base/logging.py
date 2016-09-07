@@ -53,7 +53,7 @@ class Logger(tasking.Tasker):
 
     """
 
-    def __init__(self, flushPeriod = 30.0, prefix = './', **kw):
+    def __init__(self, flushPeriod = 30.0, prefix = '~/.ioflo/log', **kw):
         """Initialize instance.
 
            Parameters
@@ -134,7 +134,7 @@ class Logger(tasking.Tasker):
         """
         self.logs.append(log)
 
-    def createPath(self, prefix = './'):
+    def createPath(self, prefix = '~/.ioflo/log'):
         """
         creates unique log directory path
         creates physical directories on disk
