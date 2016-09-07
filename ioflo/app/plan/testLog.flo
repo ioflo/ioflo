@@ -1,0 +1,62 @@
+# Test mission testLog.flo
+
+house testLog
+
+  framer vehiclesim be active first run
+    frame run
+      do simulator motion uuv
+
+  framer mission be active first northleg
+    frame timeout
+      go abort if elapsed >= 105.0
+
+      frame northleg in timeout
+        set elapsed with 20.0
+        set goal.heading with 0.0
+        set goal.depth with 5.0
+        set goal.speed with 2.5
+        go next if elapsed >= goal
+
+      frame eastleg in timeout
+        set goal.heading with 90.0
+        go next if elapsed re >= goal
+
+      frame southleg in timeout
+        set goal.heading with 180.0
+        go next if elapsed re me >= goal
+
+      frame westleg in timeout
+        set goal.heading with 270.0
+        go next if elapsed re mission >= goal
+
+      frame stop in timeout
+        bid stop vehiclesim
+        bid stop autopilot
+        go next
+
+    frame done
+      print "Success"
+      bid stop all
+
+    frame abort
+      print "Failure"
+      put "Test Log" into meta.failure
+      bid stop all
+
+  framer autopilot be active first run
+    frame run
+      do controller pid speed
+      do controller pid heading
+      do controller pid depth
+      do controller pid pitch
+
+
+logger test to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
+  log state on update
+    loggee position state.position heading state.heading depth state.depth speed state.speed
+
+  log goal on update
+    loggee heading goal.heading depth goal.depth speed goal.speed
+
+  log frame on update
+    loggee active framer.mission.state.active human framer.mission.state.human
