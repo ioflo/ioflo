@@ -7,6 +7,27 @@ CHANGE LOG
 --------
 1.6.0
 
+
+Breaking changes to FloScript syntax for Log and Loggee. This allows for more
+flexible specification of fields to be logged. The defualt shorthand is now
+more compact to write. Also supports logging of dicts stored in a Share's deck
+deque. there are three forms based on the log rule
+
+log test on (once, never, always, update, change)
+  loggee source [as tag] [source [as tag]] ...
+
+source:
+    [(value, fields) in] (path, dotpath)
+
+log test on streak
+  loggee [(value, fields) in] (path, dotpath) [as tag]
+
+log test on deck
+  loggee fields in (path, dotpath) [as tag]
+
+
+Removed FIFO and LIFO log rules and replaced with streak log rule which is fifo.
+
 Fixed log so does not store last values unles rule on change is used
 
 Fixed log so that only the fields present in share when log prepare (during startup)
