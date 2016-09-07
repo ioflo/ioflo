@@ -7,6 +7,8 @@ CHANGE LOG
 --------
 1.6.0
 
+Changed default logger base prefix directory to be in users home folder
+~/.ioflo/log/
 
 Breaking changes to FloScript syntax for Log and Loggee. This allows for more
 flexible specification of fields to be logged. The defualt shorthand is now
