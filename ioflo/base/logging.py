@@ -28,46 +28,76 @@ console = getConsole()
 
 
 class Logger(tasking.Tasker):
-    """Logger Task Patron Registry Class for managing Logs
+    """
+    Logger Task Patron Registry Class for managing Logs
 
-       Usage:   logger.send(START) to prepare log formats also reopens files
-                logger.send(RUN) runs logs
-                logger.send(STOP) closes log files needed to flush caches
-
-       iherited instance attributes
-          .name = unique name for machine
-          .store = data store for house should be same for all frameworks
-
-          .period = desired time in seconds between runs must be non negative, zero means asap
-          .stamp = time when tasker last ran sucessfully (not interrupted by exception)
-          .status = operational status of tasker
-          .desire = desired control asked by this or other taskers
-          .runner = generator to run tasker
-
-       Instance attributes
-          .logs = dict of logs
-          .flushStamp = time logs last flushed
-          .flushPeriod = period between flushes
-          .prefix = prefix used to create log directory
-          .path = full path name of log directory
+    Usage:   logger.send(START) to prepare log formats also reopens files
+             logger.send(RUN) runs logs
+             logger.send(STOP) closes log files needed to flush caches
 
     """
 
-    def __init__(self, flushPeriod = 30.0, prefix = '~/.ioflo/log', **kw):
-        """Initialize instance.
+    def __init__(self,
+                 flushPeriod=30.0,
+                 prefix='~/.ioflo/log',
+                 cycle=None,
+                 keep=0,
+                 **kw):
+        """
+        Initialize instance.
 
-           Parameters
-              flushPeriod = time in seconds between flushes
-              prefix = prefix used to create log directory
+        Inherited Parameters:
+            name = unique name for logger
+            store = data store
+            period = time period between runs of logger
+            schedule = tasker shedule such as ACTIVE INACTIVE
+
+        Parameters:
+            flushPeriod = time in seconds between flushes
+            prefix = prefix used to create log directory
+            cycle = interval in seconds between log rotations,
+                     0.0 or None means do not rotate
+            keep = int number of log files to rotate amongst
+
+        Inherited Class Attributes:
+            Counter = number of instances in class registrar
+            Names = odict of instances keyed by name in class registrar
+
+        Inherited instance attributes
+            .name = unique name for logger
+            .store = data store for house
+            .period = desired time in seconds between runs,non negative, zero means asap
+            .schedule = initial scheduling context for this logger vis a vis skedder
+
+            .stamp = depends on subclass default is time logger last RUN
+            .status = operational status of logger
+            .desire = desired control asked by this or other taskers
+            .done = logger completion state True or False
+            .runner = generator to run logger
+
+        Instance attributes
+            .flushPeriod = period between flushes
+            .prefix = prefix used to create log directory
+            .cycle = nterval in seconds between log rotations,
+                     0.0 or None means do not rotate
+            .keep = int number of log files to rotate amongst
+
+            .flushStamp = time logs last flushed
+            .path = full path name of log directory
+            .logs = dict of logs
+
 
         """
         super(Logger, self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
 
-        self.logs = [] #list of logs
-        self.flushStamp = 0.0
         self.flushPeriod = max(1.0, flushPeriod)
         self.prefix = prefix #prefix to log directory path
+        self.cycle = cycle
+        self.keep = keep
+
+        self.flushStamp = 0.0
         self.path = '' #log directory path created on .reopen()
+        self.logs = [] #list of logs
 
     def log(self):
         """

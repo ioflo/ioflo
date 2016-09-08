@@ -1093,7 +1093,7 @@ class Builder(object):
                           (command, connective)
                     raise excepting.ParseError(msg, tokens, index)
 
-            if name in logging.Log.Names:
+            if name in logging.Log.Names:  # check if instance name in Registrar
                 msg = "Error building %s. Log named %s already exists." %\
                       (command, name)
                 raise excepting.ParseError(msg, tokens, index)

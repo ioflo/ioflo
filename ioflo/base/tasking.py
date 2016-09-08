@@ -32,28 +32,29 @@ class Tasker(registering.StoriedRegistrar):
     Names = {}
 
     def __init__(self, period = 0.0, schedule=INACTIVE, **kw):
-        """Initialize instance.
+        """
+        Initialize instance.
 
-           iherited instance attributes
-           .name = unique name for tasker
-           .store = data store
+        Inherited instance attributes
+            .name = unique name for tasker
+            .store = data store
 
-           instance attributes
-           .period = desired time in seconds between runs,non negative, zero means asap
-           .stamp = depends on subclass default is time tasker last RUN
-           .status = operational status of tasker
-           .desire = desired control asked by this or other taskers
-           .done = tasker completion state True or False
-           .schedule = initial scheduling context for this tasker vis a vis skedder
-           .runner = generator to run tasker
+        Instance attributes
+            .period = desired time in seconds between runs,non negative, zero means asap
+            .stamp = depends on subclass default is time tasker last RUN
+            .status = operational status of tasker
+            .desire = desired control asked by this or other taskers
+            .done = tasker completion state True or False
+            .schedule = initial scheduling context for this tasker vis a vis skedder
+            .runner = generator to run tasker
 
-            The registry class will supply unique name when name is empty by using
-            the .__class__.__name__ as the default preface to the name.
-            To use a different default preface add this to the .__init__ method
-            before the super call
+         The registry class will supply unique name when name is empty by using
+         the .__class__.__name__ as the default preface to the name.
+         To use a different default preface add this to the .__init__ method
+         before the super call
 
-            if 'preface' not in kw:
-                kw['preface'] = 'MyDefaultPreface'
+         if 'preface' not in kw:
+             kw['preface'] = 'MyDefaultPreface'
 
         """
         super(Tasker,self).__init__(**kw)

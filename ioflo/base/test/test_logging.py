@@ -33,7 +33,7 @@ def tearDownModule():
     console.reinit(verbosity=console.Wordage.concise)
 
 
-class BasicTestCase(testing.LoggerIofloTestCase):
+class LoggerTestCase(testing.LoggerIofloTestCase):
     """
     Example TestCase
     """
@@ -42,13 +42,13 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         """
         Call super if override so House Framer and Frame are setup correctly
         """
-        super(BasicTestCase, self).setUp()
+        super(LoggerTestCase, self).setUp()
 
     def tearDown(self):
         """
         Call super if override so House Framer and Frame are torn down correctly
         """
-        super(BasicTestCase, self).tearDown()
+        super(LoggerTestCase, self).tearDown()
 
 
     def testLogger(self):
@@ -880,38 +880,157 @@ class BasicTestCase(testing.LoggerIofloTestCase):
         log.file.close()
 
 
+class HouseTestCase(testing.HouseIofloTestCase):
+    """
+    Example TestCase
+    """
 
-def runOne(test):
+    def setUp(self):
+        """
+        Call super if override so House Framer and Frame are setup correctly
+        """
+        super(HouseTestCase, self).setUp()
+
+    def tearDown(self):
+        """
+        Call super if override so House Framer and Frame are torn down correctly
+        """
+        super(HouseTestCase, self).tearDown()
+
+
+    def testSetup(self):
+        """
+        Test creating setting up a logger
+        """
+        console.terse("{0}\n".format(self.testSetup.__doc__))
+        self.assertEqual(self.house.store, self.store)
+
+        prefix = "/tmp/log/ioflo"
+        flush = 2.0
+        cycle = 0.0
+        keep =  0
+        logger = logging.Logger(name="LoggerTest",
+                                store=self.store,
+                                schedule=globaling.ACTIVE,
+                                prefix=prefix,
+                                flushPeriod=flush,
+                                cycle=cycle,
+                                keep=keep)
+
+        self.assertEqual(logger.flushPeriod, flush)
+        self.assertEqual(logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(logger.runner)  # runner generator is made when logger created
+        self.assertEqual(logger.cycle, cycle)
+        self.assertEqual(logger.keep, keep)
+        self.assertEqual(logger.flushStamp, 0.0)
+        self.assertEqual(logger.path, '')
+
+        self.assertEqual(logger.logs, [])
+
+        self.house.taskers.append(logger)
+        self.house.mids.append(logger)
+        self.house.orderTaskables()
+
+        self.house.store.changeStamp(0.0)
+        self.assertEqual(logger.stamp, 0.0)
+
+        status = logger.runner.send(globaling.START)  # reopens prepares
+        self.assertTrue(logger.path.startswith("/tmp/log/ioflo/HouseTest/LoggerTest_"))
+
+
+    def testCycle(self):
+        """
+        Test creating setting up a logger with log to rotate
+        """
+        console.terse("{0}\n".format(self.testCycle.__doc__))
+        self.assertEqual(self.house.store, self.store)
+
+        prefix = "/tmp/log/ioflo"
+        flush = 2.0
+        cycle = 5.0
+        keep =  3
+        logger = logging.Logger(name="LoggerTest",
+                                store=self.store,
+                                schedule=globaling.ACTIVE,
+                                prefix=prefix,
+                                flushPeriod=flush,
+                                cycle=cycle,
+                                keep=keep)
+
+        self.assertEqual(logger.flushPeriod, flush)
+        self.assertEqual(logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(logger.runner)  # runner generator is made when logger created
+        self.assertEqual(logger.cycle, cycle)
+        self.assertEqual(logger.keep, keep)
+        self.assertEqual(logger.flushStamp, 0.0)
+        self.assertEqual(logger.path, '')
+
+        self.assertEqual(logger.logs, [])
+
+        self.house.taskers.append(logger)
+        self.house.mids.append(logger)
+        self.house.orderTaskables()
+
+        self.house.store.changeStamp(0.0)
+        self.assertEqual(logger.stamp, 0.0)
+
+
+
+
+        status = logger.runner.send(globaling.START)  # reopens prepares
+        self.assertTrue(logger.path.startswith("/tmp/log/ioflo/HouseTest/LoggerTest_"))
+
+
+
+
+def runOneLogger(test):
     '''
     Unittest Runner
     '''
-    test = BasicTestCase(test)
+    test = LoggerTestCase(test)
+    suite = unittest.TestSuite([test])
+    unittest.TextTestRunner(verbosity=2).run(suite)
+
+def runOneBasic(test):
+    '''
+    Unittest Runner
+    '''
+    test = HouseTestCase(test)
     suite = unittest.TestSuite([test])
     unittest.TextTestRunner(verbosity=2).run(suite)
 
 def runSome():
     """ Unittest runner """
     tests =  []
-    names = ['testLogger',
-             'testLogAlways',
-             'testLogOnce',
-             'testLogNever',
-             'testLogUpdate',
-             'testLogUpdateFields',
-             'testLogChange',
-             'testLogChangeFields',
-             'testLogStreak',
-             'testLogStreakFields',
-             'testLogDeck',
+    names = [
+                'testLogger',
+                'testLogAlways',
+                'testLogOnce',
+                'testLogNever',
+                'testLogUpdate',
+                'testLogUpdateFields',
+                'testLogChange',
+                'testLogChangeFields',
+                'testLogStreak',
+                'testLogStreakFields',
+                'testLogDeck',
             ]
-    tests.extend(map(BasicTestCase, names))
+    tests.extend(map(LoggerTestCase, names))
+
+    names = [
+                'testSetup',
+                'testCycle',
+            ]
+    tests.extend(map(HouseTestCase, names))
+
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
 def runAll():
     """ Unittest runner """
     suite = unittest.TestSuite()
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(BasicTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(LoggerTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(HouseTestCase))
     unittest.TextTestRunner(verbosity=2).run(suite)
 
 if __name__ == '__main__' and __package__ is None:
@@ -922,4 +1041,5 @@ if __name__ == '__main__' and __package__ is None:
 
     runSome()#only run some
 
-    #runOne('testLogDeck')
+    #runOneLogger('testLogDeck')
+    #runOneBasic('testLogDeck')
