@@ -42,7 +42,7 @@ class Logger(tasking.Tasker):
                  flushPeriod=30.0,
                  prefix='~/.ioflo/log',
                  cycle=None,
-                 keep=0,
+                 keep=1,
                  **kw):
         """
         Initialize instance.
@@ -58,7 +58,7 @@ class Logger(tasking.Tasker):
             prefix = prefix used to create log directory
             cycle = interval in seconds between log rotations,
                      0.0 or None means do not rotate
-            keep = int number of log files to rotate amongst
+            keep = int number of log copies in rotation
 
         Inherited Class Attributes:
             Counter = number of instances in class registrar
@@ -81,7 +81,7 @@ class Logger(tasking.Tasker):
             .prefix = prefix used to create log directory
             .cycle = nterval in seconds between log rotations,
                      0.0 or None means do not rotate
-            .keep = int number of log files to rotate amongst
+            .keep = int number of log copies in rotation
 
             .flushStamp = time logs last flushed
             .path = full path name of log directory
@@ -94,7 +94,7 @@ class Logger(tasking.Tasker):
         self.flushPeriod = max(1.0, flushPeriod)
         self.prefix = prefix #prefix to log directory path
         self.cycle = cycle
-        self.keep = keep
+        self.keep = int(keep)
 
         self.flushStamp = 0.0
         self.path = '' #log directory path created on .reopen()
@@ -122,11 +122,12 @@ class Logger(tasking.Tasker):
         Reopen all log files
         """
         if not self.path:  # not created yet
-            if not self.createPath(prefix = self.prefix):
+            self.path = self.createPath(prefix = self.prefix)
+            if not self.path:
                 return False
 
         for log in self.logs:
-            if not log.reopen(prefix=self.path):
+            if not log.reopen(prefix=self.path, cycle=self.cycle, keep=self.keep):
                 return False
 
         return True
@@ -144,6 +145,13 @@ class Logger(tasking.Tasker):
         """
         for log in self.logs:
             log.flush()
+
+    def rotate(self):
+        """
+        Rotate all log files
+        """
+        for log in self.logs:
+            log.rotate()
 
     def prepare(self):
         """
@@ -167,9 +175,12 @@ class Logger(tasking.Tasker):
 
     def createPath(self, prefix = '~/.ioflo/log'):
         """
+        Returns unique logger base directory path
+        if successfully creates base logger directory, empty otherwise
         creates unique log directory path
         creates physical directories on disk
         """
+        path = ''
         try:
             i = 0
             while True:  # do until keep trying until different
@@ -186,13 +197,12 @@ class Logger(tasking.Tasker):
 
         except OSError as ex:
             console.terse("Error: creating log directory '{0}'\n".format(ex))
-            return False
+            return path
 
-        self.path = path
         console.concise("     Created Logger {0} Directory at '{1}'\n".format(
                 self.name, self.path))
 
-        return True
+        return path
 
     def makeRunner(self):
         """
@@ -300,11 +310,12 @@ class Log(registering.StoriedRegistrar):
         """
         Initialize instance.
         Parameters:
-        kind = text or binary
-        baseFilename = base for log file name, extension added later when path created
-        rule = log rule conditions (NEVER, ONCE, ALWAYS, UPDATE, CHANGE)
-        loggees = odict of shares to be logged keyed by tags
-        fields = odict of field name lists keyed by loggee tag
+            kind = text or binary
+            baseFilename = base for log file name, extension added later when path created
+            rule = log rule conditions (NEVER, ONCE, ALWAYS, UPDATE, CHANGE)
+            loggees = odict of shares to be logged keyed by tags
+            fields = odict of field name lists keyed by loggee tag
+
         """
         if 'preface' not in kw:
             kw['preface'] = 'Log'
@@ -318,8 +329,9 @@ class Log(registering.StoriedRegistrar):
             self.baseFilename = baseFilename #file name only
         else:
             self.baseFilename = self.name
-        self.path = '' #full dir path name of file
-        self.file = None #file where log is written
+        self.path = ''  # full dir path name of file
+        self.file = None  # file where log is written
+        self.paths = []  # file path names of log rotate copies
 
         self.rule = rule #log rule when to log
         self.action = None #which method to use when logging
@@ -337,6 +349,7 @@ class Log(registering.StoriedRegistrar):
         if loggees:
             for tag, loggee in loggees.items():
                 self.addLoggee(tag, loggee)
+
 
     def resolve(self):
         """
@@ -373,24 +386,50 @@ class Log(registering.StoriedRegistrar):
         path = os.path.abspath(path)  # convert to proper absolute path
         return path
 
-    def reopen(self, prefix=''):
+    def reopen(self, prefix='', cycle=None, keep=1):
         """
-        creates if .path empty with prefix
-        closes if open then reopens
+        Returns True is successful False otherwise
+        Closes if open then reopens
+        Opens or Creates log file and assign to .path
+        If .path empty then creates path using prefix
+        If cycle then creates rotation copy paths in .paths
+           trial opens rotation paths.
         """
+        keep = int(keep)
+
         if not self.path:
             self.path = self.createPath(prefix=prefix)
+            self.paths = []  # remove stale rotate paths
 
         self.close()  #innocuous to call close() on unopened file
         try:
             self.file = ocfn(self.path, 'a+')  # append pick up where left off
-
         except IOError as ex:
-            console.terse("Error: creating/opening log file '{0}'\n".format(ex))
+            console.terse("Error: Creating/opening log file '{0}'\n".format(ex))
             self.file = None
             return False
 
         console.concise("     Created/Opened Log file '{0}'\n".format(self.path))
+
+        if cycle:
+            if not keep >  0:
+                console.terse("Error: Keep '{0}' must be > 0\n".format(self.keep))
+                return False
+
+            for k in range(keep):
+                self.paths = [self.path]
+                k += 1
+                root, ext = os.path.splitext(self.path)
+                path = "{0}{1:02}{2}".format(root, k, ext)
+                self.paths.append(path)
+
+                try:  # trial open file to make
+                    file = ocfn(path, 'w+')  #
+                except IOError as ex:
+                    console.terse("Error: Creating/opening log rotate file '{0}'\n".format(ex))
+                    return False
+                file.close()
+                console.concise("     Created Log rotate file '{0}'\n".format(path))
 
         return True
 
@@ -410,6 +449,40 @@ class Log(registering.StoriedRegistrar):
         if self.file and not self.file.closed:
             self.file.flush()
             os.fsync(self.file.fileno())
+
+    def rotate(self):
+        """
+        Returns True if rotate successful, False otherwise
+        Rotate log files
+        """
+        self.flush()
+        if self.paths:  # non zero rotate copies
+            self.close()
+            renamed = True
+            for k in reversed(range(len(self.paths) - 1)):
+                old = self.paths[k]
+                new = self.paths[k+1]
+                try:
+                    os.rename(old, new)
+                except OSError as ex:
+                    console.terse("Error: Moving log rotate file '{0}'\n".format(ex))
+                    renamed = False
+                    break
+
+            if not renamed:
+                self.reopen()  # reopen so don't lose data
+                return False
+
+            try:  # truncate main file
+                self.file = ocfn(self.path, 'w+')  # truncate.file
+            except IOError as ex:
+                console.terse("Error: Truncating log file '{0}'\n".format(ex))
+                self.file = None
+                return False
+
+            self.reopen()  # reopen for append
+
+        return True
 
     def assignRuleAction(self, rule = None):
         """

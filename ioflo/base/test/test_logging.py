@@ -929,8 +929,8 @@ class HouseTestCase(testing.HouseIofloTestCase):
 
         prefix = "/tmp/log/ioflo"
         flush = 2.0
-        cycle = 5.0
-        keep =  3
+        cycle = 3.0
+        keep =  2
         logger = logging.Logger(name="LoggerTest",
                                 store=self.store,
                                 schedule=globaling.ACTIVE,
@@ -956,12 +956,67 @@ class HouseTestCase(testing.HouseIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertEqual(logger.stamp, 0.0)
 
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.ALWAYS)
 
+        self.assertEqual(log.baseFilename, log.name)
+        self.assertEqual(log.path, '')
+        self.assertEqual(log.file, None)
+        self.assertEqual(log.kind, 'text')
 
+        self.assertEqual(log.rule, globaling.ALWAYS)
+        self.assertEqual(log.action, log.always)
 
-        status = logger.runner.send(globaling.START)  # reopens prepares
-        self.assertTrue(logger.path.startswith("/tmp/log/ioflo/HouseTest/LoggerTest_"))
+        logger.addLog(log)
 
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        #position = self.store.create('pose.position').create([("north", 10.0), ("east", 5.0)])
+
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        #log.addLoggee(tag = 'pos', loggee = 'pose.position')
+
+        logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+
+        status = logger.runner.send(globaling.START)  # reopens prepares and logs once
+
+        self.assertTrue(logger.path.startswith('/tmp/log/ioflo/HouseTest/LoggerTest_'))
+        self.assertTrue(log.path.startswith(logger.path))
+        self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
+        self.assertTrue(log.file)
+
+        self.store.advanceStamp(0.125)
+        status = logger.runner.send(globaling.RUN)
+        self.store.advanceStamp(0.125)
+        heading.value += 1.0
+        status = logger.runner.send(globaling.RUN)
+        self.store.advanceStamp(0.125)
+        heading.value += 1.0
+        status = logger.runner.send(globaling.RUN)
+        self.store.advanceStamp(0.125)
+        heading.value += 5.0
+        status = logger.runner.send(globaling.RUN)
+        self.store.advanceStamp(0.125)
+        heading.value += 3.0
+        status = logger.runner.send(globaling.STOP)  # logs once and closes logs
+
+        log.reopen()
+        log.file.seek(0)  # reopen appends so seek back to start
+        lines = log.file.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '0.0\t0.0\n',
+                                '0.125\t0.0\n',
+                                '0.25\t1.0\n',
+                                '0.375\t2.0\n',
+                                '0.5\t7.0\n',
+                                '0.625\t10.0\n'])
+        log.file.close()
 
 
 
