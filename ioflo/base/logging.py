@@ -15,6 +15,7 @@ from collections import deque, MutableSequence, MutableMapping, Mapping
 from ..aid.sixing import *
 from .globaling import *
 from ..aid.odicting import odict
+from ..aid.filing import ocfn
 
 from . import excepting
 from . import registering
@@ -360,7 +361,7 @@ class Log(registering.StoriedRegistrar):
 
     def createPath(self, prefix):
         """
-        creates full path name of file
+        Returns full path name of file given prefix and .kind .baseFilename
         """
         if self.kind == 'text':
             ext = '.txt'
@@ -368,8 +369,9 @@ class Log(registering.StoriedRegistrar):
             ext = '.log'
 
         filename= "{0}{1}".format(self.baseFilename, ext)
-        self.path = os.path.join(prefix, filename)
-        self.path = os.path.abspath(self.path)  # convert to proper absolute path
+        path = os.path.join(prefix, filename)
+        path = os.path.abspath(path)  # convert to proper absolute path
+        return path
 
     def reopen(self, prefix=''):
         """
@@ -377,11 +379,11 @@ class Log(registering.StoriedRegistrar):
         closes if open then reopens
         """
         if not self.path:
-            self.createPath(prefix=prefix)
+            self.path = self.createPath(prefix=prefix)
 
         self.close()  #innocuous to call close() on unopened file
         try:
-            self.file = open(self.path, 'a+')  # append pick up where left off
+            self.file = ocfn(self.path, 'a+')  # append pick up where left off
 
         except IOError as ex:
             console.terse("Error: creating/opening log file '{0}'\n".format(ex))
