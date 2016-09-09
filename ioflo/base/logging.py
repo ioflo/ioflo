@@ -486,25 +486,30 @@ class Log(registering.StoriedRegistrar):
         #should be different if binary kind
         #build formats
         self.formats.clear()
-        self.formats['_time'] = '%0.4f'
+        self.formats['_time'] = '%s'  # '%0.6f'
+        for tag, fields in self.fields.items():
+            self.formats[tag] = odict()
+            for field in fields:
+                fmt = '\t%s'  # str for all
+                self.formats[tag][field] = fmt
 
-        if self.rule in (STREAK, DECK, ):  # no way to know data so default fmt
-            for tag, fields in self.fields.items():
-                self.formats[tag] = odict()
-                for field in fields:
-                    fmt = '\t%s'
-                    self.formats[tag][field] = fmt
+        #if self.rule in (STREAK, DECK, ):  # no way to know data so default fmt
+            #for tag, fields in self.fields.items():
+                #self.formats[tag] = odict()
+                #for field in fields:
+                    #fmt = '\t%s'
+                    #self.formats[tag][field] = fmt
 
-        else:  # formats from loggee fields if present
-            for tag, fields in self.fields.items():
-                self.formats[tag] = odict()
-                loggee = self.loggees[tag]
-                for field in fields:
-                    if field in loggee:
-                        fmt = self.format(loggee[field])
-                    else:
-                        fmt = '\t%s'
-                    self.formats[tag][field] = fmt
+        #else:  # formats from loggee fields if present
+            #for tag, fields in self.fields.items():
+                #self.formats[tag] = odict()
+                #loggee = self.loggees[tag]
+                #for field in fields:
+                    #if field in loggee:
+                        #fmt = self.format(loggee[field])
+                    #else:
+                        #fmt = '\t%s'
+                    #self.formats[tag][field] = fmt
 
 
         if self.rule in (CHANGE, ):  # build last copies for if changed

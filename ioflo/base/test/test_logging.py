@@ -90,9 +90,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.assertTrue(log.file)
 
         log.prepare()
-        self.assertEqual(log.formats, {'_time': '%0.4f',
-                                        'heading': odict([('value', '\t%0.4f')]),
-                                        'pos': odict([('north', '\t%0.4f'), ('east', '\t%0.4f')])})
+        self.assertEqual(log.formats, {'_time': '%s',
+                                        'heading': odict([('value', '\t%s')]),
+                                        'pos': odict([('north', '\t%s'), ('east', '\t%s')])})
+        #self.assertEqual(log.formats, {'_time': '%0.4f',
+                                        #'heading': odict([('value', '\t%0.4f')]),
+                                        #'pos': odict([('north', '\t%0.4f'), ('east', '\t%0.4f')])})
 
         self.house.store.changeStamp(0.0)
 
@@ -119,27 +122,27 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         line = log.file.readline()
         self.assertEqual(line, '_time\theading\tpos.north\tpos.east\n')
         lines = log.file.readlines()
-        self.assertEqual(lines, ['0.0000\t0.0000\t10.0000\t5.0000\n',
-                                '0.1250\t0.0000\t12.0000\t3.5000\n',
-                                '0.2500\t1.0000\t14.0000\t2.0000\n',
-                                '0.3750\t2.0000\t16.0000\t0.5000\n',
-                                '0.5000\t3.0000\t18.0000\t-1.0000\n',
-                                '0.6250\t4.0000\t20.0000\t-2.5000\n',
-                                '0.7500\t4.0000\t20.0000\t-2.5000\n',
-                                '0.8750\t6.0000\t22.0000\t-4.0000\n',
-                                '1.0000\t7.0000\t24.0000\t-5.5000\n',
-                                '1.1250\t8.0000\t26.0000\t-7.0000\n',
-                                '1.2500\t9.0000\t28.0000\t-8.5000\n',
-                                '1.3750\t9.0000\t28.0000\t-8.5000\n',
-                                '1.5000\t11.0000\t30.0000\t-10.0000\n',
-                                '1.6250\t12.0000\t32.0000\t-11.5000\n',
-                                '1.7500\t13.0000\t34.0000\t-13.0000\n',
-                                '1.8750\t14.0000\t36.0000\t-14.5000\n',
-                                '2.0000\t15.0000\t38.0000\t-16.0000\n',
-                                '2.1250\t16.0000\t40.0000\t-17.5000\n',
-                                '2.2500\t17.0000\t42.0000\t-19.0000\n',
-                                '2.3750\t18.0000\t44.0000\t-20.5000\n',
-                                '2.5000\t19.0000\t46.0000\t-22.0000\n'])
+        self.assertEqual(lines, ['0.0\t0.0\t10.0\t5.0\n',
+                                '0.125\t0.0\t12.0\t3.5\n',
+                                '0.25\t1.0\t14.0\t2.0\n',
+                                '0.375\t2.0\t16.0\t0.5\n',
+                                '0.5\t3.0\t18.0\t-1.0\n',
+                                '0.625\t4.0\t20.0\t-2.5\n',
+                                '0.75\t4.0\t20.0\t-2.5\n',
+                                '0.875\t6.0\t22.0\t-4.0\n',
+                                '1.0\t7.0\t24.0\t-5.5\n',
+                                '1.125\t8.0\t26.0\t-7.0\n',
+                                '1.25\t9.0\t28.0\t-8.5\n',
+                                '1.375\t9.0\t28.0\t-8.5\n',
+                                '1.5\t11.0\t30.0\t-10.0\n',
+                                '1.625\t12.0\t32.0\t-11.5\n',
+                                '1.75\t13.0\t34.0\t-13.0\n',
+                                '1.875\t14.0\t36.0\t-14.5\n',
+                                '2.0\t15.0\t38.0\t-16.0\n',
+                                '2.125\t16.0\t40.0\t-17.5\n',
+                                '2.25\t17.0\t42.0\t-19.0\n',
+                                '2.375\t18.0\t44.0\t-20.5\n',
+                                '2.5\t19.0\t46.0\t-22.0\n'])
 
         log.close()
 
@@ -186,9 +189,13 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.assertTrue(log.path.startswith(self.logger.path))
         self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
         self.assertTrue(log.file)
-        self.assertEqual(log.formats, {'_time': '%0.4f',
-                                       'heading': odict([('value', '\t%0.4f')]),
-                                       'pos': odict([('north', '\t%0.4f'), ('east', '\t%0.4f')])})
+        self.assertEqual(log.formats, {'_time': '%s',
+                                        'heading': odict([('value', '\t%s')]),
+                                        'pos': odict([('north', '\t%s'), ('east', '\t%s')])})
+
+        #self.assertEqual(log.formats, {'_time': '%0.4f',
+                                        #'heading': odict([('value', '\t%0.4f')]),
+                                        #'pos': odict([('north', '\t%0.4f'), ('east', '\t%0.4f')])})
 
         for i in range(20):
             self.store.advanceStamp(0.125)
@@ -215,28 +222,28 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         line = log.file.readline()
         self.assertEqual(line, '_time\theading\tpos.north\tpos.east\n')
         lines = log.file.readlines()
-        self.assertEqual(lines, ['0.0000\t0.0000\t10.0000\t5.0000\n',
-                                '0.1250\t0.0000\t12.0000\t3.5000\n',
-                                '0.2500\t1.0000\t14.0000\t2.0000\n',
-                                '0.3750\t2.0000\t16.0000\t0.5000\n',
-                                '0.5000\t3.0000\t18.0000\t-1.0000\n',
-                                '0.6250\t4.0000\t20.0000\t-2.5000\n',
-                                '0.7500\t4.0000\t20.0000\t-2.5000\n',
-                                '0.8750\t6.0000\t22.0000\t-4.0000\n',
-                                '1.0000\t7.0000\t24.0000\t-5.5000\n',
-                                '1.1250\t8.0000\t26.0000\t-7.0000\n',
-                                '1.2500\t9.0000\t28.0000\t-8.5000\n',
-                                '1.3750\t9.0000\t28.0000\t-8.5000\n',
-                                '1.5000\t11.0000\t30.0000\t-10.0000\n',
-                                '1.6250\t12.0000\t32.0000\t-11.5000\n',
-                                '1.7500\t13.0000\t34.0000\t-13.0000\n',
-                                '1.8750\t14.0000\t36.0000\t-14.5000\n',
-                                '2.0000\t15.0000\t38.0000\t-16.0000\n',
-                                '2.1250\t16.0000\t40.0000\t-17.5000\n',
-                                '2.2500\t17.0000\t42.0000\t-19.0000\n',
-                                '2.3750\t18.0000\t44.0000\t-20.5000\n',
-                                '2.5000\t19.0000\t46.0000\t-22.0000\n',
-                                '2.6250\t19.0000\t46.0000\t-22.0000\n'])
+        self.assertEqual(lines, ['0.0\t0.0\t10.0\t5.0\n',
+                                    '0.125\t0.0\t12.0\t3.5\n',
+                                    '0.25\t1.0\t14.0\t2.0\n',
+                                    '0.375\t2.0\t16.0\t0.5\n',
+                                    '0.5\t3.0\t18.0\t-1.0\n',
+                                    '0.625\t4.0\t20.0\t-2.5\n',
+                                    '0.75\t4.0\t20.0\t-2.5\n',
+                                    '0.875\t6.0\t22.0\t-4.0\n',
+                                    '1.0\t7.0\t24.0\t-5.5\n',
+                                    '1.125\t8.0\t26.0\t-7.0\n',
+                                    '1.25\t9.0\t28.0\t-8.5\n',
+                                    '1.375\t9.0\t28.0\t-8.5\n',
+                                    '1.5\t11.0\t30.0\t-10.0\n',
+                                    '1.625\t12.0\t32.0\t-11.5\n',
+                                    '1.75\t13.0\t34.0\t-13.0\n',
+                                    '1.875\t14.0\t36.0\t-14.5\n',
+                                    '2.0\t15.0\t38.0\t-16.0\n',
+                                    '2.125\t16.0\t40.0\t-17.5\n',
+                                    '2.25\t17.0\t42.0\t-19.0\n',
+                                    '2.375\t18.0\t44.0\t-20.5\n',
+                                    '2.5\t19.0\t46.0\t-22.0\n',
+                                    '2.625\t19.0\t46.0\t-22.0\n'])
 
         self.assertIsNot(log.stamp, None)
         self.store.advanceStamp(0.125)
@@ -252,31 +259,31 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tAlways\ttest\n',
                                 '_time\theading\tpos.north\tpos.east\n',
-                                '0.0000\t0.0000\t10.0000\t5.0000\n',
-                                '0.1250\t0.0000\t12.0000\t3.5000\n',
-                                '0.2500\t1.0000\t14.0000\t2.0000\n',
-                                '0.3750\t2.0000\t16.0000\t0.5000\n',
-                                '0.5000\t3.0000\t18.0000\t-1.0000\n',
-                                '0.6250\t4.0000\t20.0000\t-2.5000\n',
-                                '0.7500\t4.0000\t20.0000\t-2.5000\n',
-                                '0.8750\t6.0000\t22.0000\t-4.0000\n',
-                                '1.0000\t7.0000\t24.0000\t-5.5000\n',
-                                '1.1250\t8.0000\t26.0000\t-7.0000\n',
-                                '1.2500\t9.0000\t28.0000\t-8.5000\n',
-                                '1.3750\t9.0000\t28.0000\t-8.5000\n',
-                                '1.5000\t11.0000\t30.0000\t-10.0000\n',
-                                '1.6250\t12.0000\t32.0000\t-11.5000\n',
-                                '1.7500\t13.0000\t34.0000\t-13.0000\n',
-                                '1.8750\t14.0000\t36.0000\t-14.5000\n',
-                                '2.0000\t15.0000\t38.0000\t-16.0000\n',
-                                '2.1250\t16.0000\t40.0000\t-17.5000\n',
-                                '2.2500\t17.0000\t42.0000\t-19.0000\n',
-                                '2.3750\t18.0000\t44.0000\t-20.5000\n',
-                                '2.5000\t19.0000\t46.0000\t-22.0000\n',
-                                '2.6250\t19.0000\t46.0000\t-22.0000\n',
-                                '2.7500\t19.0000\t46.0000\t-22.0000\n',
-                                '2.8750\t24.0000\t46.0000\t-22.0000\n',
-                                '3.0000\t24.0000\t46.0000\t-22.0000\n'])
+                                '0.0\t0.0\t10.0\t5.0\n',
+                                '0.125\t0.0\t12.0\t3.5\n',
+                                '0.25\t1.0\t14.0\t2.0\n',
+                                '0.375\t2.0\t16.0\t0.5\n',
+                                '0.5\t3.0\t18.0\t-1.0\n',
+                                '0.625\t4.0\t20.0\t-2.5\n',
+                                '0.75\t4.0\t20.0\t-2.5\n',
+                                '0.875\t6.0\t22.0\t-4.0\n',
+                                '1.0\t7.0\t24.0\t-5.5\n',
+                                '1.125\t8.0\t26.0\t-7.0\n',
+                                '1.25\t9.0\t28.0\t-8.5\n',
+                                '1.375\t9.0\t28.0\t-8.5\n',
+                                '1.5\t11.0\t30.0\t-10.0\n',
+                                '1.625\t12.0\t32.0\t-11.5\n',
+                                '1.75\t13.0\t34.0\t-13.0\n',
+                                '1.875\t14.0\t36.0\t-14.5\n',
+                                '2.0\t15.0\t38.0\t-16.0\n',
+                                '2.125\t16.0\t40.0\t-17.5\n',
+                                '2.25\t17.0\t42.0\t-19.0\n',
+                                '2.375\t18.0\t44.0\t-20.5\n',
+                                '2.5\t19.0\t46.0\t-22.0\n',
+                                '2.625\t19.0\t46.0\t-22.0\n',
+                                '2.75\t19.0\t46.0\t-22.0\n',
+                                '2.875\t24.0\t46.0\t-22.0\n',
+                                '3.0\t24.0\t46.0\t-22.0\n'])
         log.file.close()
 
     def testLogOnce(self):
@@ -307,10 +314,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {
-                                       '_time': '%0.4f',
-                                       'heading': odict([('value', '\t%0.4f')])
-                                      })
+        self.assertEqual(log.formats, odict([('_time', '%s'), ('heading', odict([('value', '\t%s')]))]))
 
         self.store.advanceStamp(0.125)
         status = self.logger.runner.send(globaling.RUN)  # no log since not updated
@@ -330,7 +334,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         log.reopen()
         log.file.seek(0)  # reopen appends so seek back to start
         lines = log.file.readlines()
-        self.assertEqual(lines, ['text\tOnce\ttest\n', '_time\theading\n', '0.0000\t0.0000\n'])
+        self.assertEqual(lines, ['text\tOnce\ttest\n', '_time\theading\n', '0.0\t0.0\n'])
         log.file.close()
 
     def testLogNever(self):
@@ -361,10 +365,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {
-                                       '_time': '%0.4f',
-                                       'heading': odict([('value', '\t%0.4f')])
-                                      })
+        self.assertEqual(log.formats, odict([('_time', '%s'), ('heading', odict([('value', '\t%s')]))]))
 
         self.store.advanceStamp(0.125)
         status = self.logger.runner.send(globaling.RUN)  # no log since not updated
@@ -416,10 +417,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {
-                                       '_time': '%0.4f',
-                                       'heading': odict([('value', '\t%0.4f')])
-                                      })
+        self.assertEqual(log.formats, odict([('_time', '%s'), ('heading', odict([('value', '\t%s')]))]))
 
         self.store.advanceStamp(0.125)
         status = self.logger.runner.send(globaling.RUN)  # no log since not updated
@@ -441,9 +439,9 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tUpdate\ttest\n',
                                 '_time\theading\n',
-                                '0.0000\t0.0000\n',
-                                '0.2500\t0.0000\n',
-                                '0.5000\t5.0000\n'])
+                                '0.0\t0.0\n',
+                                '0.25\t0.0\n',
+                                '0.5\t5.0\n'])
         log.file.close()
 
 
@@ -475,9 +473,9 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {'_time': '%0.4f',
-                                       'ned': odict([('north', '\t%0.4f'),
-                                                     ('east', '\t%0.4f')])})
+        self.assertEqual(log.formats, {'_time': '%s',
+                                        'ned': odict([('north', '\t%s'), ('east', '\t%s')])}
+                                       )
 
         self.store.advanceStamp(0.125)
         status = self.logger.runner.send(globaling.RUN)  # no log since not updated
@@ -500,11 +498,10 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tUpdate\ttest\n',
                                 '_time\tned.north\tned.east\n',
-                                '0.0000\t0.0000\t0.0000\n',
-                                '0.2500\t0.0000\t0.0000\n',
-                                '0.3750\t0.0000\t0.0000\n',
-                                '0.5000\t5.0000\t7.0000\n']
-                               )
+                                '0.0\t0.0\t0.0\n',
+                                '0.25\t0.0\t0.0\n',
+                                '0.375\t0.0\t0.0\n',
+                                '0.5\t5.0\t7.0\n'])
         log.file.close()
 
     def testLogChange(self):
@@ -535,10 +532,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {
-                                       '_time': '%0.4f',
-                                       'heading': odict([('value', '\t%0.4f')])
-                                      })
+        self.assertEqual(log.formats, odict([('_time', '%s'), ('heading', odict([('value', '\t%s')]))]))
         self.assertTrue('heading' in log.lasts)
 
         self.store.advanceStamp(0.125)
@@ -559,10 +553,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         log.reopen()
         log.file.seek(0)  # reopen appends so seek back to start
         lines = log.file.readlines()
-        self.assertEqual(lines, ['text\tChange\ttest\n',
-                                '_time\theading\n',
-                                '0.0000\t0.0000\n',
-                                '0.5000\t5.0000\n'])
+        self.assertEqual(lines, ['text\tChange\ttest\n', '_time\theading\n', '0.0\t0.0\n', '0.5\t5.0\n'])
         log.file.close()
 
     def testLogChangeFields(self):
@@ -594,9 +585,8 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {'_time': '%0.4f',
-                                       'ned': odict([('north', '\t%0.4f'),
-                                                     ('east', '\t%0.4f')])})
+        self.assertEqual(log.formats, {'_time': '%s',
+                                    'ned': odict([('north', '\t%s'), ('east', '\t%s')])})
         self.assertTrue('ned' in log.lasts)
         last = log.lasts['ned']
         for field in fields:
@@ -623,9 +613,8 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tChange\ttest\n',
                                 '_time\tned.north\tned.east\n',
-                                '0.0000\t0.0000\t0.0000\n',
-                                '0.5000\t5.0000\t7.0000\n']
-                            )
+                                '0.0\t0.0\t0.0\n',
+                                '0.5\t5.0\t7.0\n'])
         log.file.close()
 
     def testLogStreak(self):
@@ -656,10 +645,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {
-                                       '_time': '%0.4f',
-                                       'heading': odict([('value', '\t%s')])
-                                      })
+        self.assertEqual(log.formats, odict([('_time', '%s'), ('heading', odict([('value', '\t%s')]))]))
 
         self.store.advanceStamp(0.125)
         status = self.logger.runner.send(globaling.RUN)  # no log since not updated
@@ -681,22 +667,19 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tStreak\ttest\n',
                                 '_time\theading\n',
-                                '0.0000\t0.0\n',
-                                '0.1250\t0.0\n',
-                                '0.2500\t0.0\n',
-                                '0.3750\t0.0\n',
-                                '0.5000\t5.0\n',
-                                '0.6250\t5.0\n'])
+                                '0.0\t0.0\n',
+                                '0.125\t0.0\n',
+                                '0.25\t0.0\n',
+                                '0.375\t0.0\n',
+                                '0.5\t5.0\n',
+                                '0.625\t5.0\n'])
         log.file.close()
 
         heading.value = ["hello", "how", "are", "you", 5.0, 6, 7]
 
         self.assertEqual(log.stamp, 0.625)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {
-                                       '_time': '%0.4f',
-                                       'heading': odict([('value', '\t%s')])
-                                      })
+        self.assertEqual(log.formats, odict([('_time', '%s'), ('heading', odict([('value', '\t%s')]))]))
         #self.assertTrue('heading' in log.lasts)
 
         self.store.advanceStamp(0.125)
@@ -718,22 +701,22 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tStreak\ttest\n',
                                 '_time\theading\n',
-                                '0.0000\t0.0\n',
-                                '0.1250\t0.0\n',
-                                '0.2500\t0.0\n',
-                                '0.3750\t0.0\n',
-                                '0.5000\t5.0\n',
-                                '0.6250\t5.0\n',
-                                '0.6250\thello\n',
-                                '0.6250\thow\n',
-                                '0.6250\tare\n',
-                                '0.6250\tyou\n',
-                                '0.6250\t5.0\n',
-                                '0.6250\t6\n',
-                                '0.6250\t7\n',
-                                '0.8750\t10.0\n',
-                                '1.1250\t15\n',
-                                '1.1250\t20\n'])
+                                '0.0\t0.0\n',
+                                '0.125\t0.0\n',
+                                '0.25\t0.0\n',
+                                '0.375\t0.0\n',
+                                '0.5\t5.0\n',
+                                '0.625\t5.0\n',
+                                '0.625\thello\n',
+                                '0.625\thow\n',
+                                '0.625\tare\n',
+                                '0.625\tyou\n',
+                                '0.625\t5.0\n',
+                                '0.625\t6\n',
+                                '0.625\t7\n',
+                                '0.875\t10.0\n',
+                                '1.125\t15\n',
+                                '1.125\t20\n'])
         log.file.close()
 
     def testLogStreakFields(self):
@@ -766,8 +749,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, odict([('_time', '%0.4f'),
-                                             ('puff', odict([('bag', '\t%s')]))]))
+        self.assertEqual(log.formats, odict([('_time', '%s'), ('puff', odict([('bag', '\t%s')]))]))
 
         self.store.advanceStamp(0.125)
         status = self.logger.runner.send(globaling.RUN)  # no log since empty
@@ -790,12 +772,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tStreak\ttest\n',
                                 '_time\tpuff\n',
-                                '0.2500\tRain\n',
-                                '0.2500\tFalls\n',
-                                '0.5000\tSky\n',
-                                '0.5000\tBlue\n',
-                                '0.5000\tTree\n',
-                                '0.5000\tGreen\n'])
+                                '0.25\tRain\n',
+                                '0.25\tFalls\n',
+                                '0.5\tSky\n',
+                                '0.5\tBlue\n',
+                                '0.5\tTree\n',
+                                '0.5\tGreen\n'])
         log.close()
 
     def testLogDeck(self):
@@ -845,7 +827,7 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.house.store.changeStamp(0.0)
         self.assertIs(log.stamp, None)
         status = self.logger.runner.send(globaling.START)  # reopens prepares and logs once
-        self.assertEqual(log.formats, {'_time': '%0.4f',
+        self.assertEqual(log.formats, {'_time': '%s',
                                        'ned': odict([('north', '\t%s'), ('east', '\t%s')])})
 
         self.store.advanceStamp(0.125)
@@ -868,15 +850,15 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tDeck\ttest\n',
                                 '_time\tned.north\tned.east\n',
-                                '0.0000\t0.0\t0.0\n',
-                                '0.0000\t5.0\t4.0\n',
-                                '0.0000\t6.0\t3.0\n',
-                                '0.0000\t\t2.0\n',
-                                '0.0000\t\t\n',
-                                '0.0000\t7.0\t4.0\n',
-                                '0.0000\t8.0\t5.0\n',
-                                '0.2500\t9.0\t6.0\n',
-                                '0.5000\t10.0\t7.0\n'])
+                                '0.0\t0.0\t0.0\n',
+                                '0.0\t5.0\t4.0\n',
+                                '0.0\t6.0\t3.0\n',
+                                '0.0\t\t2.0\n',
+                                '0.0\t\t\n',
+                                '0.0\t7.0\t4.0\n',
+                                '0.0\t8.0\t5.0\n',
+                                '0.25\t9.0\t6.0\n',
+                                '0.5\t10.0\t7.0\n'])
         log.file.close()
 
 
