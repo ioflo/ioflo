@@ -7,6 +7,10 @@ CHANGE LOG
 --------
 1.6.0
 
+Added log file rotation support via new options keep copies and cycle term
+to logger declaration
+
+
 Changed default logger base prefix directory to be in users home folder
 ~/.ioflo/log/
 
