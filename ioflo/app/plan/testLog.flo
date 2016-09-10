@@ -51,7 +51,7 @@ house testLog
       do controller pid pitch
 
 
-logger test to /tmp/log/ioflo/  # /tmp deleted on reboot but /var/tmp not
+logger test to /tmp/log/ioflo/ keep 2 cycle 20.0 # /tmp deleted on reboot but /var/tmp not
   log state on update
     loggee .state.position .state.heading .state.depth .state.speed
 

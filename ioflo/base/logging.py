@@ -41,8 +41,8 @@ class Logger(tasking.Tasker):
     def __init__(self,
                  flushPeriod=30.0,
                  prefix='~/.ioflo/log',
-                 cycle=None,
-                 keep=1,
+                 keep=0,
+                 cyclePeriod=0.0,
                  **kw):
         """
         Initialize instance.
@@ -56,9 +56,10 @@ class Logger(tasking.Tasker):
         Parameters:
             flushPeriod = time in seconds between flushes
             prefix = prefix used to create log directory
-            cycle = interval in seconds between log rotations,
+            keep = int number of log copies in rotation <1> means do not cycle
+            cyclePeriod = interval in seconds between log rotations,
                      0.0 or None means do not rotate
-            keep = int number of log copies in rotation
+
 
         Inherited Class Attributes:
             Counter = number of instances in class registrar
@@ -79,10 +80,11 @@ class Logger(tasking.Tasker):
         Instance attributes
             .flushPeriod = period between flushes
             .prefix = prefix used to create log directory
-            .cycle = nterval in seconds between log rotations,
+            .keep = int number of log copies in rotation, < 1 means do cycle
+            .cyclePeriod = nterval in seconds between log rotations,
                      0.0 or None means do not rotate
-            .keep = int number of log copies in rotation
 
+            .rotateStamp = time logs last rotated
             .flushStamp = time logs last flushed
             .path = full path name of log directory
             .logs = dict of logs
@@ -93,9 +95,12 @@ class Logger(tasking.Tasker):
 
         self.flushPeriod = max(1.0, flushPeriod)
         self.prefix = prefix #prefix to log directory path
-        self.cycle = cycle
         self.keep = int(keep)
+        self.cyclePeriod = max(0.0, cyclePeriod)  # ensure >= 0
+        if self.keep > 0 and not self.cyclePeriod:
+            self.keep = 0  # cyclePeriod must be nonzero if keep > 0
 
+        self.cycleStamp = 0.0
         self.flushStamp = 0.0
         self.path = '' #log directory path created on .reopen()
         self.logs = [] #list of logs
@@ -117,6 +122,17 @@ class Logger(tasking.Tasker):
         except TypeError:  # stamps may be None so handle
             self.flushStamp = self.store.stamp  # force flushStamp to be store.stamp
 
+        if self.keep:
+            try:
+                if (self.store.stamp - self.cycleStamp) >= self.cyclePeriod:
+                    console.profuse("Logger {0} Cycle rotation at {1}, previous cycle at {2}\n".format(
+                        self.name, self.store.stamp, self.cycleStamp))
+                    self.cycle()
+                    self.cycleStamp = self.store.stamp
+
+            except TypeError:  # stamps may be None so handle
+                self.cycleStamp = self.store.stamp  # force cycleStamp to be store.stamp
+
     def reopen(self):
         """
         Reopen all log files
@@ -127,7 +143,7 @@ class Logger(tasking.Tasker):
                 return False
 
         for log in self.logs:
-            if not log.reopen(prefix=self.path, cycle=self.cycle, keep=self.keep):
+            if not log.reopen(prefix=self.path, keep=self.keep):
                 return False
 
         return True
@@ -146,12 +162,12 @@ class Logger(tasking.Tasker):
         for log in self.logs:
             log.flush()
 
-    def rotate(self):
+    def cycle(self):
         """
-        Rotate all log files
+        Cycle (Rotate) all log files
         """
         for log in self.logs:
-            log.rotate()
+            log.cycle()
 
     def prepare(self):
         """
@@ -337,7 +353,7 @@ class Log(registering.StoriedRegistrar):
         self.action = None #which method to use when logging
         self.assignRuleAction() #assign log action function
 
-        self.header = ''
+        self.header = ''  # log file header
 
         self.loggees = odict()  # odict of share refs to be logged (loggees) keyed by tag
         # odict of lists of field names for loggee keyed by tag
@@ -386,14 +402,14 @@ class Log(registering.StoriedRegistrar):
         path = os.path.abspath(path)  # convert to proper absolute path
         return path
 
-    def reopen(self, prefix='', cycle=None, keep=1):
+    def reopen(self, prefix='', keep=0):
         """
         Returns True is successful False otherwise
         Closes if open then reopens
         Opens or Creates log file and assign to .path
         If .path empty then creates path using prefix
-        If cycle then creates rotation copy paths in .paths
-           trial opens rotation paths.
+        If keep then creates cycle (rotation) copy paths in .paths
+           trial opens cycle paths.
         """
         keep = int(keep)
 
@@ -411,13 +427,9 @@ class Log(registering.StoriedRegistrar):
 
         console.concise("     Created/Opened Log file '{0}'\n".format(self.path))
 
-        if cycle:
-            if not keep >  0:
-                console.terse("Error: Keep '{0}' must be > 0\n".format(self.keep))
-                return False
-
+        if keep > 0:
+            self.paths = [self.path]
             for k in range(keep):
-                self.paths = [self.path]
                 k += 1
                 root, ext = os.path.splitext(self.path)
                 path = "{0}{1:02}{2}".format(root, k, ext)
@@ -450,15 +462,14 @@ class Log(registering.StoriedRegistrar):
             self.file.flush()
             os.fsync(self.file.fileno())
 
-    def rotate(self):
+    def cycle(self):
         """
-        Returns True if rotate successful, False otherwise
-        Rotate log files
+        Returns True if cycle rotate successful, False otherwise
+        Cycle log files
         """
-        self.flush()
         if self.paths:  # non zero rotate copies
-            self.close()
-            renamed = True
+            self.close()  # also flushes
+            cycled = True
             for k in reversed(range(len(self.paths) - 1)):
                 old = self.paths[k]
                 new = self.paths[k+1]
@@ -466,10 +477,10 @@ class Log(registering.StoriedRegistrar):
                     os.rename(old, new)
                 except OSError as ex:
                     console.terse("Error: Moving log rotate file '{0}'\n".format(ex))
-                    renamed = False
+                    cycled = False
                     break
 
-            if not renamed:
+            if not cycled:
                 self.reopen()  # reopen so don't lose data
                 return False
 
@@ -480,6 +491,7 @@ class Log(registering.StoriedRegistrar):
                 self.file = None
                 return False
 
+            self.file.write(self.header)  # rewrite header
             self.reopen()  # reopen for append
 
         return True
@@ -506,6 +518,32 @@ class Log(registering.StoriedRegistrar):
             self.action = self.deck
         else:
             self.action = self.never
+
+    def buildHeader(self):
+        """
+        Build  .header
+        """
+        # build first line header with kind rule and file name
+        cf = io.StringIO()
+        cf.write(ns2u(self.kind))
+        cf.write(u'\t')
+        cf.write(ns2u(LogRuleNames[self.rule]))
+        cf.write(u'\t')
+        cf.write(ns2u(self.baseFilename))
+        cf.write(u'\n')
+        # build second line header with field names
+        cf.write(u'_time')
+        for tag, fields in self.fields.items():
+            if len(fields) > 1:  # multiple data fields so prepend with tag.
+                for field in fields:
+                    cf.write(u"\t{0}.{1}".format(tag, field))
+            else:
+                cf.write(u"\t{0}".format(tag))
+
+        cf.write(u'\n')
+        self.header = cf.getvalue()
+        cf.close()
+
 
     def prepare(self):
         """
@@ -535,28 +573,6 @@ class Log(registering.StoriedRegistrar):
                 if tag not in self.fields:  # if fields not given use all fields in loggee
                     self.fields[tag] = [field for field in loggee]
 
-
-
-        # build first line header with kind rule and file name
-        cf = io.StringIO()
-        cf.write(ns2u(self.kind))
-        cf.write(u'\t')
-        cf.write(ns2u(LogRuleNames[self.rule]))
-        cf.write(u'\t')
-        cf.write(ns2u(self.baseFilename))
-        cf.write(u'\n')
-        # build second line header with field names
-        cf.write(u'_time')
-        for tag, fields in self.fields.items():
-            if len(fields) > 1:  # multiple data fields so prepend with tag.
-                for field in fields:
-                    cf.write(u"\t{0}.{1}".format(tag, field))
-            else:
-                cf.write(u"\t{0}".format(tag))
-
-        cf.write(u'\n')
-        self.header = cf.getvalue()
-        cf.close()
 
         #should be different if binary kind
         #build formats
@@ -593,6 +609,8 @@ class Log(registering.StoriedRegistrar):
                 loggee = self.loggees[tag]
                 lasts = [(key, loggee[key]) for key in fields if key in loggee]
                 self.lasts[tag] = storing.Data(lasts)  # in both loggee and fields
+
+        self.buildHeader()
 
         if self.stamp is None: #never logged so log headers
             self.file.write(self.header)

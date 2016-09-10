@@ -902,7 +902,7 @@ class HouseTestCase(testing.HouseIofloTestCase):
         self.assertEqual(logger.flushPeriod, flush)
         self.assertEqual(logger.prefix, '/tmp/log/ioflo')
         self.assertTrue(logger.runner)  # runner generator is made when logger created
-        self.assertEqual(logger.cycle, cycle)
+        self.assertEqual(logger.cyclePeriod, cycle)
         self.assertEqual(logger.keep, keep)
         self.assertEqual(logger.flushStamp, 0.0)
         self.assertEqual(logger.path, '')
@@ -928,21 +928,21 @@ class HouseTestCase(testing.HouseIofloTestCase):
         self.assertEqual(self.house.store, self.store)
 
         prefix = "/tmp/log/ioflo"
-        flush = 2.0
-        cycle = 3.0
+        flush = 3.0
+        cyclePeriod = 0.5
         keep =  2
         logger = logging.Logger(name="LoggerTest",
                                 store=self.store,
                                 schedule=globaling.ACTIVE,
                                 prefix=prefix,
                                 flushPeriod=flush,
-                                cycle=cycle,
-                                keep=keep)
+                                keep=keep,
+                                cyclePeriod=cyclePeriod)
 
         self.assertEqual(logger.flushPeriod, flush)
         self.assertEqual(logger.prefix, '/tmp/log/ioflo')
         self.assertTrue(logger.runner)  # runner generator is made when logger created
-        self.assertEqual(logger.cycle, cycle)
+        self.assertEqual(logger.cyclePeriod, cyclePeriod)
         self.assertEqual(logger.keep, keep)
         self.assertEqual(logger.flushStamp, 0.0)
         self.assertEqual(logger.path, '')
@@ -990,33 +990,50 @@ class HouseTestCase(testing.HouseIofloTestCase):
         self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
         self.assertTrue(log.file)
 
-        self.store.advanceStamp(0.125)
-        status = logger.runner.send(globaling.RUN)
+        self.assertEqual(len(log.paths), keep+1)
+        for k, path in enumerate(log.paths[1:]):
+            self.assertTrue(path.startswith(logger.path))
+            base = os.path.basename(path)
+            root, ext = os.path.splitext(base)
+            self.assertTrue(root.endswith("{0:02}".format(k+1)))
+
+        for i in range(16):
+            self.store.advanceStamp(0.125)
+            heading.value += 1.0
+            status = logger.runner.send(globaling.RUN)
+
         self.store.advanceStamp(0.125)
         heading.value += 1.0
-        status = logger.runner.send(globaling.RUN)
-        self.store.advanceStamp(0.125)
-        heading.value += 1.0
-        status = logger.runner.send(globaling.RUN)
-        self.store.advanceStamp(0.125)
-        heading.value += 5.0
-        status = logger.runner.send(globaling.RUN)
-        self.store.advanceStamp(0.125)
-        heading.value += 3.0
         status = logger.runner.send(globaling.STOP)  # logs once and closes logs
 
-        log.reopen()
-        log.file.seek(0)  # reopen appends so seek back to start
-        lines = log.file.readlines()
+        path0, path1, path2 = log.paths
+
+        file0 = open(path0, "r")
+        lines = file0.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                 '_time\theading\n',
+                                 '2.125\t17.0\n'])
+        file0.close()
+
+        file1 = open(path1, "r")
+        lines = file1.readlines()
         self.assertEqual(lines, ['text\tAlways\ttest\n',
                                 '_time\theading\n',
-                                '0.0\t0.0\n',
-                                '0.125\t0.0\n',
-                                '0.25\t1.0\n',
-                                '0.375\t2.0\n',
-                                '0.5\t7.0\n',
-                                '0.625\t10.0\n'])
-        log.file.close()
+                                '1.625\t13.0\n',
+                                '1.75\t14.0\n',
+                                '1.875\t15.0\n',
+                                '2.0\t16.0\n'])
+        file1.close()
+
+        file2 = open(path2, "r")
+        lines = file2.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '1.125\t9.0\n',
+                                '1.25\t10.0\n',
+                                '1.375\t11.0\n',
+                                '1.5\t12.0\n'])
+        file2.close()
 
 
 
@@ -1028,7 +1045,7 @@ def runOneLogger(test):
     suite = unittest.TestSuite([test])
     unittest.TextTestRunner(verbosity=2).run(suite)
 
-def runOneBasic(test):
+def runOneHouse(test):
     '''
     Unittest Runner
     '''
@@ -1079,4 +1096,4 @@ if __name__ == '__main__' and __package__ is None:
     runSome()#only run some
 
     #runOneLogger('testLogDeck')
-    #runOneBasic('testLogDeck')
+    #runOneHouse('testCycle')

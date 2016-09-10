@@ -921,8 +921,13 @@ class Builder(object):
         Create logger in current house
 
 
-        logger logname [to prefix] [at period] [be scheduled] [flush interval]
+        logger logname [to prefix] [at period] [be scheduled]
+                       [flush interval]  [keep copies] [cycle term]
         scheduled: (active, inactive, slave)
+        period seconds
+        interval seconds
+        term seconds
+        copies integer
 
         logger basic at 0.125
         logger basic
@@ -947,6 +952,9 @@ class Builder(object):
             order = MID #globaling.py
             interval = 30.0
             prefix = './'
+            keep = 0
+            term = 3600.0
+
 
             while index < len(tokens): #options
                 connective = tokens[index]
@@ -980,7 +988,15 @@ class Builder(object):
                     order = OrderValues[order] #convert to order value
 
                 elif connective == 'flush':
-                    interval = max(1.0,abs(Convert2Num(tokens[index])))
+                    interval = max(1.0, abs(Convert2Num(tokens[index])))
+                    index +=1
+
+                elif connective == 'keep':
+                    keep = max(0, int(Convert2Num(tokens[index])))
+                    index +=1
+
+                elif connective == 'cycle':
+                    term = max(0.0, abs(Convert2Num(tokens[index])))
                     index +=1
 
                 else:
@@ -997,7 +1013,9 @@ class Builder(object):
                                     store=self.currentStore,
                                     period=period,
                                     flushPeriod=interval,
-                                    prefix=prefix)
+                                    prefix=prefix,
+                                    keep=keep,
+                                    cyclePeriod=term)
             logger.schedule = schedule
 
             self.currentHouse.taskers.append(logger)
