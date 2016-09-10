@@ -191,15 +191,7 @@ Aborting all ready taskers ...
 
 github
 
-https://github.com/ioflo/ioflo_manuals/blob/master/ioflo_FloScriptGuide_v1.2.0.pdf
-
-https://github.com/ioflo/ioflo_manuals/blob/master/ioflo_Architecture_Overview_1.02.pdf
-
-or
-
-http://ioflo.com/wp-content/uploads/ioflo_FloScriptGuide_1.1.2.pdf
-
-http://ioflo.com/wp-content/uploads/2013/10/ioflo_Architecture_Overview_1.02.pdf
+https://github.com/ioflo/ioflo_manuals
 
 #### License
 APACHE 2.0
