@@ -43,6 +43,7 @@ class Logger(tasking.Tasker):
                  prefix='~/.ioflo/log',
                  keep=0,
                  cyclePeriod=0.0,
+                 fileSize=0,
                  **kw):
         """
         Initialize instance.
@@ -59,7 +60,9 @@ class Logger(tasking.Tasker):
             keep = int number of log copies in rotation <1> means do not cycle
             cyclePeriod = interval in seconds between log rotations,
                      0.0 or None means do not rotate
-
+            fileSize = size in KB (1024) of log file required to peform rotation
+                       Do not rotate is main file is not at least meet file size
+                       0 means always rotate
 
         Inherited Class Attributes:
             Counter = number of instances in class registrar
@@ -81,8 +84,9 @@ class Logger(tasking.Tasker):
             .flushPeriod = period between flushes
             .prefix = prefix used to create log directory
             .keep = int number of log copies in rotation, < 1 means do cycle
-            .cyclePeriod = nterval in seconds between log rotations,
+            .cyclePeriod = interval in seconds between log rotations,
                      0.0 or None means do not rotate
+            .fileSize = minimum size in bytes of main log file for rotation to occur
 
             .rotateStamp = time logs last rotated
             .flushStamp = time logs last flushed
@@ -99,6 +103,7 @@ class Logger(tasking.Tasker):
         self.cyclePeriod = max(0.0, cyclePeriod)  # ensure >= 0
         if self.keep > 0 and not self.cyclePeriod:
             self.keep = 0  # cyclePeriod must be nonzero if keep > 0
+        self.fileSize = max(0, fileSize)
 
         self.cycleStamp = 0.0
         self.flushStamp = 0.0
@@ -167,7 +172,7 @@ class Logger(tasking.Tasker):
         Cycle (Rotate) all log files
         """
         for log in self.logs:
-            log.cycle()
+            log.cycle(size=self.fileSize)
 
     def prepare(self):
         """
@@ -462,12 +467,21 @@ class Log(registering.StoriedRegistrar):
             self.file.flush()
             os.fsync(self.file.fileno())
 
-    def cycle(self):
+    def cycle(self, size=0):
         """
         Returns True if cycle rotate successful, False otherwise
-        Cycle log files
+        Cycle log files  Only cycle if size > 0 and main log file size >= size
         """
+
         if self.paths:  # non zero rotate copies
+            self.flush()
+            try:
+                if size and os.path.getsize(self.path) < (size *  1024):
+                    return False
+            except OSError as ex:
+                console.terse("Error: Reading file size '{0}'\n".format(ex))
+                return False
+
             self.close()  # also flushes
             cycled = True
             for k in reversed(range(len(self.paths) - 1)):

@@ -931,13 +931,15 @@ class HouseTestCase(testing.HouseIofloTestCase):
         flush = 3.0
         cyclePeriod = 0.5
         keep =  2
+        fileSize = 10.0 / 1024.0
         logger = logging.Logger(name="LoggerTest",
                                 store=self.store,
                                 schedule=globaling.ACTIVE,
                                 prefix=prefix,
                                 flushPeriod=flush,
                                 keep=keep,
-                                cyclePeriod=cyclePeriod)
+                                cyclePeriod=cyclePeriod,
+                                fileSize=fileSize)
 
         self.assertEqual(logger.flushPeriod, flush)
         self.assertEqual(logger.prefix, '/tmp/log/ioflo')
