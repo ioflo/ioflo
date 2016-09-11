@@ -121,12 +121,55 @@ class BasicTestCase(unittest.TestCase):
         Test Class SocketUdpNb
         """
         console.terse("{0}\n".format(self.testBroadcast.__doc__))
+
+
+        try:  # only run if netifaces installed
+            import netifaces
+        except ImportError:
+            return
+
         console.reinit(verbosity=console.Wordage.profuse)
 
-        unicast = socket.gethostbyname(socket.gethostname())
-        parts = unicast.split('.')
-        parts[3] = '255'
-        broadcast = ".".join(parts)  # make broadcast send address
+        def getDefaultHost():
+            """
+            Gets host ip address of default interface using netifaces
+
+            import netifaces
+            >>> def_gw_device = netifaces.gateways()['default'][netifaces.AF_INET][1]
+            This will get you the name of the device used by the default IPv4 route. You can get the MAC address of that interface like this:
+
+            >>> macaddr = netifaces.ifaddresses('enp0s25')[netifaces.AF_LINK][0]['addr']
+
+            """
+            iface =  netifaces.gateways()['default'][netifaces.AF_INET][1]
+            info = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]
+            host = info['addr']
+            return host
+
+        def getDefaultBroadcast():
+            """
+            Gets host ip address of default interface using netifaces
+
+            import netifaces
+            >>> def_gw_device = netifaces.gateways()['default'][netifaces.AF_INET][1]
+            This will get you the name of the device used by the default IPv4 route. You can get the MAC address of that interface like this:
+
+            >>> macaddr = netifaces.ifaddresses('enp0s25')[netifaces.AF_LINK][0]['addr']
+
+            """
+            iface =  netifaces.gateways()['default'][netifaces.AF_INET][1]
+            info = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]
+            bcast = info['broadcast']
+            return bcast
+
+        #unicast = socket.gethostbyname(socket.gethostname())
+        unicast = getDefaultHost()
+
+        #parts = unicast.split('.')
+        #parts[3] = '255'
+        #broadcast = ".".join(parts)  # make broadcast send address
+
+        broadcast = getDefaultBroadcast()
         bha = (broadcast, 6102)
 
         alpha = udping.SocketUdpNb(host=unicast,
