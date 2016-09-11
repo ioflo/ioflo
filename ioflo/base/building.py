@@ -922,12 +922,13 @@ class Builder(object):
 
 
         logger logname [to prefix] [at period] [be scheduled]
-                       [flush interval]  [keep copies] [cycle term]
+                       [flush interval]  [keep copies] [cycle term] [size KB]
         scheduled: (active, inactive, slave)
         period seconds
         interval seconds
         term seconds
         copies integer
+        KB kilobytes (1024)
 
         logger basic at 0.125
         logger basic
@@ -954,6 +955,7 @@ class Builder(object):
             prefix = './'
             keep = 0
             term = 3600.0
+            size = 1 # default rotate size is 1 KB 1024
 
 
             while index < len(tokens): #options
@@ -999,6 +1001,10 @@ class Builder(object):
                     term = max(0.0, abs(Convert2Num(tokens[index])))
                     index +=1
 
+                elif connective == 'size':
+                    size = max(0, abs(Convert2Num(tokens[index])))
+                    index +=1
+
                 else:
                     msg = "Error building %s. Bad connective got %s." %\
                           (command, connective)
@@ -1015,7 +1021,8 @@ class Builder(object):
                                     flushPeriod=interval,
                                     prefix=prefix,
                                     keep=keep,
-                                    cyclePeriod=term)
+                                    cyclePeriod=term,
+                                    fileSize=size)
             logger.schedule = schedule
 
             self.currentHouse.taskers.append(logger)
