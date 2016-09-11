@@ -60,7 +60,7 @@ class Logger(tasking.Tasker):
             keep = int number of log copies in rotation <1> means do not cycle
             cyclePeriod = interval in seconds between log rotations,
                      0.0 or None means do not rotate
-            fileSize = size in KB (1024) of log file required to peform rotation
+            fileSize = size in bytes  of log file required to peform rotation
                        Do not rotate is main file is not at least meet file size
                        0 means always rotate
 
@@ -476,7 +476,7 @@ class Log(registering.StoriedRegistrar):
         if self.paths:  # non zero rotate copies
             self.flush()
             try:
-                if size and os.path.getsize(self.path) < (size *  1024):
+                if size and os.path.getsize(self.path) < size:
                     return False
             except OSError as ex:
                 console.terse("Error: Reading file size '{0}'\n".format(ex))

@@ -922,13 +922,13 @@ class Builder(object):
 
 
         logger logname [to prefix] [at period] [be scheduled]
-                       [flush interval]  [keep copies] [cycle term] [size KB]
+                       [flush interval]  [keep copies] [cycle term] [size bytes]
         scheduled: (active, inactive, slave)
         period seconds
         interval seconds
         term seconds
         copies integer
-        KB kilobytes (1024)
+        bytes bytes
 
         logger basic at 0.125
         logger basic
@@ -955,7 +955,7 @@ class Builder(object):
             prefix = './'
             keep = 0
             term = 3600.0
-            size = 1 # default rotate size is 1 KB 1024
+            size = 1024 # default rotate size is 1024 bytes = 1KB
 
 
             while index < len(tokens): #options
