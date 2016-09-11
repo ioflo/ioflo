@@ -3,7 +3,15 @@ CHANGE LOG
 -------------------
 
 --------
-20160719
+20160911
+--------
+1.6.1
+
+Added minimum size option to logger declaration for log rotation to occur
+
+
+--------
+20160910
 --------
 1.6.0
 
