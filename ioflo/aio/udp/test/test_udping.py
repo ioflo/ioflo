@@ -19,6 +19,7 @@ from ioflo.aid.sixing import *
 from ioflo.aid.consoling import getConsole
 from ioflo.aio import wiring
 from ioflo.aio.udp import udping
+from ioflo.aio import aioing
 
 console = getConsole()
 
@@ -124,43 +125,13 @@ class BasicTestCase(unittest.TestCase):
 
 
         try:  # only run if netifaces installed
-            import netifaces
+            from ioflo.aio.aioing import getDefaultHost,  getDefaultBroadcast
         except ImportError:
             return
 
+
         console.reinit(verbosity=console.Wordage.profuse)
 
-        def getDefaultHost():
-            """
-            Gets host ip address of default interface using netifaces
-
-            import netifaces
-            >>> def_gw_device = netifaces.gateways()['default'][netifaces.AF_INET][1]
-            This will get you the name of the device used by the default IPv4 route. You can get the MAC address of that interface like this:
-
-            >>> macaddr = netifaces.ifaddresses('enp0s25')[netifaces.AF_LINK][0]['addr']
-
-            """
-            iface =  netifaces.gateways()['default'][netifaces.AF_INET][1]
-            info = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]
-            host = info['addr']
-            return host
-
-        def getDefaultBroadcast():
-            """
-            Gets host ip address of default interface using netifaces
-
-            import netifaces
-            >>> def_gw_device = netifaces.gateways()['default'][netifaces.AF_INET][1]
-            This will get you the name of the device used by the default IPv4 route. You can get the MAC address of that interface like this:
-
-            >>> macaddr = netifaces.ifaddresses('enp0s25')[netifaces.AF_LINK][0]['addr']
-
-            """
-            iface =  netifaces.gateways()['default'][netifaces.AF_INET][1]
-            info = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]
-            bcast = info['broadcast']
-            return bcast
 
         #unicast = socket.gethostbyname(socket.gethostname())
         unicast = getDefaultHost()
