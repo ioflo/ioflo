@@ -1012,8 +1012,7 @@ class HouseTestCase(testing.HouseIofloTestCase):
 
         file0 = open(path0, "r")
         lines = file0.readlines()
-        self.assertEqual(lines, ['text\tAlways\ttest\n',
-                                 '_time\theading\n',
+        self.assertEqual(lines, ['text\tAlways\ttest\n', '_time\theading\n',
                                  '2.125\t17.0\n'])
         file0.close()
 

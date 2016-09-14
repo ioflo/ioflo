@@ -281,6 +281,8 @@ class Logger(tasking.Tasker):
                     if self.status != STOPPED:
                         console.terse("     Stopping Logger {0} ...\n".format(self.name))
                         self.log() #final log
+                        if self.keep and self.reuse:
+                            self.cycle()  # final rotate so if reuse no lost data no spurious header
                         self.close()
                         self.desire = STOP
                         self.status = STOPPED
