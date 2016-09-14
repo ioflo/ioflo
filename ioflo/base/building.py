@@ -956,6 +956,7 @@ class Builder(object):
             keep = 0
             term = 3600.0
             size = 1024 # default rotate size is 1024 bytes = 1KB
+            reuse = False  # non-unique logger directory name if True
 
 
             while index < len(tokens): #options
@@ -1005,6 +1006,9 @@ class Builder(object):
                     size = max(0, abs(Convert2Num(tokens[index])))
                     index +=1
 
+                elif connective == 'reuse':
+                    reuse = True
+
                 else:
                     msg = "Error building %s. Bad connective got %s." %\
                           (command, connective)
@@ -1022,7 +1026,8 @@ class Builder(object):
                                     prefix=prefix,
                                     keep=keep,
                                     cyclePeriod=term,
-                                    fileSize=size)
+                                    fileSize=size,
+                                    reuse=reuse)
             logger.schedule = schedule
 
             self.currentHouse.taskers.append(logger)
