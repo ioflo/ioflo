@@ -210,21 +210,27 @@ class Logger(tasking.Tasker):
         """
         path = ''
         try:
-            i = 0
-            while True:  # do until keep trying until different
-                if not self.reuse:
+            if self.reuse:
+                path = os.path.join(prefix, self.store.house.name, self.name)
+                path = os.path.abspath(path)  # convert to proper absolute path
+                if not os.path.exists(path):
+                    os.makedirs(path)
+
+            else:  # unique directory name
+                i = 0
+                while True:  # do until keep trying until different
+
                     dt = datetime.datetime.now()
                     dirname = "{0}_{1:04d}{2:02d}{3:02d}_{4:02d}{5:02d}{6:02d}_{7:03d}".format(
                                self.name, dt.year, dt.month, dt.day, dt.hour,
                                dt.minute, dt.second, dt.microsecond // 1000 + i )
-                else:
-                    dirname = self.name
-                path = os.path.join(prefix, self.store.house.name, dirname)
-                path = os.path.abspath(path) #convert to proper absolute path
-                if not os.path.exists(path):
-                    os.makedirs(path)
-                    break
-                i +=1
+
+                    path = os.path.join(prefix, self.store.house.name, dirname)
+                    path = os.path.abspath(path) #convert to proper absolute path
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                        break
+                    i +=1
 
         except OSError as ex:
             console.terse("Error: creating log directory '{0}'\n".format(ex))

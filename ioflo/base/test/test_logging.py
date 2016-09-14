@@ -946,6 +946,8 @@ class HouseTestCase(testing.HouseIofloTestCase):
         self.assertTrue(logger.runner)  # runner generator is made when logger created
         self.assertEqual(logger.cyclePeriod, cyclePeriod)
         self.assertEqual(logger.keep, keep)
+        self.assertEqual(logger.fileSize, fileSize)
+        self.assertEqual(logger.cycleStamp, 0.0)
         self.assertEqual(logger.flushStamp, 0.0)
         self.assertEqual(logger.path, '')
 
@@ -1037,6 +1039,343 @@ class HouseTestCase(testing.HouseIofloTestCase):
         file2.close()
 
 
+    def testCycleReuse(self):
+        """
+        Test logger with rotate and non unique directory name
+        """
+        console.terse("{0}\n".format(self.testCycleReuse.__doc__))
+        self.assertEqual(self.house.store, self.store)
+
+        prefix = "/tmp/log/ioflo"
+        flush = 3.0
+        cyclePeriod = 0.5
+        keep =  2
+        fileSize = 10
+        logger = logging.Logger(name="LoggerTest",
+                                store=self.store,
+                                schedule=globaling.ACTIVE,
+                                prefix=prefix,
+                                flushPeriod=flush,
+                                keep=keep,
+                                cyclePeriod=cyclePeriod,
+                                fileSize=fileSize,
+                                reuse=True)
+
+        self.assertEqual(logger.flushPeriod, flush)
+        self.assertEqual(logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(logger.runner)  # runner generator is made when logger created
+        self.assertEqual(logger.cyclePeriod, cyclePeriod)
+        self.assertEqual(logger.keep, keep)
+        self.assertEqual(logger.fileSize, fileSize)
+        self.assertEqual(logger.cycleStamp, 0.0)
+        self.assertEqual(logger.flushStamp, 0.0)
+        self.assertEqual(logger.path, '')
+        self.assertTrue(logger.reuse)
+
+        self.assertEqual(logger.logs, [])
+
+        self.house.taskers.append(logger)
+        self.house.mids.append(logger)
+        self.house.orderTaskables()
+
+        self.house.store.changeStamp(0.0)
+        self.assertEqual(logger.stamp, 0.0)
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.ALWAYS)
+
+        self.assertEqual(log.baseFilename, log.name)
+        self.assertEqual(log.path, '')
+        self.assertEqual(log.file, None)
+        self.assertEqual(log.kind, 'text')
+
+        self.assertEqual(log.rule, globaling.ALWAYS)
+        self.assertEqual(log.action, log.always)
+
+        logger.addLog(log)
+
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        #position = self.store.create('pose.position').create([("north", 10.0), ("east", 5.0)])
+
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        #log.addLoggee(tag = 'pos', loggee = 'pose.position')
+
+        logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+
+        status = logger.runner.send(globaling.START)  # reopens prepares and logs once
+
+        self.assertTrue(logger.path.startswith('/tmp/log/ioflo/HouseTest/LoggerTest'))
+        self.assertTrue(log.path.startswith(logger.path))
+        self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
+        self.assertTrue(log.file)
+
+        self.assertEqual(len(log.paths), keep+1)
+        for k, path in enumerate(log.paths[1:]):
+            self.assertTrue(path.startswith(logger.path))
+            base = os.path.basename(path)
+            root, ext = os.path.splitext(base)
+            self.assertTrue(root.endswith("{0:02}".format(k+1)))
+
+        for i in range(16):
+            self.store.advanceStamp(0.125)
+            heading.value += 1.0
+            status = logger.runner.send(globaling.RUN)
+
+        self.store.advanceStamp(0.125)
+        heading.value += 1.0
+        status = logger.runner.send(globaling.STOP)  # logs once and closes logs
+
+        path0, path1, path2 = log.paths
+
+        file0 = open(path0, "r")
+        lines = file0.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n', '_time\theading\n'])
+        file0.close()
+
+        file1 = open(path1, "r")
+        lines = file1.readlines()
+        self.assertEqual(lines,['text\tAlways\ttest\n', '_time\theading\n',
+                                '2.125\t17.0\n'] )
+        file1.close()
+
+        file2 = open(path2, "r")
+        lines = file2.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '1.625\t13.0\n',
+                                '1.75\t14.0\n',
+                                '1.875\t15.0\n',
+                                '2.0\t16.0\n'])
+        file2.close()
+
+        # restart for reuse
+        status = logger.runner.send(globaling.START)  # reopens prepares and logs once
+
+        self.assertTrue(logger.path.startswith('/tmp/log/ioflo/HouseTest/LoggerTest'))
+        self.assertTrue(log.path.startswith(logger.path))
+        self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
+        self.assertTrue(log.file)
+
+        self.assertEqual(len(log.paths), keep+1)
+        for k, path in enumerate(log.paths[1:]):
+            self.assertTrue(path.startswith(logger.path))
+            base = os.path.basename(path)
+            root, ext = os.path.splitext(base)
+            self.assertTrue(root.endswith("{0:02}".format(k+1)))
+
+        for i in range(3):
+            self.store.advanceStamp(0.125)
+            heading.value += 1.0
+            status = logger.runner.send(globaling.RUN)
+
+        self.store.advanceStamp(0.125)
+        heading.value += 1.0
+        status = logger.runner.send(globaling.STOP)  # logs once and closes logs
+
+        path0, path1, path2 = log.paths
+
+        file0 = open(path0, "r")
+        lines = file0.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n', '_time\theading\n'])
+        file0.close()
+
+        file1 = open(path1, "r")
+        lines = file1.readlines()
+        self.assertEqual(lines,['text\tAlways\ttest\n', '_time\theading\n',
+                                '2.625\t21.0\n'] )
+        file1.close()
+
+        file2 = open(path2, "r")
+        lines = file2.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '2.125\t17.0\n',
+                                '2.25\t18.0\n',
+                                '2.375\t19.0\n',
+                                '2.5\t20.0\n'])
+        file2.close()
+
+        file = open(log.path, "w")  # erase file
+        file.close()
+
+    def testReuse(self):
+        """
+        Test logger with non unique directory name
+        """
+        console.terse("{0}\n".format(self.testReuse.__doc__))
+        self.assertEqual(self.house.store, self.store)
+
+        prefix = "/tmp/log/ioflo"
+        flush = 3.0
+        logger = logging.Logger(name="LoggerTest",
+                                store=self.store,
+                                schedule=globaling.ACTIVE,
+                                prefix=prefix,
+                                flushPeriod=flush,
+                                reuse=True)
+
+        self.assertEqual(logger.flushPeriod, flush)
+        self.assertEqual(logger.prefix, '/tmp/log/ioflo')
+        self.assertTrue(logger.runner)  # runner generator is made when logger created
+        self.assertEqual(logger.cyclePeriod, 0)
+        self.assertEqual(logger.keep, 0)
+        self.assertEqual(logger.fileSize, 0)
+        self.assertEqual(logger.cycleStamp, 0.0)
+        self.assertEqual(logger.flushStamp, 0.0)
+        self.assertEqual(logger.path, '')
+        self.assertTrue(logger.reuse)
+
+        self.assertEqual(logger.logs, [])
+
+        self.house.taskers.append(logger)
+        self.house.mids.append(logger)
+        self.house.orderTaskables()
+
+        self.house.store.changeStamp(0.0)
+        self.assertEqual(logger.stamp, 0.0)
+
+        log = logging.Log(name='test',
+                          store=self.store,
+                          kind='text',
+                          baseFileName='',
+                          rule=globaling.ALWAYS)
+
+        self.assertEqual(log.baseFilename, log.name)
+        self.assertEqual(log.path, '')
+        self.assertEqual(log.file, None)
+        self.assertEqual(log.kind, 'text')
+
+        self.assertEqual(log.rule, globaling.ALWAYS)
+        self.assertEqual(log.action, log.always)
+
+        logger.addLog(log)
+
+        heading = self.store.create('pose.heading').create(value = 0.0)
+        #position = self.store.create('pose.position').create([("north", 10.0), ("east", 5.0)])
+
+        log.addLoggee(tag = 'heading', loggee = 'pose.heading')
+        #log.addLoggee(tag = 'pos', loggee = 'pose.position')
+
+        logger.resolve()  # resolves logs as well
+
+        self.house.store.changeStamp(0.0)
+        self.assertIs(log.stamp, None)
+
+        status = logger.runner.send(globaling.START)  # reopens prepares and logs once
+
+        self.assertTrue(logger.path.startswith('/tmp/log/ioflo/HouseTest/LoggerTest'))
+        self.assertTrue(log.path.startswith(logger.path))
+        self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
+        self.assertTrue(log.file)
+
+        self.assertEqual(len(log.paths), 0)
+
+        for i in range(16):
+            self.store.advanceStamp(0.125)
+            heading.value += 1.0
+            status = logger.runner.send(globaling.RUN)
+
+        self.store.advanceStamp(0.125)
+        heading.value += 1.0
+        status = logger.runner.send(globaling.STOP)  # logs once and closes logs
+
+        file = open(log.path, "r")
+        lines = file.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '0.0\t0.0\n',
+                                '0.125\t1.0\n',
+                                '0.25\t2.0\n',
+                                '0.375\t3.0\n',
+                                '0.5\t4.0\n',
+                                '0.625\t5.0\n',
+                                '0.75\t6.0\n',
+                                '0.875\t7.0\n',
+                                '1.0\t8.0\n',
+                                '1.125\t9.0\n',
+                                '1.25\t10.0\n',
+                                '1.375\t11.0\n',
+                                '1.5\t12.0\n',
+                                '1.625\t13.0\n',
+                                '1.75\t14.0\n',
+                                '1.875\t15.0\n',
+                                '2.0\t16.0\n',
+                                '2.125\t17.0\n'])
+        file.close()
+
+        # restart for reuse
+        self.house.store.changeStamp(0.0)
+        log.stamp = None
+        self.assertIs(log.stamp, None)
+
+        status = logger.runner.send(globaling.START)  # reopens prepares and logs once
+
+        self.assertTrue(logger.path.startswith('/tmp/log/ioflo/HouseTest/LoggerTest'))
+        self.assertTrue(log.path.startswith(logger.path))
+        self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
+        self.assertTrue(log.file)
+
+        self.assertEqual(len(log.paths), 0)
+
+        status = logger.runner.send(globaling.START)  # reopens prepares and logs once
+
+        self.assertTrue(logger.path.startswith('/tmp/log/ioflo/HouseTest/LoggerTest'))
+        self.assertTrue(log.path.startswith(logger.path))
+        self.assertTrue(log.path.endswith(log.baseFilename + '.txt'))
+        self.assertTrue(log.file)
+
+        self.assertEqual(len(log.paths), 0)
+
+        for i in range(3):
+            self.store.advanceStamp(0.125)
+            heading.value += 1.0
+            status = logger.runner.send(globaling.RUN)
+
+        self.store.advanceStamp(0.125)
+        heading.value += 1.0
+        status = logger.runner.send(globaling.STOP)  # logs once and closes logs
+
+        file = open(log.path, "r")
+        lines = file.readlines()
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '0.0\t0.0\n',
+                                '0.125\t1.0\n',
+                                '0.25\t2.0\n',
+                                '0.375\t3.0\n',
+                                '0.5\t4.0\n',
+                                '0.625\t5.0\n',
+                                '0.75\t6.0\n',
+                                '0.875\t7.0\n',
+                                '1.0\t8.0\n',
+                                '1.125\t9.0\n',
+                                '1.25\t10.0\n',
+                                '1.375\t11.0\n',
+                                '1.5\t12.0\n',
+                                '1.625\t13.0\n',
+                                '1.75\t14.0\n',
+                                '1.875\t15.0\n',
+                                '2.0\t16.0\n',
+                                '2.125\t17.0\n',
+                                'text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '0.0\t17.0\n',
+                                '0.0\t17.0\n',
+                                '0.125\t18.0\n',
+                                '0.25\t19.0\n',
+                                '0.375\t20.0\n',
+                                '0.5\t21.0\n'])
+        file.close()
+
+        file = open(log.path, "w")  # erase file
+        file.close()
+
 
 def runOneLogger(test):
     '''
@@ -1075,6 +1414,8 @@ def runSome():
     names = [
                 'testSetup',
                 'testCycle',
+                'testCycleReuse',
+                'testReuse',
             ]
     tests.extend(map(HouseTestCase, names))
 
