@@ -7,6 +7,9 @@ CHANGE LOG
 --------
 1.6.1
 
+Added reuse option to the logger declaration to reuse log files on reruns. This
+is most useful when rotation is enabled.
+
 Added minimum size option to logger declaration for log rotation to occur
 
 
