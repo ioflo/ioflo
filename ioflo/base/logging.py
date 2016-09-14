@@ -44,6 +44,7 @@ class Logger(tasking.Tasker):
                  keep=0,
                  cyclePeriod=0.0,
                  fileSize=0,
+                 reuse=False,
                  **kw):
         """
         Initialize instance.
@@ -63,6 +64,9 @@ class Logger(tasking.Tasker):
             fileSize = size in bytes  of log file required to peform rotation
                        Do not rotate is main file is not at least meet file size
                        0 means always rotate
+            reuse = Make unique time stamped log directory if True otherwise nonunique
+                    useful when rotating
+
 
         Inherited Class Attributes:
             Counter = number of instances in class registrar
@@ -87,6 +91,8 @@ class Logger(tasking.Tasker):
             .cyclePeriod = interval in seconds between log rotations,
                      0.0 or None means do not rotate
             .fileSize = minimum size in bytes of main log file for rotation to occur
+            .reuse = Make unique time stamped log directory if True otherwise nonunique
+                    useful when rotating
 
             .rotateStamp = time logs last rotated
             .flushStamp = time logs last flushed
@@ -104,6 +110,7 @@ class Logger(tasking.Tasker):
         if self.keep > 0 and not self.cyclePeriod:
             self.keep = 0  # cyclePeriod must be nonzero if keep > 0
         self.fileSize = max(0, fileSize)
+        self.reuse = True if reuse else False
 
         self.cycleStamp = 0.0
         self.flushStamp = 0.0
@@ -205,10 +212,13 @@ class Logger(tasking.Tasker):
         try:
             i = 0
             while True:  # do until keep trying until different
-                dt = datetime.datetime.now()
-                dirname = "{0}_{1:04d}{2:02d}{3:02d}_{4:02d}{5:02d}{6:02d}_{7:03d}".format(
-                           self.name, dt.year, dt.month, dt.day, dt.hour,
-                           dt.minute, dt.second, dt.microsecond // 1000 + i )
+                if not self.reuse:
+                    dt = datetime.datetime.now()
+                    dirname = "{0}_{1:04d}{2:02d}{3:02d}_{4:02d}{5:02d}{6:02d}_{7:03d}".format(
+                               self.name, dt.year, dt.month, dt.day, dt.hour,
+                               dt.minute, dt.second, dt.microsecond // 1000 + i )
+                else:
+                    dirname = self.name
                 path = os.path.join(prefix, self.store.house.name, dirname)
                 path = os.path.abspath(path) #convert to proper absolute path
                 if not os.path.exists(path):
