@@ -216,6 +216,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIn("time", store.shares)
         self.assertEqual(store.metaShr, storing.Node([]))
         self.assertIsInstance(store.realTimeShr, storing.Share)
+        self.assertIsInstance(store.dateTimeShr, storing.Share)
         self.assertIsInstance(store.timeShr, storing.Share)
 
         share = storing.Share(name='auto.depth')

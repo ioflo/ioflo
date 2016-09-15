@@ -8,6 +8,7 @@ import struct
 import re
 import copy
 from collections import deque
+import datetime
 
 from ..aid.sixing import *
 from .globaling import INDENT_ADD, REO_IdentPub
@@ -95,6 +96,9 @@ class Store(registering.Registrar):
         self.timeShr = self.create('.time').update(value = self.stamp or 0.0)
         #create share for realtime
         self.realTimeShr = self.create('.realtime').update(value = time.time())
+        #create share for realtime datetime ascii
+        self.dateTimeShr = self.create('.datetime').update(
+                                 value=datetime.datetime.utcnow().isoformat())
 
     def changeStamp(self, stamp):
         """change time stamp for this store """
@@ -102,6 +106,8 @@ class Store(registering.Registrar):
             self.stamp = float(stamp)
             self.timeShr.update(value=self.stamp)
             self.realTimeShr.update(value=time.time())
+            self.dateTimeShr.update(value=datetime.datetime.utcnow().isoformat())
+
         except TypeError:
             self.stamp = None
             console.verbose("Error: Store {0}, Invalid stamp '{1}'\n".format(
@@ -114,6 +120,7 @@ class Store(registering.Registrar):
             self.stamp += delta
             self.timeShr.update(value=self.stamp)
             self.realTimeShr.update(value=time.time())
+            self.dateTimeShr.update(value=datetime.datetime.utcnow().isoformat())
         except TypeError:
             console.verbose("Error: Store {0}, Can't advance stamp={1}"
                             " by delta={2}\n".format(self.name, self.stamp, delta))
