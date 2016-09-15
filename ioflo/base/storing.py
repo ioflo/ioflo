@@ -95,18 +95,20 @@ class Store(registering.Registrar):
         #create share for stamp
         self.timeShr = self.create('.time').update(value = self.stamp or 0.0)
         #create share for realtime
-        self.realTimeShr = self.create('.realtime').update(value = time.time())
+        rt = time.time()
+        self.realTimeShr = self.create('.realtime').update(value=rt)
         #create share for realtime datetime ascii
         self.dateTimeShr = self.create('.datetime').update(
-                                 value=datetime.datetime.utcnow().isoformat())
+                                 value=datetime.datetime.fromtimestamp(rt).isoformat())
 
     def changeStamp(self, stamp):
         """change time stamp for this store """
         try: #stamp must be a number or None
             self.stamp = float(stamp)
             self.timeShr.update(value=self.stamp)
-            self.realTimeShr.update(value=time.time())
-            self.dateTimeShr.update(value=datetime.datetime.utcnow().isoformat())
+            rt = time.time()
+            self.realTimeShr.update(value=rt)
+            self.dateTimeShr.update(value=datetime.datetime.fromtimestamp(rt).isoformat())
 
         except TypeError:
             self.stamp = None
@@ -119,8 +121,9 @@ class Store(registering.Registrar):
         try:
             self.stamp += delta
             self.timeShr.update(value=self.stamp)
-            self.realTimeShr.update(value=time.time())
-            self.dateTimeShr.update(value=datetime.datetime.utcnow().isoformat())
+            rt = time.time()
+            self.realTimeShr.update(value=rt)
+            self.dateTimeShr.update(value=datetime.fromtimestamp(rt).isoformat())
         except TypeError:
             console.verbose("Error: Store {0}, Can't advance stamp={1}"
                             " by delta={2}\n".format(self.name, self.stamp, delta))
