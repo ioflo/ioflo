@@ -7,6 +7,10 @@ CHANGE LOG
 --------
 1.6.1
 
+Added .datetime and .time to store default contents so all have access to current
+real date time current relative time in addition to .realtime
+
+
 Added reuse option to the logger declaration to reuse log files on reruns. This
 is most useful when rotation is enabled.
 

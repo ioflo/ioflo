@@ -287,8 +287,8 @@ class Logger(tasking.Tasker):
                     if self.status != STOPPED:
                         console.terse("     Stopping Logger {0} ...\n".format(self.name))
                         self.log() #final log
-                        if self.keep and self.reuse:
-                            self.cycle()  # final rotate so if reuse no lost data no spurious header
+                        if self.keep and self.reuse:  # recycle in case multiple restarts
+                            self.cycle()  # cause log file to exceed size before cycle time
                         self.close()
                         self.desire = STOP
                         self.status = STOPPED
@@ -361,7 +361,8 @@ class Log(registering.StoriedRegistrar):
 
         super(Log,self).__init__(**kw) #store and name inited here
 
-        self.stamp = None #time stamp last logged, None means never logged
+        self.stamp = None  # time stamp last logged, None means not yet logged
+        self.first = True  # True means file created for the first time
 
         self.kind = kind
         if baseFilename:
@@ -441,6 +442,9 @@ class Log(registering.StoriedRegistrar):
             self.paths = []  # remove stale rotate paths
 
         self.close()  #innocuous to call close() on unopened file
+        if os.path.exists(self.path):
+            self.first = False
+
         try:
             self.file = ocfn(self.path, 'a+')  # append pick up where left off
         except IOError as ex:
@@ -459,7 +463,7 @@ class Log(registering.StoriedRegistrar):
                 self.paths.append(path)
 
                 try:  # trial open file to make
-                    file = ocfn(path, 'w+')  #
+                    file = ocfn(path, 'r')  # do not truncate in case reusing
                 except IOError as ex:
                     console.terse("Error: Creating/opening log rotate file '{0}'\n".format(ex))
                     return False
@@ -576,7 +580,6 @@ class Log(registering.StoriedRegistrar):
         self.header = cf.getvalue()
         cf.close()
 
-
     def prepare(self):
         """
         Prepare log formats and values
@@ -644,7 +647,7 @@ class Log(registering.StoriedRegistrar):
 
         self.buildHeader()
 
-        if self.stamp is None: #never logged so log headers
+        if self.stamp is None and self.first:  # never logged so log headers
             self.file.write(self.header)
 
     def format(self, value):

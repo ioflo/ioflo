@@ -146,6 +146,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
 
         log.close()
 
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
+
 
     def testLogAlways(self):
         """
@@ -286,6 +292,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
                                 '3.0\t24.0\t46.0\t-22.0\n'])
         log.file.close()
 
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
+
     def testLogOnce(self):
         """
         Test log with once rule
@@ -337,6 +349,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         self.assertEqual(lines, ['text\tOnce\ttest\n', '_time\theading\n', '0.0\t0.0\n'])
         log.file.close()
 
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
+
     def testLogNever(self):
         """
         Test log with never rule
@@ -387,6 +405,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tNever\ttest\n', '_time\theading\n'])
         log.file.close()
+
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
 
 
     def testLogUpdate(self):
@@ -443,6 +467,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
                                 '0.25\t0.0\n',
                                 '0.5\t5.0\n'])
         log.file.close()
+
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
 
 
     def testLogUpdateFields(self):
@@ -504,6 +534,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
                                 '0.5\t5.0\t7.0\n'])
         log.file.close()
 
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
+
     def testLogChange(self):
         """
         Test log with change rule
@@ -555,6 +591,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
         lines = log.file.readlines()
         self.assertEqual(lines, ['text\tChange\ttest\n', '_time\theading\n', '0.0\t0.0\n', '0.5\t5.0\n'])
         log.file.close()
+
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
 
     def testLogChangeFields(self):
         """
@@ -616,6 +658,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
                                 '0.0\t0.0\t0.0\n',
                                 '0.5\t5.0\t7.0\n'])
         log.file.close()
+
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
 
     def testLogStreak(self):
         """
@@ -719,6 +767,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
                                 '1.125\t20\n'])
         log.file.close()
 
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
+
     def testLogStreakFields(self):
         """
         Test log with streak rule and fields
@@ -779,6 +833,12 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
                                 '0.5\tTree\n',
                                 '0.5\tGreen\n'])
         log.close()
+
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
+
 
     def testLogDeck(self):
         """
@@ -860,6 +920,11 @@ class LoggerTestCase(testing.LoggerIofloTestCase):
                                 '0.25\t9.0\t6.0\n',
                                 '0.5\t10.0\t7.0\n'])
         log.file.close()
+
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
 
 
 class HouseTestCase(testing.HouseIofloTestCase):
@@ -1038,6 +1103,12 @@ class HouseTestCase(testing.HouseIofloTestCase):
                                 '1.5\t12.0\n'])
         file2.close()
 
+        for path in log.paths:  # remove files to clean up
+            try:
+                os.remove(path)
+            except OSError as ex:
+                pass
+
 
     def testCycleReuse(self):
         """
@@ -1050,7 +1121,7 @@ class HouseTestCase(testing.HouseIofloTestCase):
         flush = 3.0
         cyclePeriod = 0.5
         keep =  2
-        fileSize = 10
+        fileSize = 50
         logger = logging.Logger(name="LoggerTest",
                                 store=self.store,
                                 schedule=globaling.ACTIVE,
@@ -1135,23 +1206,29 @@ class HouseTestCase(testing.HouseIofloTestCase):
 
         file0 = open(path0, "r")
         lines = file0.readlines()
-        self.assertEqual(lines, ['text\tAlways\ttest\n', '_time\theading\n'])
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                 '_time\theading\n',
+                                 '2.125\t17.0\n'])
         file0.close()
 
         file1 = open(path1, "r")
         lines = file1.readlines()
-        self.assertEqual(lines,['text\tAlways\ttest\n', '_time\theading\n',
-                                '2.125\t17.0\n'] )
+        self.assertEqual(lines,['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '1.625\t13.0\n',
+                                '1.75\t14.0\n',
+                                '1.875\t15.0\n',
+                                '2.0\t16.0\n'] )
         file1.close()
 
         file2 = open(path2, "r")
         lines = file2.readlines()
         self.assertEqual(lines, ['text\tAlways\ttest\n',
                                 '_time\theading\n',
-                                '1.625\t13.0\n',
-                                '1.75\t14.0\n',
-                                '1.875\t15.0\n',
-                                '2.0\t16.0\n'])
+                                '1.125\t9.0\n',
+                                '1.25\t10.0\n',
+                                '1.375\t11.0\n',
+                                '1.5\t12.0\n'])
         file2.close()
 
         # restart for reuse
@@ -1182,27 +1259,37 @@ class HouseTestCase(testing.HouseIofloTestCase):
 
         file0 = open(path0, "r")
         lines = file0.readlines()
-        self.assertEqual(lines, ['text\tAlways\ttest\n', '_time\theading\n'])
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                 '_time\theading\n',
+                                 '2.625\t21.0\n'])
         file0.close()
 
         file1 = open(path1, "r")
         lines = file1.readlines()
-        self.assertEqual(lines,['text\tAlways\ttest\n', '_time\theading\n',
-                                '2.625\t21.0\n'] )
+        self.assertEqual(lines, ['text\tAlways\ttest\n',
+                                '_time\theading\n',
+                                '2.125\t17.0\n',
+                                '2.125\t17.0\n',
+                                '2.25\t18.0\n',
+                                '2.375\t19.0\n',
+                                '2.5\t20.0\n'])
         file1.close()
 
         file2 = open(path2, "r")
         lines = file2.readlines()
         self.assertEqual(lines, ['text\tAlways\ttest\n',
                                 '_time\theading\n',
-                                '2.125\t17.0\n',
-                                '2.25\t18.0\n',
-                                '2.375\t19.0\n',
-                                '2.5\t20.0\n'])
+                                '1.625\t13.0\n',
+                                '1.75\t14.0\n',
+                                '1.875\t15.0\n',
+                                '2.0\t16.0\n'])
         file2.close()
 
-        file = open(log.path, "w")  # erase file
-        file.close()
+        for path in log.paths:  # remove files to clean up
+            try:
+                os.remove(path)
+            except OSError as ex:
+                pass
 
     def testReuse(self):
         """
@@ -1363,8 +1450,6 @@ class HouseTestCase(testing.HouseIofloTestCase):
                                 '1.875\t15.0\n',
                                 '2.0\t16.0\n',
                                 '2.125\t17.0\n',
-                                'text\tAlways\ttest\n',
-                                '_time\theading\n',
                                 '0.0\t17.0\n',
                                 '0.0\t17.0\n',
                                 '0.125\t18.0\n',
@@ -1373,8 +1458,10 @@ class HouseTestCase(testing.HouseIofloTestCase):
                                 '0.5\t21.0\n'])
         file.close()
 
-        file = open(log.path, "w")  # erase file
-        file.close()
+        try:
+            os.remove(log.path)  # remove to clean up
+        except OSError as ex:
+            pass
 
 
 def runOneLogger(test):
@@ -1438,4 +1525,4 @@ if __name__ == '__main__' and __package__ is None:
     runSome()#only run some
 
     #runOneLogger('testLogDeck')
-    #runOneHouse('testCycle')
+    #runOneHouse('testCycleReuse')
