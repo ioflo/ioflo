@@ -98,8 +98,17 @@ class Store(registering.Registrar):
         rt = time.time()
         self.realTimeShr = self.create('.realtime').update(value=rt)
         #create share for realtime datetime ascii
-        self.dateTimeShr = self.create('.datetime').update(
-                                 value=datetime.datetime.fromtimestamp(rt).isoformat())
+        dt = datetime.datetime.fromtimestamp(rt)
+        self.dateTimeShr = self.create('.datetime').update([("iso", dt.isoformat()),
+                                                            ("dt", dt),
+                                                            ("year", dt.year),
+                                                            ("month", dt.month),
+                                                            ("day", dt.day),
+                                                            ("hour", dt.hour),
+                                                            ("minute", dt.minute),
+                                                            ("second", dt.second),
+                                                            ("micro", dt.microsecond)
+                                                           ])
 
     def changeStamp(self, stamp):
         """change time stamp for this store """
@@ -108,7 +117,18 @@ class Store(registering.Registrar):
             self.timeShr.update(value=self.stamp)
             rt = time.time()
             self.realTimeShr.update(value=rt)
-            self.dateTimeShr.update(value=datetime.datetime.fromtimestamp(rt).isoformat())
+            dt = datetime.datetime.fromtimestamp(rt)
+            self.dateTimeShr.update([("iso", dt.isoformat()),
+                                        ("dt", dt),
+                                        ("year", dt.year),
+                                        ("month", dt.month),
+                                        ("day", dt.day),
+                                        ("hour", dt.hour),
+                                        ("minute", dt.minute),
+                                        ("second", dt.second),
+                                        ("micro", dt.microsecond)
+                                       ])
+
 
         except TypeError:
             self.stamp = None
@@ -123,7 +143,18 @@ class Store(registering.Registrar):
             self.timeShr.update(value=self.stamp)
             rt = time.time()
             self.realTimeShr.update(value=rt)
-            self.dateTimeShr.update(value=datetime.fromtimestamp(rt).isoformat())
+            dt = datetime.datetime.fromtimestamp(rt)
+            self.dateTimeShr.update([("iso", dt.isoformat()),
+                                        ("dt", dt),
+                                        ("year", dt.year),
+                                        ("month", dt.month),
+                                        ("day", dt.day),
+                                        ("hour", dt.hour),
+                                        ("minute", dt.minute),
+                                        ("second", dt.second),
+                                        ("micro", dt.microsecond)
+                                       ])
+
         except TypeError:
             console.verbose("Error: Store {0}, Can't advance stamp={1}"
                             " by delta={2}\n".format(self.name, self.stamp, delta))
