@@ -911,6 +911,5 @@ class Log(registering.StoriedRegistrar):
             if tag in self.loggees: #only add if not already there
                 raise excepting.ResolveError("Duplicate tag", tag, loggee)
             self.loggees[tag] = loggee
-            #if fields:
             self.fields[tag] = fields if fields else []  # need tag to preserve order
 
