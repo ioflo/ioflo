@@ -599,15 +599,16 @@ class Log(registering.StoriedRegistrar):
             if tag in self.fields:
                 if self.fields[tag]:  # at least one field
                     self.fields[tag] = self.fields[tag][:1]  # only one field allowed
+                else:  # use first fields in loggee if present
+                    self.fields[tag] = [loggee.keys()[0]] if loggee else []
             else:  # fields not given use first fields in loggee if present
                 self.fields[tag] = [loggee.keys()[0]] if loggee else []
 
 
         else:  # default fields from loggee
             for tag, loggee in self.loggees.items():
-                if tag not in self.fields:  # if fields not given use all fields in loggee
+                if tag not in self.fields or not self.fields[tag]:  # if fields not given use all fields in loggee
                     self.fields[tag] = [field for field in loggee]
-
 
         #should be different if binary kind
         #build formats
@@ -910,6 +911,6 @@ class Log(registering.StoriedRegistrar):
             if tag in self.loggees: #only add if not already there
                 raise excepting.ResolveError("Duplicate tag", tag, loggee)
             self.loggees[tag] = loggee
-            if fields:
-                self.fields[tag] = fields
+            #if fields:
+            self.fields[tag] = fields if fields else []  # need tag to preserve order
 
