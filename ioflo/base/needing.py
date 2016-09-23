@@ -363,8 +363,33 @@ class NeedMarker(Need):
         if not share.marks.get(frame.name):
             share.marks[frame.name] = storing.Mark()
 
+        #parms['marker'] = marker  # not used in actions so not needed
+
+        if marker not in acting.Actor.Registry:
+            msg = "ResolveError: Bad need marker link"
+            raise excepting.ResolveError(msg, marker, self.name,
+                            self._act.human, self._act.count)
+
+        markerParms = dict(share=share, frame=frame.name)
+        #parms['marker'] = markerAct
+        markerAct = acting.Act(actor=marker,
+                                registrar=acting.Actor,
+                                parms=markerParms,
+                                human=self._act.human,
+                                count=self._act.count)
+
+        self._tracts.append(markerAct)
+        markerAct.frame = self._act.frame.name  # resolve later
+        markerAct.context = ActionContextNames[NATIVE]
+        console.profuse("     Added {0} {1} with {2} in {3}\n".format(
+            'tract',
+            markerAct,
+            markerAct.parms['share'].name,
+            markerAct.parms['frame']))
+        markerAct.resolve()
+
         found = False
-        for enact in frame.enacts:
+        for enact in frame.enacts:  # avoid adding redundant marker
             if (isinstance(enact.actor, acting.Actor) and
                     enact.actor.name is marker and
                     enact.parms['share'] is share and
@@ -379,25 +404,26 @@ class NeedMarker(Need):
                                 self._act.human, self._act.count)
 
             markerParms = dict(share=share, frame=frame.name)
-            parms['marker'] = marker = acting.Act(  actor=marker,
-                                                    registrar=acting.Actor,
-                                                    parms=markerParms,
-                                                    human=self._act.human,
-                                                    count=self._act.count)
+            # parms['marker'] = markerAct
+            markerAct = acting.Act(actor=marker,
+                                                     registrar=acting.Actor,
+                                                     parms=markerParms,
+                                                     human=self._act.human,
+                                                     count=self._act.count)
 
-            frame.insertEnact(marker)
+            frame.insertEnact(markerAct)
             console.profuse("     Added {0} {1} with {2} in {3}\n".format(
                 'enact',
-                marker,
-                marker.parms['share'].name,
-                marker.parms['frame']))
-            marker.resolve()  # resolves .actor given by marker name into actor class
+                markerAct,
+                markerAct.parms['share'].name,
+                markerAct.parms['frame']))
+            markerAct.resolve()  # resolves .actor given by marker name into actor class
 
         return parms #return items are updated in original ._act parms
 
 class NeedUpdate(NeedMarker):
     """ NeedUpdate Need Special Need """
-    def action(self, share, frame, aft=False, **kw):
+    def action(self, share, frame, **kw):
         """
         Check if share updated since mark in share was updated by marker in
         frame upon frame entry.
@@ -411,17 +437,14 @@ class NeedUpdate(NeedMarker):
         result = False
         mark = share.marks.get(frame.name) #get mark from mark frame name key
         if mark and mark.stamp is not None and share.stamp is not None:
-            if aft:
-                result = share.stamp > mark.stamp  # > only catches updates after enter
-            else:
-                result = share.stamp >= mark.stamp  # >= catches updates on same enter
+            result = share.stamp >= mark.stamp  # >= catches updates on same enter
 
         console.profuse("Marker update {0} in Frame {1} of Share {2} {3} "
                         " {4} mark {5} at {6}\n".format(result,
                                                      frame.name,
                                                      share.name,
                                                      share.stamp,
-                                                     ">" if aft else '>=',
+                                                     '>=',
                                                      mark.stamp,
                                                      self.store.stamp))
 

@@ -168,6 +168,7 @@ class Skedder(object):
 
         self.ready = deque() # deque of taskers in run order
         self.aborted = deque() # deque of aborted taskers
+        self.built = False  # True when successfully built
 
     def addReadyTask(self, tasker):
         """
@@ -189,6 +190,7 @@ class Skedder(object):
         """ Build houses from file given by filepath """
 
         console.terse("Building Houses for Skedder '{0}' ...\n".format(self.name))
+        self.built = False
         #use parameter otherwise use inited value
         if filepath:
             self.filepath = filepath
@@ -208,6 +210,7 @@ class Skedder(object):
         if not b.build():
             return False
 
+        self.built = True
         self.houses = b.houses
 
         for house in self.houses:

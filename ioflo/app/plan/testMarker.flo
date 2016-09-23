@@ -36,7 +36,7 @@ framer mission be active first change1
       go next if .state.depth is changed and elapsed >= 0.0
 
     frame update3 in start
-      go next if .state.heading is updated in frame update3 aft
+      go next if .state.heading is updated in frame update3
 
     frame update4 in start
       go next if .state.heading is updated in frame start and elapsed >= 0.0

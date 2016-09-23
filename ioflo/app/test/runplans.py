@@ -30,23 +30,33 @@ def main():
     failedCount = 0
     plans = getPlanFiles()
     for plan in plans:
-        name, ext = os.path.splitext(os.path.basename(plan))
-        skeddar = ioflo.app.run.run(  name=name,
-                            filepath=plan,
-                            period=0.0625,
-                            verbose=1,
-                            real=False,)
-
-        print("Plan {0}\n  Skeddar {1}\n".format(plan, skeddar.name))
         failed = False
-        for house in skeddar.houses:
-            failure = house.metas['failure'].value
-            if failure:
+        name, ext = os.path.splitext(os.path.basename(plan))
+        try:
+            skeddar = ioflo.app.run.run(  name=name,
+                                filepath=plan,
+                                period=0.0625,
+                                verbose=1,
+                                real=False,)
+
+            print("Plan {0}\n  Skeddar {1}\n".format(plan, skeddar.name))
+
+            if not skeddar.built:
                 failed = True
-                print("**** Failed in House = {0}. "
-                      "Failure = {1}.\n".format(house.name, failure))
             else:
-                print("**** Succeeded in House = {0}.\n".format(house.name))
+                for house in skeddar.houses:
+                    failure = house.metas['failure'].value
+                    if failure:
+                        failed = True
+                        print("**** Failed in House = {0}. "
+                              "Failure = {1}.\n".format(house.name, failure))
+                    else:
+                        print("**** Succeeded in House = {0}.\n".format(house.name))
+
+        except Exception as ex:
+            print("Failed with Exception: {0}\n".format(ex))
+            failed = True
+
         if failed:
             failedCount += 1
 

@@ -323,7 +323,7 @@ VerbList = ['load', 'house', 'init',
 #reserved tokens
 Comparisons = ['==', '<', '<=', '>=', '>', '!=']
 Connectives = ['to',  'by', 'with', 'from', 'per', 'for', 'cum', 'qua', 'via',
-               'as', 'at', 'in', 'of', 'on', 're', 'is', 'aft',
+               'as', 'at', 'in', 'of', 'on', 're', 'is',
                'if', 'be', 'into', 'and', 'not', '+-', ]
 Reserved = Connectives + Comparisons  #concatenate to get reserved words
 ReservedFrameNames = ['next', 'prev']  # frame names with special meaning as target of goto
@@ -3275,8 +3275,7 @@ class Builder(object):
 
             special need:
 
-                if indirect is updated  [in frame (me, framename)] [aft]
-                if indirect is changed  [in frame (me, framename)]
+                if indirect is updated  [in frame (me, framename)]
 
                 if taskername is (readied, started, running, stopped, aborted)
 
@@ -3575,7 +3574,7 @@ class Builder(object):
         method must be wrapped in appropriate try excepts
 
         Syntax:
-            if path [[of relation] ...] is updated [in frame [(me, framename)]] [aft]
+            if path [[of relation] ...] is updated [in frame [(me, framename)]]
 
         """
         return (self.makeMarkerNeed(kind, tokens, index))
@@ -3598,15 +3597,13 @@ class Builder(object):
             as determined by kind
 
         Syntax:
-            if path [[of relation] ...] is updated [in frame [(me, framename)]] [aft]
-            if path [[of relation] ...] is changed [in frame [(me, framename)]]
+            if path [[of relation] ...] is updated [in frame [(me, framename)]]
 
             sharepath:
                 path [[of relation] ...]
 
         """
         frame = "me" # name of marked frame
-        aft = False  # modifies update time comparison from >= >
 
         sharePath, index = self.parseIndirect(tokens, index)
 
@@ -3631,9 +3628,9 @@ class Builder(object):
                                        "'{1}'".format(kind + 'd', participle))
             raise excepting.ParseError(msg, tokens, index)
 
-        while index < len(tokens):  # optional 'in frame' or 'aft' clause
+        while index < len(tokens):  # optional 'in frame'  clause
             connective = tokens[index]
-            if connective not in ('in', 'aft'):  # next need clause started
+            if connective not in ('in', ):  # next need clause started
                 break
 
             index += 1  # eat token
@@ -3656,12 +3653,12 @@ class Builder(object):
                             raise excepting.ParseError(msg, tokens, index)
                         index += 1  # consume frame name token
 
-            elif connective == 'aft':
-                if kind != 'update':
-                    msg = ("ParseError: Invalid connective '{0}' "
-                            "while building '{1}' need".format(connective, kind))
-                    raise excepting.ParseError(msg, tokens, index)
-                aft = True
+            #elif connective == 'aft':
+                #if kind != 'update':
+                    #msg = ("ParseError: Invalid connective '{0}' "
+                            #"while building '{1}' need".format(connective, kind))
+                    #raise excepting.ParseError(msg, tokens, index)
+                #aft = True
 
 
         # assign marker type actual marker Act created in need's resolve
@@ -3677,8 +3674,6 @@ class Builder(object):
         parms['share'] = sharePath
         parms['frame'] = frame  # marked frame name resolved in resolvelinks
         parms['marker'] = marker # marker kind resolved in resolvelinks
-        if aft:
-            parms['aft'] = aft
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
                             parms=parms,
