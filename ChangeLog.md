@@ -7,6 +7,13 @@ CHANGE LOG
 --------
 1.6.1
 
+Added special transit sub-context of precur when segue is successful. This
+sub-context is used by the if updated and if changed to insert special transit act
+(tract) resets mark when the transition holding the need succeeds. This prevents
+holes in detecting updates or changes.
+
+Removed the aft clause on the if updated need
+
 Added .datetime and .time to store default contents so all have access to current
 real date time current relative time in addition to .realtime
 
