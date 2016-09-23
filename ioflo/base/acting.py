@@ -910,26 +910,38 @@ class Actor(object):
                                                      self._act.count)
 
 class Interrupter(Actor):
-    """Interrupter Actor Class
-       Interrupter is a base clase for all actor classes that interrupt normal precur
-       processing and result in a change in the frame or the frame processing.
+    """
+    Interrupter Actor Class
+    Interrupter is a base clase for all actor classes that interrupt normal precur
+    processing and result in a change in the frame or the frame processing.
 
-       This class must be subclassed. This is a convenience so can either use
-         isinstance to test
+    This class must be subclassed. This is a convenience so can either use
+      isinstance to test
 
-       Specifically an Interrupter's action() method returns truthy when its action
-       interrupts the normal frame processing.
+    Specifically an Interrupter's action() method returns truthy when its action
+    interrupts the normal frame processing.
 
-       Examples are:
-       Transiters which interrupt by changing to a new frame
-       Suspenders which interrupt when the conditional aux condition is true and
-          further processing of the frame and sub frames is stopped
-
-
+    Examples are:
+    Transiters which interrupt by changing to a new frame
+    Suspenders which interrupt when the conditional aux condition is true and
+       further processing of the frame and sub frames is stopped
     """
     def __init__(self,**kw ):
-        """Initialization method for instance. """
+        """
+        Initialization method for instance.
+
+        Inherited Attributes:
+            .name = name string for Actor variant in class Registry
+            .store = reference to shared data Store
+            ._act = reference to containing Act
+
+        Attributes:
+            ._tracts = list of references to transition acts for this Actor
+                transit sub-context of precur context during segue
+
+        """
         super(Interrupter,self).__init__(**kw)
+        self._tracts = []
 
 class Transiter(Interrupter):
     """Transiter Interrupter Class
@@ -976,8 +988,10 @@ class Transiter(Interrupter):
         parms['far'] = far
 
         for act in needs:
-            act.act = self._act
+            act.act = self._act  # so act.resolve can ref self._act.frame.framer
             act.resolve()
+            self._tracts.extend(act.actor._tracts)
+            del act.actor._tracts[:]
 
         return parms
 
@@ -1013,6 +1027,9 @@ class Transiter(Interrupter):
         console.profuse("     exits: {0}\n".format([frame.name for frame in exits]))
         console.profuse("     enters: {0}\n".format([frame.name for frame in enters]))
         console.profuse("     reexens: {0}\n".format([frame.name for frame in reexens]))
+
+        for act in self._tracts:  # transit sub-context of segue precur
+            act()
 
         framer.exit(exits) #exit uncommon frames in near outline reversed in place
         framer.rexit(reexens[:]) #make copy since reversed in place
@@ -1066,6 +1083,8 @@ class Suspender(Interrupter):
         for act in needs:
             act.act = self._act
             act.resolve()
+            self._tracts.extend(act.actor._tracts)
+            del act.actor._tracts[:]
 
         deActParms = odict(aux=aux)
         deAct = SideAct( actor=self,
@@ -1110,6 +1129,9 @@ class Suspender(Interrupter):
                 aux.name, framer.name, main.headHuman, round(framer.store.stamp, 6), main.name,
                 human, framer.human, framer.elapsed)
             console.terse(msg)
+
+            for act in self._tracts:  # transit sub-context of cond aux segue precur
+                act()
 
             if aux.original:
                 aux.main = main  #assign aux's main to this frame

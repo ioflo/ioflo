@@ -27,6 +27,23 @@ class Need(acting.Actor):
     """
     Registry = odict()
 
+    def __init__(self, **kwa):
+        """
+        Initialize Instance
+
+        Inherited Attributes:
+            .name = name string for Actor variant in class Registry
+            .store = reference to shared data Store
+            ._act = reference to containing Act
+
+        Attributes:
+            ._tracts = list of references to transition acts for this need
+                transit sub-context of precur context during segue
+
+        """
+        super(Need, self).__init__(**kwa)
+        self._tracts = []
+
     def _expose(self):
         """
         """
@@ -322,9 +339,8 @@ class NeedMarker(Need):
 
         parms:
             share       share ref holding mark
-            name        name of frame where marker is watching
-            frame       only used in resolvelinks
-            marker      only used in resolvelinks
+            frame       name of frame where marker is watching
+            marker      name of marker actor class for marker act
 
         """
         parms = super(NeedMarker, self)._resolve( **kwa)
@@ -375,7 +391,7 @@ class NeedMarker(Need):
                 marker,
                 marker.parms['share'].name,
                 marker.parms['frame']))
-            marker.resolve()
+            marker.resolve()  # resolves .actor given by marker name into actor class
 
         return parms #return items are updated in original ._act parms
 
