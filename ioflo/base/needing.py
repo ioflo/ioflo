@@ -77,6 +77,15 @@ class Need(acting.Actor):
 
         return result
 
+    def addTract(self, act):
+        """
+        Add act to ._tracts list
+        """
+        self._tracts.append(act)
+        act.frame = self._act.frame.name  # resolve later
+        act.context = ActionContextNames[NATIVE]
+
+
 class NeedAlways(Need):
     """NeedAlways Need  Special Need"""
     def action(self, **kw):
@@ -378,9 +387,7 @@ class NeedMarker(Need):
                                 human=self._act.human,
                                 count=self._act.count)
 
-        self._tracts.append(markerAct)
-        markerAct.frame = self._act.frame.name  # resolve later
-        markerAct.context = ActionContextNames[NATIVE]
+        self.addTract(markerAct)
         console.profuse("     Added {0} {1} with {2} in {3}\n".format(
             'tract',
             markerAct,
