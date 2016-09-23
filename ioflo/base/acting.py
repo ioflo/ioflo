@@ -15,7 +15,7 @@ except ImportError: #python 3 zip is same as izip
     izip = zip
 
 from ..aid.sixing import *
-from .globaling import AUX, MOOT, INDENT_ADD, ScheduleNames
+from .globaling import AUX, MOOT, INDENT_ADD, ScheduleNames, TRANSIT, ActionSubContextNames
 from ..aid.odicting import odict
 
 from ..aid.classing import metaclassify, nonStringIterable
@@ -1223,7 +1223,7 @@ class MarkerUpdate(Marker):
         mark = share.marks.get(marker)
         if mark:
             mark.stamp = self.store.stamp  # update stamp when marker runs
-            if self._act.context == ActionContextNames[TRANSIT]:  # transit satisfied
+            if self._act.context == ActionSubContextNames[TRANSIT]:  # transit satisfied
                 mark.used = mark.stamp
 
     def _expose(self):

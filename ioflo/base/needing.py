@@ -429,47 +429,48 @@ class NeedMarker(Need):
 
 class NeedUpdate(NeedMarker):
     """ NeedUpdate Need Special Need """
-    def action(self, share, frame, **kw):
+    def action(self, share, marker, **kw):
         """
-        Check if share updated since mark in share was updated by marker in
-        frame upon frame entry.
-            Default is False
+        Check if share updated since mark in share was updated by marker
+        Default is False
 
-        parameters:
-            share = resolved share that is marked
-            frame = resolved frame where marker is placed
-            marker = marker kind name
+        Parameters:
+            share is resolved share that is marked with .mark[marker]
+            marker is unique marker key
         """
         result = False
-        mark = share.marks.get(frame.name) #get mark from mark frame name key
+        mark = share.marks.get(marker)
         if mark and mark.stamp is not None and share.stamp is not None:
-            result = share.stamp >= mark.stamp  # >= catches updates on same enter
+            # == catches updates to share on same enter or precur as Marker reset
+            # mark.used only lets == work the first time
+            result = ((share.stamp > mark.stamp) or
+                      (share.stamp == mark.stamp and mark.used != mark.stamp))
 
-        console.profuse("Marker update {0} in Frame {1} of Share {2} {3} "
-                        " {4} mark {5} at {6}\n".format(result,
-                                                     frame.name,
+        console.profuse("Marker update {0} for {1} of Share {2} {3} "
+                        " {4} mark {5} used {6} at {7}\n".format(result,
+                                                     marker,
                                                      share.name,
                                                      share.stamp,
                                                      '>=',
                                                      mark.stamp,
+                                                     mark.used,
                                                      self.store.stamp))
 
         return result
 
 class NeedChange(NeedMarker):
     """NeedChange Need Special Need"""
-    def action(self, share, frame, **kw):
+    def action(self, share, marker, **kw):
         """
-        Check if share data changed while in frame/mark denoted by name key if any
-            Default is False
-        parameters:
-            share
-            name
-            frame       only used in resolvelinks
-            marker      only used in resolvelinks
+        Check if share data changed while denoted by marker key if any
+        Default is False
+
+        Parameters:
+            share is resolved share that is marked with .mark[marker]
+            marker is unique marker key
         """
         result = False
-        mark = share.marks.get(frame.name) #get mark from mark frame name key
+        mark = share.marks.get(marker) #get mark from mark frame name key
         if mark and mark.data is not None:
             for field, value in share.items():
                 try:
@@ -483,7 +484,7 @@ class NeedChange(NeedMarker):
                     break
 
 
-        console.profuse("Need Share {0} change in Frame {1} = {2}\n".format(
-            share.name, frame.name, result))
+        console.profuse("Marker change {0} for {1} of share {2} at {3}\n".format(
+            result, marker, share.name, self.store.stamp))
 
         return result
