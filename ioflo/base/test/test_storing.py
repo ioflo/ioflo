@@ -12,6 +12,7 @@ else:
     import unittest
 
 import os
+from collections import deque
 
 from ioflo.aid.sixing import *
 from ioflo.test import testing
@@ -141,8 +142,6 @@ class BasicTestCase(unittest.TestCase):
         show = data._show()
         self.assertEqual(show, 'Data: error=None panSpeed=0 tiltSpeed=0\n')
 
-
-
     def testShare(self):
         """
         Test Share Class
@@ -259,67 +258,34 @@ class BasicTestCase(unittest.TestCase):
         store.expose(valued=True)
         storing.Store.Clear()
 
-def Test():
-    """Module self test """
+    def testMark(self):
+        """
+        Test Mark Class
+        """
+        console.terse("{0}\n".format(self.testMark.__doc__))
 
+        mark = storing.Mark()
+        self.assertEqual(mark.stamp, None)
+        self.assertEqual(mark.data, None)
+        self.assertEqual(mark.used, None)
 
-    try:
-        Store.Clear()
+    def testDeck(self):
+        """
+        Test Deck Class
+        """
+        console.terse("{0}\n".format(self.testDeck.__doc__))
 
-        store = Store()
-        print("Store shares = %s" % store.shares)
+        deck = storing.Deck()
+        self.assertIsInstance(deck, deque)
+        self.assertEqual(storing.Deck.push, deque.append)
+        self.assertEqual(storing.Deck.pull, deque.popleft)
 
-        store.add(Share(name = 'autopilot.depth')).create(depth = 0.0)
-        print( store.fetch('autopilot.depth').data.depth)
-        try:
-            print( store.fetch('autopilot.depth').data.value)
-        except AttributeError as e1:
-            print( e1.message)
-        print( store.fetch('autopilot.depth').value)
-        print( "Store shares = %s" % store.shares)
+        self.assertEqual(repr(deck), "Deck([])")
 
-        store.create('autopilot.heading').create(heading = 0.0)
-        print( store.fetch('autopilot.heading').data.heading)
-        try:
-            print( store.fetch('autopilot.heading').data.value)
-        except AttributeError as e1:
-            print( e1.message)
-        print( store.fetch('autopilot.heading').value)
-        print( "Store shares = %s" % store.shares)
-
-        s = Share(store = store, name = 'autopilot.heading')
-        s.create(value = 60.0)
-        s.create(value = 50.0)
-        print( s.data.value)
-        print( s.value)
-        print( s.data.value)
-        print( s.value)
-        store.change(s)
-        print( "Store shares = %s" % store.shares)
-
-        try:
-            store.add(Share(name = 'autopilot.depth'))
-        except ValueError as e1:
-            print( e1.message)
-        print( "Store shares = %s" % store.shares)
-
-        try:
-            store.change(Share(name = 'autopilot.speed'))
-        except ValueError as e1:
-            print( e1.message)
-        print( "Store shares = %s" % store.shares)
-
-        print( "autopilot.heading = %s" % store.fetch('autopilot.heading'))
-        print( "autopilot = %s" % store.fetch('autopilot'))
-        print( "dog = %s" % store.fetch('dog'))
-
-        store.expose()
-
-    except ValueError as e1:
-        print( e1.message)
-
-    return store
-
+        self.assertEqual(len(deck), 0)
+        self.assertEqual(deck.spew(), None)
+        deck.gulp(None)
+        self.assertEqual(len(deck), 0)
 
 
 def runOne(test):
@@ -337,6 +303,8 @@ def runSome():
                 'testData',
                 'testShare',
                 'testStore',
+                'testMark',
+                'testDeck',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)

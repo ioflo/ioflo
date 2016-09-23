@@ -402,7 +402,7 @@ class Mark(object):
         data = copy of data of associated share
 
     """
-    __slots__ = ('stamp', 'data',)
+    __slots__ = ('stamp', 'data', 'used')
 
 
     def __init__(self, *pa, **kwa):
@@ -411,6 +411,7 @@ class Mark(object):
 
         self.stamp = None
         self.data = None
+        self.used = None
 
 
 class Share(object):
@@ -519,7 +520,7 @@ class Share(object):
         if deck is not None:
             self.deck.extend(deck)
 
-        self.marks = odict() #odict of marks
+        self.marks = odict() #odict of marks keyed by unique marker id
 
 
     #make share look like a dictionary for .data record fields

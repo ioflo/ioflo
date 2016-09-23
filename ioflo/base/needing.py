@@ -12,6 +12,7 @@ from ..aid.sixing import *
 from .globaling import *
 from ..aid.odicting import odict
 from ..aid import aiding
+from ..aid.timing import tuuid
 from . import excepting
 from . import registering
 from . import storing
@@ -83,7 +84,7 @@ class Need(acting.Actor):
         """
         self._tracts.append(act)
         act.frame = self._act.frame.name  # resolve later
-        act.context = ActionContextNames[NATIVE]
+        act.context = ActionSubContextNames[TRANSIT]
 
 
 class NeedAlways(Need):
@@ -341,15 +342,23 @@ class NeedMarker(Need):
     Special Need
 
     """
-    def _resolve(self, share, frame, marker, **kwa):
+    def _resolve(self, share, frame, kind, **kwa):
         """
         Resolves frame name link and then
            inserts marker as first enact in the resolved frame
 
-        parms:
-            share       share ref holding mark
-            frame       name of frame where marker is watching
-            marker      name of marker actor class for marker act
+        Incoming Parameters:
+            share is path or ref of share holding mark
+            frame is name or ref of frame where marker is watching
+            kind is name of marker actor class for marker act
+
+        Outgoing Parameters:
+            share is resolved ref of share holding mark
+            marker is unique key for Mark instance in .marks odict in share
+
+        Marker Act Parameters:
+            share is resolved ref of share holding mark
+            marker is unique key for Mark instance in .marks odict in share
 
         """
         parms = super(NeedMarker, self)._resolve( **kwa)
@@ -359,7 +368,7 @@ class NeedMarker(Need):
         if frame == 'me':
             frame = self._act.frame
 
-        parms['frame'] = frame = framing.resolveFrameOfFramer(frame,
+        frame = framing.resolveFrameOfFramer(frame,
                                                               framer,
                                                               who=self.name,
                                                               desc='need marker',
@@ -369,62 +378,52 @@ class NeedMarker(Need):
         parms['share'] = share = self._resolvePath(ipath=share,
                                                   warn=True) # now a share
 
-        if not share.marks.get(frame.name):
-            share.marks[frame.name] = storing.Mark()
+        marker = "{0}.{1}.{2}.{3}".format(framer.name, frame.name, kind, tuuid())
+        parms['marker'] = marker
 
-        #parms['marker'] = marker  # not used in actions so not needed
+        if not share.marks.get(marker):
+            share.marks[marker] = storing.Mark()
 
-        if marker not in acting.Actor.Registry:
+        if kind not in acting.Actor.Registry:
             msg = "ResolveError: Bad need marker link"
-            raise excepting.ResolveError(msg, marker, self.name,
+            raise excepting.ResolveError(msg, kind, self.name,
                             self._act.human, self._act.count)
 
-        markerParms = dict(share=share, frame=frame.name)
-        #parms['marker'] = markerAct
-        markerAct = acting.Act(actor=marker,
+        markerParms = dict(share=share, marker=marker)
+        markerAct = acting.Act(actor=kind,
                                 registrar=acting.Actor,
                                 parms=markerParms,
                                 human=self._act.human,
                                 count=self._act.count)
 
         self.addTract(markerAct)
-        console.profuse("     Added {0} {1} with {2} in {3}\n".format(
-            'tract',
-            markerAct,
-            markerAct.parms['share'].name,
-            markerAct.parms['frame']))
+        console.profuse("     Added {0} {1} with {2} at {3} in {4} of "
+                        "framer {5}\n".format(
+                                'tract',
+                                markerAct,
+                                markerAct.parms['share'].name,
+                                markerAct.parms['marker'],
+                                self._act.frame.name,
+                                framer.name))
         markerAct.resolve()
 
-        found = False
-        for enact in frame.enacts:  # avoid adding redundant marker
-            if (isinstance(enact.actor, acting.Actor) and
-                    enact.actor.name is marker and
-                    enact.parms['share'] is share and
-                    enact.parms['name'] == frame.name):
-                found = True
-                break
+        markerParms = dict(share=share, marker=marker)
+        markerAct = acting.Act(actor=kind,
+                                                 registrar=acting.Actor,
+                                                 parms=markerParms,
+                                                 human=self._act.human,
+                                                 count=self._act.count)
 
-        if not found:
-            if marker not in acting.Actor.Registry:
-                msg = "ResolveError: Bad need marker link"
-                raise excepting.ResolveError(msg, marker, self.name,
-                                self._act.human, self._act.count)
-
-            markerParms = dict(share=share, frame=frame.name)
-            # parms['marker'] = markerAct
-            markerAct = acting.Act(actor=marker,
-                                                     registrar=acting.Actor,
-                                                     parms=markerParms,
-                                                     human=self._act.human,
-                                                     count=self._act.count)
-
-            frame.insertEnact(markerAct)
-            console.profuse("     Added {0} {1} with {2} in {3}\n".format(
-                'enact',
-                markerAct,
-                markerAct.parms['share'].name,
-                markerAct.parms['frame']))
-            markerAct.resolve()  # resolves .actor given by marker name into actor class
+        frame.insertEnact(markerAct)
+        console.profuse("     Added {0} {1} with {2} at {3} in {4} of "
+                        "framer {5}\n".format(
+                                'enact',
+                                markerAct,
+                                markerAct.parms['share'].name,
+                                markerAct.parms['marker'],
+                                frame.name,
+                                framer.name))
+        markerAct.resolve()  # resolves .actor given by actor kind name into actor class
 
         return parms #return items are updated in original ._act parms
 

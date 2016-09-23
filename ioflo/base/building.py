@@ -3673,7 +3673,7 @@ class Builder(object):
         parms = {}
         parms['share'] = sharePath
         parms['frame'] = frame  # marked frame name resolved in resolvelinks
-        parms['marker'] = marker # marker kind resolved in resolvelinks
+        parms['kind'] = marker # marker kind resolved in resolvelinks
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
                             parms=parms,

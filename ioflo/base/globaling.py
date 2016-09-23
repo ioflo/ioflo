@@ -72,7 +72,7 @@ BACK = 2
 OrderNames = { MID : 'mid', FRONT : 'front', BACK : 'back'}
 OrderValues = { 'mid': MID , 'front':  FRONT, 'back': BACK}
 
-#Frame action contexts
+# Frame action contexts  should change these to enums
 NATIVE = 0
 ENTER = 1
 RECUR = 2
@@ -81,13 +81,18 @@ EXIT = 4
 RENTER = 5
 REXIT = 6
 BENTER = 7
+TRANSIT = 8
 
 ActionContextValues = { 'native': NATIVE , 'enter':  ENTER, 'recur': RECUR,
-                        'precur': PRECUR, 'exit': EXIT, 'renter': RENTER, 'rexit': REXIT,
-                        'benter': BENTER}
+                        'precur': PRECUR, 'exit': EXIT, 'renter': RENTER,
+                        'rexit': REXIT, 'benter': BENTER}
 ActionContextNames = { NATIVE : 'native', ENTER : 'enter', RECUR : 'recur',
-                       PRECUR : 'precur', EXIT : 'exit', RENTER : 'renter', REXIT : 'rexit',
-                       BENTER : 'benter'}
+                       PRECUR : 'precur', EXIT : 'exit', RENTER : 'renter',
+                       REXIT : 'rexit', BENTER : 'benter'}
+
+ActionSubContextValues = {'transit': TRANSIT}
+ActionSubContextNames = { TRANSIT : 'transit'}
+
 
 
 #Precompile re match objects

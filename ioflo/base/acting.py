@@ -1209,20 +1209,22 @@ class MarkerUpdate(Marker):
         Builder at parse time when it encounters an NeedUpdate,
         creates the mark in the share and creates the appropriate MarkerUpdate
     """
-    def action(self, share, frame, **kwa):
+    def action(self, share, marker, **kwa):
         """ Update mark in share
-            Where share is reference to share and frame is frame name key of mark in
+            Where share is reference to share and marker is unique name key of mark in
                 share.marks odict
             Updates mark.stamp
 
-            only one mark per frame per share is needed
+            only one mark per marker per share is needed
         """
         console.profuse("{0} mark {1} in {2} on {3}\n".format(
-            self.name, share.name, frame, 'update' ))
+            self.name, share.name, marker, 'update' ))
 
-        mark = share.marks.get(frame)
+        mark = share.marks.get(marker)
         if mark:
-            mark.stamp = self.store.stamp #stamp when marker runs
+            mark.stamp = self.store.stamp  # update stamp when marker runs
+            if self._act.context == ActionContextNames[TRANSIT]:  # transit satisfied
+                mark.used = mark.stamp
 
     def _expose(self):
         """   """
@@ -1239,20 +1241,20 @@ class MarkerChange(Marker):
         Builder at parse time when it encounters a NeedChange,
         creates the mark in the share and creates the appropriate marker
     """
-    def action(self, share, frame, **kwa):
+    def action(self, share, marker, **kwa):
         """ Update mark in share
-            Where share is reference to share and frame is frame name key of mark in
+            Where share is reference to share and marker is unique name key of mark in
                 share.marks odict
             Updates mark.data
 
-            only one mark per frame per share is needed
+            only one mark per marker per share is needed
         """
         console.profuse("{0} mark {1} in {2} on {3}\n".format(
-            self.name, share.name, frame, 'change' ))
+            self.name, share.name, marker, 'change' ))
 
-        mark = share.marks.get(frame)
+        mark = share.marks.get(marker)
         if mark:
-            mark.data = storing.Data(share.items())
+            mark.data = storing.Data(share.items())  # update date when marker runs
 
     def _expose(self):
         """   """
