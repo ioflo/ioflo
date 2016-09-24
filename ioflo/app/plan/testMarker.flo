@@ -3,69 +3,69 @@
 
 house marker
 
-framer vehiclesim be active first vehicle_run
+  framer vehiclesim be active first vehicle_run
 
-  frame vehicle_run
-    do simulator motion uuv
+    frame vehicle_run
+      do simulator motion uuv
 
-framer mission be active first change1
+  framer mission be active first change1
 
-  frame start
-    set elapsed with 2.0
-    set goal.heading with 0.0
-    set goal.depth with 5.0
-    set goal.speed with 2.5
+    frame start
+      set elapsed with 2.0
+      set goal.heading with 0.0
+      set goal.depth with 5.0
+      set goal.speed with 2.5
 
-    go abort if elapsed >= goal
+      go abort if elapsed >= goal
 
-    frame change1 in start
-      put 6 into .marked.changed
-      go next if .marked.changed is changed
+      frame change1 in start
+        put 6 into .marked.changed
+        go next if .marked.changed is changed
 
-    frame update1 in start
-      put true into .marked.updated
-      go next if .marked.updated is updated in frame
+      frame update1 in start
+        put true into .marked.updated
+        go next if .marked.updated is updated in frame
 
-    frame update2 in start
-      go next if .state.heading is updated
-      go next if .state.heading is updated in frame
+      frame update2 in start
+        go next if .state.heading is updated in frame
+        go next if .state.heading is updated in frame me
 
-    frame change2 in start
-      go next if .state.depth is changed in frame change2
+      frame change2 in start
+        go next if .state.depth is changed in frame change2
 
-    frame change3 in start
-      go next if .state.depth is changed and elapsed >= 0.0
+      frame change3 in start
+        go next if .state.depth is changed and elapsed >= 0.0
 
-    frame update3 in start
-      go next if .state.heading is updated in frame update3
+      frame update3 in start
+        go next if .state.heading is updated in frame update3
 
-    frame update4 in start
-      go next if .state.heading is updated in frame start and elapsed >= 0.0
+      frame update4 in start
+        go next if .state.heading is updated in frame start and elapsed >= 0.0
 
-    frame update5 in start
-      go next if elapsed >= 0.0 and .state.heading is updated
+      frame update5 in start
+        go next if elapsed >= 0.0 and .state.heading is updated
 
-    frame update6 in start
-      go next if .marked.updated is updated
-      go next if recurred >= 3
+      frame update6 in start
+        go next if .marked.updated is updated
+        go next if recurred >= 3
 
-  frame done
-    print "Success"
-    bid stop vehiclesim
-    bid stop autopilot
-    bid stop me
+    frame done
+      print "Success"
+      bid stop vehiclesim
+      bid stop autopilot
+      bid stop me
 
-  frame abort
-    print "Failure"
-    put "Marker" into meta.failure
-    bid stop vehiclesim
-    bid stop autopilot
-    bid stop me
+    frame abort
+      print "Failure"
+      put "Marker" into meta.failure
+      bid stop vehiclesim
+      bid stop autopilot
+      bid stop me
 
-framer autopilot be active first autopilot_run
+  framer autopilot be active first autopilot_run
 
-  frame autopilot_run
-    do controller pid speed
-    do controller pid heading
-    do controller pid depth
-    do controller pid pitch
+    frame autopilot_run
+      do controller pid speed
+      do controller pid heading
+      do controller pid depth
+      do controller pid pitch

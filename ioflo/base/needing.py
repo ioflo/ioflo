@@ -83,7 +83,7 @@ class Need(acting.Actor):
         Add act to ._tracts list
         """
         self._tracts.append(act)
-        act.frame = self._act.frame.name  # resolve later
+        act.frame = self._act.frame.name  # re-resolve later
         act.context = ActionSubContextNames[TRANSIT]
 
 
@@ -349,7 +349,9 @@ class NeedMarker(Need):
 
         Incoming Parameters:
             share is path or ref of share holding mark
-            frame is name or ref of frame where marker is watching
+            frame is name or ref of frame to add option enact marker
+                If frame empty then only put marker in transit sub context of
+                need act's frame
             kind is name of marker actor class for marker act
             marker is unique identifier of marker if not empty
                 This allows multiple if updated/changed to use same marker
@@ -366,16 +368,16 @@ class NeedMarker(Need):
         parms = super(NeedMarker, self)._resolve( **kwa)
 
         framer = self._act.frame.framer
+        enacted = True if frame else False
 
-        if frame == 'me':
+        if not frame or frame == 'me':
             frame = self._act.frame
-
         frame = framing.resolveFrameOfFramer(frame,
-                                                              framer,
-                                                              who=self.name,
-                                                              desc='need marker',
-                                                              human=self._act.human,
-                                                              count=self._act.count)
+                                                framer,
+                                                who=self.name,
+                                                desc='need marker',
+                                                human=self._act.human,
+                                                count=self._act.count)
 
         parms['share'] = share = self._resolvePath(ipath=share,
                                                   warn=True) # now a share
@@ -414,33 +416,34 @@ class NeedMarker(Need):
                                 framer.name))
         markerAct.resolve()
 
-        found = False
-        for enact in frame.enacts:  # avoid adding redundant marker
-            if (isinstance(enact.actor, acting.Actor) and
-                    enact.actor.name == kind and
-                    enact.parms['share'].name == share.name and
-                    enact.parms['marker'] == marker):
-                found = True
-                break
+        if enacted:  # only add enact marker if original provided frame not empty
+            found = False
+            for enact in frame.enacts:  # avoid adding redundant marker
+                if (isinstance(enact.actor, acting.Actor) and
+                        enact.actor.name == kind and
+                        enact.parms['share'].name == share.name and
+                        enact.parms['marker'] == marker):
+                    found = True
+                    break
 
-        if not found:
-            markerParms = dict(share=share, marker=marker)
-            markerAct = acting.Act(actor=kind,
-                                                     registrar=acting.Actor,
-                                                     parms=markerParms,
-                                                     human=self._act.human,
-                                                     count=self._act.count)
+            if not found:
+                markerParms = dict(share=share, marker=marker)
+                markerAct = acting.Act(actor=kind,
+                                                         registrar=acting.Actor,
+                                                         parms=markerParms,
+                                                         human=self._act.human,
+                                                         count=self._act.count)
 
-            frame.insertEnact(markerAct)
-            console.profuse("     Added {0} {1} with {2} at {3} in {4} of "
-                            "framer {5}\n".format(
-                                    'enact',
-                                    markerAct,
-                                    markerAct.parms['share'].name,
-                                    markerAct.parms['marker'],
-                                    frame.name,
-                                    framer.name))
-            markerAct.resolve()  # resolves .actor given by actor kind name into actor class
+                frame.insertEnact(markerAct)
+                console.profuse("     Added {0} {1} with {2} at {3} in {4} of "
+                                "framer {5}\n".format(
+                                        'enact',
+                                        markerAct,
+                                        markerAct.parms['share'].name,
+                                        markerAct.parms['marker'],
+                                        frame.name,
+                                        framer.name))
+                markerAct.resolve()  # resolves .actor given by actor kind name into actor class
 
         return parms #return items are updated in original ._act parms
 
@@ -453,14 +456,20 @@ class NeedUpdate(NeedMarker):
 
         Parameters:
             share is resolved share that is marked with .mark[marker]
-            marker is unique marker key
+            marker is marker key
         """
         result = False
         mark = share.marks.get(marker)
-        if mark and mark.stamp is not None and share.stamp is not None:
+        if mark and share.stamp is not None:  # only if share updated from None
+            # share stamps only non-None if updated after starts running not init
             # == catches updates to share on same enter or precur as Marker reset
             # mark.used only lets == work the first time
-            result = ((share.stamp > mark.stamp) or
+            # mark.stamp is None and share.stamp not None always True so if mark
+            # not yet set will always work first time
+            # store stamp is None until first run by skedder to share.stamp is
+            # not updated until some action updates it. (not by init)
+            result = ((mark.stamp is None) or
+                      (share.stamp > mark.stamp) or
                       (share.stamp == mark.stamp and mark.used != mark.stamp))
 
         console.profuse("Marker update {0} for {1} of Share {2} {3} "
@@ -484,24 +493,27 @@ class NeedChange(NeedMarker):
 
         Parameters:
             share is resolved share that is marked with .mark[marker]
-            marker is unique marker key
+            marker is marker key
         """
         result = False
         mark = share.marks.get(marker) #get mark from mark frame name key
-        if mark and mark.data is not None:
-            for field, value in share.items():
-                try:
-                    if getattr(mark.data, field) != value:
+        if mark:
+            if mark.data is None:
+                result = True  # always true first time if mark not yet set
+            else:
+                for field, value in share.items():
+                    try:
+                        if getattr(mark.data, field) != value:
+                            result = True
+
+                    except AttributeError as ex: # new attribute so changed
                         result = True
 
-                except AttributeError as ex: # new attribute so changed
-                    result = True
-
-                if result: #stop checking on first change
-                    break
+                    if result: #stop checking on first change
+                        break
 
 
-        console.profuse("Marker change {0} for {1} of share {2} at {3}\n".format(
-            result, marker, share.name, self.store.stamp))
+        console.profuse("Marker change {0} for {1} of data {2} of share {3} at {4}\n".format(
+            result, marker, mark.data if mark else None, share.name, self.store.stamp))
 
         return result

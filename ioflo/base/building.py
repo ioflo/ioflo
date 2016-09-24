@@ -639,7 +639,7 @@ class Builder(object):
 
         return True
 
-    # Convenince Functions
+    # Convenience Functions
 
     def initPathToData(self, path, data):
         """Convenience support function to preload meta data.
@@ -3574,7 +3574,8 @@ class Builder(object):
         method must be wrapped in appropriate try excepts
 
         Syntax:
-            if path [[of relation] ...] is updated [in frame [(me, framename)]] [as marker]
+            if path [[of relation] ...] is updated [in frame [(me, framename)]]
+                    [by marker]
 
         """
         return (self.makeMarkerNeed(kind, tokens, index))
@@ -3586,7 +3587,8 @@ class Builder(object):
         method must be wrapped in appropriate try excepts
 
         Syntax:
-            if path [[of relation] ...] is changed [in frame [(me, framename)]] [as marker]
+            if path [[of relation] ...] is changed [in frame [(me, framename)]]
+                    [by marker]
 
         """
         return (self.makeMarkerNeed(kind, tokens, index))
@@ -3597,13 +3599,17 @@ class Builder(object):
             as determined by kind
 
         Syntax:
-            if path [[of relation] ...] is updated [in frame [(me, framename)]] [as marker]
+            if path [[of relation] ...] is (updated, changed)
+                    [in frame [(me, framename)]] [by marker]
 
             sharepath:
                 path [[of relation] ...]
 
+            marker:
+                string
+
         """
-        frame = "me" # name of marked frame
+        frame = ""  # name of marked frame when empty resolve uses "me"" but no enact
         marker = ""
 
         sharePath, index = self.parseIndirect(tokens, index)
@@ -3631,7 +3637,7 @@ class Builder(object):
 
         while index < len(tokens):  # optional 'in frame'  clause
             connective = tokens[index]
-            if connective not in ('in', 'as'):  # next need clause started
+            if connective not in ('in', 'by'):  # next need clause started
                 break
             index += 1  # eat token for connective
 
@@ -3645,6 +3651,8 @@ class Builder(object):
                            "'{1}'".format(connective, place))
                     raise excepting.ParseError(msg, tokens, index)
 
+                frame = "me"  # default if just frame but no framename
+
                 if index < len(tokens): # frame name is optional
                     connective = tokens[index] #need to resolve
                     if connective not in Reserved:  # assume must be name
@@ -3654,7 +3662,7 @@ class Builder(object):
                             raise excepting.ParseError(msg, tokens, index)
                         index += 1  # consume frame name token
 
-            elif connective == 'as':
+            elif connective == 'by':
                 marker = tokens[index]
                 index += 1  # eat marker token
                 marker = StripQuotes(marker)

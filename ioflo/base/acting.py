@@ -1254,7 +1254,7 @@ class MarkerChange(Marker):
 
         mark = share.marks.get(marker)
         if mark:
-            mark.data = storing.Data(share.items())  # update date when marker runs
+            mark.data = storing.Data(share.items())  # set date when marker runs
 
     def _expose(self):
         """   """
