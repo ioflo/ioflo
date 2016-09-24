@@ -8,7 +8,7 @@ house marker
     frame vehicle_run
       do simulator motion uuv
 
-  framer mission be active first change1
+  framer mission be active first A
 
     frame start
       set elapsed with 2.0
@@ -17,6 +17,59 @@ house marker
       set goal.speed with 2.5
 
       go abort if elapsed >= goal
+
+      init x with 0
+      init y with 0
+
+      frame A in start
+        inc x with 1
+        inc y with 1
+        go B if x is updated in frame by m1
+
+      frame B in start
+        inc y with 1
+        go C
+
+      frame C in start
+        inc y with 1
+        inc x with 1
+        go next if y == 5 and x == 3
+        go B if x is updated by m1
+        go A
+
+      init z with 0
+
+      frame D in start
+        go E if z is updated by m2
+        go DD if recurred >= 2
+
+      frame DD in start
+        inc z with 1
+        go D
+
+      frame E in start
+        go F
+
+      frame F in start
+        go next if z == 3
+        go E if z is updated by m2
+        go D
+        exit
+          inc z with 1
+
+      init w with 0
+
+      frame G in start
+        go H if w is changed by m2
+
+      frame H in start
+        inc w with 1
+        go I
+
+      frame I in start
+        go next if w == 3
+        go H if w is changed by m2
+        go G
 
       frame change1 in start
         put 6 into .marked.changed
@@ -48,6 +101,7 @@ house marker
       frame update6 in start
         go next if .marked.updated is updated
         go next if recurred >= 3
+
 
     frame done
       print "Success"

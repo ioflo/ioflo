@@ -507,7 +507,7 @@ class NeedChange(NeedMarker):
                             result = True
 
                     except AttributeError as ex: # new attribute so changed
-                        result = True
+                        result = True  # should not remove fields so only test add case
 
                     if result: #stop checking on first change
                         break
