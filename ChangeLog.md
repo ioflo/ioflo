@@ -7,6 +7,8 @@ CHANGE LOG
 --------
 1.6.1
 
+added by marker clause. Change syntax and semantics of if updated/changed need
+
 Added special transit sub-context of precur when segue is successful. This
 sub-context is used by the if updated and if changed to insert special transit act
 (tract) resets mark when the transition holding the need succeeds. This prevents
