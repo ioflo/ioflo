@@ -379,9 +379,12 @@ class NeedMarker(Need):
 
         parms['share'] = share = self._resolvePath(ipath=share,
                                                   warn=True) # now a share
-        parts = [framer.name, frame.name]  # default is framer.name frame.name
+        parts = [framer.name]
         if marker:
-            parts.append(marker)
+            parts.append(marker)  # framername.marker
+        else:
+            parts.append(frame.name)  # default is framername.framename
+
         marker = ".".join(parts)
         parms['marker'] = marker
 
