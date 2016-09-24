@@ -342,7 +342,7 @@ class NeedMarker(Need):
     Special Need
 
     """
-    def _resolve(self, share, frame, kind, **kwa):
+    def _resolve(self, share, frame, kind, marker, **kwa):
         """
         Resolves frame name link and then
            inserts marker as first enact in the resolved frame
@@ -351,6 +351,8 @@ class NeedMarker(Need):
             share is path or ref of share holding mark
             frame is name or ref of frame where marker is watching
             kind is name of marker actor class for marker act
+            marker is unique identifier of marker if not empty
+                This allows multiple if updated/changed to use same marker
 
         Outgoing Parameters:
             share is resolved ref of share holding mark
@@ -377,8 +379,10 @@ class NeedMarker(Need):
 
         parms['share'] = share = self._resolvePath(ipath=share,
                                                   warn=True) # now a share
-
-        marker = "{0}.{1}.{2}.{3}".format(framer.name, frame.name, kind, tuuid())
+        parts = [framer.name, frame.name]  # default is framer.name frame.name
+        if marker:
+            parts.append(marker)
+        marker = ".".join(parts)
         parms['marker'] = marker
 
         if not share.marks.get(marker):
@@ -396,7 +400,7 @@ class NeedMarker(Need):
                                 human=self._act.human,
                                 count=self._act.count)
 
-        self.addTract(markerAct)
+        self.addTract(markerAct)  # sets act.context to 'transit'
         console.profuse("     Added {0} {1} with {2} at {3} in {4} of "
                         "framer {5}\n".format(
                                 'tract',
@@ -407,23 +411,33 @@ class NeedMarker(Need):
                                 framer.name))
         markerAct.resolve()
 
-        markerParms = dict(share=share, marker=marker)
-        markerAct = acting.Act(actor=kind,
-                                                 registrar=acting.Actor,
-                                                 parms=markerParms,
-                                                 human=self._act.human,
-                                                 count=self._act.count)
+        found = False
+        for enact in frame.enacts:  # avoid adding redundant marker
+            if (isinstance(enact.actor, acting.Actor) and
+                    enact.actor.name == kind and
+                    enact.parms['share'].name == share.name and
+                    enact.parms['marker'] == marker):
+                found = True
+                break
 
-        frame.insertEnact(markerAct)
-        console.profuse("     Added {0} {1} with {2} at {3} in {4} of "
-                        "framer {5}\n".format(
-                                'enact',
-                                markerAct,
-                                markerAct.parms['share'].name,
-                                markerAct.parms['marker'],
-                                frame.name,
-                                framer.name))
-        markerAct.resolve()  # resolves .actor given by actor kind name into actor class
+        if not found:
+            markerParms = dict(share=share, marker=marker)
+            markerAct = acting.Act(actor=kind,
+                                                     registrar=acting.Actor,
+                                                     parms=markerParms,
+                                                     human=self._act.human,
+                                                     count=self._act.count)
+
+            frame.insertEnact(markerAct)
+            console.profuse("     Added {0} {1} with {2} at {3} in {4} of "
+                            "framer {5}\n".format(
+                                    'enact',
+                                    markerAct,
+                                    markerAct.parms['share'].name,
+                                    markerAct.parms['marker'],
+                                    frame.name,
+                                    framer.name))
+            markerAct.resolve()  # resolves .actor given by actor kind name into actor class
 
         return parms #return items are updated in original ._act parms
 

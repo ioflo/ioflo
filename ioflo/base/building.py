@@ -3574,7 +3574,7 @@ class Builder(object):
         method must be wrapped in appropriate try excepts
 
         Syntax:
-            if path [[of relation] ...] is updated [in frame [(me, framename)]]
+            if path [[of relation] ...] is updated [in frame [(me, framename)]] [as marker]
 
         """
         return (self.makeMarkerNeed(kind, tokens, index))
@@ -3586,7 +3586,7 @@ class Builder(object):
         method must be wrapped in appropriate try excepts
 
         Syntax:
-            if path [[of relation] ...] is changed [in frame [(me, framename)]]
+            if path [[of relation] ...] is changed [in frame [(me, framename)]] [as marker]
 
         """
         return (self.makeMarkerNeed(kind, tokens, index))
@@ -3597,13 +3597,14 @@ class Builder(object):
             as determined by kind
 
         Syntax:
-            if path [[of relation] ...] is updated [in frame [(me, framename)]]
+            if path [[of relation] ...] is updated [in frame [(me, framename)]] [as marker]
 
             sharepath:
                 path [[of relation] ...]
 
         """
         frame = "me" # name of marked frame
+        marker = ""
 
         sharePath, index = self.parseIndirect(tokens, index)
 
@@ -3630,10 +3631,10 @@ class Builder(object):
 
         while index < len(tokens):  # optional 'in frame'  clause
             connective = tokens[index]
-            if connective not in ('in', ):  # next need clause started
+            if connective not in ('in', 'as'):  # next need clause started
                 break
+            index += 1  # eat token for connective
 
-            index += 1  # eat token
             if connective == 'in':
                 place = tokens[index] #need to resolve
                 index += 1  # eat place token
@@ -3653,16 +3654,14 @@ class Builder(object):
                             raise excepting.ParseError(msg, tokens, index)
                         index += 1  # consume frame name token
 
-            #elif connective == 'aft':
-                #if kind != 'update':
-                    #msg = ("ParseError: Invalid connective '{0}' "
-                            #"while building '{1}' need".format(connective, kind))
-                    #raise excepting.ParseError(msg, tokens, index)
-                #aft = True
+            elif connective == 'as':
+                marker = tokens[index]
+                index += 1  # eat marker token
+                marker = StripQuotes(marker)
 
 
         # assign marker type actual marker Act created in need's resolve
-        marker = 'Marker' + kind.capitalize()
+        markerKind = 'Marker' + kind.capitalize()
 
         actorName = 'Need' + kind.capitalize()
         if actorName not in needing.Need.Registry:
@@ -3673,7 +3672,8 @@ class Builder(object):
         parms = {}
         parms['share'] = sharePath
         parms['frame'] = frame  # marked frame name resolved in resolvelinks
-        parms['kind'] = marker # marker kind resolved in resolvelinks
+        parms['kind'] = markerKind  # marker kind resolved in resolvelinks
+        parms['marker'] = marker
         act = acting.Act(   actor=actorName,
                             registrar=needing.Need,
                             parms=parms,

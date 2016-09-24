@@ -28,6 +28,7 @@ framer mission be active first change1
 
     frame update2 in start
       go next if .state.heading is updated
+      go next if .state.heading is updated in frame
 
     frame change2 in start
       go next if .state.depth is changed in frame change2
