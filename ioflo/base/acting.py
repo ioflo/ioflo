@@ -185,6 +185,7 @@ class Act(object):
                 if key in ioinits:  # check ipath overridden by for or per
                     # if new val not mapping and old val is mapping
                     if not isinstance(ioinits[key], Mapping) and isinstance(val, Mapping):
+                        val = val.copy()  # make copy so don't pollute registry
                         val['ipath'] = ioinits[key]  # replace old ipath witn new
                         ioinits[key] = val # restore default ival iown
 
@@ -597,7 +598,7 @@ class Actor(object):
 
     def _initio(self, ioinits):
         """
-        Compute initializations for ioflo shares from ioinits odict.
+        Compute initializations for ioflo shares from ioinits odict or item list
         'inode' item in ioinits is special
 
         This implements a generic Actor interface protocol for associating the
@@ -702,6 +703,7 @@ class Actor(object):
                 init share with ival value using create ((change if not exist))
 
         """
+        ioinits = odict(ioinits)  # make copy also allows for item list as parameter
         inode = ioinits.get('inode', '')
 
         if not isinstance(inode, basestring):
