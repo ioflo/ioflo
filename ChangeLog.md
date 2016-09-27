@@ -6,6 +6,16 @@ CHANGE LOG
 --------
 1.6.2
 
+Changed ._initio signature to odict or item list so order is preserved
+Do verb per clause now overrides for clause
+        with clause now overrides from clause
+        cum clause now overrides qual clause
+
+For clause now correctly interprets indirec starting with "me"
+Some refactoring of .resolve
+
+Some more tests flos
+
 
 
 --------
