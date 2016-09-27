@@ -180,18 +180,12 @@ class Act(object):
                             if field in src:  # only update if src has field
                                 ioinits[field] = src[field]  # clobbers ioinit odict() with ipath
 
-                #for src, fields in self.prerefs.get('ioinits', {}).items():
-                    #src = self.resolvePath(ipath=src, warn=True) # now a share
-                    #if not fields:  # default is use existing fields
-                        #fields = self._prepareSrcFields(src, fields)
-                    #for field in fields:  # each src fld value pre inited with ipath
-                        #if field in src:  # only update if src has field
-                            #ioinits[field] = src[field]  # clobbers ioinit odict() with ipath
             ioinits.update(self.ioinits or odict())  # 'do per', self.ioinits may be None
             for key, val in rioinits.items():
-                if key in ioinits:  # ipath overridden by for or per
-                    if isinstance(val, Mapping):  # default ival iown may exist
-                        val['ipath'] = ioinits[key]  # override default ipath
+                if key in ioinits:  # check ipath overridden by for or per
+                    # if new val not mapping and old val is mapping
+                    if not isinstance(ioinits[key], Mapping) and isinstance(val, Mapping):
+                        val['ipath'] = ioinits[key]  # replace old ipath witn new
                         ioinits[key] = val # restore default ival iown
 
             if ioinits:
