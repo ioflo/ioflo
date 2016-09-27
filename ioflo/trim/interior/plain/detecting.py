@@ -19,7 +19,18 @@ from ....base import doing
 from ....aid.consoling import getConsole
 console = getConsole()
 
-class DetectorPositionBox(doing.Doer):
+class DetectorBase(doing.Doer):
+    """
+    Base class to provide backwards compatible ._initio interface
+    """
+    def _initio(self, ioinits):
+        """
+        Initialize Actor data store interface from ioinits odict
+        Wrapper for backwards compatibility to new ._initio signature
+        """
+        self._prepio(**ioinits)
+
+class DetectorPositionBox(DetectorBase):
     """
     Detects if vehicle position is in box or out
     output share indicates which side in or out
@@ -44,8 +55,7 @@ class DetectorPositionBox(doing.Doer):
         #call super class method
         super(DetectorPositionBox,self).__init__(**kw)
 
-
-    def _initio(self, group, output, input, parms = None, **kw):
+    def _prepio(self, group, output, input, parms = None, **kw):
         """ Override since uses legacy interface
 
             output

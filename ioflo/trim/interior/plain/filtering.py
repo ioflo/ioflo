@@ -21,7 +21,19 @@ from ....aid.consoling import getConsole
 console = getConsole()
 
 
-class FilterSensorHeading(doing.DoerLapse):
+class FilterBase(doing.DoerLapse):
+    """
+    Base class to provide backwards compatible ._initio interface
+    """
+    def _initio(self, ioinits):
+        """
+        Initialize Actor data store interface from ioinits odict
+        Wrapper for backwards compatibility to new ._initio signature
+        """
+        self._prepio(**ioinits)
+
+
+class FilterSensorHeading(FilterBase):
     """Class """
     Ioinits = odict(
         group = 'filter.sensor.heading',
@@ -44,7 +56,7 @@ class FilterSensorHeading(doing.DoerLapse):
         #call super class method
         super(FilterSensorHeading,self).__init__(**kw)
 
-    def _initio(self, group, output, input, scenario, parms = None, **kw):
+    def _prepio(self, group, output, input, scenario, parms = None, **kw):
         """ Override since legacy init interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -139,7 +151,7 @@ class FilterSensorHeading(doing.DoerLapse):
         print(format %\
               (self.output.value, self.parm.data.phase, self.parm.data.amp))
 
-class FilterWindowed(doing.DoerLapse):
+class FilterWindowed(FilterBase):
     """Class """
     Ioinits = odict(
         group = 'filter.sensor.generic', output = 'state.generic',
@@ -160,7 +172,7 @@ class FilterWindowed(doing.DoerLapse):
         #call super class method
         super(FilterWindowed,self).__init__(**kw)
 
-    def _initio(self, group, output, input, field, depth, parms = None, **kw):
+    def _prepio(self, group, output, input, field, depth, parms = None, **kw):
         """ Override since legacy init interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -296,7 +308,7 @@ FilterWindowed.__register__('FilterSensorTemperature', ioinits=odict(
                  layer = 40.0, tolerance = 5.0)) )
 
 
-class FilterCtdMin(doing.DoerLapse):
+class FilterCtdMin(FilterBase):
     """Filter Ctd Minimum temperature
     """
     Ioinits = odict(
@@ -320,8 +332,7 @@ class FilterCtdMin(doing.DoerLapse):
         #call super class method
         super(FilterCtdMin,self).__init__(**kw)
 
-
-    def _initio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
+    def _prepio(self, group, outputs, output, input, field, depth, position, parms = None, **kw):
         """ Override since legacy init interface
 
             group is path name of group in store, group has following subgroups or shares:

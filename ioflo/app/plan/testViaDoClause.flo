@@ -1,0 +1,40 @@
+#  Tests do inode with via and framer via
+
+house testdovia
+
+  framer test be active first test via .seeme
+    frame timeout
+      go abort if elapsed >= 3.0
+
+      frame test in timeout
+        do doer at enter via .rooted
+        do doer at enter via unrooted
+        do doer at enter via me.unrooted
+        do doer at enter via rooted of root
+        do doer at enter via framered of framer
+        do doer at enter via framed of frame
+        do doer at enter via actored of actor
+        do doer at enter via .absrooted of root
+        do doer at enter via .absframered of framer
+        do doer at enter via .absframed of frame
+        do doer at enter via .absactored of actor
+        do doer at enter via .rooted.
+        do doer at enter via unrooted.
+        do doer at enter via rooted. of root
+        do doer at enter via framered. of framer
+        do doer at enter via framed. of frame
+        do doer at enter via actored. of actor
+        do doer at enter via .absrooted. of root
+        do doer at enter via .absframered. of framer
+        do doer at enter via .absframed. of frame
+        do doer at enter via .absactored. of actor
+        go next
+
+    frame done
+      print "Success"
+      bid stop all
+
+    frame abort
+      print "Failure"
+      put "Resolve Do" into meta.failure
+      bid stop all

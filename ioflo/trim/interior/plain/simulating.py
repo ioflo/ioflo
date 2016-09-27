@@ -21,7 +21,19 @@ from ....base import doing
 from ....aid.consoling import getConsole
 console = getConsole()
 
-class SimulatorMotionUuv(doing.DoerLapse):
+class SimulatorBase(doing.DoerLapse):
+    """
+    Base class to provide backwards compatible ._initio interface
+    """
+    def _initio(self, ioinits):
+        """
+        Initialize Actor data store interface from ioinits odict
+        Wrapper for backwards compatibility to new ._initio signature
+        """
+        self._prepio(**ioinits)
+
+
+class SimulatorMotionUuv(SimulatorBase):
     """UUV motion simulator class
     """
     Ioinits=odict(
@@ -56,8 +68,7 @@ class SimulatorMotionUuv(doing.DoerLapse):
                              depth = None, depthRate = None, altitude = None,
                              heading = None, headingRate = None)
 
-
-    def _initio(self, group, speed, speedRate, velocity,
+    def _prepio(self, group, speed, speedRate, velocity,
                  depth, depthRate, pitch, pitchRate, altitude,
                  heading, headingRate, position, location,
                  rpm, stern, rudder, current, bottom, onset, origin, parms = None, **kw):
@@ -318,7 +329,7 @@ class SimulatorMotionUuv(doing.DoerLapse):
               (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east))
 
-class SimulatorMotionUsv(doing.DoerLapse):
+class SimulatorMotionUsv(SimulatorBase):
     """USV motion simulator class
     """
     Ioinits=odict(
@@ -343,7 +354,7 @@ class SimulatorMotionUsv(doing.DoerLapse):
         self.ionames = dict( speed = None, speedRate = None,
                              heading = None, headingRate = None)
 
-    def _initio(self, group, speed, speedRate,  velocity,
+    def _prepio(self, group, speed, speedRate,  velocity,
                  heading, headingRate, position,
                  rpm, rudder, current, onset, parms = None, **kw):
         """ Override since legacy interface
@@ -518,7 +529,7 @@ class SimulatorMotionUsv(doing.DoerLapse):
               (self.velocity.data.north, self.velocity.data.east,
                self.position.data.north, self.position.data.east))
 
-class SimulatorSensorGps(doing.DoerLapse):
+class SimulatorSensorGps(SimulatorBase):
     """GPS sensor simulator class
     """
     Ioinits=odict(
@@ -537,7 +548,7 @@ class SimulatorSensorGps(doing.DoerLapse):
         #call super class method
         super(SimulatorSensorGps,self).__init__(**kw)
 
-    def _initio(self, group, positionOut, velocityOut, error,
+    def _prepio(self, group, positionOut, velocityOut, error,
                  heading, speed,  positionIn, velocityIn,
                  scenario, parms = None, **kw):
         """ Override since legacy interface
@@ -689,7 +700,7 @@ class SimulatorSensorGps(doing.DoerLapse):
               (self.position.data.north, self.position.data.east,
                self.velocity.data.north, self.velocity.data.east))
 
-class SimulatorSensorDvl(doing.DoerLapse):
+class SimulatorSensorDvl(SimulatorBase):
     """DVLSensorSimulator DeedLapse Deed Class
        DVL sensor simulator class
     """
@@ -709,7 +720,7 @@ class SimulatorSensorDvl(doing.DoerLapse):
         #call super class method
         super(SimulatorSensorDvl,self).__init__(**kw)
 
-    def _initio(self, group, velocity, currentOut, altitude,
+    def _prepio(self, group, velocity, currentOut, altitude,
                  heading, speed, currentIn, bottom,
                  scenario, parms = None, **kw):
         """ Override since legacy interface
@@ -860,7 +871,7 @@ class SimulatorSensorDvl(doing.DoerLapse):
                self.current.data.forward, self.current.data.starboard,
                self.altitude.value))
 
-class SimulatorSensorCompass(doing.DoerLapse):
+class SimulatorSensorCompass(SimulatorBase):
     """compass sensor simulator class
     """
     Ioinits = odict(
@@ -876,7 +887,7 @@ class SimulatorSensorCompass(doing.DoerLapse):
         #call super class method
         super(SimulatorSensorCompass,self).__init__(**kw)
 
-    def _initio(self, group, output,input, scenario, parms = None, **kw):
+    def _prepio(self, group, output,input, scenario, parms = None, **kw):
         """ Override since legacy interface
 
             group is path name of group in store, group has following subgroups or shares:
@@ -973,7 +984,7 @@ class SimulatorSensorCompass(doing.DoerLapse):
               (self.output.value, self.parm.data.phase,
                self.parm.data.amp, self.parm.data.sigma))
 
-class SimulatorSalinityLinear(doing.DoerLapse):
+class SimulatorSalinityLinear(SimulatorBase):
     """linear salinity simulator class
     """
     Ioinits = odict(
@@ -999,7 +1010,7 @@ class SimulatorSalinityLinear(doing.DoerLapse):
         super(SimulatorSalinityLinear,self).__init__(**kw)
 
 
-    def _initio(self, group, output,input, depth, parms = None, **kw):
+    def _prepio(self, group, output,input, depth, parms = None, **kw):
         """ Override since legacy interface
 
                        group is path name of group in store, group has following subgroups or shares:
@@ -1118,7 +1129,7 @@ class SimulatorSalinityLinear(doing.DoerLapse):
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width,
                self.parm.data.layer, self.parm.data.shift))
 
-class SimulatorSalinitySinusoid(doing.DoerLapse):
+class SimulatorSalinitySinusoid(SimulatorBase):
     """salinity sensor simulator class
     """
     Ioinits = odict(
@@ -1136,7 +1147,7 @@ class SimulatorSalinitySinusoid(doing.DoerLapse):
         #call super class method
         super(SimulatorSalinitySinusoid,self).__init__(**kw)
 
-    def _initio(self, group, output,input, parms = None, **kw):
+    def _prepio(self, group, output,input, parms = None, **kw):
         """ Override since legacy interface
 
                        group is path name of group in store, group has following subgroups or shares:
@@ -1245,7 +1256,7 @@ class SimulatorSalinitySinusoid(doing.DoerLapse):
                self.parm.data.north, self.parm.data.east, self.parm.data.middle,
                self.parm.data.spread, self.parm.data.rising, self.parm.data.width))
 
-class SimulatorGradient(doing.DoerLapse):
+class SimulatorGradient(SimulatorBase):
     """gradient simulator class
     """
     Ioinits = odict(
@@ -1262,7 +1273,7 @@ class SimulatorGradient(doing.DoerLapse):
         #call super class method
         super(SimulatorGradient,self).__init__(**kw)
 
-    def _initio(self, group, output, field, position, depth, parms = None, **kw):
+    def _prepio(self, group, output, field, position, depth, parms = None, **kw):
         """ Override since legacy interface
 
                        group is path name of group in store, group has following subgroups or shares:

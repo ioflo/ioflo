@@ -20,9 +20,20 @@ from ....base import doing
 from ....aid.consoling import getConsole
 console = getConsole()
 
+class ControllerBase(doing.DoerLapse):
+    """
+    Base class to provide backwards compatible ._initio interface
+    """
+    def _initio(self, ioinits):
+        """
+        Initialize Actor data store interface from ioinits odict
+        Wrapper for backwards compatibility to new ._initio signature
+        """
+        self._prepio(**ioinits)
+
 
 #Class definitions
-class ControllerPid(doing.DoerLapse):
+class ControllerPid(ControllerBase):
     """PIDController DeedLapse Deed Class
        PID Controller Class
 
@@ -44,8 +55,7 @@ class ControllerPid(doing.DoerLapse):
 
         self.lapse = 0.0 #time lapse in seconds calculated on update
 
-
-    def _initio(self, group, output, input, rate, rsp, parms = None, **kw):
+    def _prepio(self, group, output, input, rate, rsp, parms = None, **kw):
         """ Override default since legacy deed interface
 
             group is path name of group in store, group has following subgroups or shares:

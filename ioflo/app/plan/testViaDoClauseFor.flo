@@ -1,0 +1,48 @@
+#  Tests do inode with via and framer via
+
+house testDoViaFor
+  init .color with value "red"
+  init .flavor with value "sweet"
+  init .apple.color with value "green"
+  init .apple.flavor with value "sour"
+  init .seeme.color with value "yellow"
+  init .seeme.flavor with value "juicy"
+
+  init .rooted.apple with color "me.color" flavor "me.flavor"
+  init .seeme.apple with color ".apple.color" flavor ".apple.flavor"
+  init .seeme.unrooted.apple with color ".color" flavor ".flavor"
+
+  framer test be active first test via .seeme
+    frame timeout
+      go abort if elapsed >= 3.0
+
+      frame test in timeout
+        # .rooted.apple  .seeme.color .seeme.flavor
+        do doer param at enter via .rooted for color flavor in apple
+
+        # .seeme.apple  .apple.color .apple.flavor
+        do doer param at enter via .rooted for color flavor in me.apple
+
+        # .seeme.unrooted.apple   .color .flavor
+        do doer param at enter via unrooted for color flavor in apple
+
+        # .seeme.apple .apple.color .apple.flavor
+        do doer param at enter via unrooted for color flavor in me.apple
+
+        # .seeme.unrooted.apple  .color .flavor
+        do doer param at enter via me.unrooted for color flavor in apple
+
+        # .seeme.apple .apple.color .apple.flavor
+        do doer param at enter via me.unrooted for color flavor in me.apple
+
+
+        go next
+
+    frame done
+      print "Success"
+      bid stop all
+
+    frame abort
+      print "Failure"
+      put "Resolve Do" into meta.failure
+      bid stop all

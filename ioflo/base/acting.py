@@ -127,8 +127,8 @@ class Act(object):
         if not isinstance(self.actor, Actor): # Need to resolve .actor
             # .actor is currently unresolved name string for actor
             actor, inits, ioinits, parms = self.registrar.__fetch__(self.actor)
-            inits.update(self.inits or odict())
-            if self.prerefs: # preinits inits dict items
+
+            if self.prerefs: # preinits inits dict items  'do qua'
                 # each key is share src path, and value is list of src fields
                 for src, fields in self.prerefs.get('inits', {}).items():
                     src = self.resolvePath(ipath=src, warn=True) # now a share
@@ -137,14 +137,14 @@ class Act(object):
                     for field in fields:  # requires src pre inited
                         if field in src:  # only update if src has field
                             inits[field] = src[field]
+            inits.update(self.inits or odict())  # 'do cum' overrides qua, self.inits may be None
             if 'name' not in inits:
                 inits['name'] = self.actor  # as yet unresolved name string
             inits['store'] = self.frame.store
             inits['act'] = self
             self.actor = actor = actor(**inits) # instantiate and convert
 
-            parms.update(self.parms or odict())
-            if self.prerefs: # preinits parms dict items
+            if self.prerefs: # preinits parms dict items 'do from'
                 # each key is share src path, and value is list of src fields
                 for src, fields in self.prerefs.get('parms', {}).items():
                     src = self.resolvePath(ipath=src, warn=True) # now a share
@@ -153,19 +153,49 @@ class Act(object):
                     for field in fields:  # requires src pre inited
                         if field in src:  # only update if src has field
                             parms[field] = src[field]
+            parms.update(self.parms or odict())  # 'do with' overrides from, self.parms may be None
 
-            ioinits.update(self.ioinits or odict())  # self.ioinits 'do per'
+            rioinits = odict(ioinits)  # save copy registry ioinits to keep ival iown
             if self.prerefs: # preinits ioinits dict items  'do for'
-                # each key is share src path, and value is list of src fields
-                for src, fields in self.prerefs.get('ioinits', {}).items():
-                    src = self.resolvePath(ipath=src, warn=True) # now a share
-                    if not fields:  # default is use existing fields
-                        fields = self._prepareSrcFields(src, fields)
-                    for field in fields:  # each src fld value pre inited with ipath
-                        if field in src:  # only update if src has field
-                            ioinits[field] = src[field]  # clobbers ioinit odict() with ipath
+                prerefios = odict(self.prerefs.get('ioinits'))  # depend on odict order
+                if prerefios: # each key is share src path, and value is list of src fields
+                    # process each src to resolve via finode do via inode as ioinit ipath
+                    # get do inode if any
+                    preioinits = odict(inode=(self.ioinits or  odict()).get('inode', ioinits.get('inode', '')))
+                    for i, src in enumerate(prerefios.keys()):  # keys are src path strings
+                        preioinits["p{0}".format(i)] = src  # use index as field since resolution may change src
+                    piois = actor._initio(preioinits)  # resolve finode via on src paths
+                    # piois and preioinits have same keys p0 p1 ...
+                    # create new odict with resolved src keys and old val fields
+                    pioinits = odict()
+                    for key, ioi in piois.items():
+                        if key != 'inode':
+                            pioinits[ioi["ipath"]] = prerefios[preioinits[key]]
+
+                    for src, fields in pioinits.items():  # now resolve new src paths
+                        src = self.resolvePath(ipath=src, warn=True) # now a share
+                        if not fields:  # default is use existing fields
+                            fields = self._prepareSrcFields(src, fields)
+                        for field in fields:  # each src fld value pre inited with ipath
+                            if field in src:  # only update if src has field
+                                ioinits[field] = src[field]  # clobbers ioinit odict() with ipath
+
+                #for src, fields in self.prerefs.get('ioinits', {}).items():
+                    #src = self.resolvePath(ipath=src, warn=True) # now a share
+                    #if not fields:  # default is use existing fields
+                        #fields = self._prepareSrcFields(src, fields)
+                    #for field in fields:  # each src fld value pre inited with ipath
+                        #if field in src:  # only update if src has field
+                            #ioinits[field] = src[field]  # clobbers ioinit odict() with ipath
+            ioinits.update(self.ioinits or odict())  # 'do per', self.ioinits may be None
+            for key, val in rioinits.items():
+                if key in ioinits:  # ipath overridden by for or per
+                    if isinstance(val, Mapping):  # default ival iown may exist
+                        val['ipath'] = ioinits[key]  # override default ipath
+                        ioinits[key] = val # restore default ival iown
+
             if ioinits:
-                iois = actor._initio(**ioinits)
+                iois = actor._initio(ioinits)
                 if iois:
                     for key, ioi in iois.items():
                         share = actor._resolvePath(   ipath=ioi['ipath'],
@@ -233,8 +263,8 @@ class Act(object):
                 'me' indicates substitute the current framer, frame, or actor name
                 respectively.
 
-                'main' indicates substitute the current frame's main framer or main frame
-                name respectively obtained from
+                'main' indicates substitute the current .main.frame.name or
+                .main.frame.framer.name respectively obtained from aux .main link
 
 
 
@@ -291,11 +321,14 @@ class Act(object):
                                 finode = mainer.inode  # substitude main for mainer.inode
                         elif finode == "mine":  # don't prepend main framer inode
                             finode = ""
-                        else:  # possibly prepend main framer inode if finode relative
-                            minode = framer.main.framer.inode
-                            minode = minode.rstrip('.')
-                            if not finode.startswith('.') and minode:  # prepend if relative
-                                finode = '.'.join([minode, finode])
+                        else:  # prepend main framer inode (minode) if finode relative and minode
+                            if not finode.startswith('.'):  # finode relative
+                                minode = framer.main.framer.inode
+                                minode = minode.rstrip('.')
+                                if minode:  # minode not empty
+                                    finode = '.'.join([minode, finode])
+
+
                     finode = finode.rstrip('.')
                     if not finode:  # empty finode so use default actor relative
                         finode = "framer.me.frame.me.actor.me"
@@ -568,18 +601,34 @@ class Actor(object):
 
         return parms
 
-    def _initio(self, inode='', **kwa):
+    def _initio(self, ioinits):
         """
-        Compute initializations for ioflo shares from inode and kwa arguments.
+        Compute initializations for ioflo shares from ioinits odict.
+        'inode' item in ioinits is special
+
         This implements a generic Actor interface protocol for associating the
         io data flow shares to the Actor.
 
         inode is the computed pathname string of the default share node
         where shares associated with the Actor instance may be placed when
-        relative addressing is used.
+        relative addressing is used. It is also the default data store context
+        for share references by Doer iois. The inode on an actor my be set
+        explicitly in the Ioinit class variable or in the actify (doify) decorator
+        or by the via clause of a Doer
 
-        The inode is computed as absolute, relative, or default.
-        The default inode is  'framer.me.frame.me.actor.me.'
+        The default inode is  'framer.me.frame.me.actor.me.' which is the case
+        when the passed in inode is empty.
+
+        If the inode is provided then if it is absolute, has a leading '.' then
+        it it left as is
+
+        If the inode is relative, has no leading '.' then relative substitution
+        rules apply.
+           If the inode is "me" or starts with "me." then replace the me with
+               the framer inode (frinode). Skip frame inode lookup
+
+           Otherwise apply prepend frame inode lookup
+
             This occurs if the framer inode (finode) is empty
                 (which occurs when the via clause is missing for the framer)
             and the ioinit inode parameter passed in is also empty
@@ -613,7 +662,7 @@ class Actor(object):
         Missing init values from ipath, ival, iown will be assigned a
         default value as per the rules below:
 
-        For each kwa item (key, val)
+        For each ioinits item (key, val) besides the inode
             key is the name of the associated instance attribute or action parm.
             Extract ipath, ival, iown from val
 
@@ -659,34 +708,44 @@ class Actor(object):
                 init share with ival value using create ((change if not exist))
 
         """
+        inode = ioinits.get('inode', '')
+
         if not isinstance(inode, basestring):
             raise ValueError("Nonstring inode arg '{0}'".format(inode))
 
-        finode = ''  # inode of framer
+        frinode = ''  # inode of framer
         if self._act.frame.framer: # framer has been assigned
             framer = self._act.frame.framer
-            finode = framer.inode  # could be empty
+            frinode = framer.inode  # could be empty
             if framer.main:  # aux framer so special meaning of main or mine
                 mainer = framer.main.framer  # main frame's framer eg main framer
-                if finode == "main":  # replace finode with main framer inode
-                    finode = mainer.inode
-                    while finode == "main" and mainer.main:  # inode is main and has a main frame
+                if frinode == "main":  # replace finode with main framer inode
+                    frinode = mainer.inode
+                    while frinode == "main" and mainer.main:  # inode is main and has a main frame
                         mainer = mainer.main.framer # walk up mainer links
-                        finode = mainer.inode  # substitude main for mainer.inode
-                elif finode == "mine":  # don't prepend main framer inode
-                    finode = ""  # effectively empty inode
+                        frinode = mainer.inode  # substitude main for mainer.inode
+                elif frinode == "mine":  # don't prepend main framer inode
+                    frinode = ""  # effectively empty inode
                 else:  # otherwise just prepend main framer inode if relative
                     minode = framer.main.framer.inode  # could be empty
                     minode = minode.rstrip('.')
-                    if not finode.startswith('.') and minode:  # prepend if relative
-                        finode = '.'.join([minode, finode])
+                    if not frinode.startswith('.') and minode:  # prepend if relative
+                        frinode = '.'.join([minode, frinode])
 
-        finode = finode.rstrip('.')
+        frinode = frinode.rstrip('.')
 
-        if not inode.startswith('.') and finode:  # not absolute and finode so prepend
-            if inode.startswith('me.') or inode == 'me':
-                raise ValueError("Invalid inode '{0}', first part == 'me'".format(inode))
-            inode = ".".join([finode, inode])
+        #if not inode.startswith('.') and frinode:  # not absolute and finode so prepend
+            #if inode.startswith('me.') or inode == 'me':
+                #inode = inode.lstrip("me")  # me means replace with framer inode
+                #inode = inode.lstrip(".")  # in
+                ##raise ValueError("Invalid inode '{0}', first part == 'me'".format(inode))
+            #inode = ".".join([frinode, inode])
+
+        if not inode.startswith('.') and frinode:  # not absolute and frinode so prepend
+            parts = inode.split(".")
+            if parts[0] != 'me':  # ensure leading me
+                parts.insert(0, 'me')  # so act.resolvePath substitutes frinode
+            inode = ".".join(parts)
 
         if not inode:  # empty or missing use default actor relative
             inode = "framer.me.frame.me.actor.me."
@@ -695,11 +754,14 @@ class Actor(object):
             inode = "{0}.".format(inode)
 
         iois = odict()
+        ioi = odict(ipath=inode)  # create ioi for the inode not in kwa
+        iois['inode'] = ioi  # inode path resolves first convenience when debugging
+        for key, val in ioinits.items():  # assumes keys are basestrings
+            if key == 'inode':  # skip already processed inode
+                continue
 
-        for key, val in kwa.items():  # assumes keys are basestrings
             if val is None:  # use default assume no way to be inadvertent
                 val = ""  # empty string for val defaults ipath to same as key
-                #continue
 
             if isinstance(val, basestring):
                 ipath = val
@@ -729,18 +791,13 @@ class Actor(object):
                     if not(ipath.startswith('me.') or ipath == 'me'):  # do not override inode
                         ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
                     # any paths starting with me with have the framer inode (finode) substituted
-                    # in actor.resolvePath later this allows override of doer inode appendix
+                    # in act.resolvepath called by actor._resolvePath later
+                    # this allows override of doer inode prepend
             else: # empty ipath
                 ipath = '.'.join((inode.rstrip('.'), key))  # when ipath empty create default from key
 
-            #if ipath.startswith('me.') or ipath == 'me':
-            #    raise ValueError("Invalid ipath '{0}', first part == 'me'".format(ipath))
-
             ioi = odict(ipath=ipath, ival=ival, iown=iown)
             iois[key] = ioi
-
-        ioi = odict(ipath=inode)  # create ioi for the inode
-        iois['inode'] = ioi
 
         return iois # non-empty when _parametric
 

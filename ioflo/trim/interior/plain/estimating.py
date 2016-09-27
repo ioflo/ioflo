@@ -50,7 +50,15 @@ class EstimatorPositionNfl(doing.DoerLapse):
         #call super class method
         super(EstimatorPositionNfl,self).__init__(**kw)
 
-    def _initio(self, group, position, drPosition, drBias,
+    def _initio(self, ioinits):
+        """
+        Initialize Actor data store interface from ioinits odict
+
+        Wrapper for backwards compatibility to new _initio signature
+        """
+        self._prepio(**ioinits)
+
+    def _prepio(self, group, position, drPosition, drBias,
                  speed, heading, current, dvlVelocity, gpsPosition, gpsVelocity,
                  parms = None, **kw):
         """ Override since uses legacy interface
