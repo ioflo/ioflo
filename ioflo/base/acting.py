@@ -159,12 +159,12 @@ class Act(object):
             if self.prerefs: # preinits ioinits dict items  'do for'
                 prerefios = odict(self.prerefs.get('ioinits'))  # depend on odict order
                 if prerefios: # each key is share src path, and value is list of src fields
-                    # process each src to resolve via finode do via inode as ioinit ipath
+                    # process each src to resolve via frinode do via inode as ioinit ipath
                     # get do inode if any
                     preioinits = odict(inode=(self.ioinits or  odict()).get('inode', ioinits.get('inode', '')))
                     for i, src in enumerate(prerefios.keys()):  # keys are src path strings
                         preioinits["p{0}".format(i)] = src  # use index as field since resolution may change src
-                    piois = actor._initio(preioinits)  # resolve finode via on src paths
+                    piois = actor._initio(preioinits)  # resolve frinode via on src paths
                     # piois and preioinits have same keys p0 p1 ...
                     # create new odict with resolved src keys and old val fields
                     pioinits = odict()
@@ -304,31 +304,31 @@ class Act(object):
                                 self.human, self.count)
                     del parts[0]
 
-                    finode = ''  # inode of framer
+                    frinode = ''  # inode of framer
                     framer = self.frame.framer
-                    finode = framer.inode
+                    frinode = framer.inode
                     if framer.main:  # aux framer so special meaning of main or mine
                         mainer = framer.main.framer  # main frame's framer eg main framer
-                        if finode == "main":  # replace finode with main framer inode
-                            finode = mainer.inode
-                            while finode == "main" and mainer.main:  # inode is main and has a main frame
+                        if frinode == "main":  # replace frinode with main framer inode
+                            frinode = mainer.inode
+                            while frinode == "main" and mainer.main:  # inode is main and has a main frame
                                 mainer = mainer.main.framer # walk up mainer links
-                                finode = mainer.inode  # substitude main for mainer.inode
-                        elif finode == "mine":  # don't prepend main framer inode
-                            finode = ""
-                        else:  # prepend main framer inode (minode) if finode relative and minode
-                            if not finode.startswith('.'):  # finode relative
+                                frinode = mainer.inode  # substitude main for mainer.inode
+                        elif frinode == "mine":  # don't prepend main framer inode
+                            frinode = ""
+                        else:  # prepend main framer inode (minode) if frinode relative and minode
+                            if not frinode.startswith('.'):  # frinode relative
                                 minode = framer.main.framer.inode
                                 minode = minode.rstrip('.')
                                 if minode:  # minode not empty
-                                    finode = '.'.join([minode, finode])
+                                    frinode = '.'.join([minode, frinode])
 
 
-                    finode = finode.rstrip('.')
-                    if not finode:  # empty finode so use default actor relative
-                        finode = "framer.me.frame.me.actor.me"
-                    if finode:
-                        finparts = finode.split('.')
+                    frinode = frinode.rstrip('.')
+                    if not frinode:  # empty frinode so use default actor relative
+                        frinode = "framer.me.frame.me.actor.me"
+                    if frinode:
+                        finparts = frinode.split('.')
                         if finparts:
                             parts = finparts + parts
                     ipath = '.'.join(parts)
@@ -624,11 +624,11 @@ class Actor(object):
 
            Otherwise apply prepend frame inode lookup
 
-            This occurs if the framer inode (finode) is empty
+            This occurs if the framer inode (frinode) is empty
                 (which occurs when the via clause is missing for the framer)
             and the ioinit inode parameter passed in is also empty
 
-        When a via clause exists for the framer then finode is not empty
+        When a via clause exists for the framer then frinode is not empty
             so the default is not used
             and the computed inode is either absolute or relative
 
@@ -715,7 +715,7 @@ class Actor(object):
             frinode = framer.inode  # could be empty
             if framer.main:  # aux framer so special meaning of main or mine
                 mainer = framer.main.framer  # main frame's framer eg main framer
-                if frinode == "main":  # replace finode with main framer inode
+                if frinode == "main":  # replace frinode with main framer inode
                     frinode = mainer.inode
                     while frinode == "main" and mainer.main:  # inode is main and has a main frame
                         mainer = mainer.main.framer # walk up mainer links
@@ -730,23 +730,16 @@ class Actor(object):
 
         frinode = frinode.rstrip('.')
 
-        #if not inode.startswith('.') and frinode:  # not absolute and finode so prepend
-            #if inode.startswith('me.') or inode == 'me':
-                #inode = inode.lstrip("me")  # me means replace with framer inode
-                #inode = inode.lstrip(".")  # in
-                ##raise ValueError("Invalid inode '{0}', first part == 'me'".format(inode))
-            #inode = ".".join([frinode, inode])
-
-        if not inode.startswith('.') and frinode:  # not absolute and frinode so prepend
-            parts = inode.split(".")
-            if parts[0] != 'me':  # ensure leading me
+        if not inode.startswith('.') and frinode:  # not absolute and frinode
+            parts = inode.split(".") if inode else []  # inode may be empty
+            if not parts or parts[0] != 'me':  # ensure leading me
                 parts.insert(0, 'me')  # so act.resolvePath substitutes frinode
             inode = ".".join(parts)
 
         if not inode:  # empty or missing use default actor relative
             inode = "framer.me.frame.me.actor.me."
 
-        if not inode.endswith('.'):
+        if inode and not inode.endswith('.'):
             inode = "{0}.".format(inode)
 
         iois = odict()
@@ -786,7 +779,7 @@ class Actor(object):
                 if not ipath.startswith('.'): # full path is inode joined to ipath
                     if not(ipath.startswith('me.') or ipath == 'me'):  # do not override inode
                         ipath = '.'.join((inode.rstrip('.'), ipath)) # when inode empty prepends dot
-                    # any paths starting with me with have the framer inode (finode) substituted
+                    # any paths starting with me with have the framer inode (frinode) substituted
                     # in act.resolvepath called by actor._resolvePath later
                     # this allows override of doer inode prepend
             else: # empty ipath
@@ -795,7 +788,7 @@ class Actor(object):
             ioi = odict(ipath=ipath, ival=ival, iown=iown)
             iois[key] = ioi
 
-        return iois # non-empty when _parametric
+        return iois
 
     def _prepare(self, **kwa):
         """ Base method to be overriden in sub classes. Perform post initio setup
@@ -828,15 +821,15 @@ class Actor(object):
     def _prepareDstFields(self, srcFields, dst, dstFields):
         """
         Prepares  for a transfer of data
-        from srcFields to dstFields in dst
-           handles default conditions when fields are empty
+           from srcFields
+           to dstFields in dst
+        Handles default conditions when fields are empty
+            srcFields is list of field names
+            dst is share
+            dstFields is list of field names
 
-        srcFields is list of field names
-        dst is share
-        dstFields is list of field names
-
+        Ensure Builder.prepareDataDstFields is similar
         """
-
         if not dstFields: #no destinationField so use default rules
             if 'value' in dst:
                 dstFields = ['value'] #use value field
@@ -875,11 +868,11 @@ class Actor(object):
         Prepares and verifys a transfer of data
            from srcFields in src
            to dstFields in dst
-           handles default conditions when fields are empty
-
+        Handles default conditions when fields are empty
            src and dst are shares
            srcFields and dstFields are lists
 
+        Ensure Builder.prepareSrcDstFields is the same
         """
         if not srcFields: # empty source fields so assign defaults
             if src:
@@ -933,14 +926,17 @@ class Actor(object):
         return (srcFields, dstFields)
 
     def _verifyShareFields(self, share, fields):
-        """Verify that updating fields in share won't violate the
+        """
+        Verify that updating fields in share won't violate the
            condition that when a share has field == 'value'
            it will be the only field
 
            fields is list of field names
            share is  share
 
-           raises exception if condition would be violated
+        Raises exception if condition would be violated
+
+        Ensure Builder.verifyShareFields is same
         """
         if (len(fields) > 1) and ('value' in fields):
             msg = "ResolveError: Field = 'value' within fields = '{0}'".format(fields)

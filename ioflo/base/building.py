@@ -4618,16 +4618,16 @@ class Builder(object):
 
         return (tolerance, index)
 
-    #---------------------------
-
     def prepareSrcDstFields(self, src, srcFields, dst, dstFields, tokens, index):
-        """Prepares and verifys a transfer of data
-           from sourceFields in source to dstFields in dst
-           handles default conditions when fields are empty
+        """
+        Prepares and verifys a transfer of data
+            from sourceFields in source
+            to dstFields in dst
+        Handles default conditions when fields are empty
+            src and dst are shares
+            fields are lists
 
-           src and dst are shares
-           fields are lists
-
+        Ensure Actor._prepareSrcDstFields is the same
         """
         if not srcFields: #no source fields so assign defaults
             if src:
@@ -4684,14 +4684,16 @@ class Builder(object):
         return (srcFields, dstFields)
 
     def prepareDataDstFields(self, data, dataFields, dst, dstFields, tokens, index):
-        """Prepares and verifys a transfer of data
-           from dataFields in data to dstFields in dst
-           handles default conditions when fields are empty
+        """
+        Prepares and verifys a transfer of data
+            from dataFields in data
+            to dstFields in dst
+        Handles default conditions when fields are empty
+            data is dict
+            dst is share
+            fields are lists
 
-           data is dict
-           dst is share
-           fields are lists
-
+        Ensure Actor._prepareDstFields is similar
         """
 
         if not dstFields: #no destinationField so use default rules
@@ -4724,14 +4726,17 @@ class Builder(object):
         return (dataFields, dstFields)
 
     def verifyShareFields(self, share, fields, tokens, index):
-        """Verify that updating fields in share won't violate the
+        """
+        Verify that updating fields in share won't violate the
            condition that when a share has field == 'value'
            it will be the only field
 
            fields is list of field names
            share is  share
 
-           raises exception if condition would be violated
+        raises exception if condition would be violated
+
+        Ensure Actor._verifyShareFields is same
         """
         if (len(fields) > 1) and ('value' in fields):
             msg = "ParseError: Field = 'value' within fields = '%s'" % (fields)
