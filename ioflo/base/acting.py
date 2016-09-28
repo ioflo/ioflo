@@ -314,7 +314,8 @@ class Act(object):
                                 if fparts[0] == 'me':  # finode relative
                                     del fparts[0]  # remove 'me'
                             mainer = mainer.main.framer  # walk up mainer link
-                            mparts = mainer.inode.rstrip(".").split(".") if minode else []
+                            minode = mainer.inode
+                            mparts = minode.rstrip(".").split(".") if minode else []
                             fparts = mparts + fparts  # not extend in place
 
                     else:  # while not absolute walk up mainer link
@@ -329,7 +330,8 @@ class Act(object):
                                 if fparts[0] == 'me':  # finode relative
                                     del fparts[0]  # remove 'me'
                             mainer = mainer.main.framer  # walk up mainer link
-                            mparts = mainer.inode.rstrip(".").split(".") if minode else []
+                            minode = mainer.inode
+                            mparts = minode.rstrip(".").split(".") if minode else []
                             fparts = mparts + fparts  # not extend in place
 
                 finode = ".".join(fparts)  # ".".join([]) == ".".join([""]) == ""
