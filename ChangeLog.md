@@ -6,6 +6,12 @@ CHANGE LOG
 --------
 1.6.2
 
+Refactored the initio processing and resolvePaths to support multi level via
+Also normalized syntax of framer inode relative "me." Store paths.
+me means prepend the framer inode if any and also keep walking up aux.main.framer
+links to successively prepend inodes until either absolute or framer relative
+
+
 Changed ._initio signature to odict or item list so order is preserved
 Do verb per clause now overrides for clause
         with clause now overrides from clause

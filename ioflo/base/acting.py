@@ -278,6 +278,22 @@ class Act(object):
               self.actor is resolved
               self.actor.name is not empty
 
+        Any actor could have ioinits saved for them in their ._act  Act
+        If ionits exist then then an inode is part of the ioinits
+        Currently only the Do verb actors have ioinits. The inode is one of them.
+        The ioinits come from two sources. The registry and the do verb per and for
+        clauses
+
+        _act.ioinits are the do and per clauses
+        registry ioints are from the Actor.Ionints class variable
+
+        So inode parameter to Act.resolvePaths inidcates if for ioinit or not.
+        If inode None then ipath is not an ioinit and Otherwise even if "" then
+        ipath comes from ioinit and  should handle inode logic.
+        This would puts all the framer inode prepend
+        logic in one place and make it easier to climb the aux outline
+        or later add frame inodes
+
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
             parts = ipath.split('.')  # assume ipath is not empty
