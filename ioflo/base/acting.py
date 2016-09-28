@@ -218,7 +218,7 @@ class Act(object):
             self.parms.update(self.actor._resolve(**self.parms)) # resolve sub acts
             self.actor._prepare(**self.parms)
 
-    def resolvePath(self, ipath, ival=None, iown=None, warn=False):
+    def resolvePath(self, ipath, ival=None, iown=None, inode=None, warn=False):
         """
         Returns resolved Share or Node instance from ipath
         ipath may be path name of share or node
@@ -230,6 +230,8 @@ class Act(object):
         ival is optional value for share
         iown is optional ownership if True then overwrite if exists
                otherwise do not overwrite
+
+        inode is optional inode value for ipath used for ioinits
 
         if warn then will complain if the share is created.
 
@@ -291,7 +293,7 @@ class Act(object):
 
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
-            if not ipath.startswith('.'): # not reconciled so do relative substitutions
+            if not ipath.startswith('.'):  # not reconciled so do relative substitutions
                 parts = ipath.split('.')
                 if parts[0] == 'me':  #  framer inode relative addressing
                     if not self.frame:
@@ -328,9 +330,9 @@ class Act(object):
                     if not frinode:  # empty frinode so use default actor relative
                         frinode = "framer.me.frame.me.actor.me"
                     if frinode:
-                        finparts = frinode.split('.')
-                        if finparts:
-                            parts = finparts + parts
+                        frinparts = frinode.split('.')
+                        if frinparts:
+                            parts = frinparts + parts
                     ipath = '.'.join(parts)
 
             if not ipath.startswith('.'): # not reconciled so do relative substitutions
@@ -814,7 +816,7 @@ class Actor(object):
                 raise excepting.ResolveError("ResolveError: Missing act context"
                         " to resolve relative pathname.", ipath, self,
                         self._act.human, self._act.count)
-            ipath = self._act.resolvePath(ipath, ival, iown, warn)
+            ipath = self._act.resolvePath(ipath=ipath, ival=ival, iown=iown, warn=warn)
 
         return ipath
 
