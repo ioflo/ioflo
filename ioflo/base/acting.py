@@ -294,58 +294,77 @@ class Act(object):
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
             if not ipath.startswith('.'):  # not reconciled so do relative substitutions
+                if not self.frame:
+                    raise excepting.ResolveError("ResolveError: Missing frame context"
+                                             " to resolve relative pathname.", ipath, self,
+                                             self.human, self.count)
+                if not self.frame.framer:
+                    raise excepting.ResolveError("ResolveError: Missing framer context"
+                                                 " to resolve relative pathname.", ipath, self.frame,
+                                                 self.human, self.count)
+
+                frame = self.frame
+                framer = self.frame.framer
+                finode = framer.inode  # inode of framer
+                fparts = finode.rstrip(".").split(".")
+                if framer.main:  # aux framer so special meaning of main or mine
+                    if finode == "mine":  # don't prepend main framer inode
+                        fparts = []  # ".".join([]) == ""
+                    elif finode == "main":  # replace finode with main framer inode
+                        mainer = framer.main.framer  # main frame's framer eg main framer
+                        minode = mainer.inode
+                        while mainer.main and minode == "main":  # has main frame and finode is 'main'
+                            mainer = mainer.main.framer  # walk up mainer link
+                            minode = mainer.inode  # substitude main for mainer.inode
+                        fparts = minode.rstrip(".").split(".") if minode else []
+                        # if minode startwith "." then fiparts[0] == ""
+                        # if minode empty then fiparts == []
+                        while mainer.main and ((not fparts) or fparts[0]):  # has main frame and not absolute
+                            if fparts and fparts[0] == 'me':  # finode relative
+                                del fparts[0]  # remove 'me'
+                            mainer = mainer.main.framer  # walk up mainer link
+                            mparts = mainer.inode.rstrip(".").split(".") if minode else []
+                            fparts = mparts.extend(fparts)
+
+                    else:  # while not absolute walk up mainer link
+                        fparts = finode.rstrip(".").split(".") if finode else []
+                        # if finode startwith "." then fiparts[0] == ""
+                        # if finode empty then fiparts == []
+                        mainer = framer.main.framer  # main frame's framer eg main framer
+                        while mainer.main and ((not fparts) or fparts[0]):  # has main frame and not absolute
+                            if fparts and fparts[0] == 'me':  # finode relative
+                                del fparts[0]  # remove 'me'
+                            mainer = mainer.main.framer  # walk up mainer link
+                            mparts = mainer.inode.rstrip(".").split(".") if minode else []
+                            fparts = mparts.extend(fparts)
+
+                finode = ".".join(fparts)  # ".".join([]) == ".".join([""]) == ""
+
+
+
+                if inode is not None:  # process actor inode
+                    iparts = inode.split(".") if inode else []
+
+
+
                 parts = ipath.split('.')
                 if parts[0] == 'me':  #  framer inode relative addressing
-                    if not self.frame:
-                        raise excepting.ResolveError("ResolveError: Missing frame context"
-                                " to resolve relative pathname.", ipath, self,
-                                self.human, self.count)
-                    if not self.frame.framer:
-                        raise excepting.ResolveError("ResolveError: Missing framer context"
-                                " to resolve relative pathname.", ipath, self.frame,
-                                self.human, self.count)
+
                     del parts[0]
 
-                    frinode = ''  # inode of framer
-                    framer = self.frame.framer
-                    frinode = framer.inode
-                    if framer.main:  # aux framer so special meaning of main or mine
-                        mainer = framer.main.framer  # main frame's framer eg main framer
-                        if frinode == "main":  # replace frinode with main framer inode
-                            frinode = mainer.inode
-                            while frinode == "main" and mainer.main:  # inode is main and has a main frame
-                                mainer = mainer.main.framer # walk up mainer links
-                                frinode = mainer.inode  # substitude main for mainer.inode
-                        elif frinode == "mine":  # don't prepend main framer inode
-                            frinode = ""
-                        else:  # prepend main framer inode (minode) if frinode relative and minode
-                            if not frinode.startswith('.'):  # frinode relative
-                                minode = framer.main.framer.inode
-                                minode = minode.rstrip('.')
-                                if minode:  # minode not empty
-                                    frinode = '.'.join([minode, frinode])
 
-
-                    frinode = frinode.rstrip('.')
-                    if not frinode:  # empty frinode so use default actor relative
-                        frinode = "framer.me.frame.me.actor.me"
-                    if frinode:
-                        frinparts = frinode.split('.')
-                        if frinparts:
-                            parts = frinparts + parts
+                    if not finode:  # empty finode so use default actor relative
+                        finode = "framer.me.frame.me.actor.me"
+                    if finode:
+                        fparts = finode.split('.')
+                        if fparts:
+                            parts = fparts + parts
                     ipath = '.'.join(parts)
 
             if not ipath.startswith('.'): # not reconciled so do relative substitutions
                 parts = ipath.split('.')
                 if parts[0] == 'framer':  #  relative addressing
-                    if not self.frame:
-                        raise excepting.ResolveError("ResolveError: Missing frame context"
-                            " to resolve relative pathname.", ipath, self,
-                                self.human, self.count)
-                    if not self.frame.framer:
-                        raise excepting.ResolveError("ResolveError: Missing framer context"
-                            " to resolve relative pathname.", ipath, self.frame,
-                                self.human, self.count)
+
 
                     if parts[1] == 'me': # current framer
                         parts[1] = self.frame.framer.name
