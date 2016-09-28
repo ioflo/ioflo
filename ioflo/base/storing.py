@@ -241,6 +241,8 @@ class Store(registering.Registrar):
         """
         if  not isinstance(share, Share):
             raise ValueError("Not Share %s" % share)
+        if  not share.name:
+            raise ValueError("Empty Share Name %s" % share.name)
 
         levels = share.name.strip('.').split('.') #strip leading and following '.' and split
         node = self.shares
