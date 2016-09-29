@@ -4460,7 +4460,7 @@ class Builder(object):
         """
         indexSave = index  # save it since we lookahead to see if "re"
         states = []
-        found = False  #f lag to indicate found 'in' wich indicates fields clause
+        found = False  # tag to indicate found 're'
         framer = None
 
         while index < len(tokens):
@@ -4474,7 +4474,7 @@ class Builder(object):
                 break  # do not append state == reserved to states
 
             index += 1  # eat last state token
-            state = StripQuotes(connective)  # candidate state
+            state = StripQuotes(connective)  # candidate state since re os quotes ok
             states.append(state)  # save it
 
         if not found:  # no state clause 're'
@@ -4512,7 +4512,6 @@ class Builder(object):
                     raise excepting.ParseError(msg, tokens, index)
 
                 index += 1
-
 
         return (state, framer, index)
 
