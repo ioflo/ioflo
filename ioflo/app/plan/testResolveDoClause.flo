@@ -12,6 +12,8 @@ framer test be active first test0
 
     frame test0 in timeout
       print "Hello World"
+      do doer at enter  # default inode
+      do doer at enter per trial trial
       do doer at enter with stuff 5
       do doer at enter from depth in .trial
       do doer at enter from .trial
