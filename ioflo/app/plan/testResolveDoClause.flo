@@ -12,6 +12,7 @@ framer test be active first test0
 
     frame test0 in timeout
       print "Hello World"
+      do doer at enter  # default inode
       do doer at enter with stuff 5
       do doer at enter from depth in .trial
       do doer at enter from .trial
@@ -93,6 +94,7 @@ framer test be active first test0
       do doer at enter via .absframered. of framer
       do doer at enter via .absframed. of frame
       do doer at enter via .absactored. of actor
+      do doer at enter  # default inode
       go next
 
   frame done

@@ -1,0 +1,26 @@
+#  Tests do inode with via and framer via
+
+house testDoViaPer
+
+  framer test be active first test via .seeme
+    frame timeout
+      go abort if elapsed >= 3.0
+
+      frame test in timeout
+        do doer param at enter via .rooted per color red
+        do doer param at enter via .rooted per color me.red
+        do doer param at enter via unrooted per color red
+        do doer param at enter via unrooted per color me.red
+        do doer param at enter via me.unrooted per color red
+        do doer param at enter via me.unrooted per color me.red
+
+        go next
+
+    frame done
+      print "Success"
+      bid stop all
+
+    frame abort
+      print "Failure"
+      put "Resolve Do" into meta.failure
+      bid stop all
