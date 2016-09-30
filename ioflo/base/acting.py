@@ -306,65 +306,53 @@ class Act(object):
                     raise excepting.ResolveError("ResolveError: Missing framer context"
                                                  " to resolve relative pathname.", ipath, self.frame,
                                                  self.human, self.count)
-
                 frame = self.frame
                 framer = self.frame.framer
-                finode = framer.inode  # inode of framer
-                fparts = finode.rstrip(".").split(".")
-                if framer.main:  # aux framer so special meaning of main or mine
-                    if finode == "mine":  # don't prepend main framer inode
-                        fparts = []  # ".".join([]) == ""
-                    elif finode == "main":  # replace finode with main framer inode
-                        mainer = framer.main.framer  # main frame's framer eg main framer
-                        minode = mainer.inode
-                        while mainer.main and minode == "main":  # has main frame and finode is 'main'
-                            mainer = mainer.main.framer  # walk up mainer link
-                            minode = mainer.inode  # substitude main for mainer.inode
-                        fparts = minode.rstrip(".").split(".") if minode else []
-                        # if minode startwith "." then fiparts[0] == ""
-                        # if minode empty then fiparts == []
-                        while mainer.main and ((not fparts) or fparts[0]):  # has main frame and not absolute
-                            if fparts:
-                                if fparts[0] == 'framer':  # framer relative
-                                    break  # handle below
-                                if fparts[0] == 'me':  # finode relative
-                                    del fparts[0]  # remove 'me'
-                            mainer = mainer.main.framer  # walk up mainer link
-                            minode = mainer.inode
-                            mparts = minode.rstrip(".").split(".") if minode else []
-                            fparts = mparts + fparts  # not extend in place
+                minode = framer.inode  # inode of framer first pass minode
+                fparts = minode.inode.rstrip(".").split(".") if minode else []
+                mainer = framer.main.framer if framer.main else None  # main frame's framer
+                # if mainer and not (absolute or framer relative)
+                # then fromer is aux framer so walk up mains processing finodes
+                # finode first because used by both inode and ipath logic below
+                while mainer and (not fparts or fparts[0] not in ("", "framer")):
+                    # five aux finode cases:
+                    # absolute: fparts[0] = "",
+                    # framer relative: fparts[0] == "framer",
+                    # main: minode == "main"  first pass minode = finode
+                    # me relative: fparts[0] == "me",
+                    # empty: fparts == [],
+                    # relative: otherwise
 
-                    else:  # while not absolute walk up mainer link
-                        fparts = finode.rstrip(".").split(".") if finode else []
-                        # if finode startwith "." then fiparts[0] == ""
-                        # if finode empty then fiparts == []
-                        mainer = framer.main.framer  # main frame's framer eg main framer
-                        while mainer.main and ((not fparts) or fparts[0]):  # has main frame and not absolute
-                            if fparts:
-                                if fparts[0] == 'framer':  # framer relative
-                                    break  # handle below
-                                if fparts[0] == 'me':  # finode relative
-                                    del fparts[0]  # remove 'me'
-                            mainer = mainer.main.framer  # walk up mainer link
-                            minode = mainer.inode
-                            mparts = minode.rstrip(".").split(".") if minode else []
-                            fparts = mparts + fparts  # not extend in place
+                    # if not fparts or (fparts[0] != "me" and mparts != ["main"]):
+                        # future process frame via upper here
+                        # else skip frame via upper
 
-                finode = ".".join(fparts)  # ".".join([]) == ".".join([""]) == ""
+                    # use minode == "main" here instead of mparts == ["main"] because
+                    # mparts == ["main"] for minode in ("main", "main.")
+                    if fparts and (fparts[0] == "me" or minode == "main"):
+                        del fparts[0]  # note fparts[0] = mparts[0] == minode
+                    minode = mainer.inode
+                    mparts = minode.rstrip(".").split(".") if minode else []
+                    fparts = mparts + fparts  # prepend mparts
+                    mainer = framer.main.framer if framer.main else None
 
-                # already know from above not absolute
+                if fparts and fparts[0] == "me" :
+                    del fparts[0]  # me not allowed as initial inode
+
+                # "" == ".".join([]) == ".".join([""])
+
+                # already know from above parts not absolute
                 if parts[0] != 'me' and parts[0] != 'framer' and inode is not None:
-                    # prepend inode
+                    # prepend inode logic
                     iparts = inode.rstrip(".").split(".") if inode else []
-                    if not iparts and not finode:  # use default inode
+                    if not iparts and not fparts:  # use default inode
                         iparts = "framer.me.frame.me.actor.me".split(".")
                     parts = iparts + parts  # not extend in place
 
-                if parts and parts[0] and parts[0] != 'framer':  # not absolute or framer relative
-                    # prepend finode
+                if parts and parts[0] not in ("", "framer"):  # not absolute or framer relative
                     if parts[0] == 'me':
                         del parts[0]
-                    parts = fparts + parts  # not extend in place
+                    parts = fparts + parts  # prepend fparts
 
             if parts and parts[0]:  # not absolute so do relative substitutions
                 if parts[0] == 'framer':  #  framer relative addressing

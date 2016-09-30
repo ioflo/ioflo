@@ -1,20 +1,19 @@
 #  Tests do inode with via and framer via
 
-house testDoViaPer
+house testNestedVia
 
-  framer test be active first test via .seeme
+  framer test be active first nest via top
     frame timeout
       go abort if elapsed >= 3.0
 
-      frame test in timeout
-        do doer param at enter via .rooted per color red
-        do doer param at enter via .rooted per color me.red
-        do doer param at enter via unrooted per color red
-        do doer param at enter via unrooted per color me.red
-        do doer param at enter via me.unrooted per color red
-        do doer param at enter via me.unrooted per color me.red
-
-        go next
+      frame nest in timeout
+        print clonerA
+        do doer param at enter via testnest per color red  # top.testnest.red
+        do doer param at enter via testnest per color me.red  # top.red
+        do doer param at enter via me.testnest per color red  # top.testnest.red
+        do doer param at enter per color red  # top.red
+        aux mootA as cloneA
+        go next if cloneA is done
 
     frame done
       print "Success"
@@ -22,5 +21,43 @@ house testDoViaPer
 
     frame abort
       print "Failure"
-      put "Resolve Do" into meta.failure
+      put "Nested Via" into meta.failure
       bid stop all
+
+
+  framer mootA be moot via me.a
+    frame AA
+      print AA
+      do doer param at enter via aa per flavor sweet  # top.a.aa.sweet
+      do doer param at enter via aa per flavor me.sweet  # top.a.sweet
+      aux mootB as cloneB via mb.
+      go next if cloneB is done
+
+    frame AB
+      print AB
+      aux mootC as cloneC
+      go next if cloneC is done
+
+    frame AC
+      done
+
+
+  framer mootB be moot via b.
+    frame BA
+      print BA
+      do doer param at enter via ba per size big  # top.a.mb.ba.big
+      do doer param at enter via ba per size me.big  # top.a.mb.big
+      go next
+
+    frame BB
+      done
+
+  framer mootC be moot via c.
+    frame CA
+      print CA
+      do doer param at enter via ca per shape oval  # top.a.c.ca.oval
+      do doer param at enter via ca per shapr me.oval  # top.a.c.oval
+      go next
+
+    frame CB
+      done

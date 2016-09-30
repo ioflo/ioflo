@@ -47,5 +47,5 @@ def run(plan):
 
 
 if __name__ == '__main__':
-    run('testResolveDoClause.flo')
+    run('testNestedViaMain.flo')
 

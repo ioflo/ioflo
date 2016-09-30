@@ -1,0 +1,59 @@
+#  Tests do inode with via and framer via main
+
+house testNestedViaMain
+
+  framer test be active first nest via top
+    frame timeout
+      go abort if elapsed >= 3.0
+
+      frame nest in timeout
+        print clonerA
+        aux mootA as cloneA via main
+        go next if cloneA is done
+
+    frame done
+      print "Success"
+      bid stop all
+
+    frame abort
+      print "Failure"
+      put "Nested Via" into meta.failure
+      bid stop all
+
+
+  framer mootA be moot via me.a
+    frame AA
+      print AA
+      do doer param at enter via aa per flavor sweet  # top.aa.sweet
+      do doer param at enter via aa per flavor me.sweet  # top.sweet
+      aux mootB as cloneB via mb.
+      go next if cloneB is done
+
+    frame AB
+      print AB
+      aux mootC as cloneC via main
+      go next if cloneC is done
+
+    frame AC
+      done
+
+
+  framer mootB be moot via b.
+    frame BA
+      print BA
+      do doer param at enter via ba per size big  # top.mb.ba.big
+      do doer param at enter via ba per size me.big  # top.mb.big
+      go next
+
+    frame BB
+      done
+
+  framer mootC be moot via c.
+    frame CA
+      print CA
+      do doer param at enter via ca per shape oval  # top.ca.oval
+      do doer param at enter via ca per shapr me.oval  # top.oval
+      go next
+
+    frame CB
+      done

@@ -227,18 +227,23 @@ class Framer(tasking.Tasker):
                                      human=human,
                                      count=count)
             clone = original.clone(name=clone, schedule=schedule)
-            if inode:  # only update if new inode not empty
-                if clone.inode:  # old inode provided
-                    if inode == 'mine':  # do not override the old inode
-                        if (clone.inode != 'mine' and
-                                clone.inode != 'main' and
-                                not clone.inode.startswith('.')):  # old relative
-                            clone.inode = ".{0}".format(clone.inode)  # make absolute
-                        # otherwise use the old inode
-                    else:  # new inode overrides
-                        clone.inode = inode
-                else:  # replace
-                    clone.inode = inode
+
+            # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
+            if inode == "mine":  # new == "mine" so use old to determine
+                if clone.inode == "mine":  # effective "mine"
+                    clone.inode = ""  # so make empty
+                elif (clone.inode != "main" and
+                        not clone.inode.startswith('.')):  # relative and not "main"
+                    clone.inode = ".{0}".format(clone.inode)  # so make absolute
+                    # otherwise old == "main" or absolute
+                    # leave old as is which may be "main"
+                    # when "main" will get substitued later for main framer inode
+            elif inode == "":  # empty so use old to determine
+                if clone.inode == "mine":  # effective "mine"
+                    clone.inode = ""  # so make empty
+                # otherwise leave old as is
+            else:  # replace old with new
+                clone.inode = inode
 
             clone.original = False  # main frame will be fixed
             self.store.house.resolvables.append(clone)
@@ -1007,18 +1012,23 @@ class Frame(registering.StoriedRegistrar):
                 self.framer.assignFrameRegistry()  # restore original.clone changes above
                 clone.original = False  # main frame will be fixed
                 clone.insular =  True #  local to this framer
-                if inode:  # only update if new inode not empty
-                    if clone.inode:  # old inode provided
-                        if inode == 'mine':  # do not override the old inode
-                            if (clone.inode != 'mine' and
-                                clone.inode != 'main' and
-                                not clone.inode.startswith('.')):  # old relative
-                                clone.inode = ".{0}".format(clone.inode)  # make absolute
-                            # otherwise use the old inode
-                        else:  # new inode overrides
-                            clone.inode = inode
-                    else:  # replace
-                        clone.inode = inode
+
+                # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
+                if inode == "mine":  # new == "mine" so use old to determine
+                    if clone.inode == "mine":  # effective "mine"
+                        clone.inode = ""  # so make empty
+                    elif (clone.inode != "main" and
+                            not clone.inode.startswith('.')):  # relative and not "main"
+                        clone.inode = ".{0}".format(clone.inode)  # so make absolute
+                        # otherwise old == "main" or absolute
+                        # leave old as is which may be "main"
+                        # when "main" will get substitued later for main framer inode
+                elif inode == "":  # empty so use old to determine
+                    if clone.inode == "mine":  # effective "mine"
+                        clone.inode = ""  # so make empty
+                    # otherwise leave old as is
+                else:  # replace old with new
+                    clone.inode = inode
 
                 self.auxes[i] = aux = clone
                 self.store.house.resolvables.append(clone)
