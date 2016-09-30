@@ -309,7 +309,7 @@ class Act(object):
                 frame = self.frame
                 framer = self.frame.framer
                 minode = framer.inode  # inode of framer first pass minode
-                fparts = minode.inode.rstrip(".").split(".") if minode else []
+                fparts = minode.rstrip(".").split(".") if minode else []
                 mainer = framer.main.framer if framer.main else None  # main frame's framer
                 # if mainer and not (absolute or framer relative)
                 # then fromer is aux framer so walk up mains processing finodes
@@ -325,7 +325,7 @@ class Act(object):
 
                     # if not fparts or (fparts[0] != "me" and mparts != ["main"]):
                         # future process frame via upper here
-                        # else skip frame via upper
+                    # else skip frame via upper
 
                     # use minode == "main" here instead of mparts == ["main"] because
                     # mparts == ["main"] for minode in ("main", "main.")
@@ -334,7 +334,7 @@ class Act(object):
                     minode = mainer.inode
                     mparts = minode.rstrip(".").split(".") if minode else []
                     fparts = mparts + fparts  # prepend mparts
-                    mainer = framer.main.framer if framer.main else None
+                    mainer = mainer.main.framer if mainer.main else None
 
                 if fparts and fparts[0] == "me" :
                     del fparts[0]  # me not allowed as initial inode
