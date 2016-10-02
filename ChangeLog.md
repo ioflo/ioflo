@@ -2,9 +2,18 @@
 CHANGE LOG
 -------------------
 --------
-201609XX
+20161002
 --------
 1.6.2
+
+Aux via now supports nested auxes and will walk up the main framer outline
+prepending any main, me, or relative addressed via clauses.
+If main or me skip to the main framer via of the current framer.
+If relative prepend the framer via. If absolute or starts with framer then
+terminate prepend at that point.
+
+Refactored algorithm and added tests for correctness. handles main and not main
+and relative nested.
 
 Refactored the initio processing and resolvePaths to support multi level via
 Also normalized syntax of framer inode relative "me." Store paths.
