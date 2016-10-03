@@ -232,12 +232,12 @@ class Framer(tasking.Tasker):
             if inode == "mine":  # new == "mine" so use old to determine
                 if clone.inode == "mine":  # effective "mine"
                     clone.inode = ""  # so make empty
-                elif (clone.inode != "main" and
-                        not clone.inode.startswith('.')):  # relative and not "main"
+                elif (clone.inode and clone.inode != "main" and
+                        not clone.inode.startswith('.')):  # relative not empty and not "main"
                     clone.inode = ".{0}".format(clone.inode)  # so make absolute
-                    # otherwise old == "main" or absolute
-                    # leave old as is which may be "main"
-                    # when "main" will get substitued later for main framer inode
+                # otherwise old == "main" or absolute or empty
+                # leave old as is which may be "main"
+                # when "main" will get substitued later for main framer inode
             elif inode == "":  # empty so use old to determine
                 if clone.inode == "mine":  # effective "mine"
                     clone.inode = ""  # so make empty
@@ -1017,12 +1017,12 @@ class Frame(registering.StoriedRegistrar):
                 if inode == "mine":  # new == "mine" so use old to determine
                     if clone.inode == "mine":  # effective "mine"
                         clone.inode = ""  # so make empty
-                    elif (clone.inode != "main" and
-                            not clone.inode.startswith('.')):  # relative and not "main"
+                    elif (clone.inode and clone.inode != "main" and
+                            not clone.inode.startswith('.')):  # relative not empty and not "main"
                         clone.inode = ".{0}".format(clone.inode)  # so make absolute
-                        # otherwise old == "main" or absolute
-                        # leave old as is which may be "main"
-                        # when "main" will get substitued later for main framer inode
+                    # otherwise old == "main" or absolute or empty
+                    # leave old as is which may be "main"
+                    # when "main" will get substitued later for main framer inode
                 elif inode == "":  # empty so use old to determine
                     if clone.inode == "mine":  # effective "mine"
                         clone.inode = ""  # so make empty
