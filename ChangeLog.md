@@ -6,6 +6,9 @@ CHANGE LOG
 --------
 1.6.3
 
+Added support for nested frame inode contexts using new via clause on frame
+declaration.  frame name via inode
+
 Fix bugs
 
 

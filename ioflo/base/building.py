@@ -1266,10 +1266,10 @@ class Builder(object):
     def buildFramer(self, command, tokens, index):
         """Create a new framer and make it the current one
 
-           framework framername [be (active, inactive, aux, slave)] [at period]
+           framer framername [be (active, inactive, aux, slave)] [at period]
                                 [first frame] [via inode]
-           framework framername be active at 0.0
-           framework framername
+           framer framername be active at 0.0
+           framer framername
         """
         if not self.currentHouse:
             msg = "Error building %s. No current house." % (command,)
@@ -1418,10 +1418,10 @@ class Builder(object):
     def buildFrame(self, command, tokens, index):
         """Create frame and attach to over frame if indicated
 
-           frame frameName
-           frame frameName overName
+           frame framename [in over] [via inode]
 
-           the frameName next is reserved
+
+           framename cannot be "next" which is reserved
 
         """
         if not self.currentStore:
