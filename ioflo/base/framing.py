@@ -749,6 +749,7 @@ class Frame(registering.StoriedRegistrar):
 
         instance attributes
             .framer = link to framer that executes this frame
+            .inode = inode path to prepend to data store path refs
             .over = link to frame immediately above this one in hierarchy
             .under = property link to primary frame immediately below this one in hierarchy
             .unders = list of all frames immediately below this one
@@ -772,7 +773,7 @@ class Frame(registering.StoriedRegistrar):
     Counter = 0
     Names = odict()
 
-    def __init__(self, framer = None, **kw):
+    def __init__(self, framer=None, inode='', **kw):
         """Initialize instance.
 
         """
@@ -781,14 +782,15 @@ class Frame(registering.StoriedRegistrar):
 
         super(Frame,self).__init__(**kw)
 
-        self.framer = framer #link to framer that executes this frame
-        self.over = None # link to frame above this one, None if no frame above
-        self.unders = [] #list of frames below this one, first one is primary under
-        self.outline = [] #list of frames in outline top down order.
-        self.head = [] #list of frames from top down to self
-        self.human = '' #string of names of frames in outline '>' separated
-        self.headHuman = '' #string of names of frames in head '>' separated
-        self.next_ = None #next frame used by builder for transitions to next
+        self.framer = framer  # link to framer that executes this frame
+        self.inode = inode  # path fragment to prepend to act store path refs
+        self.over = None  # link to frame above this one, None if no frame above
+        self.unders = []  # list of frames below this one, first one is primary under
+        self.outline = []  # list of frames in outline top down order.
+        self.head = []  # list of frames from top down to self
+        self.human = ''  # string of names of frames in outline '>' separated
+        self.headHuman = ''  # string of names of frames in head '>' separated
+        self.next_ = None   #next frame used by builder for transitions to next
 
         self.beacts = [] #list of enter need acts callables that return True or False
         self.preacts = [] #list of pre-recurring acts  callables upon pre recurrence

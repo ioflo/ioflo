@@ -1432,6 +1432,8 @@ class Builder(object):
             msg = "Error building %s. No current framer." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
+        inode = ''
+
         try:
             name = tokens[index]
             index +=1
@@ -1447,6 +1449,10 @@ class Builder(object):
                 if connective == 'in':
                     over = tokens[index]
                     index +=1
+
+                elif connective == 'via':
+                    inode, index = self.parseIndirect(tokens, index, node=True)
+
                 else:
                     msg = "Error building %s. Bad connective got %s." % (command, connective)
                     raise excepting.ParseError(msg, tokens, index)
@@ -1468,8 +1474,9 @@ class Builder(object):
                     (command, self.currentFramer.name, name)
             raise excepting.ParseError(msg, tokens, index)
         else:
-            frame = framing.Frame(name = name, store = self.currentStore,
-                                  framer = self.currentFramer.name)
+            frame = framing.Frame(name=name, store = self.currentStore,
+                                  framer=self.currentFramer.name,
+                                  inode=inode)
 
             if over:
                 frame.over = over #need to resolve later
