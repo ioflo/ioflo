@@ -813,7 +813,8 @@ class Frame(registering.StoriedRegistrar):
         """
         clone = Frame(name=self.name,
                       store=self.store,
-                      framer=framer.name) # only name so resolve framer later
+                      framer=framer.name,  # only name so resolve framer later
+                      inode=self.inode)
         console.terse("           Cloning Frame '{0}' into Framer '{1}'\n".format(
                                clone.name, framer.name))
 

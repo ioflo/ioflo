@@ -1,0 +1,77 @@
+#  Tests do inode with via and framer via me
+
+house testNestedViaMain
+
+  framer test be active first start via top
+    frame timeout
+      go abort if elapsed >= 3.0
+
+      frame start in timeout via pop
+        put 1 into slop
+        put 2 into me.slop
+        go next if .top.pop.slop == 1 and .top.slop == 2
+
+      frame horse in timeout via bee
+
+        frame cart in horse via tail
+          put 3 into hay
+          go next if .top.bee.tail.hay == 3
+
+        frame wagon in horse via me.hoof
+          put 4 into oat
+          put 5 into me.corn
+          go next if .top.hoof.oat == 4 and .top.corn == 5
+
+      frame nest in timeout
+        print clonerA
+        aux mootA as cloneA via me
+        go next if cloneA is done
+
+    frame done
+      print "Success"
+      bid stop all
+
+    frame abort
+      print "Failure"
+      put "Nested Via" into meta.failure
+      bid stop all
+
+
+  framer mootA be moot via me.a
+    frame Z via zip
+      frame AA in Z via ape
+        print AA
+        do doer param at enter via aa per flavor sweet  # top.zip.ape.aa.sweet
+        do doer param at enter via aa per flavor me.sweet  # top.sweet
+        aux mootB as cloneB via mb.
+        go next if cloneB is done
+
+      frame AB in Z via me.ball
+        print AB
+        aux mootC as cloneC via me
+        go next if cloneC is done
+
+    frame AC
+      done
+
+
+  framer mootB be moot via b.
+    frame W via me.w
+      frame BA in W via wba
+        print BA
+        do doer param at enter via ba per size big  # top.zip.ape.mb.w.wba.ba.big
+        do doer param at enter via ba per size me.big  # top.zip.ape.mb.big
+        go next
+
+    frame BB
+      done
+
+  framer mootC be moot via c.
+    frame CA via cat
+      print CA
+      do doer param at enter via ca per shape oval  # top.cat.ca.oval
+      do doer param at enter via ca per shape me.oval  # top.oval
+      go next
+
+    frame CB
+      done
