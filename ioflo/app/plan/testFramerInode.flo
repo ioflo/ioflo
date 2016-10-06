@@ -34,11 +34,11 @@ framer test be active first test0 via .top.
       go next if elapsed >= 0.0 and pub1 is done
 
     frame pub2 in timeout
-      aux pub as pub2 via main
+      aux pub as pub2 via me
       go next if pub2 is done
 
     frame pub3 in timeout
-      aux pub as pub3 via mine
+      aux pub as pub3  # empty via
       go next if pub3 is done
 
     frame pub4 in timeout
@@ -54,11 +54,11 @@ framer test be active first test0 via .top.
       go next if cub1 is done
 
     frame cub2 in timeout
-      aux cub as cub2 via mine
+      aux cub as cub2 # empty via
       go next if cub2 is done
 
     frame bub1 in timeout
-      aux bub as bub1 via mine
+      aux bub as bub1 # empty via
       go next if bub1 is done
 
     frame bub2 in timeout
@@ -66,11 +66,11 @@ framer test be active first test0 via .top.
       go next if bub2 is done
 
     frame bub3 in timeout
-      aux bub as bub3 via main
+      aux bub as bub3 via me
       go next if bub3 is done
 
     frame lub1 in timeout
-      aux lub as lub1 via mine
+      aux lub as lub1  # empty via
       go next if lub1 is done
 
     frame lub2 in timeout
@@ -82,7 +82,7 @@ framer test be active first test0 via .top.
       go next if lub3 is done
 
     frame lub4 in timeout
-      aux lub as lub4 via main
+      aux lub as lub4 via me
       go next if lub4 is done
 
   frame done
@@ -95,7 +95,7 @@ framer test be active first test0 via .top.
     bid stop all
 
 
-framer sub be moot first start via main
+framer sub be moot first start # empty via
   frame start
     do doer param at enter via cop
     do doer param at enter via .cop
@@ -143,7 +143,7 @@ framer bub be moot first start via .pop
     done me
 
 
-framer lub be moot first start via mine
+framer lub be moot first start # empty via
   frame start
     do doer param at enter via cop
     do doer param at enter via .cop

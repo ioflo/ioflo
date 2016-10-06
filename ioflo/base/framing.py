@@ -229,21 +229,8 @@ class Framer(tasking.Tasker):
             clone = original.clone(name=clone, schedule=schedule)
 
             # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
-            if inode == "mine":  # new == "mine" so use old to determine
-                if clone.inode == "mine":  # effective "mine"
-                    clone.inode = ""  # so make empty
-                elif (clone.inode and clone.inode != "main" and
-                        not clone.inode.startswith('.')):  # relative not empty and not "main"
-                    clone.inode = ".{0}".format(clone.inode)  # so make absolute
-                # otherwise old == "main" or absolute or empty
-                # leave old as is which may be "main"
-                # when "main" will get substitued later for main framer inode
-            elif inode == "":  # empty so use old to determine
-                if clone.inode == "mine":  # effective "mine"
-                    clone.inode = ""  # so make empty
-                # otherwise leave old as is
-            else:  # replace old with new
-                clone.inode = inode
+            if inode:  # new != "" so resultant is new
+                clone.inode = inode  # replace old with new
 
             clone.original = False  # main frame will be fixed
             self.store.house.resolvables.append(clone)
@@ -1014,21 +1001,8 @@ class Frame(registering.StoriedRegistrar):
                 clone.insular =  True #  local to this framer
 
                 # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
-                if inode == "mine":  # new == "mine" so use old to determine
-                    if clone.inode == "mine":  # effective "mine"
-                        clone.inode = ""  # so make empty
-                    elif (clone.inode and clone.inode != "main" and
-                            not clone.inode.startswith('.')):  # relative not empty and not "main"
-                        clone.inode = ".{0}".format(clone.inode)  # so make absolute
-                    # otherwise old == "main" or absolute or empty
-                    # leave old as is which may be "main"
-                    # when "main" will get substitued later for main framer inode
-                elif inode == "":  # empty so use old to determine
-                    if clone.inode == "mine":  # effective "mine"
-                        clone.inode = ""  # so make empty
-                    # otherwise leave old as is
-                else:  # replace old with new
-                    clone.inode = inode
+                if inode:  # new != "" so resultant is new
+                    clone.inode = inode  # replace old with new
 
                 self.auxes[i] = aux = clone
                 self.store.house.resolvables.append(clone)

@@ -318,18 +318,15 @@ class Act(object):
                     # five aux finode cases:
                     # absolute: fparts[0] = "",
                     # framer relative: fparts[0] == "framer",
-                    # main: minode == "main"  first pass minode = finode
-                    # me relative: fparts[0] == "me",
                     # empty: fparts == [],
+                    # me relative: fparts[0] == "me",
                     # relative: otherwise
 
-                    # if not fparts or (fparts[0] != "me" and mparts != ["main"]):
-                        # future process frame via upper here
-                    # else skip frame via upper
+                    # if not fparts or (fparts[0] != "me":
+                        # future process frame via inode upper here
+                    # else skip process of frame via inode upper
 
-                    # use minode == "main" here instead of mparts == ["main"] because
-                    # mparts == ["main"] for minode in ("main", "main.")
-                    if fparts and (fparts[0] == "me" or minode == "main"):
+                    if fparts and fparts[0] == "me":
                         del fparts[0]  # note fparts[0] = mparts[0] == minode
                     minode = mainer.inode
                     mparts = minode.rstrip(".").split(".") if minode else []

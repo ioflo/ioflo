@@ -1267,7 +1267,7 @@ class Builder(object):
         """Create a new framer and make it the current one
 
            framework framername [be (active, inactive, aux, slave)] [at period]
-                                [first frame] [via (main, mine, inode)]
+                                [first frame] [via inode]
            framework framername be active at 0.0
            framework framername
         """
@@ -1616,9 +1616,9 @@ class Builder(object):
               aux framername  if [not] need [and [not] need ...]
 
            Cloned Conditional Auxiliary:
-              aux framername as (mine, clonedauxname) [via (main, mine, inode)]
+              aux framername as (mine, clonedauxname) [via inode]
                              if [not] need
-              aux framername as (mine, clonedauxname) [via (main, mine, inode)]
+              aux framername as (mine, clonedauxname) [via inode]
                              if [not] need [and [not] need ...]
 
         """
@@ -1690,7 +1690,7 @@ class Builder(object):
                 self.currentFramer.moots.append(data)  # need to resolve early
                 aux = clone # assign aux to clone name as original aux is to be cloned
                 # named clones must be resolved before any frames get resolved
-                # and are added to the framer.names so they can be referenced
+                # and are added to the class Framer.names so they can be referenced
 
         if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging

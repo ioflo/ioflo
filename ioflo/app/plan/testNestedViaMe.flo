@@ -1,4 +1,4 @@
-#  Tests do inode with via and framer via main
+#  Tests do inode with via and framer via me
 
 house testNestedViaMain
 
@@ -8,7 +8,7 @@ house testNestedViaMain
 
       frame nest in timeout
         print clonerA
-        aux mootA as cloneA via main
+        aux mootA as cloneA via me
         go next if cloneA is done
 
     frame done
@@ -31,7 +31,7 @@ house testNestedViaMain
 
     frame AB
       print AB
-      aux mootC as cloneC via main
+      aux mootC as cloneC via me
       go next if cloneC is done
 
     frame AC
