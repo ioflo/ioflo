@@ -387,7 +387,7 @@ class NeedMarker(Need):
         else:
             parts.append(frame.name)  # default is framername.framename
 
-        marker = ".".join(parts)
+        marker = "<".join(parts)
         parms['marker'] = marker
 
         if not share.marks.get(marker):

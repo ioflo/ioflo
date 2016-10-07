@@ -2,13 +2,20 @@
 CHANGE LOG
 -------------------
 --------
+201610XX
+--------
+1.6.5
+
+Changed default marker format from framername.framename to framername<framename
+to avoid confusion with data stor path naming conventions. Also in prep for
+name spaced cloned auxiliaries framername convention.
+
+--------
 20161007
 --------
 1.6.4
 
 Fixed bug in how local ioinit inode path was computed.
-
-
 
 --------
 20161006
@@ -19,7 +26,6 @@ Added support for nested frame inode contexts using new via clause on frame
 declaration.  frame name via inode
 
 Fix bugs
-
 
 --------
 20161002
@@ -51,8 +57,6 @@ Some refactoring of .resolve
 
 Some more tests flos
 
-
-
 --------
 20160924
 --------
@@ -75,7 +79,6 @@ Added reuse option to the logger declaration to reuse log files on reruns. This
 is most useful when rotation is enabled.
 
 Added minimum size option to logger declaration for log rotation to occur
-
 
 --------
 20160910
@@ -201,7 +204,6 @@ New Syntax:
         value
         [(value, field) in] indirect
 
-
 --------
 20160528
 --------
@@ -235,8 +237,6 @@ as redundant to "with" and 'from'
 Added "frame" modifier to if update/change need syntax to be consistent with
 rear raze
 
-
-
 --------
 20160506
 --------
@@ -247,9 +247,7 @@ Fix some bugs
 Added reverse parameter to (un)bytify (un)packify packifyinto to make is easier
 to deal with little endian
 
-
-
---------
+---
 20160504
 --------
 1.5.3
@@ -266,7 +264,6 @@ comments.
 Added constraint that Tasker, Framer, Frame names can not be Reserved words
 this is to make syntax highlighting easier in the future. Reserved words (connectives
 and comparisons) act like keyworks for that purpose and verbs act like built ins
-
 
 --------
 20160503
@@ -308,7 +305,6 @@ Added signExtend function
 
 Fixed Incomer TCP connection to have refreshable attribute to refresh connection
 timeout whenever there is activity on the connection.
-
 
 ---------
 20151208
