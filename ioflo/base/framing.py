@@ -110,6 +110,7 @@ class Framer(tasking.Tasker):
         self.frameCounter = 0 #frame name registry counter for framer
 
         self.moots = []  # moot framers to be cloned
+        self.clones = odict()  # cloned framers keyed by long name of clone
         self.inode = ''  # framer inode prefix
 
     def clone(self, name, period=0.0, schedule=AUX):
