@@ -2,7 +2,16 @@
 CHANGE LOG
 -------------------
 --------
-201610XX
+20161007
+--------
+1.6.4
+
+Fixed bug in how local ioinit inode path was computed.
+
+
+
+--------
+20161006
 --------
 1.6.3
 
