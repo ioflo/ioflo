@@ -226,9 +226,13 @@ class Act(object):
         iown is optional ownership if True then overwrite if exists
                otherwise do not overwrite
 
-        inode is optional inode value for ipath used for ioinits
+        inode is optional actor inode value for ipath used for ioinits
 
         if warn then will complain if the share is created.
+
+        When ipath is empty then resolvePath returns the effective context node
+        path given the actor inode and nested frame inodes and framer inodes
+
 
         It allows for substitution into ipath of
         inode, framer,  main framer, frame, main frame, or actor relative names.
@@ -296,16 +300,15 @@ class Act(object):
         registry ioints are from the Actor.Ionints class variable
 
         So inode parameter to Act.resolvePaths inidcates if for ioinit or not.
-        If inode None then ipath is not an ioinit and Otherwise even if "" then
+        If inode None then ipath is not an actor ioinit and Otherwise even if "" then
         ipath comes from ioinit and  should handle inode logic.
         This would puts all the framer inode prepend
-        logic in one place and make it easier to climb the aux outline
-        or later add frame inodes
+        logic in one place and make it easier to climb the  frame and aux outline
 
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
             parts = ipath.split('.') if ipath else []  # [] if ipath is empty
-            node = True if not parts else False  # computing node path prefix to empty ipath for inode
+            noded = True if not parts else False  # return node path prefix context since empty ipath
             if not parts or parts and parts[0]:  # empty or not empty and not absolute so do relative substitutions
                 if not self.frame:
                     raise excepting.ResolveError("ResolveError: Missing frame context"
@@ -421,7 +424,7 @@ class Act(object):
 
             ipath = '.'.join(parts)
 
-            if node and ipath and not ipath.endswith("."):
+            if noded and ipath and not ipath.endswith("."):
                 ipath = "{0}.".format(ipath)
 
             if not self.frame.store:
