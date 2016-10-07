@@ -3422,7 +3422,7 @@ class Builder(object):
 
         Syntax:
            if taskername is done
-           if ([auxname, any, all) [in frame [(me, framename)]
+           if (auxname, any, all) [in frame [(me, framename)]
                           [in framer [(me, framername)]]] is done
            done tasker
         """

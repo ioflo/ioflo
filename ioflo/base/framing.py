@@ -65,7 +65,9 @@ class Framer(tasking.Tasker):
             .frameCounter = frame name registry counter
 
             .moots = list of moot framers to be cloned
+            .clones = odict of cloned auxes keyed by tag name of clone
             .inode = prefix string for inode ioinit of do verb objects in framer
+            .tage = main framer local unique clone tag when cloned
     """
     #Counter = 0
     #Names = {}
@@ -110,8 +112,9 @@ class Framer(tasking.Tasker):
         self.frameCounter = 0 #frame name registry counter for framer
 
         self.moots = []  # moot framers to be cloned
-        self.clones = odict()  # cloned framers keyed by long name of clone
+        self.clones = odict()  # cloned framers keyed by tag name of clone
         self.inode = ''  # framer inode prefix
+        self.tag = ''  # main framer local unique clone tag when cloned
 
     def clone(self, name, period=0.0, schedule=AUX):
         """ Return clone of self named name
