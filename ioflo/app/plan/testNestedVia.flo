@@ -12,7 +12,7 @@ house testNestedVia
         do doer param at enter via testnest per color me.red  # top.red
         do doer param at enter via me.testnest per color red  # top.testnest.red
         do doer param at enter per color red  # top.red
-        aux mootA as cloneA
+        aux mootA as cloneA via mine
         go next if cloneA is done
 
     frame done

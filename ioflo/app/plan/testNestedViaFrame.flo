@@ -49,6 +49,8 @@ house testNestedViaMain
       frame AB in Z via me.ball
         print AB
         aux mootC as cloneC via me
+        aux mootD as cloneD
+        aux mootE as cloneE via mine
         go next if cloneC is done
 
     frame AC
@@ -74,4 +76,24 @@ house testNestedViaMain
       go next
 
     frame CB
+      done
+
+  framer mootD be moot via d.
+    frame DA via dog
+      print DA
+      do doer param at enter via da per shape round  # top.ball.dog.da.round
+      do doer param at enter via da per shape me.round  # top.ball.round
+      go next
+
+    frame DB
+      done
+
+  framer mootE be moot via me.e
+    frame EA via eagle
+      print EA
+      do doer param at enter via ea per shape square  # top.e.eagle.ea.square
+      do doer param at enter via ea per shape me.square  # top.e.square
+      go next
+
+    frame EB
       done

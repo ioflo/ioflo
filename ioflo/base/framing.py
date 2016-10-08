@@ -233,7 +233,7 @@ class Framer(tasking.Tasker):
             clone = original.clone(name=clone, schedule=schedule)
 
             # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
-            if inode:  # new != "" so resultant is new
+            if inode != "mine":  # new != "mine" so resultant is new
                 clone.inode = inode  # replace old with new
 
             clone.original = False  # main frame will be fixed
@@ -1008,7 +1008,7 @@ class Frame(registering.StoriedRegistrar):
                 clone.insular =  True #  local to this framer
 
                 # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
-                if inode:  # new != "" so resultant is new
+                if inode != "mine":  # new != "mine" so resultant is new
                     clone.inode = inode  # replace old with new
 
                 self.auxes[i] = aux = clone

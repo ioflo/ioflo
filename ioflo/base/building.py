@@ -1698,6 +1698,10 @@ class Builder(object):
                 aux = clone # assign aux to clone name as original aux is to be cloned
                 # named clones must be resolved before any frames get resolved
                 # and are added to the class Framer.names so they can be referenced
+                # resolved by house.resolve -> house.resolveResolvables
+                #    -> framer.resolve -> framer.resolveMoots
+                # resolveMoots adds new resolveable framers to house.resolvables
+                # self.store.house.resolvables.append(clone)
 
         if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
