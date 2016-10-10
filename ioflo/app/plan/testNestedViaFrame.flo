@@ -1,6 +1,6 @@
 #  Tests do inode with via and framer via me
 
-house testNestedViaMain
+house testNestedViaFrame
 
   framer test be active first start via top
     frame timeout

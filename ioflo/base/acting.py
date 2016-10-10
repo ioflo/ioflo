@@ -362,29 +362,33 @@ class Act(object):
 
                 # "" == ".".join([]) == ".".join([""])
 
+                # over frame inode processing
+                frame = self.frame # start at current frame
+                oparts = frame.inode.rstrip(".").split(".") if frame.inode else []
+                while frame and (not oparts or oparts[0] not in ("", "framer")):
+                    if oparts and oparts[0] == "me":  # me relative
+                        del oparts[0]
+                        break  # skip any further over frames
+                    frame = frame.over
+                    if frame and frame.inode:
+                        oparts = frame.inode.rstrip(".").split(".") + oparts
+
                 # already know from above parts not absolute
                 if (self.inode is not None and (not parts or
                         parts[0] not in ("framer", "me"))):
                     # prepend act .inode logic
                     iparts = self.inode.rstrip(".").split(".") if self.inode else []
-                    if not iparts and not fparts:  # use default inode
+                    if not iparts and not oparts and not fparts:  # use default inode
                         iparts = "framer.me.frame.me.actor.me".split(".")
                     parts = iparts + parts  # prepend inode parts
 
                 if not parts or parts[0] not in ("", "framer"):  # not absolute or framer relative
                     if parts and parts[0] == 'me':  # skip frame.inode processing
                         del parts[0]  # parts could be empty now
-                    else:  # process frame.inode and walk up over if any
-                        frame = self.frame # start at current frame
-                        while frame and (not parts or parts[0] not in ("", "framer")):
-                            if frame.inode:
-                                parts = frame.inode.rstrip(".").split(".") + parts
-                            if parts and parts[0] == "me":
-                                del parts[0]
-                                break  # skip any further over frames
-                            frame = frame.over
+                    else:  # prepend over frame inodes
+                        parts = oparts + parts
                     if not parts or parts[0] not in ("", "framer"):
-                        parts = fparts + parts  # prepend fparts
+                        parts = fparts + parts  # prepend fparts framer inodes
 
             if parts and parts[0]:  # not absolute so do relative substitutions
                 if parts[0] == 'framer':  #  framer relative addressing
