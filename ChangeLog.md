@@ -6,9 +6,13 @@ CHANGE LOG
 --------
 1.6.5
 
+Changed default case for actor inode when act.inode empty and frame inode context
+empty and framer inode context empty
+
+Simplified semantics of aux as mine clause
+
 Changed default marker format from framername.framename to framername<framename
-to avoid confusion with data stor path naming conventions. Also in prep for
-name spaced cloned auxiliaries framername convention.
+to avoid confusion with data store path naming conventions.
 
 --------
 20161007
