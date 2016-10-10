@@ -35,11 +35,11 @@ class Act(object):
     """ Container class for actor resolve time initialization and runtime operation """
     __slots__ = ('frame', 'context', 'act', 'actor',
                  'registrar', 'inits', 'ioinits', 'parms',
-                 'prerefs', 'human', 'count')
+                 'prerefs', 'human', 'count', 'inode')
 
     def __init__(self, frame=None, context=None, act=None, actor=None,
                  registrar=None, inits=None, ioinits=None, parms=None,
-                 prerefs=None, human='', count=0, **kwa ):
+                 prerefs=None, human='', count=0, inode=None, **kwa ):
         """
         Initialization method for instance.
 
@@ -56,6 +56,7 @@ class Act(object):
             .prerefs = dictionary of init, ioinit, and parm refs to resolve
             .human = human friendly version of action declaration
             .count = line count in floscript of action declaration
+            .inode = actor level inode for ioinits if any
 
         Share path resolution
             act.resolve aggregates ioinits from registry,  act.ioinits, and act.prerefs
@@ -77,6 +78,7 @@ class Act(object):
         self.prerefs = prerefs if prerefs else None # store None if empty dict
         self.human = human  # human readable version of FloScript declaration
         self.count = count  # line number or count of FloScript declaration
+        self.inode = inode  # inode None means ignore
 
     def clone(self):
         """ Return clone of self in support of framer cloning
@@ -155,14 +157,20 @@ class Act(object):
                             parms[field] = src[field]
             parms.update(self.parms or odict())  # 'do with' overrides from, self.parms may be None
 
+            #  compute .inode
+            self.inode = (self.ioinits or odict()).get('inode', ioinits.get('inode', self.inode))
+            if self.inode is not None and not isinstance(self.inode, basestring):
+                raise ValueError("Nonstring inode '{0}'".format(self.inode))
+            if self.inode and not self.inode.endswith("."):  # ensure node not share path
+                self.inode = "{0}.".format(self.inode)
+
             rioinits = odict(ioinits)  # save copy registry ioinits to keep ival iown
-            if self.prerefs:  # preinits ioinits dict items  'do for'
+            if self.prerefs and 'ioinits' in self.prerefs:  # preinit ioinits dict items  'do for'
                 # each key is share src path, and value is list of src fields
-                inode = (self.ioinits or odict()).get('inode', ioinits.get('inode', ''))
-                if inode and not inode.endswith("."):  # ensure is node not share path
-                    inode = "{0}.".format(inode)
-                for src, fields in self.prerefs.get('ioinits', {}).items():   # now resolve new src paths
-                    src = self.resolvePath(ipath=src, inode=inode, warn=True) # now a share
+                if self.inode is None:  # since prerefs then inode may not be None
+                    self.inode = ""
+                for src, fields in self.prerefs['ioinits'].items():  # now resolve new src paths
+                    src = self.resolvePath(ipath=src, warn=True)  # now a share
                     if not fields:  # default is use existing fields
                         fields = self._prepareSrcFields(src, fields)
                     for field in fields:  # assumes each src fld value pre inited with ipath
@@ -177,20 +185,19 @@ class Act(object):
                         val['ipath'] = ioinits[key]  # replace old ipath witn new
                         ioinits[key] = val # restore default ival iown
 
+
             if ioinits:
-                inode, iois = actor._initio(ioinits)
+                iois = actor._initio(ioinits)  # .inode may be changed in here
                 if iois:
                     for key, ioi in iois.items():
                         if key == "inode":  # compute the final inode
-                            share = actor._resolvePath(ipath="",
+                            share = actor._resolvePath(ipath="", # empty to force
                                                        ival=ioi.get('ival'),
-                                                       iown=ioi.get('iown'),
-                                                       inode=ioi['ipath'])  # empty to force
+                                                       iown=ioi.get('iown'))
                         else:
                             share = actor._resolvePath(ipath=ioi['ipath'],
                                                        ival=ioi.get('ival'),
-                                                       iown=ioi.get('iown'),
-                                                       inode=inode)
+                                                       iown=ioi.get('iown'))
                         if actor._Parametric:
                             if key in parms:
                                 msg = "ResolveError: Parm and Ioi with same name"
@@ -213,7 +220,7 @@ class Act(object):
             self.parms.update(self.actor._resolve(**self.parms)) # resolve sub acts
             self.actor._prepare(**self.parms)
 
-    def resolvePath(self, ipath, ival=None, iown=None, inode=None, warn=False):
+    def resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """
         Returns resolved Share or Node instance from ipath
         ipath may be path name of share or node
@@ -226,13 +233,10 @@ class Act(object):
         iown is optional ownership if True then overwrite if exists
                otherwise do not overwrite
 
-        inode is optional actor inode value for ipath used for ioinits
-
         if warn then will complain if the share is created.
 
         When ipath is empty then resolvePath returns the effective context node
-        path given the actor inode and nested frame inodes and framer inodes
-
+        path given by .inode and nested frame inodes and framer inodes
 
         It allows for substitution into ipath of
         inode, framer,  main framer, frame, main frame, or actor relative names.
@@ -291,7 +295,7 @@ class Act(object):
               self.actor.name is not empty
 
         Any actor could have ioinits saved for them in their ._act  Act
-        If ionits exist then then an inode is part of the ioinits
+        If ionits exist then then an inode should be part of the ioinits
         Currently only the Do verb actors have ioinits. The inode is one of them.
         The ioinits come from two sources. The registry and the do verb per and for
         clauses
@@ -299,12 +303,13 @@ class Act(object):
         _act.ioinits are the do and per clauses
         registry ioints are from the Actor.Ionints class variable
 
-        So inode parameter to Act.resolvePaths inidcates if for ioinit or not.
-        If inode None then ipath is not an actor ioinit and Otherwise even if "" then
-        ipath comes from ioinit and  should handle inode logic.
+        So the .inode attribute indicates if the ipath being resolved is for
+        an ioinit or not.  If .inode is None it is not for an ioinit.
+        Otherwise even if .inode is "" then ipath comes from ioinit and
+        path resolution should handle inode logic.
+
         This would puts all the framer inode prepend
         logic in one place and make it easier to climb the  frame and aux outline
-
         """
         if not (isinstance(ipath, storing.Share) or isinstance(ipath, storing.Node)): # must be pathname
             parts = ipath.split('.') if ipath else []  # [] if ipath is empty
@@ -358,10 +363,10 @@ class Act(object):
                 # "" == ".".join([]) == ".".join([""])
 
                 # already know from above parts not absolute
-                if (inode is not None and (not parts or
+                if (self.inode is not None and (not parts or
                         parts[0] not in ("framer", "me"))):
-                    # prepend inode logic
-                    iparts = inode.rstrip(".").split(".") if inode else []
+                    # prepend act .inode logic
+                    iparts = self.inode.rstrip(".").split(".") if self.inode else []
                     if not iparts and not fparts:  # use default inode
                         iparts = "framer.me.frame.me.actor.me".split(".")
                     parts = iparts + parts  # prepend inode parts
@@ -639,44 +644,19 @@ class Actor(object):
     def _initio(self, ioinits):
         """
         Compute initializations for ioflo shares from ioinits odict or item list
-        'inode' item in ioinits is special
+        The 'inode' item in ioinits is special. Act.resolve extracts 'inode' from
+        ioinits and assigns to ._act.inode before ._initio is called.
 
         This implements a generic Actor interface protocol for associating the
         io data flow shares to the Actor.
 
-        inode is the computed pathname string of the default share node
-        where shares associated with the Actor instance may be placed when
-        relative addressing is used. It is also the default data store context
+        The ._act.inode attribute holds the pathname string of the default
+        data store node where shares associated with the Actor instance may
+        be placed when relative addressing is used.
+        It is also the default data store context
         for share references by Doer iois. The inode on an actor my be set
         explicitly in the Ioinit class variable or in the actify (doify) decorator
         or by the via clause of a Doer
-
-        The default inode is  'framer.me.frame.me.actor.me.' which is the case
-        when the passed in inode is empty.
-
-        If the inode is provided then if it is absolute, has a leading '.' then
-        it it left as is
-
-        If the inode is relative, has no leading '.' then relative substitution
-        rules apply.
-           If the inode is "me" or starts with "me." then replace the me with
-               the framer inode (frinode). Skip frame inode lookup
-
-           Otherwise apply prepend frame inode lookup
-
-            This occurs if the framer inode (frinode) is empty
-                (which occurs when the via clause is missing for the framer)
-            and the ioinit inode parameter passed in is also empty
-
-        When a via clause exists for the framer then frinode is not empty
-            so the default is not used
-            and the computed inode is either absolute or relative
-
-        When the inode parameter is relative (no leading dot)
-            it is relative to the framer inode
-
-        If the framer is a cloned auxiliary then the inode could be relative
-            to the main framer inode
 
         The values of the items in the **kwa argument may be either strings or
         mappings
@@ -744,16 +724,16 @@ class Actor(object):
 
         """
         ioinits = odict(ioinits)  # make copy also allows for item list as parameter
-        inode = ioinits.get('inode', '')
+        #inode = ioinits.get('inode', '')
 
-        if not isinstance(inode, basestring):
-            raise ValueError("Nonstring inode arg '{0}'".format(inode))
+        #if inode and not inode.endswith('.'):  # ensure is a node not share path
+            #inode = "{0}.".format(inode)
 
-        if inode and not inode.endswith('.'):  # ensure is a node not share path
-            inode = "{0}.".format(inode)
+        if self._act.inode is None:  # inode may not be None if ioinits
+            self._act.inode = ""
 
         iois = odict()
-        ioi = odict(ipath=inode)  # create ioi for the inode
+        ioi = odict(ipath=self._act.inode)  # create ioi for the inode
         iois['inode'] = ioi  # inode path resolves so actor has reference to its own inode
         for key, val in ioinits.items():  # assumes keys are basestrings
             if key == 'inode':  # skip inode
@@ -793,7 +773,7 @@ class Actor(object):
             ioi = odict(ipath=ipath, ival=ival, iown=iown)
             iois[key] = ioi
 
-        return (inode, iois)  # inode prepended in act.resolvePath
+        return iois  # inode prepended in act.resolvePath
 
     def _prepare(self, **kwa):
         """ Base method to be overriden in sub classes. Perform post initio setup
@@ -805,7 +785,7 @@ class Actor(object):
         """
         pass
 
-    def _resolvePath(self, ipath, ival=None, iown=None, inode=None, warn=False):
+    def _resolvePath(self, ipath, ival=None, iown=None, warn=False):
         """ Returns resolved Share or Node instance from ipath
             Calls self._act.resolvePath()
             See doc string from Act.resolvePath for detailed description of
@@ -822,7 +802,6 @@ class Actor(object):
             ipath = self._act.resolvePath(ipath=ipath,
                                           ival=ival,
                                           iown=iown,
-                                          inode=inode,
                                           warn=warn)
 
         return ipath

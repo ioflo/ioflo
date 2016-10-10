@@ -30,7 +30,7 @@ class ControllerBase(doing.DoerLapse):
         Wrapper for backwards compatibility to new ._initio signature
         """
         self._prepio(**ioinits)
-        return (None, odict())
+        return odict()
 
 
 #Class definitions

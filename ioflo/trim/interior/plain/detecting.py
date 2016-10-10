@@ -29,7 +29,7 @@ class DetectorBase(doing.Doer):
         Wrapper for backwards compatibility to new ._initio signature
         """
         self._prepio(**ioinits)
-        return (None, odict())
+        return odict()
 
 class DetectorPositionBox(DetectorBase):
     """
