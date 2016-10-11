@@ -1,0 +1,62 @@
+#  Test two clones referencing each other
+
+house testCrossClone
+
+  framer rootA be active first nestA via a
+    frame timeoutA
+      go abortA if elapsed >= 3.0
+
+      frame nestA in timeoutA
+        print clonerA
+        aux mootA as cloneA
+        go next if cloneA is done
+        go next if cloneB is done
+
+    frame doneA
+      print "Success"
+      bid stop all
+
+    frame abortA
+      print "Failure"
+      put "rootA" into meta.failure
+      bid stop all
+
+  framer rootB be active first nestB via b
+    frame timeoutB
+      go abortB if elapsed >= 3.0
+
+      frame nestB in timeoutB
+        print clonerB
+        aux mootB as cloneB
+        go next if cloneB is done
+        go next if cloneA is done
+
+    frame doneB
+      print "Success"
+      bid stop all
+
+    frame abortB
+      print "Failure"
+      put "rootB" into meta.failure
+      bid stop all
+
+
+  framer mootA be moot
+    frame AA
+      print AA
+      go next if cloneB is done
+      go next if elapsed > 1.0
+
+    frame AB
+      done
+
+
+  framer mootB be moot
+    frame BA
+      print BA
+      go next if cloneA is done
+      go next if elapsed > 1.0
+
+    frame BB
+      done
+

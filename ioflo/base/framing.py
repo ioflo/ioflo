@@ -180,6 +180,7 @@ class Framer(tasking.Tasker):
         else:
             raise excepting.ResolveError("No first frame link", self.name, self.first)
 
+        console.terse("       Resolving frames for framer {0}\n".format(self.name))
         for frame in Frame.Names.values(): #all frames in this framer's name space
             frame.resolve()
 
