@@ -1410,7 +1410,8 @@ class Rearer(Actor):
             clone.razeable = True  # can be razed
             frame.addAux(clone)
             clone.main = frame
-            self.store.house.resolvables.append(clone)
+            self.store.house.presolvables.append(clone)
+            self.store.house.presolvePresolvables()
             self.store.house.resolveResolvables()
 
 

@@ -100,6 +100,7 @@ class House(registering.StoriedRegistrar):
         self.slaves = [] #list of slave taskers in house
         self.moots = [] #list of moot framers in house
 
+        self.presolvables = deque()  # deque of framer to be presolved
         self.resolvables = deque()  # deque of framers to be resolved
 
         self.names = odict() #houses dict of registry Names
@@ -140,10 +141,25 @@ class House(registering.StoriedRegistrar):
         self.assignRegistries()
 
         for tasker in self.taskers:
-            if not tasker.resolved and tasker not in self.moots:
-                self.resolvables.append(tasker)
+            if not tasker.presolved and tasker not in self.moots:
+                self.presolvables.append(tasker)
+
+        self.presolvePresolvables()
 
         self.resolveResolvables()
+
+    def presolvePresolvables(self):
+        """
+        Continually presolve presolvables deque until empty.
+        Because a tasker (framer) may clone new framers
+        each presolve may add more presolvables
+
+        Once presolved add to resolvables
+        """
+        while self.presolvables:
+            tasker = self.presolvables.popleft()
+            tasker.presolve()
+            self.resolvables.append(tasker)
 
     def resolveResolvables(self):
         """

@@ -1694,7 +1694,7 @@ class Builder(object):
                 aux = data # create clone when resolve aux can wait until then
                            # resolved to unique name in frame.resolveAuxLinks
             else:  # named clone create clone when resolve framer.moots may be referenced
-                self.currentFramer.moots.append(data)  # need to resolve early
+                self.currentFramer.moots[clone] = data  # need to resolve early
                 aux = clone # assign aux to clone name as original aux is to be cloned
                 # named clones must be resolved before any frames get resolved
                 # and are added to the class Framer.names so they can be referenced

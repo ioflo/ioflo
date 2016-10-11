@@ -64,7 +64,7 @@ class Framer(tasking.Tasker):
             .frameNames = frame name registry , name space of frame names
             .frameCounter = frame name registry counter
 
-            .moots = list of moot framers to be cloned
+            .moots = odict of moot framers to be cloned keyed by clone tag
             .clones = odict of cloned auxes keyed by tag name of clone
             .inode = prefix string for inode ioinit of do verb objects in framer
             .tage = main framer local unique clone tag when cloned
@@ -111,8 +111,8 @@ class Framer(tasking.Tasker):
         self.frameNames = odict() #frame name registry for framer. name space of frame names
         self.frameCounter = 0 #frame name registry counter for framer
 
-        self.moots = []  # moot framers to be cloned
-        self.clones = odict()  # cloned framers keyed by tag name of clone
+        self.moots = odict()  # moot framers to be cloned keyed by clone tag
+        self.clones = odict()  # cloned framers keyed by clone tag
         self.inode = ''  # framer inode prefix
         self.tag = ''  # main framer local unique clone tag when cloned
 
@@ -165,12 +165,25 @@ class Framer(tasking.Tasker):
         if self.name in Framer.Names and Framer.Names[self.name] == self:
             del Framer.Names[self.name]
 
-    def resolve(self):
-        """Convert all the name strings for links to references to instance
-           by that name
+    def presolve(self):
         """
+        Convert namestrings or data of moots into clones
+        """
+        console.terse("     Presolving Framer {0}\n".format(self.name))
+        self.resolveMoots()  # do we need to presolve insular clones
+
+        self.presolved = True
+
+    def resolve(self):
+        """
+        Convert all the name strings for links to references to instance
+        by that name
+        """
+        if not self.presolved:
+            raise excepting.ResolveError("Not presolved", self.name, self.main)
+
         console.terse("     Resolving Framer {0}\n".format(self.name))
-        self.resolveMoots()
+        #self.resolveMoots()
 
         self.assignFrameRegistry() #needed by act links below
 
@@ -191,7 +204,7 @@ class Framer(tasking.Tasker):
     def resolveMoots(self):
         """
         Resolves .moots by cloning as appropriate.
-        .moots is list of dicts of form
+        .moots is odict keyed by clone tag with value that are dicts of form
         {
             original: framername,
             clone: string,
@@ -209,7 +222,7 @@ class Framer(tasking.Tasker):
         """
         #self.store.house.assignRegistries() # ensure Framer.names is houses registry
         console.terse("       Resolving original moots for named clones ...\n")
-        for data in self.moots:
+        for data in self.moots.values():
             original = data['original']  # original name
             clone = data['clone']  # clone name
             schedule = data['schedule']
@@ -238,13 +251,13 @@ class Framer(tasking.Tasker):
                 clone.inode = inode  # replace old with new
 
             clone.original = False  # main frame will be fixed
-            self.store.house.resolvables.append(clone)
+            self.store.house.presolvables.append(clone)
             self.store.house.taskers.append(clone)
             self.store.house.framers.append(clone)
             if schedule == AUX:
                 self.store.house.auxes.append(clone)
 
-        self.moots = []
+        self.moots.clear()
 
     @staticmethod
     def nameUid(prefix='clone', size=8):
@@ -1013,7 +1026,7 @@ class Frame(registering.StoriedRegistrar):
                     clone.inode = inode  # replace old with new
 
                 self.auxes[i] = aux = clone
-                self.store.house.resolvables.append(clone)
+                self.store.house.presolvables.append(clone)
             else:  # not insular has given name
                 self.auxes[i] = aux = resolveFramer(aux,
                                                 who=self.name,

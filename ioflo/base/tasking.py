@@ -61,6 +61,7 @@ class Tasker(registering.StoriedRegistrar):
 
         self.period = float(abs(period)) #desired time between runs, 0.0 means asap
         self.stamp = 0.0 #time last run
+        self.presolved = False  # tasker has been presolved
         self.resolved = False  # tasker has been resolved
         self.status = STOPPED #operational status of tasker
         self.desire = STOP #desired control next time Task is iterated
@@ -92,6 +93,10 @@ class Tasker(registering.StoriedRegistrar):
 
         """
         print("     Task %s status = %s" % (self.name, StatusNames[self.status]))
+
+    def presolve(self, **kwa):
+        """Presolves any links to aux clones"""
+        self.presolved = True
 
     def resolve(self, **kwa):
         """Resolves any by name links to other objects   """
