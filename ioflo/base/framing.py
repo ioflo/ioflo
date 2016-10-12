@@ -65,16 +65,20 @@ class Framer(tasking.Tasker):
             .frameCounter = frame name registry counter
 
             .moots = odict of moot framers to be cloned keyed by clone tag
-            .clones = odict of cloned auxes keyed by tag name of clone
             .inode = prefix string for inode ioinit of do verb objects in framer
-            .tage = main framer local unique clone tag when cloned
+            .tag = main framer local unique clone tag when cloned or aux name if not
+            .insularCount = number of insular clones used to create unique clone tag
+            .auxes = odict of cloned auxes keyed by tag name of clone
     """
     #Counter = 0
     #Names = {}
 
-    def __init__(self, **kw):
-        """Initialize instance.
+    def __init__(self, tag='', **kw):
+        """
+        Initialize instance.
 
+        Parameters:
+            tag = unique to framer clone tag name if clone otherwise same as .name if empty
 
         """
         super(Framer,self).__init__(**kw) #status = STOPPED  make runner advance so can send cmd
@@ -114,7 +118,7 @@ class Framer(tasking.Tasker):
         self.moots = odict()  # moot framers to be cloned keyed by clone tag
         self.inode = ''  # framer inode prefix
 
-        self.tag = None  # main framer local unique clone tag when cloned
+        self.tag = tag if tag else self.name  # main framer local unique clone tag when cloned or .name if not
         self.insularCount = 0  # number of insular clones used to create unique clone tag
         self.auxes = odict()  # aux framers keyed by clone tag if clone or aux name if not
 
@@ -152,14 +156,14 @@ class Framer(tasking.Tasker):
         clone = Framer(name=name,
                        store=self.store,
                        period=period,
-                       schedule=schedule)
+                       schedule=schedule,
+                       tag=tag)
         console.terse("         Cloning contents of Framer original '{0}' to clone '{1}'\n"
                         "".format(self.name, clone.name))
         clone.schedule = schedule
         clone.first = self.first # resolve later
         clone.moots = copy.deepcopy(self.moots)
         clone.inode = self.inode
-        clone.tag = tag if tag else name
 
         clone.assignFrameRegistry() #Frame.names is cloned framer registry
         for frame in self.frameNames.values():
@@ -1061,9 +1065,6 @@ class Frame(registering.StoriedRegistrar):
                             msg = ("Aux name '{0}' already in use in"
                                    " '{1}'".format(aux.name, self.framer.name))
                             raise excepting.ResolveError(msg, name=aux.name, value=self.name)
-
-
-
 
 
     def resolveNextLink(self):

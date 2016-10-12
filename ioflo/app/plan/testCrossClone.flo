@@ -9,8 +9,9 @@ house testCrossClone
       frame nestA in timeoutA
         print clonerA
         aux mootA as cloneA
-        go next if cloneA is done
-        go next if cloneB is done
+        aux mootB as cloneB
+        go next if cloneA in frame is done
+        go next if cloneB in frame is done
 
     frame doneA
       print "Success"
@@ -27,9 +28,11 @@ house testCrossClone
 
       frame nestB in timeoutB
         print clonerB
+        aux mootA as cloneA
         aux mootB as cloneB
-        go next if cloneB is done
-        go next if cloneA is done
+        go next if cloneA in frame is done
+        go next if cloneB in frame is done
+
 
     frame doneB
       print "Success"
@@ -44,7 +47,8 @@ house testCrossClone
   framer mootA be moot
     frame AA
       print AA
-      go next if cloneB is done
+      aux mootC as cloneC
+      go next if cloneC in frame is done
       go next if elapsed > 1.0
 
     frame AB
@@ -54,9 +58,17 @@ house testCrossClone
   framer mootB be moot
     frame BA
       print BA
-      go next if cloneA is done
+      aux mootC as cloneC
+      go next if cloneC in frame is done
       go next if elapsed > 1.0
 
     frame BB
       done
 
+  framer mootC be moot
+    frame CA
+      print CA
+      go next if elapsed > 1.0
+
+    frame CB
+      done
