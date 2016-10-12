@@ -231,6 +231,7 @@ class Framer(tasking.Tasker):
             human: string,
             count: number,
             inode: pathstring,
+            insular: boolean
         }
 
         creates clone and adds to taskables if named clone
@@ -248,8 +249,11 @@ class Framer(tasking.Tasker):
             human = data['human']
             count = data['count']
             inode = data['inode']
-            console.terse("         Cloning original '{0}' as named clone '{1}'\n"
-                            "".format(original, clone))
+            insular = data['insular']
+            console.terse("         Cloning original '{0}' as {1} clone '{2}'\n"
+                            "".format(original,
+                                      "insular" if insular else "named",
+                                      clone))
             if clone == 'mine':  # invalid name for named clone
                 raise excepting.ResolveError("Invalid named clone name of 'mine'",
                                              name=original,
@@ -269,7 +273,8 @@ class Framer(tasking.Tasker):
             if inode != "mine":  # new != "mine" so resultant is new
                 clone.inode = inode  # replace old with new
 
-            clone.original = False  # main frame will be fixed
+            clone.original = False  # fixed main frame value, unique main frame
+            clone.insular = insular  # local to this framer can not be referenced
             self.store.house.presolvables.append(clone)
             self.store.house.taskers.append(clone)
             self.store.house.framers.append(clone)
@@ -999,8 +1004,8 @@ class Frame(registering.StoriedRegistrar):
                                          count=count)
                 clone = original.clone(name=clone, schedule=schedule)
                 self.framer.assignFrameRegistry()  # restore original.clone changes above
-                clone.original = False  # main frame will be fixed
-                clone.insular =  True #  local to this framer
+                clone.original = False  # fixed main frame value, unique main frame
+                clone.insular =  True #  local to this framer can not be referenced
 
                 # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
                 if inode != "mine":  # new != "mine" so resultant is new

@@ -1637,6 +1637,7 @@ class Builder(object):
             connective = None
             clone = None
             inode = ''
+            insular = False
 
             aux = tokens[index]
             index +=1 #eat token
@@ -1690,6 +1691,7 @@ class Builder(object):
         if clone:
             if clone == 'mine':
                 clone = self.currentFramer.newInsularTag()
+                insular = True
 
             if clone in self.currentFramer.moots:
                 msg = ("Error building {0}. Clone tag '{1}' "
@@ -1701,7 +1703,8 @@ class Builder(object):
                          schedule=AUX,
                          human=self.currentHuman,
                          count=self.currentCount,
-                         inode=inode)
+                         inode=inode,
+                         insular=insular)
 
             self.currentFramer.moots[clone] = data  # need to resolve early
             aux = clone # assign aux to clone name as original aux is to be cloned
