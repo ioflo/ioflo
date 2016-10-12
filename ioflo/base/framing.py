@@ -115,6 +115,7 @@ class Framer(tasking.Tasker):
         self.clones = odict()  # cloned framers keyed by clone tag
         self.inode = ''  # framer inode prefix
         self.tag = ''  # main framer local unique clone tag when cloned
+        self.insularCount = 0  # number of insular clones used to create unique clone tag
 
     def clone(self, name, period=0.0, schedule=AUX):
         """ Return clone of self named name
@@ -147,10 +148,22 @@ class Framer(tasking.Tasker):
 
         return clone
 
+    def newInsularTag(self):
+        """
+        Returns new unique among .moots insular tag by using .insularCount
+        """
+        self.insularCount += 1
+        tag = "{0}{1}".format(self.name, self.insularCount)
+        while tag in self.moots:
+            self.insularCount += 1
+            tag = "{0}{1}".format(self.name, self.insularCount)
+        return tag
+
     def prune(self):
         """
         Recursively Prune (destroy) all insular auxiliary clones in all frames
         Force exit if not done
+        Called by Razer Actor when razing insular auxes from frame
         """
         if not self.done:
             console.profuse("Force exiting '{0}'\n".format(self.name))
@@ -172,6 +185,19 @@ class Framer(tasking.Tasker):
         console.terse("     Presolving Framer {0}\n".format(self.name))
         self.resolveMoots()  # do we need to presolve insular clones
 
+        self.assignFrameRegistry()  # needed so Frame.Names valid
+
+        # Resolve first frame link
+        if self.first:
+            self.first = resolveFrame(self.first, who=self.name, desc='first')
+        else:
+            raise excepting.ResolveError("No first frame link", self.name, self.first)
+
+
+        console.terse("       Presolving frames for framer {0}\n".format(self.name))
+        for frame in Frame.Names.values():  # all frames in this framer's name space
+            frame.presolve()
+
         self.presolved = True
 
     def resolve(self):
@@ -183,15 +209,8 @@ class Framer(tasking.Tasker):
             raise excepting.ResolveError("Not presolved", self.name, self.main)
 
         console.terse("     Resolving Framer {0}\n".format(self.name))
-        #self.resolveMoots()
 
         self.assignFrameRegistry() #needed by act links below
-
-        #Resolve first frame link
-        if self.first:
-            self.first = resolveFrame(self.first, who=self.name, desc='first')
-        else:
-            raise excepting.ResolveError("No first frame link", self.name, self.first)
 
         console.terse("       Resolving frames for framer {0}\n".format(self.name))
         for frame in Frame.Names.values(): #all frames in this framer's name space
@@ -877,20 +896,32 @@ class Frame(registering.StoriedRegistrar):
 
         return clone
 
+    def presolve(self):
+        """
+        Resolve auxiliary links where links are instance name strings assigned during building
+           need to be converted to object references using instance name registry
+
+        """
+        console.concise("       Presolving Frame {0}\n".format(self.name))
+
+        self.resolveFramerLink()
+        self.resolveAuxLinks()
+
+
     def resolve(self):
-        """Resolve links where links are instance name strings assigned during building
+        """
+        Resolve links where links are instance name strings assigned during building
            need to be converted to object references using instance name registry
 
         """
         console.concise("       Resolving Frame {0}\n".format(self.name))
 
-        self.resolveFramerLink()
+        #self.resolveFramerLink()
+        #self.resolveAuxLinks()
 
         self.resolveNextLink()
         self.resolveOverLinks()
         self.resolveUnderLinks()
-
-        self.resolveAuxLinks()
 
         for act in self.beacts:
             act.resolve()
@@ -920,65 +951,15 @@ class Frame(registering.StoriedRegistrar):
                                                 who=self.name,
                                                 desc="frame's",)
 
-    def resolveNextLink(self):
-        """Resolve next link
-
-        """
-        if self.next_:
-            self.next_ = resolveFrame(self.next_, who=self.name, desc='next')
-
-    def resolveOverLinks(self):
-        """Starting with self.over climb over links resolving the links as needed along the way
-
-        """
-        over = self.over
-        under = self
-
-        while over: #not beyond top
-            if not isinstance(over, Frame): #over is name of frame not ref so resolve
-                name = over #make copy for later
-                try:
-                    over = Frame.Names[name] #get reference from Frame name registry
-                except KeyError:
-                    raise excepting.ResolveError("Bad over link in outline", self.name, name)
-
-                if over == self: #check for loop
-                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
-
-                #attach under to over
-                if under.name in over.unders: #under name in unders as a result of script under cmd
-                    index = over.unders.index(under.name) #index = position in list
-                    over.unders[index] = under #replace under at position index
-                else: #otherwise append
-                    over.unders.append(under) #add to unders
-
-                #maybe should error check for duplicates in unders here
-
-                under.over = over #assign valid over ref
-
-            else: #over is valid frame reference so don't need to resolve
-                if over == self: #check for loop
-                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
-
-            under = over
-            over = over.over #rise one level
-
-    def resolveUnderLinks(self):
-        """ Resolve under links """
-        for i, under in enumerate(self.unders):
-            self.unders[i] = resolveFrame(under, who=self.name, desc='under')
-
-        if len(set(self.unders)) != len(self.unders): # duplicates
-            raise excepting.ResolveError("Duplicate under", name=self.name, value=self.unders)
-
     def resolveAuxLinks(self):
-        """ Resolve aux links
+        """
+        Resolve aux links
 
-            If aux.original
-               aux.main for each aux is not assigned here but is assigned when
-              frame.enter before aux.enterAll() so can reuse aux in other frames.
-            Otherwise
-               assign aux.main to self
+        If aux.original
+           aux.main for each aux is not assigned here but is assigned when
+          frame.enter before aux.enterAll() so can reuse aux in other frames.
+        Otherwise
+           assign aux.main to self
         """
         for i, aux in enumerate(self.auxes):
             if isinstance(aux, Mapping):  # Indicates an insular clone  (see builder.buildAux)
@@ -1040,6 +1021,57 @@ class Frame(registering.StoriedRegistrar):
                                                  name=aux.name,
                                                  value=self.name)
                 aux.main = self
+
+    def resolveNextLink(self):
+        """Resolve next link
+
+        """
+        if self.next_:
+            self.next_ = resolveFrame(self.next_, who=self.name, desc='next')
+
+    def resolveOverLinks(self):
+        """Starting with self.over climb over links resolving the links as needed along the way
+
+        """
+        over = self.over
+        under = self
+
+        while over: #not beyond top
+            if not isinstance(over, Frame): #over is name of frame not ref so resolve
+                name = over #make copy for later
+                try:
+                    over = Frame.Names[name] #get reference from Frame name registry
+                except KeyError:
+                    raise excepting.ResolveError("Bad over link in outline", self.name, name)
+
+                if over == self: #check for loop
+                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
+
+                #attach under to over
+                if under.name in over.unders: #under name in unders as a result of script under cmd
+                    index = over.unders.index(under.name) #index = position in list
+                    over.unders[index] = under #replace under at position index
+                else: #otherwise append
+                    over.unders.append(under) #add to unders
+
+                #maybe should error check for duplicates in unders here
+
+                under.over = over #assign valid over ref
+
+            else: #over is valid frame reference so don't need to resolve
+                if over == self: #check for loop
+                    raise excepting.ResolveError("Outline overs create loop", self.name, under.name)
+
+            under = over
+            over = over.over #rise one level
+
+    def resolveUnderLinks(self):
+        """ Resolve under links """
+        for i, under in enumerate(self.unders):
+            self.unders[i] = resolveFrame(under, who=self.name, desc='under')
+
+        if len(set(self.unders)) != len(self.unders): # duplicates
+            raise excepting.ResolveError("Duplicate under", name=self.name, value=self.unders)
 
     def expose(self):
         """Prints out instance variables.

@@ -1683,25 +1683,35 @@ class Builder(object):
             msg = "Error building %s. Unused tokens." % (command,)
             raise excepting.ParseError(msg, tokens, index)
 
+        if clone and needs:
+            msg = "Error building %s. Conditional auxilary may not be clone." % (command,)
+            raise excepting.ParseError(msg, tokens, index)
+
         if clone:
+            if clone == 'mine':
+                clone = self.currentFramer.newInsularTag()
+
+            if clone in self.currentFramer.moots:
+                msg = ("Error building {0}. Clone tag '{1}' "
+                      "already in use.".format(command, clone))
+                raise excepting.ParseError(msg, tokens, index)
+
             data = odict(original=aux,
                          clone=clone,
                          schedule=AUX,
                          human=self.currentHuman,
                          count=self.currentCount,
                          inode=inode)
-            if clone == 'mine':  # insular clone may not be referenced
-                aux = data # create clone when resolve aux can wait until then
-                           # resolved to unique name in frame.resolveAuxLinks
-            else:  # named clone create clone when resolve framer.moots may be referenced
-                self.currentFramer.moots[clone] = data  # need to resolve early
-                aux = clone # assign aux to clone name as original aux is to be cloned
-                # named clones must be resolved before any frames get resolved
-                # and are added to the class Framer.names so they can be referenced
-                # resolved by house.resolve -> house.resolveResolvables
-                #    -> framer.resolve -> framer.resolveMoots
-                # resolveMoots adds new resolveable framers to house.resolvables
-                # self.store.house.resolvables.append(clone)
+
+            self.currentFramer.moots[clone] = data  # need to resolve early
+            aux = clone # assign aux to clone name as original aux is to be cloned
+            # named clone create clone when resolve framer.moots so may be referenced
+            # named clones must be resolved before any frames get resolved
+            # and are added to the class Framer.names so they can be referenced
+            # resolved by house.resolve -> house.presolvePresolvables
+            #    -> framer.presolve -> framer.resolveMoots
+            # resolveMoots adds new resolveable framers to house.presolvables
+            # self.store.house.presolvables.append(clone)
 
         if needs: #conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
