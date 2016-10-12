@@ -114,12 +114,29 @@ class Framer(tasking.Tasker):
         self.moots = odict()  # moot framers to be cloned keyed by clone tag
         self.inode = ''  # framer inode prefix
 
-        self.tag = ''  # main framer local unique clone tag when cloned
+        self.tag = None  # main framer local unique clone tag when cloned
         self.insularCount = 0  # number of insular clones used to create unique clone tag
-        self.clones = odict()  # cloned framers keyed by clone tag
+        self.auxes = odict()  # aux framers keyed by clone tag if clone or aux name if not
 
-    def clone(self, name, period=0.0, schedule=AUX):
-        """ Return clone of self named name
+    @property
+    def mains(self):
+        """
+        Property that returns tuple of framer hierarchy of current framer
+        from current framer to an including first non clone framer
+        (framername,clonetag,clonetag,clonetag)
+        """
+        framer = self
+        mains = [framer]
+        while not framer.original:  # stop at first original framer (not clone)
+            framer = framer.main.framer  # assumes .main is resolved
+            mains.append(framer)
+
+        return tuple(reversed(mains))
+
+
+    def clone(self, name, tag='', period=0.0, schedule=AUX,):
+        """
+        Return clone of self named name with tag
 
         """
         self.store.house.assignRegistries() # ensure Framer.names is houses registry
@@ -142,23 +159,13 @@ class Framer(tasking.Tasker):
         clone.first = self.first # resolve later
         clone.moots = copy.deepcopy(self.moots)
         clone.inode = self.inode
+        clone.tag = tag if tag else name
 
         clone.assignFrameRegistry() #Frame.names is cloned framer registry
         for frame in self.frameNames.values():
             frame.clone(framer=clone)
 
         return clone
-
-    def newInsularTag(self):
-        """
-        Returns new unique among .moots insular tag by using .insularCount
-        """
-        self.insularCount += 1
-        tag = "{0}{1}".format(self.name, self.insularCount)
-        while tag in self.moots:
-            self.insularCount += 1
-            tag = "{0}{1}".format(self.name, self.insularCount)
-        return tag
 
     def prune(self):
         """
@@ -243,9 +250,9 @@ class Framer(tasking.Tasker):
         """
         #self.store.house.assignRegistries() # ensure Framer.names is houses registry
         console.terse("       Resolving original moots for named clones ...\n")
-        for data in self.moots.values():
+        for tag, data in self.moots.items():
             original = data['original']  # original name
-            clone = data['clone']  # clone name
+            name = data['clone']  # clone name tag should match tag key
             schedule = data['schedule']
             human = data['human']
             count = data['count']
@@ -254,8 +261,14 @@ class Framer(tasking.Tasker):
             console.terse("         Cloning original '{0}' as {1} clone '{2}'\n"
                             "".format(original,
                                       "insular" if insular else "named",
-                                      clone))
-            if clone == 'mine':  # invalid name for named clone
+                                      name))
+            if name != tag:
+                raise excepting.ResolveError("Mismatch clone tag",
+                                                             name=name,
+                                                             value=tag,
+                                                             human=human,
+                                                             count=count )
+            if name == 'mine':  # invalid name for named clone
                 raise excepting.ResolveError("Invalid named clone name of 'mine'",
                                              name=original,
                                              value=self.name,
@@ -268,7 +281,16 @@ class Framer(tasking.Tasker):
                                      contexts=[MOOT],
                                      human=human,
                                      count=count)
-            clone = original.clone(name=clone, schedule=schedule)
+
+            name = "_".join((self.surname, tag))  # replace name will full name
+            clone = original.clone(name=name, tag=tag, schedule=schedule)
+            if tag in self.auxes:  # tag must be unique to framer
+                raise excepting.ResolveError("Clone tag already in use",
+                                             name=self.name,
+                                             value=tag,
+                                             human=human,
+                                             count=count )
+            self.auxes[tag] = clone
 
             # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
             if inode != "mine":  # new != "mine" so resultant is new
@@ -276,13 +298,34 @@ class Framer(tasking.Tasker):
 
             clone.original = False  # fixed main frame value, unique main frame
             clone.insular = insular  # local to this framer can not be referenced
-            self.store.house.presolvables.append(clone)
+            self.store.house.presolvables.append(clone)  # so can resolve
             self.store.house.taskers.append(clone)
             self.store.house.framers.append(clone)
             if schedule == AUX:
                 self.store.house.auxes.append(clone)
 
         self.moots.clear()
+
+    @property
+    def surname(self):
+        """
+        Property that returns underscore separated string representing namespaced
+        clone framer hierarchy
+        For non cloned framers the .surname should be the same as .name
+        Uses .mains property so assumes that .main is resolved if any
+        """
+        return "_".join(framer.name if framer.original else framer.tag for framer in self.mains)
+
+    def newInsularTag(self):
+        """
+        Returns new unique among .moots insular tag by using .insularCount
+        """
+        self.insularCount += 1
+        tag = "{0}{1}".format(self.name, self.insularCount)
+        while tag in self.moots:
+            self.insularCount += 1
+            tag = "{0}{1}".format(self.name, self.insularCount)
+        return tag
 
     @staticmethod
     def nameUid(prefix='clone', size=8):
@@ -908,7 +951,7 @@ class Frame(registering.StoriedRegistrar):
            need to be converted to object references using instance name registry
 
         """
-        console.concise("       Presolving Frame {0}\n".format(self.name))
+        console.concise("        Presolving Frame {0}\n".format(self.name))
 
         self.resolveFramerLink()
         self.resolveAuxLinks()
@@ -920,7 +963,7 @@ class Frame(registering.StoriedRegistrar):
            need to be converted to object references using instance name registry
 
         """
-        console.concise("       Resolving Frame {0}\n".format(self.name))
+        console.concise("        Resolving Frame {0}\n".format(self.name))
 
         #self.resolveFramerLink()
         #self.resolveAuxLinks()
@@ -968,22 +1011,60 @@ class Frame(registering.StoriedRegistrar):
            assign aux.main to self
         """
         for i, aux in enumerate(self.auxes):
-            if isinstance(aux, Mapping):  # Indicates an insular clone  (see builder.buildAux)
-                msg = "Invalid aux link '{0}'".format(aux)
-                raise excepting.ResolveError(msg,name=self.name,value=aux)
+            cloned = False
+            if isinstance(aux, Mapping):  # Indicates a clone  (see builder.buildAux)
+                tag = aux.get('tag')
+                if not tag:
+                    msg = "Empty aux clone tag link '{0}'".format(aux)
+                    raise excepting.ResolveError(msg,name=self.name,value=aux)
+                aux = tag
+                cloned = True
 
-            self.auxes[i] = aux = resolveFramer(aux,
-                                            who=self.name,
-                                            desc='aux',
-                                            contexts=[AUX])
+            if not isinstance(aux, Framer): # not instance so aux is a name or tag
+                if cloned:  # should already be entered in framer.auxes
+                    self.auxes[i] = aux = resolveAuxOfFramer(aux,
+                                                                 self.framer,
+                                                                 who=self.name,
+                                                                 desc='aux',
+                                                                 contexts=[AUX],
+                                                                 human=self.human,
+                                                                 count=None)
+                    if aux.original:  # whoops
+                        msg = ("Aux clone tag already in use by original aux '{0}' in"
+                               " '{1}'".format(aux.name, self.framer.name))
+                        raise excepting.ResolveError(msg, name=aux.name, value=self.name)
 
-            if not aux.original: # clones get fixed main never released
-                if aux.main: # raise exception if aux.main is not None
-                    msg = "Aux already assigned to main '{0}'".format(aux.main.name)
-                    raise excepting.ResolveError(msg,
-                                                 name=aux.name,
-                                                 value=self.name)
-                aux.main = self
+                    # aux is clone, clones get fixed main never released
+                    if aux.main: # raise exception if aux.main is not None
+                        msg = "Aux already assigned to main '{0}'".format(aux.main.name)
+                        raise excepting.ResolveError(msg,
+                                                     name=aux.name,
+                                                     value=self.name)
+                    aux.main = self
+
+                else:  # not clone may not be entered
+                    self.auxes[i] = aux = resolveFramer(aux,
+                                                        who=self.name,
+                                                        desc='aux',
+                                                        contexts=[AUX],
+                                                        human=self.human,
+                                                        count=None)
+                    if not aux.original:  # must be original
+                        msg = ("Unexpected non-original aux name '{0}' in"
+                               " '{1}'".format(aux.name, self.framer.name))
+                        raise excepting.ResolveError(msg, name=aux.name, value=self.name)
+
+                    if aux.name not in self.framer.auxes:  # first time
+                        self.framer.auxes[aux.name] = aux  # add for the first time
+                    else:
+                        if self.framer.auxes[aux.name] is not aux:  # must be same aux
+                            msg = ("Aux name '{0}' already in use in"
+                                   " '{1}'".format(aux.name, self.framer.name))
+                            raise excepting.ResolveError(msg, name=aux.name, value=self.name)
+
+
+
+
 
     def resolveNextLink(self):
         """Resolve next link
@@ -1411,6 +1492,49 @@ class Frame(registering.StoriedRegistrar):
 
 
 #utility functions
+def resolveAuxOfFramer(aux,
+                       framer,
+                       who='',
+                       desc='aux',
+                       contexts=None,
+                       human='',
+                       count=None):
+    """ Returns resolved aux framer instance from framer
+        aux is either name of aux framer to resolve or pre-resolved instance
+        framer is framer instance that contains aux.
+        who is optional name of object owning the aux framer link
+            such as main framer or main frame or actor
+        desc is string description of framer link such as 'aux' or 'clone'
+        contexts is list of allowed schedule contexts, None or empty means any.
+        human is human readable version of associated declaration
+        count is line number of associated declaration
+
+        Framer.Names registry must already be setup
+    """
+    if not isinstance(aux, Framer): # not instance so aux is a name or tag
+        if aux not in framer.auxes:
+            msg = ("ResolveError: Bad {0} link name '{1}'".format(desc, aux))
+            raise excepting.ResolveError(msg,
+                                         framer.name,
+                                         who,
+                                         human,
+                                         count)
+        aux = framer.auxes[aux]  # replace name with instance
+
+        if contexts and aux.schedule not in contexts:
+            raise excepting.ResolveError("ResolveError: Bad {0} link not scheduled"
+                                         " as one of {1}".format(desc,
+                                            [ScheduleNames.get(context, context)
+                                                 for context in contexts]),
+                                         aux.name,
+                                         who,
+                                         human,
+                                         count)
+        console.concise("         Resolved {0} Framer '{1}' with tag '{2}' in {3}\n"
+                      "".format(desc, aux.name, aux.tag, who))
+    return aux
+
+
 def resolveFramer(framer, who='', desc='framer', contexts=None,
                   human='', count=None):
     """ Returns resolved framer instance from framer

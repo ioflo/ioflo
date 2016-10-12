@@ -1694,7 +1694,7 @@ class Builder(object):
                 insular = True
 
             if clone in self.currentFramer.moots:
-                msg = ("Error building {0}. Clone tag '{1}' "
+                msg = ("Error building {0}. Aux/Clone tag '{1}' "
                       "already in use.".format(command, clone))
                 raise excepting.ParseError(msg, tokens, index)
 
@@ -1707,7 +1707,8 @@ class Builder(object):
                          insular=insular)
 
             self.currentFramer.moots[clone] = data  # need to resolve early
-            aux = clone # assign aux to clone name as original aux is to be cloned
+            aux = odict(tag=clone)  # mapping indicates that its a clone
+            # assign aux to mapping with clone tag name as original aux is to be cloned
             # named clone create clone when resolve framer.moots so may be referenced
             # named clones must be resolved before any frames get resolved
             # and are added to the class Framer.names so they can be referenced
@@ -1716,7 +1717,7 @@ class Builder(object):
             # resolveMoots adds new resolveable framers to house.presolvables
             # self.store.house.presolvables.append(clone)
 
-        if needs: #conditional auxiliary suspender preact
+        if needs:  # conditional auxiliary suspender preact
             human = ' '.join(tokens) #recreate transition command string for debugging
             #resolve aux link later
             parms = dict(needs = needs, main = 'me', aux = aux, human = human)
@@ -1733,7 +1734,7 @@ class Builder(object):
             for need in needs:
                 console.profuse("       {0} with parms = {1}\n".format(need.actor, need.parms))
 
-        else: # Simple auxiliary
+        else: # simple auxiliary  if aux is string then regular auz if aux is mapping then clone
             self.currentFrame.addAux(aux) #need to resolve later
             console.profuse("     Added aux framer {0}\n".format(aux))
 

@@ -1403,7 +1403,7 @@ class Rearer(Actor):
                                                            clone,
                                                            frame.name))
 
-            clone = original.clone(name=clone, schedule=schedule)
+            clone = original.clone(name=clone, tag=clone, schedule=schedule)
             self._act.frame.framer.assignFrameRegistry()  # restore original.clone changes
             clone.original = False  # main frame will be fixed
             clone.insular = True  #  local to this framer

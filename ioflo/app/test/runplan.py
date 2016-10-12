@@ -31,7 +31,7 @@ def run(plan):
     skeddar = ioflo.app.run.run(  name=name,
                         filepath=plan,
                         period=0.0625,
-                        verbose=1,
+                        verbose=2,
                         real=False,)
 
     print("Running Plan: {0}\n".format(plan))
