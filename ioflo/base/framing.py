@@ -112,10 +112,11 @@ class Framer(tasking.Tasker):
         self.frameCounter = 0 #frame name registry counter for framer
 
         self.moots = odict()  # moot framers to be cloned keyed by clone tag
-        self.clones = odict()  # cloned framers keyed by clone tag
         self.inode = ''  # framer inode prefix
+
         self.tag = ''  # main framer local unique clone tag when cloned
         self.insularCount = 0  # number of insular clones used to create unique clone tag
+        self.clones = odict()  # cloned framers keyed by clone tag
 
     def clone(self, name, period=0.0, schedule=AUX):
         """ Return clone of self named name
@@ -968,56 +969,13 @@ class Frame(registering.StoriedRegistrar):
         """
         for i, aux in enumerate(self.auxes):
             if isinstance(aux, Mapping):  # Indicates an insular clone  (see builder.buildAux)
-                clone = aux['clone']
-                original = aux['original']
-                schedule = aux['schedule']
-                human = aux['human']
-                count = aux['count']
-                inode = aux['inode']
-                if schedule != AUX:
-                    msg = ("ResolveError: Invalid insular clone schedule '{0}' "
-                           "for {1}.".format(schedule, original))
-                    raise excepting.ResolveError(msg,
-                                                 name=clone,
-                                                 value=self.name,
-                                                 human=human,
-                                                 count=count)
-                if clone != 'mine':
-                    msg = "Aux insular clone name must be 'mine' not '{0}'".format(clone)
-                    raise excepting.ResolveError(msg,
-                                                 name=clone,
-                                                 value=self.name,
-                                                 human=human,
-                                                 count=count)
+                msg = "Invalid aux link '{0}'".format(aux)
+                raise excepting.ResolveError(msg,name=self.name,value=aux)
 
-                clone = Framer.nameUid(prefix=original)
-                while (clone in Framer.Names): # ensure unique
-                    clone = Framer.nameUid(prefix=original)
-
-                console.terse("         Cloning original '{0}' as insular clone '{1}'\n"
-                                            "".format(original, clone))
-                original = resolveFramer(original,
-                                         who=self.name,
-                                         desc='original',
-                                         contexts=[MOOT],
-                                         human=human,
-                                         count=count)
-                clone = original.clone(name=clone, schedule=schedule)
-                self.framer.assignFrameRegistry()  # restore original.clone changes above
-                clone.original = False  # fixed main frame value, unique main frame
-                clone.insular =  True #  local to this framer can not be referenced
-
-                # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
-                if inode != "mine":  # new != "mine" so resultant is new
-                    clone.inode = inode  # replace old with new
-
-                self.auxes[i] = aux = clone
-                self.store.house.presolvables.append(clone)
-            else:  # not insular has given name
-                self.auxes[i] = aux = resolveFramer(aux,
-                                                who=self.name,
-                                                desc='aux',
-                                                contexts=[AUX])
+            self.auxes[i] = aux = resolveFramer(aux,
+                                            who=self.name,
+                                            desc='aux',
+                                            contexts=[AUX])
 
             if not aux.original: # clones get fixed main never released
                 if aux.main: # raise exception if aux.main is not None
