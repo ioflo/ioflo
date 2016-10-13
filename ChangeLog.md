@@ -2,9 +2,18 @@
 CHANGE LOG
 -------------------
 --------
-201610XX
+20161013
 --------
 1.6.5
+
+Support for named nested cloned auxiliaries. Each framer now has an .auxes odict
+that keeps track of clones per framer. This allows refrencing aux clone by its
+tag name instead of full name.
+
+New syntax and semantics for if aux name is done  when aux the name resolution
+looks in the framer.auxes instead of the global Framer.Names
+This new syntax will break FloScripts that reference cloned auxilaries.
+
 
 Changed default case for actor inode when act.inode empty and frame inode context
 empty and framer inode context empty
