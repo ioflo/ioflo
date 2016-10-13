@@ -3304,8 +3304,18 @@ class Builder(object):
                 if taskername is (readied, started, running, stopped, aborted)
 
                 if taskername is done
-                if ([auxname, any, all) [in frame [(me, framename)]
-                                  [in framer [(me, framername)]]] is done
+
+                if aux auxname
+                   [in frame [(me, framename)][in framer [(me, framername)]]] is done
+
+                if aux auxname
+                   [in framer [(me, framername)]] is done
+
+                if ([aux] auxname, any, all)
+                   in frame [(me, framename)][in framer [(me, framername)]] is done
+
+                if ([aux] auxname, any, all)
+                   in framer [(me, framername)] is done
 
 
         state:
@@ -3440,11 +3450,17 @@ class Builder(object):
         Syntax:
             if taskername is done
 
-            if ([aux] auxname, any, all)
-               [in frame [(me, framename)][in framer [(me, framername)]]] is done
+            if aux auxname
+                [in frame [(me, framename)][in framer [(me, framername)]]] is done
+
+            if aux auxname
+               [in framer [(me, framername)]] is done
 
             if ([aux] auxname, any, all)
-               [in framer [(me, framername)]] is done
+               in frame [(me, framename)][in framer [(me, framername)]] is done
+
+            if ([aux] auxname, any, all)
+               in framer [(me, framername)] is done
 
         """
         frame = ""  # name of frame where aux resides if applicable
