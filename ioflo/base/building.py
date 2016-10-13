@@ -3436,79 +3436,94 @@ class Builder(object):
     def makeDoneNeed(self, kind, tokens, index):
         """
         Need to check if tasker completed by .done truthy
-           method must be wrapped in appropriate try excepts
+            method must be wrapped in appropriate try excepts
 
         Syntax:
-           if taskername is done
-           if (auxname, any, all) [in frame [(me, framename)]
-                          [in framer [(me, framername)]]] is done
-           done tasker
+            if taskername is done
+
+            if ([aux] auxname, any, all)
+               [in frame [(me, framename)][in framer [(me, framername)]]] is done
+
+            if ([aux] auxname, any, all)
+               [in framer [(me, framername)]] is done
+
         """
-        frame = "" # name of frame where aux resides if applicable
-        framer = "" # name of framer where aux resides if applicable
+        frame = ""  # name of frame where aux resides if applicable
+        framer = ""  # name of framer where aux resides if applicable
+        auxed = False  # one of the auxiliary forms
 
         tasker = tokens[index]
-        if not REO_IdentPub.match(tasker):
-            msg = "ParseError: Invalid format of tasker name '%s'" % (tasker)
-            raise excepting.ParseError(msg, tokens, index)
-        index += 1
 
-        if tasker in ['any', 'all']:  # auxilary case applicable so default
-            frame = 'me'
+        if tasker in ('any', 'all'):  # auxilary case applicable so default
+            index += 1
+            auxed = True
             framer = 'me'
+            frame = 'me'
 
-        # optional in clauses followed by is clause
+        elif tasker == "aux":
+            index += 1
+            auxed = True
+            framer = 'me'
+            tasker = tokens[index]
+            self.verifyName(tasker, kind, tokens, index)
+            index += 1
+        else:
+            self.verifyName(tasker, kind, tokens, index)
+            index += 1
+
         # in clause existence means auxilary case
+        # optional in clauses followed by is clause
         connective = tokens[index]
         if connective == 'in':  # optional 'in frame [(me, framename)]' clause
-            framer = 'me'  # if frame clause then framer default unless framer clause
             index += 1  # eat 'in' connective
-            place = tokens[index]  # required place frame
+            auxed = True
+            framer = 'me'
+            place = tokens[index]  # required place frame or framer
             index += 1  # eat place token
 
-            if place != 'frame':
-                msg = ("ParseError: Expected 'frame' got "
-                    "'{0}'".format(place))
-                raise excepting.ParseError(msg, tokens, index)
-
-            connective = tokens[index]
-            if connective not in Reserved:  # assume must be name
-                frame = connective
-                if not REO_IdentPub.match(frame):
-                    msg = "ParseError: Invalid format of frame name '%s'" % (frame)
-                    raise excepting.ParseError(msg, tokens, index)
-                index += 1
-                connective = tokens[index]
-
-            else:  # frame name not given so default
-                frame = 'me'
-
-            if connective == 'in':  # optional 'in framer [(me, framername)]' clause
-                index += 1  # eat 'in' connective
-                place = tokens[index]  # required place framer
-                index += 1  # eat place token
-
-                if place != 'framer':
-                    msg = ("ParseError: Expected 'framer' got "
-                           "'{0}'".format(place))
-                    raise excepting.ParseError(msg, tokens, index)
-
+            if place == 'framer':
                 connective = tokens[index]
                 if connective not in Reserved:  # assume must be name
                     framer = connective
-                    if not REO_IdentPub.match(framer):
-                        msg = "ParseError: Invalid format of framer name '%s'" % (framer)
-                        raise excepting.ParseError(msg, tokens, index)
+                    self.verifyName(framer, kind, tokens, index)
                     index += 1
+                    connective = tokens[index]  # set up for next clause
+
+            elif place == 'frame':
+                frame = 'me'
+                connective = tokens[index]
+                if connective not in Reserved:  # assume must be name
+                    frame = connective
+                    self.verifyName(frame, kind, tokens, index)
+                    index += 1
+                    connective = tokens[index]  # setup for next clause
+
+                if connective == 'in':  # optional 'in framer [(me, framername)]' clause
+                    index += 1  # eat 'in' connective
+                    place = tokens[index]  # required place framer
+                    index += 1  # eat place token
+
+                    if place != 'framer':
+                        msg = ("ParseError: Expected 'framer' got "
+                               "'{0}'".format(place))
+                        raise excepting.ParseError(msg, tokens, index)
+
                     connective = tokens[index]
-                else:
-                    framer = 'me'
+                    if connective not in Reserved:  # assume must be name
+                        framer = connective
+                        self.verifyName(framer, kind, tokens, index)
+                        index += 1
+                        connective = tokens[index]  # setup for next clause
+
+            else:
+                msg = ("ParseError: Expected 'framer' or frame' got "
+                       "'{0}'".format(place))
+                raise excepting.ParseError(msg, tokens, index)
 
         if connective not in ('is', ):  # missing 'is'
             msg = ("ParseError: Expected 'is' connective got "
                                        "'{0}'".format(connective))
             raise excepting.ParseError(msg, tokens, index)
-
         index += 1  # eat 'is' connective token
 
         participle = tokens[index]
@@ -3521,12 +3536,14 @@ class Builder(object):
 
         # a frame of me is nonsensical if framer is not current framer
         if (frame == 'me' and
-                not (framer == 'me' or  framer == self.currentFramer.name)):
+                not (framer == 'me' or framer == self.currentFramer.name)):
             msg = ("Error: Frame '{0}' nonsensical given"
                    " Framer '{1}'.".format(frame, framer))
             raise excepting.ParseError(msg, tokens, index)
 
         actorName = 'Need' + kind.capitalize()
+        if auxed:
+            actorName += 'Aux'
         if actorName not in needing.Need.Registry:
             msg = "ParseError: Need '%s' can't find actor named '%s'" %\
                 (  kind, actorName)

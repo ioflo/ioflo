@@ -96,12 +96,46 @@ class NeedAlways(Need):
         return result
 
 class NeedDone(Need):
-    """NeedDone Need Special Need"""
-    def _resolve(self, tasker, framer, frame, **kwa):
+    """
+    NeedDone Need Special Need
+    """
+    def _resolve(self, tasker, **kwa):
         """Resolves value (tasker) link that is passed in as tasker parm
            resolved link is passed back to container ._act to update in act's parms
         """
         parms = super(NeedDone, self)._resolve( **kwa)
+
+        parms['tasker'] = tasker = tasking.resolveTasker(tasker,
+                                                        who=self._act.frame.name,
+                                                        desc='need done',
+                                                        contexts=[],
+                                                        human=self._act.human,
+                                                        count=self._act.count)
+
+        return parms #return items are updated in original ._act parms
+
+    def action(self, tasker, **kw):
+        """
+        Check if  tasker done
+        parameters:
+            tasker
+        """
+        result = tasker.done
+        console.profuse("Need Tasker {0} done = {1}\n".format(tasker.name, result))
+        return result
+
+class NeedDoneAux(Need):
+    """
+    NeedDoneAux Need Special Need
+    """
+    def _resolve(self, tasker, framer, frame, **kwa):
+        """
+        Resolves aux framer tag link that is passed in as tasker parm relative to
+        containing framer and frame
+
+        Resolved link is passed back to container ._act to update in act's parms
+        """
+        parms = super(NeedDoneAux, self)._resolve( **kwa)
         if framer:
             if framer == 'me':
                 framer = self._act.frame.framer
@@ -122,23 +156,24 @@ class NeedDone(Need):
                                                                   human=self._act.human,
                                                                   count=self._act.count)
 
-
         if tasker not in ['any', 'all']:
-            parms['tasker'] = tasker = tasking.resolveTasker(tasker,
-                                                             who=self._act.frame.name,
-                                                             desc='need done',
-                                                             contexts=[],
-                                                             human=self._act.human,
-                                                             count=self._act.count)
-
+            parms['tasker'] = tasker = framing.resolveAuxOfFramer(tasker,
+                                                            framer,
+                                                            who=self._act.frame.name,
+                                                            desc='need done aux',
+                                                            contexts=[],
+                                                            human=self._act.human,
+                                                            count=self._act.count)
 
         return parms #return items are updated in original ._act parms
 
     def action(self, tasker, framer, frame, **kw):
         """
-        Check if  tasker done
+        Check if  aux done
         parameters:
-            tasker
+            aux
+            framer
+            frame
         """
         if frame:
             if tasker == 'any':
@@ -149,12 +184,14 @@ class NeedDone(Need):
                 result = tasker.done
             else:
                 result = False
-            name = tasker if tasker in ('any', 'all') else tasker.name
-            console.profuse("Need Aux {0} done = {1}\n".format(name, result))
-
+            name = tasker if tasker in ('any', 'all') else tasker.tag
+            console.profuse("Need Aux {0} done = {1} in {2}<{3}\n".format(name,
+                                                                          result,
+                                                                          framer.name,
+                                                                          frame.name))
         else:
             result = tasker.done
-            console.profuse("Need Tasker {0} done = {1}\n".format(tasker.name, result))
+            console.profuse("Need Aux {0} done = {1}\n".format(tasker.name, result))
 
         return result
 
