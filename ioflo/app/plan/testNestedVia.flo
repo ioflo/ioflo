@@ -13,7 +13,7 @@ house testNestedVia
         do doer param at enter via me.testnest per color red  # top.testnest.red
         do doer param at enter per color red  # top.red
         aux mootA as cloneA via mine
-        go next if cloneA is done
+        go next if aux cloneA is done
 
     frame done
       print "Success"
@@ -31,12 +31,12 @@ house testNestedVia
       do doer param at enter via aa per flavor sweet  # top.a.aa.sweet
       do doer param at enter via aa per flavor me.sweet  # top.a.sweet
       aux mootB as cloneB via mb.
-      go next if cloneB is done
+      go next if aux cloneB is done
 
     frame AB
       print AB
       aux mootC as cloneC
-      go next if cloneC is done
+      go next if aux cloneC is done
 
     frame AC
       done

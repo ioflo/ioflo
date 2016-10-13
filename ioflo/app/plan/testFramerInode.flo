@@ -23,7 +23,7 @@ framer test be active first test0 via .top.
 
     frame sub1 in timeout
       aux sub as sub1
-      go next if sub1 is done and elapsed >= 0.0
+      go next if aux sub1 is done and elapsed >= 0.0
 
     frame sub2 in timeout
       aux sub as mine
@@ -31,59 +31,59 @@ framer test be active first test0 via .top.
 
     frame pub1 in timeout
       aux pub as pub1
-      go next if elapsed >= 0.0 and pub1 is done
+      go next if elapsed >= 0.0 and aux pub1 is done
 
     frame pub2 in timeout
       aux pub as pub2 via me
-      go next if pub2 is done
+      go next if aux pub2 is done
 
     frame pub3 in timeout
       aux pub as pub3  # empty via
-      go next if pub3 is done
+      go next if aux pub3 is done
 
     frame pub4 in timeout
       aux pub as pub4 via pop
-      go next if pub4 is done
+      go next if aux pub4 is done
 
     frame pub5 in timeout
       aux pub as pub5 via .pop
-      go next if pub5  is done
+      go next if aux pub5  is done
 
     frame cub1 in timeout
       aux cub as cub1
-      go next if cub1 is done
+      go next if aux cub1 is done
 
     frame cub2 in timeout
       aux cub as cub2 # empty via
-      go next if cub2 is done
+      go next if aux cub2 is done
 
     frame bub1 in timeout
       aux bub as bub1 # empty via
-      go next if bub1 is done
+      go next if aux bub1 is done
 
     frame bub2 in timeout
       aux bub as bub2
-      go next if bub2 is done
+      go next if aux bub2 is done
 
     frame bub3 in timeout
       aux bub as bub3 via me
-      go next if bub3 is done
+      go next if aux bub3 is done
 
     frame lub1 in timeout
       aux lub as lub1  # empty via
-      go next if lub1 is done
+      go next if aux lub1 is done
 
     frame lub2 in timeout
       aux lub as lub2 via pop
-      go next if lub2 is done
+      go next if aux lub2 is done
 
     frame lub3 in timeout
       aux lub as lub3
-      go next if lub3 is done
+      go next if aux lub3 is done
 
     frame lub4 in timeout
       aux lub as lub4 via me
-      go next if lub4 is done
+      go next if aux lub4 is done
 
   frame done
     print "Success"

@@ -10,8 +10,8 @@ house testCrossClone
         print clonerA
         aux mootA as cloneA
         aux mootB as cloneB
-        go next if cloneA in frame is done
-        go next if cloneB in frame is done
+        go next if aux cloneA is done
+        go next if aux cloneB in frame me is done
 
     frame doneA
       print "Success"
@@ -30,8 +30,8 @@ house testCrossClone
         print clonerB
         aux mootA as cloneA
         aux mootB as cloneB
-        go next if cloneA in frame is done
-        go next if cloneB in frame is done
+        go next if cloneA in framer is done
+        go next if aux cloneB in framer me is done
 
 
     frame doneB
@@ -48,7 +48,7 @@ house testCrossClone
     frame AA
       print AA
       aux mootC as cloneC
-      go next if cloneC in frame is done
+      go next if cloneC in frame in framer is done
       go next if elapsed > 1.0
 
     frame AB
@@ -59,7 +59,7 @@ house testCrossClone
     frame BA
       print BA
       aux mootC as cloneC
-      go next if cloneC in frame is done
+      go next if aux cloneC in frame BA in framer me is done
       go next if elapsed > 1.0
 
     frame BB

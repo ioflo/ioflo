@@ -78,7 +78,7 @@ house cloner
          print R
          put 0 into counter of framer
          aux orig3 as RCloneOrig3
-         go next if RCloneOrig3 is done
+         go next if aux RCloneOrig3 is done
 
       frame S
          print S

@@ -25,7 +25,7 @@ house testNestedViaFrame
       frame nest in timeout
         print clonerA
         aux mootA as cloneA via me
-        go next if cloneA is done
+        go next if aux cloneA is done
 
     frame done
       print "Success"
@@ -44,14 +44,14 @@ house testNestedViaFrame
         do doer param at enter via aa per flavor sweet  # top.zip.ape.aa.sweet
         do doer param at enter via aa per flavor me.sweet  # top.sweet
         aux mootB as cloneB via mb.
-        go next if cloneB is done
+        go next if aux cloneB is done
 
       frame AB in Z via me.ball
         print AB
         aux mootC as cloneC via me
         aux mootD as cloneD
         aux mootE as cloneE via mine
-        go next if cloneC is done
+        go next if aux cloneC is done
 
     frame AC
       done
