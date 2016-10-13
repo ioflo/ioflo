@@ -3450,10 +3450,10 @@ class Builder(object):
         Syntax:
             if taskername is done
 
-            if aux auxname
+            if (aux auxname, any, all)
                 [in frame [(me, framename)][in framer [(me, framername)]]] is done
 
-            if aux auxname
+            if (aux auxname, any, all)
                [in framer [(me, framername)]] is done
 
             if ([aux] auxname, any, all)
