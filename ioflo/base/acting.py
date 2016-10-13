@@ -1337,7 +1337,7 @@ class Rearer(Actor):
                                          count=self._act.count)
 
         if schedule == AUX:  # only current framer
-            framer = framing.resolveFramer(self._act.frame.framer,
+            parms['framer'] = framer = framing.resolveFramer(self._act.frame.framer,
                                             who=self._act.frame.name,
                                             desc='rear aux clone',
                                             contexts=[],
@@ -1379,8 +1379,18 @@ class Rearer(Actor):
 
         return parms
 
-    def action(self, original, clone, schedule, frame, **kw):
-        """Action called by Actor  """
+    def action(self, original, clone, schedule, frame, framer, **kw):
+        """
+        Action called by Actor
+
+        Parameters:
+           original is resolved original moot framer to be cloned
+           clone is clone tag (not used currently)
+           schedule is clone schedule
+           frame is resolved frame for reared clone
+           framer is resolved framer for frame for reared clone
+
+        """
 
         console.profuse("         Cloning '{0}' as '{1}' be '{2}'\n".format(
                 original.name, clone, ScheduleNames.get(schedule, schedule)))
@@ -1393,23 +1403,22 @@ class Rearer(Actor):
                                                                          self._act.count))
                 return
 
-
-            clone = framing.Framer.nameUid(prefix=original.name)
-            while (clone in framing.Framer.Names): # ensure unique
-                clone = framing.Framer.nameUid(prefix=original.name)
-
-            console.terse("         Cloning original '{0}' as aux insular clone"
-                          " '{1}' of Frame '{2}'\n".format(original.name,
-                                                           clone,
-                                                           frame.name))
-
-            clone = original.clone(name=clone, tag=clone, schedule=schedule)
-            self._act.frame.framer.assignFrameRegistry()  # restore original.clone changes
+            tag = framer.newAuxTag(base=original.tag)
+            name = "_".join((framer.surname, tag))  # replace name with full name
+            console.terse("         Rearing original '{0}' as aux insular clone"
+                          " '{1}' in Frame '{2}' in Framer '{3}'"
+                          "\n".format(original.name,
+                                        name,
+                                        frame.name,
+                                        framer.name))
+            clone = original.clone(name=name, tag=tag, schedule=schedule)
             clone.original = False  # main frame will be fixed
             clone.insular = True  #  local to this framer
             clone.razeable = True  # can be razed
+            framer.auxes[tag] = clone
             frame.addAux(clone)
             clone.main = frame
+            #self._act.frame.framer.assignFrameRegistry()  # setup for resolution
             self.store.house.presolvables.append(clone)
             self.store.house.presolvePresolvables()
             self.store.house.resolveResolvables()
@@ -1432,7 +1441,7 @@ class Razer(Actor):
         parms = super(Razer, self)._resolve( **kwa)
 
 
-        framer = framing.resolveFramer(self._act.frame.framer,
+        parms['framer'] = framer = framing.resolveFramer(self._act.frame.framer,
                                         who=self._act.frame.name,
                                         desc='rear aux clone',
                                         contexts=[],
@@ -1452,8 +1461,15 @@ class Razer(Actor):
 
         return parms
 
-    def action(self, who, frame, **kw):
-        """Action called by Actor  """
+    def action(self, who, frame, framer, **kw):
+        """
+        Action called by Actor
+
+        Parameters:
+           who is string describing which aux(es) to raze
+           frame is frame with auxes to raze
+           framer is framer of frame with auxes to raze
+        """
 
         razeables = []
         if who == 'all':
@@ -1462,12 +1478,12 @@ class Razer(Actor):
                     razeables.append(aux)
 
         elif who == 'first':
-            for aux in frame.auxes:
+            for aux in frame.auxes:  # works even if .auxes empty
                 if aux.insular and aux.razeable:
                     razeables.append(aux)
                     break
 
-        elif who == 'last':
+        elif who == 'last':  # works even if .auxes empty
             for aux in reversed(frame.auxes):
                 if aux.insular and aux.razeable:
                     razeables.append(aux)
@@ -1477,3 +1493,5 @@ class Razer(Actor):
             console.concise("         Razing '{0}' in '{1}'\n".format(who, frame.name))
             aux.prune()
             frame.auxes.remove(aux)
+            if aux.tag in framer.auxes:
+                del framer.auxes[aux.tag]

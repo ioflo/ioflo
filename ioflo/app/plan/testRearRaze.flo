@@ -8,9 +8,9 @@ house cloner
 
          frame cloner1 in start
             print cloner1
-            rear orig1 as mine be aux in frame clonage1
-            rear orig2 in frame clonage1
-            rear orig4 in frame clonage1
+            rear origA as mine be aux in frame clonage1
+            rear origB in frame clonage1
+            rear origD in frame clonage1
             go next
 
          frame clonage1 in start
@@ -26,9 +26,9 @@ house cloner
 
          frame cloner2 in start
             print cloner2
-            rear orig4 as mine be aux in frame clonage2
-            rear orig4 in frame clonage2
-            rear orig4 in frame clonage2
+            rear origD as mine be aux in frame clonage2
+            rear origD in frame clonage2
+            rear origD in frame clonage2
             go next
 
          frame clonage2 in start
@@ -54,7 +54,7 @@ house cloner
           bid stop all
 
 
-   framer orig1 be moot first A
+   framer origA be moot first A
 
       frame A
          print A
@@ -70,12 +70,12 @@ house cloner
          done
 
 
-   framer orig2 be moot first R
+   framer origB be moot first R
 
       frame R
          print R
          put 0 into counter of framer
-         aux orig3 as RCloneOrig3
+         aux origC as RCloneOrig3
          go next if aux RCloneOrig3 is done
 
       frame S
@@ -86,7 +86,7 @@ house cloner
       frame T
          done
 
-   framer orig3 be moot first X
+   framer origC be moot first X
 
       frame X
          print X
@@ -102,12 +102,12 @@ house cloner
          done
 
 
-   framer orig4 be moot first D
+   framer origD be moot first D
 
       frame D
          print D
          put 0 into counter of framer
-         aux orig5 as mine
+         aux origE as mine
          go next if all is done
 
       frame E
@@ -118,7 +118,7 @@ house cloner
       frame F
          done
 
-   framer orig5 be moot first G
+   framer origE be moot first G
 
       frame G
          print G

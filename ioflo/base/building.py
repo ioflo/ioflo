@@ -1633,7 +1633,7 @@ class Builder(object):
 
         try:
             needs = []
-            aux = None #original
+            aux = None  #  original
             connective = None
             clone = None
             inode = ''
@@ -1651,7 +1651,6 @@ class Builder(object):
                 if connective == 'as':
                     clone = tokens[index]
                     index += 1
-
                     self.verifyName(clone, command, tokens, index)
 
                 elif connective == 'via':
@@ -1690,7 +1689,7 @@ class Builder(object):
 
         if clone:
             if clone == 'mine':
-                clone = self.currentFramer.newInsularTag()
+                clone = self.currentFramer.newMootTag(base=aux)
                 insular = True
 
             if clone in self.currentFramer.moots:

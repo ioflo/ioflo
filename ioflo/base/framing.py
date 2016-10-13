@@ -119,7 +119,6 @@ class Framer(tasking.Tasker):
         self.inode = ''  # framer inode prefix
 
         self.tag = tag if tag else self.name  # main framer local unique clone tag when cloned or .name if not
-        self.insularCount = 0  # number of insular clones used to create unique clone tag
         self.auxes = odict()  # aux framers keyed by clone tag if clone or aux name if not
 
     @property
@@ -137,6 +136,15 @@ class Framer(tasking.Tasker):
 
         return tuple(reversed(mains))
 
+    @property
+    def surname(self):
+        """
+        Property that returns underscore separated string representing namespaced
+        clone framer hierarchy
+        For non cloned framers the .surname should be the same as .name
+        Uses .mains property so assumes that .main is resolved if any
+        """
+        return "_".join(framer.name if framer.original else framer.tag for framer in self.mains)
 
     def clone(self, name, tag='', period=0.0, schedule=AUX,):
         """
@@ -186,6 +194,8 @@ class Framer(tasking.Tasker):
             for aux in prunables:
                 aux.prune()
                 frame.auxes.remove(aux)
+                if aux.tag in self.auxes:
+                    del self.auxes[aux.tag]
 
         if self.name in Framer.Names and Framer.Names[self.name] == self:
             del Framer.Names[self.name]
@@ -195,7 +205,7 @@ class Framer(tasking.Tasker):
         Convert namestrings or data of moots into clones
         """
         console.terse("     Presolving Framer {0}\n".format(self.name))
-        self.resolveMoots()  # do we need to presolve insular clones
+        self.resolveMoots()
 
         self.assignFrameRegistry()  # needed so Frame.Names valid
 
@@ -286,14 +296,14 @@ class Framer(tasking.Tasker):
                                      human=human,
                                      count=count)
 
-            name = "_".join((self.surname, tag))  # replace name will full name
-            clone = original.clone(name=name, tag=tag, schedule=schedule)
             if tag in self.auxes:  # tag must be unique to framer
                 raise excepting.ResolveError("Clone tag already in use",
                                              name=self.name,
                                              value=tag,
                                              human=human,
                                              count=count )
+            name = "_".join((self.surname, tag))  # replace name with full name
+            clone = original.clone(name=name, tag=tag, schedule=schedule)
             self.auxes[tag] = clone
 
             # inode is new (aux verb clone via)  clone.inode is old (framer moot via)
@@ -310,25 +320,30 @@ class Framer(tasking.Tasker):
 
         self.moots.clear()
 
-    @property
-    def surname(self):
+    def newMootTag(self, base=None, count=0):
         """
-        Property that returns underscore separated string representing namespaced
-        clone framer hierarchy
-        For non cloned framers the .surname should be the same as .name
-        Uses .mains property so assumes that .main is resolved if any
+        Returns new unique among .moots insular tag by incrementing count
         """
-        return "_".join(framer.name if framer.original else framer.tag for framer in self.mains)
-
-    def newInsularTag(self):
-        """
-        Returns new unique among .moots insular tag by using .insularCount
-        """
-        self.insularCount += 1
-        tag = "{0}{1}".format(self.name, self.insularCount)
+        if not base:
+            base = self.tag
+        count += 1
+        tag = "{0}{1}".format(base, count)
         while tag in self.moots:
-            self.insularCount += 1
-            tag = "{0}{1}".format(self.name, self.insularCount)
+            count += 1
+            tag = "{0}{1}".format(base, count)
+        return tag
+
+    def newAuxTag(self, base=None, count=0):
+        """
+        Returns new unique among .auxes insular tag by using .insularCount
+        """
+        if not base:
+            base = self.tag
+        count += 1
+        tag = "{0}{1}".format(base, count)
+        while tag in self.auxes:
+            count += 1
+            tag = "{0}{1}".format(base, count)
         return tag
 
     @staticmethod
