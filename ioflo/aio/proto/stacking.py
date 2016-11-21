@@ -654,7 +654,7 @@ class RemoteStack(Stack):
                 self.incStat("msg_destination_invalid")
                 return
             remote = self.remotes.values()[0]
-        return None
+        return packeting.Packet(packed=msg.encode('ascii'))
 
     def _serviceOneTxMsg(self):
         """
@@ -2044,7 +2044,6 @@ class UdpStack(GramStack, RemoteStack, IpStack):
             ha = self.remotes.values()[0].ha
         pkt.pack()
         self.txPkts.append((pkt, ha))
-
 
     def parserize(self, raw, ha=None):
         """
