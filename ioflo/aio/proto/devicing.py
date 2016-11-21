@@ -141,6 +141,14 @@ class RemoteDevice(Device):
         super(RemoteDevice, self).__init__(stack=stack, uid=uid, **kwa)
 
 
+    def receive(self, msg):
+        """
+        Process received rx msg/pkt/data.
+        """
+        if msg is not None:
+            self.stack.rxMsgs.append(msg)
+
+
 class SingleRemoteDevice(Device):
     """
     Remote Device Class when only one remote in stack .remote

@@ -688,12 +688,19 @@ class RemoteStack(Stack):
             remote = self.remotes.values()[0]
         self.txMsgs.append((msg, remote))
 
-    def messagize(self, pkt, ha=None):
+    def messagize(self, pkt, ha):
         """
-        Returns messageconverted from packet pkt sourced from ha
+        Returns duple of (message, remote) converted from packet pkt and ha
         Override in subclass
         """
-        return None
+        msg = pkt.packed.decode("ascii")
+        try:
+            remote = self.haRemotes[ha]
+        except KeyError as ex:
+            console.verbose(("{0}: Dropping packet received from unknown remote "
+                             "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
+            return None
+        return (msg, remote)
 
     def _serviceOneRxPkt(self):
         """
@@ -704,22 +711,19 @@ class RemoteStack(Stack):
         console.verbose("{0} received packet from {1}\n{2}\n".format(self.name,
                                                                      ha or '',
                                                                      pkt.show()))
-        message = self.messagize(pkt, ha)
-        if message is not None:
-            self.rxMsgs.append(message)
+        message, remote = self.messagize(pkt, ha)
+        if remote:
+            remote.receive(message)
 
     def _serviceOneRxMsg(self):
         """
         Service one duple from .rxMsgs deque
         """
-        msg, remote = self.rxMsgs.popleft()
-        console.verbose("{0}: Servicing RxMsg from {1} at {2:.3f}:"
-                        "\n     {3}\n".format(self.name,
-                                              remote.name,
+        msg = self.rxMsgs.popleft()
+        console.verbose("{0}: Servicing RxMsg at {1:.3f}:"
+                        "\n     {2}\n".format(self.name,
                                               self.stamper.stamp,
                                               msg))
-        if remote:
-            remote.receive(msg)
 
     def serviceTimers(self):
         """
@@ -2069,16 +2073,27 @@ class UdpStack(GramStack, RemoteStack, IpStack):
             return None
         return (msg, remote)
 
+    def _serviceOneRxPkt(self):
+        """
+        Service pkt from .rxPkts deque
+        Assumes that there is a message on the .rxes deque
+        """
+        pkt, ha = self.rxPkts.popleft()
+        console.verbose("{0} received packet from {1}\n{2}\n".format(self.name,
+                                                                     ha or '',
+                                                                     pkt.show()))
+        message, remote = self.messagize(pkt, ha)
+        if remote:
+            remote.receive(message)
+
     def _serviceOneRxMsg(self):
         """
         Service one duple from .rxMsgs deque
         """
-        msg, remote = self.rxMsgs.popleft()
-        console.verbose("{0}: Servicing RxMsg from {1} at {2:.3f}:"
-                        "\n     {3}\n".format(self.name,
-                                              remote.name,
+        msg = self.rxMsgs.popleft()
+        console.verbose("{0}: Servicing RxMsg at {1:.3f}:"
+                        "\n     {2}\n".format(self.name,
                                               self.stamper.stamp,
                                               msg))
         self.incStat("msg_received")
-        if remote:
-            remote.receive(msg)
+
