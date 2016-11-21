@@ -336,6 +336,7 @@ class Stack(MixIn):
         console.verbose("{0} sending\n{1}\n".format(self.name, msg))
         packet = self.packetize(msg, remote)
         if packet is not None:  # queue packet
+            packet.pack()
             self.txPkts.append(packet)
 
     def serviceTxMsgs(self):
@@ -668,7 +669,7 @@ class RemoteStack(Stack):
                                                            msg))
         packet = self.packetize(msg, remote)
         if packet is not None:
-            pkt.pack()
+            packet.pack()
             self.txPkts.append(packet)
 
     def message(self, msg, remote=None):
@@ -1877,6 +1878,7 @@ class GramStack(Stack):
                                                            msg))
         packet = self.packetize(msg, remote)
         if packet is not None:
+            packet.pack()
             self.txPkts.append((packet, remote.ha))
 
     def parserize(self, raw, ha=None):
