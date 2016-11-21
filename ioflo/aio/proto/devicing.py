@@ -140,7 +140,6 @@ class RemoteDevice(Device):
 
         super(RemoteDevice, self).__init__(stack=stack, uid=uid, **kwa)
 
-
     def receive(self, msg):
         """
         Process received rx msg/pkt/data.
