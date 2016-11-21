@@ -668,6 +668,7 @@ class RemoteStack(Stack):
                                                            msg))
         packet = self.packetize(msg, remote)
         if packet is not None:
+            pkt.pack()
             self.txPkts.append(packet)
 
     def message(self, msg, remote=None):
