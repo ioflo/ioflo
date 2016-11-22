@@ -189,6 +189,15 @@ class BasicTestCase(unittest.TestCase):
         part = packeting.Packet(stack="Not a stack")
         self.assertEqual(part.stack, "Not a stack")
 
+        packed = part.pack()
+        self.assertEqual(packed, part.packed)
+        self.assertEqual(part.packed, bytearray([]))
+
+        raw = b'Hello'
+        offset = part.parse(raw=raw)
+        self.assertEqual(part.size, offset)
+        self.assertEqual(part.packed, raw)
+
 
 def runOne(test):
     '''

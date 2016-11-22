@@ -324,7 +324,15 @@ class Stack(MixIn):
         Returns packed packet created from msg
         Override in subclass
         """
-        return None
+        packet = packeting.Packet(stack=self, packed=msg.encode('ascii'))
+        try:
+            packet.pack()
+        except ValueError as ex:
+            emsg = "{}: Error packing msg.\n{}\n{}\n".format(self.name, msg, ex)
+            console.terse(emsg)
+            self.incState("pkt_pack_error")
+            return None
+        return packet
 
     def _serviceOneTxMsg(self):
         """
@@ -336,7 +344,6 @@ class Stack(MixIn):
         console.verbose("{0} sending\n{1}\n".format(self.name, msg))
         packet = self.packetize(msg, remote)
         if packet is not None:  # queue packet
-            packet.pack()
             self.txPkts.append(packet)
 
     def serviceTxMsgs(self):
@@ -387,7 +394,15 @@ class Stack(MixIn):
         Returns packet parsed from raw data
         Override in subclass
         """
-        return None
+        packet = packeting.Packet(stack=self)
+        try:
+            packet.parse(raw=raw)
+        except ValueError as ex:
+            emsg = "{}: Error parsing raw.\n{}\n{}\n".format(self.name, raw, ex)
+            console.terse(emsg)
+            self.incState("pkt_parse_error")
+            return None
+        return packet
 
     def _serviceOneReceived(self):
         """
@@ -655,7 +670,16 @@ class RemoteStack(Stack):
                 self.incStat("msg_destination_invalid")
                 return
             remote = self.remotes.values()[0]
-        return packeting.Packet(packed=msg.encode('ascii'))
+
+        packet = packeting.Packet(stack=self, packed=msg.encode('ascii'))
+        try:
+            packet.pack()
+        except ValueError as ex:
+            emsg = "{}: Error packing msg.\n{}\n{}\n".format(self.name, msg, ex)
+            console.terse(emsg)
+            self.incState("pkt_pack_error")
+            return None
+        return packet
 
     def _serviceOneTxMsg(self):
         """
@@ -669,7 +693,6 @@ class RemoteStack(Stack):
                                                            msg))
         packet = self.packetize(msg, remote)
         if packet is not None:
-            packet.pack()
             self.txPkts.append(packet)
 
     def message(self, msg, remote=None):
@@ -1404,7 +1427,15 @@ class ClientStreamStack(Stack):
         Returns packed packet created from msg destined for remote
         Override in subclass
         """
-        return packeting.Packet(packed=msg.encode('ascii'))
+        packet = packeting.Packet(stack=self, packed=msg.encode('ascii'))
+        try:
+            packet.pack()
+        except ValueError as ex:
+            emsg = "{}: Error packing msg.\n{}\n{}\n".format(self.name, msg, ex)
+            console.terse(emsg)
+            self.incState("pkt_pack_error")
+            return None
+        return packet
 
     def _serviceOneTxPkt(self):
         """
@@ -1438,7 +1469,15 @@ class ClientStreamStack(Stack):
         Returns packet parsed from raw data
         Override in subclass
         """
-        return packeting.Packet(packed=raw)
+        packet = packeting.Packet(stack=self)
+        try:
+            packet.parse(raw=raw)
+        except ValueError as ex:
+            emsg = "{}: Error parsing raw.\n{}\n{}\n".format(self.name, raw, ex)
+            console.terse(emsg)
+            self.incState("pkt_parse_error")
+            return None
+        return packet
 
     def _serviceOneReceived(self):
         """
@@ -1882,7 +1921,6 @@ class GramStack(Stack):
                                                            msg))
         packet = self.packetize(msg, remote)
         if packet is not None:
-            packet.pack()
             self.txPkts.append((packet, remote.ha))
 
     def parserize(self, raw, ha=None):
@@ -1890,7 +1928,15 @@ class GramStack(Stack):
         Returns packet parsed from raw data sourced from ha
         Override in subclass
         """
-        return None
+        packet = packeting.Packet(stack=self)
+        try:
+            packet.parse(raw=raw)
+        except ValueError as ex:
+            emsg = "{}: Error parsing raw.\n{}\n{}\n".format(self.name, raw, ex)
+            console.terse(emsg)
+            self.incState("pkt_parse_error")
+            return None
+        return packet
 
     def _serviceOneReceived(self):
         '''
@@ -2028,13 +2074,6 @@ class UdpStack(GramStack, RemoteStack, IpStack):
                                      bufsize=udping.UDP_MAX_PACKET_SIZE * self.bufcnt)
         return handler
 
-    def packetize(self, msg, remote=None):
-        """
-        Returns packed packet created from msg destined for remote
-        Override in subclass
-        """
-        return packeting.Packet(packed=msg.encode('ascii'))
-
     def transmit(self, pkt, ha=None):
         """
         Pack and Append (pkt, ha) duple to .txPkts deque
@@ -2051,13 +2090,6 @@ class UdpStack(GramStack, RemoteStack, IpStack):
             ha = self.remotes.values()[0].ha
         pkt.pack()
         self.txPkts.append((pkt, ha))
-
-    def parserize(self, raw, ha=None):
-        """
-        Returns packet parsed from raw data sourced from ha
-        Override in subclass
-        """
-        return packeting.Packet(packed=raw)
 
     def messagize(self, pkt, ha):
         """

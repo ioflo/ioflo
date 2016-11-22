@@ -95,7 +95,7 @@ class PackerPart(Part):
         Attributes:
             .fmt is struct format string
             .packer is compiled struct packer
-            
+
         Class Attributes:
             .Format is struct packer format string for packed
 
@@ -174,7 +174,7 @@ class PackifierPart(Part):
 
         Inherited Properties:
             .size is length of .packed
-            
+
         Properties
             .fmtSize is size given by .fmt
 
@@ -185,16 +185,16 @@ class PackifierPart(Part):
 
         if raw is not None:
             self.parse(raw=raw)
-            
+
     @property
     def fmtSize(self):
         """
         Property fmtSize
         """
         tbfl = sum((int(x) for x in self.fmt.split()))
-        size = (tbfl // 8) + 1 if tbfl % 8 else tbfl // 8        
+        size = (tbfl // 8) + 1 if tbfl % 8 else tbfl // 8
         return size
-    
+
     def verifySize(self, raw=bytearray(b'')):
         """
         Return True if len(raw) is at least long enough for packed size
@@ -268,7 +268,7 @@ class PacketPart(Part):
         """
         self.packet = packet  # do this first  in case mixin needs attribute
         super(PacketPart, self).__init__(**kwa)
-        
+
 
     def show(self):
         """
@@ -317,6 +317,7 @@ class Packet(Part):
         """
         Parse raw data into .packed
         """
+        self.packed = bytearray(raw)
         return self.size
 
     def pack(self):
