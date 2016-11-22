@@ -316,8 +316,14 @@ class Stack(MixIn):
         Pack and append pkt to .txPkts deque
         Override in subclass
         """
-        pkt.pack()
-        self.txPkts.append(pkt)
+        try:
+            pkt.pack()
+        except ValueError as ex:
+            emsg = "{}: Error packing pkt.\n{}\n{}\n".format(self.name, pkt, ex)
+            console.terse(emsg)
+            self.incState("pkt_pack_error")
+        else:
+            self.txPkts.append(pkt)
 
     def packetize(self, msg):
         """
@@ -654,8 +660,14 @@ class RemoteStack(Stack):
         Pack and Append (pkt, ha) duple to .txPkts deque
         Override in subclass
         """
-        pkt.pack()
-        self.txPkts.append((pkt, ha))
+        try:
+            pkt.pack()
+        except ValueError as ex:
+            emsg = "{}: Error packing pkt.\n{}\n{}\n".format(self.name, pkt, ex)
+            console.terse(emsg)
+            self.incState("pkt_pack_error")
+        else:
+            self.txPkts.append((pkt, ha))
 
     def packetize(self, msg, remote=None):
         """
@@ -1906,8 +1918,14 @@ class GramStack(Stack):
         Pack and Append (pkt, ha) duple to .txPkts deque
         Override in subclass
         """
-        pkt.pack()
-        self.txPkts.append((pkt, ha))
+        try:
+            pkt.pack()
+        except ValueError as ex:
+            emsg = "{}: Error packing pkt.\n{}\n{}\n".format(self.name, pkt, ex)
+            console.terse(emsg)
+            self.incState("pkt_pack_error")
+        else:
+            self.txPkts.append((pkt, ha))
 
     def _serviceOneTxMsg(self):
         """
@@ -2088,8 +2106,15 @@ class UdpStack(GramStack, RemoteStack, IpStack):
                 self.incStat("pkt_destination_invalid")
                 return
             ha = self.remotes.values()[0].ha
-        pkt.pack()
-        self.txPkts.append((pkt, ha))
+
+        try:
+            pkt.pack()
+        except ValueError as ex:
+            emsg = "{}: Error packing pkt.\n{}\n{}\n".format(self.name, pkt, ex)
+            console.terse(emsg)
+            self.incState("pkt_pack_error")
+        else:
+            self.txPkts.append((pkt, ha))
 
     def messagize(self, pkt, ha):
         """
