@@ -59,11 +59,20 @@ class BasicTestCase(unittest.TestCase):
         tag = eventing.tagify(head='exchange')
         self.assertEqual(tag, 'exchange')
 
+        tag = eventing.tagify(head=['exchange', 'trade'])
+        self.assertEqual(tag, 'exchange.trade')
+
         tag = eventing.tagify(head='exchange', tail='completed')
         self.assertEqual(tag, 'exchange.completed')
 
         tag = eventing.tagify(head='exchange', tail=['process', 'started'])
         self.assertEqual(tag, 'exchange.process.started')
+
+        tag = eventing.tagify(head=['exchange', 'trade'], tail=['process', 'started'])
+        self.assertEqual(tag, 'exchange.trade.process.started')
+
+        tag = eventing.tagify(head=['exchange', 'trade'], tail='completed')
+        self.assertEqual(tag, 'exchange.trade.completed')
 
         tag = eventing.tagify(head='exchange', tail=['process', 'started'], sep='/')
         self.assertEqual(tag, 'exchange/process/started')
