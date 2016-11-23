@@ -464,6 +464,7 @@ class Stack(MixIn):
         """
         pkt = self.rxPkts.popleft()
         console.verbose("{0} received packet\n{1}\n".format(self.name, pkt.show()))
+        self.incStat("pkt_received")
         message = self.messagize(pkt)
         if message is not None:
             self.rxMsgs.append(message)
@@ -734,7 +735,7 @@ class RemoteStack(Stack):
         except KeyError as ex:
             console.verbose(("{0}: Dropping packet received from unknown remote "
                              "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
-            return None
+            return (None, None)
         return (msg, remote)
 
     def _serviceOneRxPkt(self):
@@ -746,6 +747,7 @@ class RemoteStack(Stack):
         console.verbose("{0} received packet from {1}\n{2}\n".format(self.name,
                                                                      ha or '',
                                                                      pkt.show()))
+        self.incStat("pkt_received")
         message, remote = self.messagize(pkt, ha)
         if remote:
             remote.receive(message)
@@ -1989,12 +1991,19 @@ class GramStack(Stack):
             self.rxPkts.append((packet, ha))     # duple = ( packed, source address)
         return True  # received data
 
-    def messagize(self, pkt, ha=None):
+    def messagize(self, pkt, ha):
         """
-        Returns messageconverted from packet pkt sourced from ha
+        Returns duple of (message, remote) converted from packet pkt and ha
         Override in subclass
         """
-        return None
+        msg = pkt.packed.decode("ascii")
+        try:
+            remote = self.haRemotes[ha]
+        except KeyError as ex:
+            console.verbose(("{0}: Dropping packet received from unknown remote "
+                             "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
+            return (None, None)
+        return (msg, remote)
 
     def _serviceOneRxPkt(self):
         """
@@ -2005,8 +2014,9 @@ class GramStack(Stack):
         console.verbose("{0} received packet from {1}\n{2}\n".format(self.name,
                                                                      ha or '',
                                                                      pkt.show()))
-        message = self.messagize(pkt, ha)
-        if message is not None:
+        self.incStat("pkt_received")
+        message, remote = self.messagize(pkt, ha)
+        if remote is not None:
             self.rxMsgs.append(message)
 
 
@@ -2127,7 +2137,7 @@ class UdpStack(GramStack, RemoteStack, IpStack):
         except KeyError as ex:
             console.verbose(("{0}: Dropping packet received from unknown remote "
                              "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
-            return None
+            return (None, None)
         return (msg, remote)
 
     def _serviceOneRxPkt(self):
@@ -2139,6 +2149,7 @@ class UdpStack(GramStack, RemoteStack, IpStack):
         console.verbose("{0} received packet from {1}\n{2}\n".format(self.name,
                                                                      ha or '',
                                                                      pkt.show()))
+        self.incStat("pkt_received")
         message, remote = self.messagize(pkt, ha)
         if remote:
             remote.receive(message)
