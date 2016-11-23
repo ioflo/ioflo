@@ -348,7 +348,7 @@ class Stack(MixIn):
         """
         msg = self.txMsgs.popleft()
         console.verbose("{0} sending\n{1}\n".format(self.name, msg))
-        packet = self.packetize(msg, remote)
+        packet = self.packetize(msg)
         if packet is not None:  # queue packet
             self.txPkts.append(packet)
 
@@ -698,7 +698,7 @@ class RemoteStack(Stack):
         """
         Handle one (message, remote) duple from .txMsgs deque
         Assumes there is a duple on the deque
-        Appends (packed, ha) duple to txPkts deque
+        Appends (packet, ha) duple to txPkts deque
         """
         msg, remote = self.txMsgs.popleft()  # duple (msg, destination uid
         console.verbose("{0} sending to {1}\n{2}\n".format(self.name,
@@ -706,7 +706,7 @@ class RemoteStack(Stack):
                                                            msg))
         packet = self.packetize(msg, remote)
         if packet is not None:
-            self.txPkts.append(packet)
+            self.txPkts.append((packet, remote.ha))
 
     def message(self, msg, remote=None):
         """
@@ -726,7 +726,7 @@ class RemoteStack(Stack):
 
     def messagize(self, pkt, ha):
         """
-        Returns duple of (message, remote) converted from packet pkt and ha
+        Returns duple of (message, remote) converted from rx packet pkt and ha
         Override in subclass
         """
         msg = pkt.packed.decode("ascii")
@@ -1436,26 +1436,10 @@ class ClientStreamStack(Stack):
         """
         super(ClientStreamStack, self).__init__(**kwa)
 
-    def packetize(self, msg, remote=None):
-        """
-        Returns packed packet created from msg destined for remote
-        Override in subclass
-        """
-        packet = packeting.Packet(stack=self, packed=msg.encode('ascii'))
-        try:
-            packet.pack()
-        except ValueError as ex:
-            emsg = "{}: Error packing msg.\n{}\n{}\n".format(self.name, msg, ex)
-            console.terse(emsg)
-            self.incState("pkt_pack_error")
-            return None
-        return packet
-
     def _serviceOneTxPkt(self):
         """
         Service one (packet, ha) duple on .txPkts deque
         Packet is assumed to be packed already in .packed
-        Assumes there is a duple on the deque
         Override in subclass
         """
         pkt = None
