@@ -673,17 +673,9 @@ class RemoteStack(Stack):
     def packetize(self, msg, remote=None):
         """
         Returns packed packet created from msg destined for remote
-        Uses zeroth remote if not provided
+        Remote provided if attributes needed to fill in packet
         Override in subclass
         """
-        if remote is None:
-            if not self.remotes:
-                emsg = "No remote to send to.\n"
-                console.terse(emsg)
-                self.incStat("msg_destination_invalid")
-                return
-            remote = self.remotes.values()[0]
-
         packet = packeting.Packet(stack=self, packed=msg.encode('ascii'))
         try:
             packet.pack()
@@ -1971,22 +1963,16 @@ class GramStack(Stack):
         packet = self.parserize(raw, ha)
         if packet is not None:
             console.profuse("{0}: received\n    0x{1}\n".format(self.name,
-                                        hexlify(self.rxbs[:packet.size]).decode('ascii')))
+                                        hexlify(raw).decode('ascii')))
             self.rxPkts.append((packet, ha))     # duple = ( packed, source address)
         return True  # received data
 
     def messagize(self, pkt, ha):
         """
-        Returns duple of (message, remote) converted from packet pkt and ha
+        Returns duple of (message, remote) converted from rx source packet pkt and rha
         Override in subclass
         """
         msg = pkt.packed.decode("ascii")
-        try:
-            remote = self.haRemotes[ha]
-        except KeyError as ex:
-            console.verbose(("{0}: Dropping packet received from unknown remote "
-                             "ha '{1}'.\n{2}\n".format(self.name, ha, pkt.packed)))
-            return (None, None)
         return (msg, remote)
 
     def _serviceOneRxPkt(self):
@@ -1999,9 +1985,8 @@ class GramStack(Stack):
                                                                      ha or '',
                                                                      pkt.show()))
         self.incStat("pkt_received")
-        message, remote = self.messagize(pkt, ha)
-        if remote is not None:
-            self.rxMsgs.append(message)
+        message = self.messagize(pkt, ha)
+        self.rxMsgs.append(message)
 
 
 class UdpStack(GramStack, RemoteStack, IpStack):
@@ -2112,7 +2097,7 @@ class UdpStack(GramStack, RemoteStack, IpStack):
 
     def messagize(self, pkt, ha):
         """
-        Returns duple of (message, remote) converted from packet pkt and ha
+        Returns duple of (message, remote) converted from rx source packet pkt and ha
         Override in subclass
         """
         msg = pkt.packed.decode("ascii")
