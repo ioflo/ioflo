@@ -69,7 +69,7 @@ def eventize(tag, stamp=None, uid=None, data=None, route=None):
     tag is required and must be provided namespaced (dotted) string
     stamp is optional timestamp, if stamp is True then substitude iso8601 time stamp
     uid is optional unique id, if uid is True then substitute time unique identifier
-    data is required data odict, If not provided then empty odict
+    data is optional data odict, if data is True then substitute empty odict
     route is optional routing odict of form {src: tuple, dst: tuple}
     """
     event = odict(tag=tag)
@@ -77,7 +77,8 @@ def eventize(tag, stamp=None, uid=None, data=None, route=None):
         event["stamp"] = iso8601() if stamp is True else stamp
     if uid is not None:
         event['uid'] = tuuid() if uid is True else uid
-    event["data"] = data if data is not None else odict()
+    if data is  not None:
+        event["data"] = odict() if data is True else data
     if route is not None:
         event["route"] = route
     return event

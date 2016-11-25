@@ -12,6 +12,7 @@ else:
     import unittest
 
 import os
+import time
 
 from ioflo.aid.sixing import *
 from ioflo.aid.odicting import odict
@@ -93,6 +94,7 @@ class BasicTestCase(unittest.TestCase):
 
         dt = datetime.datetime.utcnow()
         stamp = dt.isoformat()
+        time.sleep(0.01)
 
         event = eventing.eventify('hello')
         self.assertEqual(event['tag'], 'hello')
@@ -140,7 +142,7 @@ class BasicTestCase(unittest.TestCase):
 
         event = eventing.eventize('hello')
         self.assertEqual(event['tag'], 'hello')
-        self.assertEqual(event['data'], odict())
+        self.assertFalse('data' in event)
         self.assertFalse('stamp' in event)
         self.assertFalse('uid' in event)
         self.assertFalse('route' in event)
@@ -148,13 +150,15 @@ class BasicTestCase(unittest.TestCase):
         event = eventing.eventize(tag=eventing.tagify(head='exchange', tail='started'),
                                   stamp=True,
                                   uid=True,
-                                  data=odict(name="John"),
+                                  data=True,
                                   route=odict([("src", (None, None, None)),
                                              ("dst", (None, None, None))]))
 
 
         self.assertEqual(event['tag'], 'exchange.started')
-        self.assertEqual(event['data'], odict(name="John"))
+        self.assertTrue('data' in event)
+        self.assertIsInstance(event["data"], odict)
+        self.assertEqual(event['data'], odict([]))
         self.assertTrue('stamp' in event)
         self.assertIsInstance(event["stamp"], str)
         self.assertGreater(event['stamp'], stamp)
