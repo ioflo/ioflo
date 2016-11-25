@@ -12,6 +12,7 @@ from collections import Set  # both set and frozen set
 # Import ioflo libs
 from .sixing import *
 from .odicting import odict
+from .timing import iso8601, tuuid
 from .consoling import getConsole
 
 console = getConsole()
@@ -49,15 +50,34 @@ def eventify(tag, data=None, stamp=None, uid=None):
     """
     Returns new event with tag and  current timestamp and data if any
     Timestamp is iso 8601
-    YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
+        YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
     Adds uid field if provided
+    if not provided data is empty odict
     """
     event = odict([(u'tag', tag),
-                   (u'stamp', stamp if stamp is not None else
-                         datetime.datetime.utcnow().isoformat()),
+                   (u'stamp', stamp if stamp is not None else iso8601()),
                    ])
     if uid is not None:
         event['uid'] = uid
     event['data'] = data if data is not None else odict()
     return event
 
+def eventize(tag, stamp=None, uid=None, data=None, route=None):
+    """
+    Returns odict with fields suitable for event message
+
+    tag is required and must be provided namespaced (dotted) string
+    stamp is optional timestamp, if stamp is True then substitude iso8601 time stamp
+    uid is optional unique id, if uid is True then substitute time unique identifier
+    data is required data odict, If not provided then empty odict
+    route is optional routing odict of form {src: tuple, dst: tuple}
+    """
+    event = odict(tag=tag)
+    if stamp is not None:
+        event["stamp"] = iso8601() if stamp is True else stamp
+    if uid is not None:
+        event['uid'] = tuuid() if uid is True else uid
+    event["data"] = data if data is not None else odict()
+    if route is not None:
+        event["route"] = route
+    return event

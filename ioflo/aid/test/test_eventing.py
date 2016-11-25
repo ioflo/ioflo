@@ -17,6 +17,8 @@ from ioflo.aid.sixing import *
 from ioflo.aid.odicting import odict
 from ioflo.test import testing
 from ioflo.aid.consoling import getConsole
+from ioflo.aid.timing import iso8601, tuuid
+
 console = getConsole()
 
 from ioflo.aid import eventing
@@ -125,6 +127,63 @@ class BasicTestCase(unittest.TestCase):
 
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testEventize(self):
+        """
+        Test eventize function
+        """
+        console.terse("{0}\n".format(self.testEventize.__doc__))
+        console.reinit(verbosity=console.Wordage.profuse)
+
+
+        stamp = iso8601()  # "YYYY-MM-DDTHH:MM:SS.mmmmmm"
+        tuid = tuuid()  # "0000014ddf1f2f9c_5e36738"
+
+        event = eventing.eventize('hello')
+        self.assertEqual(event['tag'], 'hello')
+        self.assertEqual(event['data'], odict())
+        self.assertFalse('stamp' in event)
+        self.assertFalse('uid' in event)
+        self.assertFalse('route' in event)
+
+        event = eventing.eventize(tag=eventing.tagify(head='exchange', tail='started'),
+                                  stamp=True,
+                                  uid=True,
+                                  data=odict(name="John"),
+                                  route=odict([("src", (None, None, None)),
+                                             ("dst", (None, None, None))]))
+
+
+        self.assertEqual(event['tag'], 'exchange.started')
+        self.assertEqual(event['data'], odict(name="John"))
+        self.assertTrue('stamp' in event)
+        self.assertIsInstance(event["stamp"], str)
+        self.assertGreater(event['stamp'], stamp)
+        self.assertTrue('uid' in event)
+        self.assertIsInstance(event["uid"], str)
+        self.assertGreater(event['uid'], tuid)
+        self.assertTrue('route' in event)
+        self.assertEqual(event['route'] ,odict([("src", (None, None, None)),
+                                         ("dst", (None, None, None))]))
+
+        event = eventing.eventize(tag=eventing.tagify(head='exchange', tail='started'),
+                                  stamp=stamp,
+                                  uid=tuid,
+                                  data=odict(name="John"),
+                                  route=odict([("src", (None, None, None)),
+                                             ("dst", (None, None, None))]))
+
+
+        self.assertEqual(event['tag'], 'exchange.started')
+        self.assertEqual(event['data'], odict(name="John"))
+        self.assertEqual(event['stamp'], stamp)
+        self.assertEqual(event['uid'], tuid)
+        self.assertEqual(event['route'] ,odict([("src", (None, None, None)),
+                                         ("dst", (None, None, None))]))
+
+
+
+        console.reinit(verbosity=console.Wordage.concise)
+
 
 def runOne(test):
     '''
@@ -140,6 +199,7 @@ def runSome():
     names = [
              'testTagify',
              'testEventify',
+             'testEventize',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
