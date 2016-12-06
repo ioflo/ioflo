@@ -84,22 +84,22 @@ house box1
 
    framer mission be active first northleg
       frame northleg
-         set elapsed to 20.0
-         set heading to 0.0
-         set depth to 5.0
-         set speed to 2.5
+         set elapsed with 20.0
+         set heading with 0.0
+         set depth with 5.0
+         set speed with 2.5
          go next if elapsed >= goal
 
       frame eastleg
-         set heading to 90.0
+         set heading with 90.0
          go next if elapsed >= goal
 
       frame southleg
-         set heading to 180.0
+         set heading with 180.0
          go next if elapsed >= goal
 
       frame westleg
-         set heading to 270.0
+         set heading with 270.0
          go next if elapsed >= goal
 
       frame mission_stop
