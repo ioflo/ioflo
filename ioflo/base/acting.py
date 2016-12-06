@@ -647,7 +647,8 @@ class Actor(object):
 
     def _initio(self, ioinits):
         """
-        Compute initializations for ioflo shares from ioinits odict or item list
+        Compute initializations for ioflo shares from ioinits (odict or item list)
+
         The 'inode' item in ioinits is special. Act.resolve extracts 'inode' from
         ioinits and assigns to ._act.inode before ._initio is called.
 
@@ -665,7 +666,7 @@ class Actor(object):
         The values of the items in the **kwa argument may be either strings or
         mappings
 
-        For each key,val in **kwa.items() there are the following 2 forms for val:
+        For each key,val in ioinits.items() there are the following 2 forms for val:
 
         1- string:
            ipath = pathnamestring
