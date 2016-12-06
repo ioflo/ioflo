@@ -9,8 +9,8 @@ from __future__ import division
 from ..aid.aiding import  reverseCamel,  \
      nameToPath, repack, just, isPath, isIdentifier, isIdentPub, \
      packByte, unpackByte,  \
-     hexize, unhexize, Denary2BinaryStr, Dec2BinStr, PrintHex, PrintDecimal, CRC16, \
-     CRC64, ocfn, Load, Dump, DumpJson, LoadJson
+     hexize, unhexize, denary2BinaryStr, dec2BinStr, printHex, printDecimal, crc16, \
+     crc64, ocfn, load, dump, dumpJson, loadJson
 
 # In future users should import from ioflo.aid.timing not here
 from ..aid.timing import Timer, MonoTimer, StoreTimer, totalSeconds
