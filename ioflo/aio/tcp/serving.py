@@ -22,6 +22,7 @@ from ...aid.sixing import *
 from ...aid.odicting import odict
 from ...aid.timing import StoreTimer
 from ...aid.consoling import getConsole
+from .. import aioing
 from ...base import storing
 
 console = getConsole()
@@ -585,9 +586,11 @@ class Acceptor(object):
         eha = eha or self.ha
         if eha:
             host, port = eha
-            host = socket.gethostbyname(host)
-            if host in ['0.0.0.0', '']:
+            host = aioing.normalizeHost(host)
+            if host in ('0.0.0.0',):
                 host = '127.0.0.1'
+            elif host in ("::", "0:0:0:0:0:0:0:0"):
+                host = "::1"
             eha = (host, port)
         self.eha = eha
         self.bs = bufsize

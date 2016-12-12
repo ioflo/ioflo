@@ -22,6 +22,7 @@ from ...aid.sixing import *
 from ...aid.odicting import odict
 from ...aid.timing import StoreTimer
 from ...aid.consoling import getConsole
+from .. import aioing
 from ...base import storing
 
 console = getConsole()
@@ -68,7 +69,7 @@ class Client(object):
         self.ha = ha or (host, port)
         host, port = self.ha
         self.hostname = host  # host domain name
-        host = socket.gethostbyname(host)  # ip host address
+        host = aioing.normalizeHost(host)  # ip host address
         self.ha = (host, port)
         self.bs = bufsize
         self.wlog = wlog
@@ -148,12 +149,12 @@ class Client(object):
         Reinit self.ha and self.hostname from ha = (host, port) or hostname port
         self.ha is of form (host, port) where host is either dns name or ip
         self.hostname is hostname as dns name
-        host eventually is host ip address output from gethostbyname()
+        host eventually is host ip address output from normalizeHost()
         """
         self.ha = ha or (hostname, port)
         hostname, port = self.ha
         self.hostname = hostname  # host domain name
-        host = socket.gethostbyname(hostname)  # ip host address
+        host = aioing.normalizeHost(hostname)  # ip host address
         self.ha = (host, port)
 
     def actualBufSizes(self):

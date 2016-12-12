@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import sys
 import os
 import subprocess
+import socket
 
 # Import ioflo libs
 from ..aid.sixing import *
@@ -15,7 +16,37 @@ from ..aid.consoling import getConsole
 console = getConsole()
 
 
+def normalizeHost(host):
+    '''
+    Returns ip address host string in normalized dotted form or empty string
+    converts host parameter which may be the dns name not ip address
+    Prefers ipv4 addresses over ipv6 in that it will only return the ipv6
+    address if no ipv4 address equivalent is available
+    '''
+    if host == "":
+        host = "0.0.0.0"
 
+    try:  # try ipv4
+        info =  socket.getaddrinfo(host,
+                                   None,
+                                   socket.AF_INET,
+                                   socket.SOCK_DGRAM,
+                                   socket.IPPROTO_IP, 0)
+    except socket.gaierror as ex: # try ipv6
+        if host in ("", "0.0.0.0"):
+            host = "::"
+
+        info =  socket.getaddrinfo(host,
+                                    None,
+                                    socket.AF_INET6,
+                                    socket.SOCK_DGRAM,
+                                    socket.IPPROTO_IP, 0)
+    if not info:
+        emsg = "Cannot resolve address for host '{0}'".format(host)
+        raise raeting.EstateError(emsg)
+
+    host = info[0][4][0]
+    return host
 
 def arpCreate(ether, host, interface="en0", temp=True):
     """

@@ -15,6 +15,7 @@ from ...aid.odicting import odict
 from ...aid.byting import bytify, unbytify, packify, unpackify
 from ...aid.eventing import eventify, tagify
 from ...aid import getConsole
+from .. import aioing
 from .protoing import MixIn
 
 console = getConsole()
@@ -227,9 +228,11 @@ class IpDevice(Device):
         """
         if ha:
             host, port = ha
-            host = socket.gethostbyname(host)
-            if host in ['0.0.0.0', '']:
+            host = aioing.normalizeHost(host)
+            if host in ('0.0.0.0',):
                 host = '127.0.0.1'
+            elif host in ("::", "0:0:0:0:0:0:0:0"):
+                host = "::1"
             ha = (host, port)
         else:
             ha = ('127.0.0.1', stack.Port)

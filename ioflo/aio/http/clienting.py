@@ -40,7 +40,7 @@ from ...aid import aiding
 from ...aid.odicting import odict, lodict, modict
 from ...aid.consoling import getConsole
 from ...base import excepting, storing
-
+from .. import aioing
 from ..tcp import Client, ClientTls, Server, ServerTls
 from . import httping
 
@@ -711,7 +711,7 @@ class Patron(object):
         hostname = splits.hostname or hostname  # is host or port provided
         port = splits.port or port  # is port provided
         hostname, port = httping.normalizeHostPort(host=hostname, port=port, defaultPort=defaultPort)
-        host = socket.gethostbyname(hostname)
+        host = aioing.normalizeHost(hostname)
         ha = (host, port)
 
         if connector:
@@ -850,7 +850,7 @@ class Patron(object):
 
             method = redirect.get('method')
 
-            host = socket.gethostbyname(hostname)
+            host = aioing.normalizeHost(hostname)
             ha = (host, port)
             if ha != self.connector.ha or scheme != self.requester.scheme:
                 if self.requester.scheme == 'https' and scheme != 'https':
