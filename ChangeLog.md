@@ -2,11 +2,14 @@
 CHANGE LOG
 -------------------
 --------
-201611XX
+20161212
 --------
 1.6.6
 
 Bugfixes
+
+Added fix for IPV6  replaced socket.gethostbyname with new function
+aioing.normalizeHost that uses socket.getaddrinfo that supports ipv6
 
 
 --------
