@@ -6,6 +6,8 @@ CHANGE LOG
 --------
 1.6.7
 
+changed setup.py to use setuptools_git so create full sdist will all git files
+Changes debugging
 
 
 

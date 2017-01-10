@@ -63,6 +63,7 @@ setup(
     license=__license__,
     keywords=('Automation Operating System Automated Reasoning Engine '
               'Flow Based Programming Intelligent Automation Pub/Sub ioflo FloScript'),
+    include_package_data=True,
     packages=find_packages(exclude=['test', 'test.*',
                                       'docs', 'docs*',
                                       'log', 'log*', 'ioflo/app/log*']),
@@ -72,6 +73,7 @@ setup(
         'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
     install_requires=REQUIRES,
+    setup_requires=["setuptools_git >= 1.1", ],
     extras_require={},
     scripts=PYTHON_SCRIPTS,)
 
