@@ -69,7 +69,7 @@ setup(
                                       'log', 'log*', 'ioflo/app/log*']),
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
-                   '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL'],
+                   '*.css', '*.ico', '*.png', 'LICENSE', 'LICENSE*.txt' 'LEGAL'],
         'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
     install_requires=REQUIRES,
