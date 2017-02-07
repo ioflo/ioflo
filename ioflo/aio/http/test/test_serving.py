@@ -60,6 +60,13 @@ class BasicTestCase(unittest.TestCase):
         """
         console.reinit(verbosity=console.Wordage.profuse)
 
+        tempdirpath = os.path.dirname(
+                        os.path.dirname(
+                            os.path.dirname(
+                                os.path.abspath(
+                                    sys.modules.get(__name__).__file__))))
+        self.certdirpath = os.path.join(tempdirpath, 'test', 'tls', 'certs')
+
     def tearDown(self):
         """
 
@@ -788,9 +795,13 @@ class BasicTestCase(unittest.TestCase):
         result = wireLogAlpha.reopen()
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        #serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        #serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        #clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        serverKeypath = self.certdirpath + '/server_key.pem'  # local server private key
+        serverCertpath = self.certdirpath + '/server_cert.pem'  # local server public cert
+        clientCafilepath = self.certdirpath + '/client.pem' # remote client public cert
 
         alpha = serving.Valet(port = 6101,
                               bufsize=131072,
@@ -810,9 +821,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        #clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        #clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        #serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        clientKeypath = self.certdirpath + '/client_key.pem'  # local client private key
+        clientCertpath = self.certdirpath + '/client_cert.pem'  # local client public cert
+        serverCafilepath = self.certdirpath + '/server.pem' # remote server public cert
 
         path = "https://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
@@ -924,9 +939,13 @@ class BasicTestCase(unittest.TestCase):
         result = wireLogAlpha.reopen()
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        #serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        #serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        #clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        serverKeypath = self.certdirpath + '/server_key.pem'  # local server private key
+        serverCertpath = self.certdirpath + '/server_cert.pem'  # local server public cert
+        clientCafilepath = self.certdirpath + '/client.pem' # remote client public cert
 
         alpha = serving.Valet(port = 6101,
                               bufsize=131072,
@@ -946,9 +965,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        #clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        #clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        #serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        clientKeypath = self.certdirpath + '/client_key.pem'  # local client private key
+        clientCertpath = self.certdirpath + '/client_cert.pem'  # local client public cert
+        serverCafilepath = self.certdirpath + '/server.pem' # remote server public cert
 
         path = "https://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
@@ -1068,9 +1091,13 @@ class BasicTestCase(unittest.TestCase):
         result = wireLogAlpha.reopen()
 
         serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
-        serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
-        serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
-        clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+        #serverKeypath = '/etc/pki/tls/certs/server_key.pem'  # local server private key
+        #serverCertpath = '/etc/pki/tls/certs/server_cert.pem'  # local server public cert
+        #clientCafilepath = '/etc/pki/tls/certs/client.pem' # remote client public cert
+
+        serverKeypath = self.certdirpath + '/server_key.pem'  # local server private key
+        serverCertpath = self.certdirpath + '/server_cert.pem'  # local server public cert
+        clientCafilepath = self.certdirpath + '/client.pem' # remote client public cert
 
         alpha = serving.Valet(port = 6101,
                               bufsize=131072,
@@ -1090,9 +1117,13 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta = wiring.WireLog(buffify=True,  same=True)
         result = wireLogBeta.reopen()
 
-        clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
-        clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
-        serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+        #clientKeypath = '/etc/pki/tls/certs/client_key.pem'  # local client private key
+        #clientCertpath = '/etc/pki/tls/certs/client_cert.pem'  # local client public cert
+        #serverCafilepath = '/etc/pki/tls/certs/server.pem' # remote server public cert
+
+        clientKeypath = self.certdirpath + '/client_key.pem'  # local client private key
+        clientCertpath = self.certdirpath + '/client_cert.pem'  # local client public cert
+        serverCafilepath = self.certdirpath + '/server.pem' # remote server public cert
 
         path = "https://{0}:{1}/".format('localhost', alpha.servant.eha[1])
 
