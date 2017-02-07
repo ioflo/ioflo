@@ -139,6 +139,7 @@ class BasicTestCase(unittest.TestCase):
 
         stamp = iso8601()  # "YYYY-MM-DDTHH:MM:SS.mmmmmm"
         tuid = tuuid()  # "0000014ddf1f2f9c_5e36738"
+        time.sleep(0.1)
 
         event = eventing.eventize('hello')
         self.assertEqual(event['tag'], 'hello')

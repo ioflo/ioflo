@@ -3,7 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function
 
-
+import os
 import time
 import random
 import datetime
@@ -18,6 +18,7 @@ console = getConsole()
 
 TIME1970 = long(2208988800) #offset secs between SNTP epoch=1900 & unix epoch=1970
 
+
 def totalSeconds(td):
     """ Compute total seconds for datetime.timedelta object
         needed for python 2.6
@@ -26,14 +27,31 @@ def totalSeconds(td):
 
 TotalSeconds = totalSeconds
 
-def iso8601(dt=None):
+def timestamp(dt=None):
+    """
+    Returns float posix timestamp at dt if given else now
+    Works for python versions earlier than 3.3
+    """
+    if dt is None:
+        dt = datetime.datetime.now(datetime.timezone.utc)  # make it aware
+
+    if hasattr(dt, "timestamp"):  # only in python3.3+
+        return dt.timestamp()
+    else:
+        return (dt - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)).total_seconds()
+
+def iso8601(dt=None, aware=False):
     """
     Returns string datetime stamp in iso 8601 format from datetime object dt
-    If dt is missing then use utcnow
+    If dt is missing and aware then use now(timezone.utc) else utcnow() naive
     YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
     """
     if dt is None:
-        dt = datetime.datetime.utcnow()
+        if aware:
+            dt = datetime.datetime.now(datetime.timezone.utc)  # make it aware
+        else:  # naive
+            dt = datetime.datetime.utcnow()  # naive
+
     return(dt.isoformat())
 
 def tuuid(stamp=None, prefix=None):
@@ -42,7 +60,7 @@ def tuuid(stamp=None, prefix=None):
     that is hex formated string of length 24
     stamp is float time since unix epoch (1970-1-1) as in time.time()
     If stamp not provided uses current system time UTC
-    
+
     prefix is optional prefix string that is prepended to tuid with '_'
     for example if prefix is 'm' then tuiid looks like
     'm_0000014ddf1f2f9c_5e36738'
@@ -72,7 +90,8 @@ def tuuid(stamp=None, prefix=None):
     parts = []
     if prefix is not None:
         parts.append(prefix)
-    stamp = stamp if stamp is not None else time.mktime(time.gmtime())
+
+    stamp = stamp if stamp is not None else timestamp()
     stamp = int(stamp * 1000000)
     stamp = "{0:016x}".format(stamp)[-16:]
     parts.append(stamp)

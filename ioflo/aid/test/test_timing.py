@@ -5,7 +5,6 @@ Unit Test Template
 from __future__ import absolute_import, division, print_function
 
 import sys
-import datetime
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -49,6 +48,23 @@ class BasicTestCase(unittest.TestCase):
         super(BasicTestCase, self).tearDown()
         console.reinit(verbosity=console.Wordage.concise)
 
+    def testTimestamp(self):
+        """
+        Test posix timestamp generation
+        """
+        console.terse("{0}\n".format(self.testTimestamp.__doc__))
+
+        dt = datetime.datetime.now(datetime.timezone.utc)
+        older = (dt - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)).total_seconds()
+        ts = timing.timestamp()
+        self.assertNotEqual(ts, 0.0)
+        self.assertGreaterEqual(ts, older)
+
+        ts = timing.timestamp(dt=dt)
+        self.assertNotEqual(ts, 0.0)
+        self.assertEqual(ts, older)
+
+
     def testIso8601(self):
         """
         Test iso8601 generation
@@ -61,6 +77,13 @@ class BasicTestCase(unittest.TestCase):
         dt = datetime.datetime(2000, 1, 1)
         stamp = timing.iso8601(dt)
         self.assertEqual(stamp, "2000-01-01T00:00:00")
+
+        stamp = timing.iso8601(aware=True)
+        self.assertEqual(len(stamp), 32)  # '2017-02-07T23:47:16.498821+00:00'
+
+        dt = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
+        stamp = timing.iso8601(dt, aware=True)
+        self.assertEqual(stamp, "2000-01-01T00:00:00+00:00")
 
     def testTuuid(self):
         """
@@ -121,6 +144,7 @@ def runSome():
     """ Unittest runner """
     tests =  []
     names = [
+             'testTimestamp',
              'testIso8601',
              'testTuuid',
              'testStamper',
