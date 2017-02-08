@@ -276,14 +276,111 @@ def wind(p, vs):
     return (w)
 
 
-def insideOnly(p, vs):
+def inside(p, vs, side=True):
     """
-    Returns True if p is inside polygon given by vs but not on edge or vertex.
-    True if 2D point p satisfies point-in-polygon test for the
-    the closed polygon whose sides are formed by connecting the vertex points
+    Returns True if 2D point p is inside 2D polygon given by vs, False otherwise
+    If side is True then p on an edge or vertex are considered inside.
+
+    The closed polygon whose sides are formed by connecting the vertex points
     in sequence vs where each element of vs is a point.
     Points are 2D sequences (tuples, namedtuples, lists etc)
 
-    If p is on a vertex or edge of polygon it is considered outside
+    If the winding number is zero then p is not inside the polygon.
+    If the winding number is positive then p is inside and the polygon is
+      wound counter clockwise around p
+    If the winding number is negative then p is inside and the polygon is
+      wound clockwise around p
+
+    Modified version of algorithm from Dan Sunday
+    http://geomalgorithms.com/a03-_inclusion.html
+    The Sunday algorithm does not handle the case consistently where p is on a vertex
+    This modified algorithm accounts for p on edge (vertex or side) as outside
+    Because P on the edge could be either inside or outside arbitrarily but there
+    is no good way to determine winding direction in that case it is considered outside
+    Algorithm checks for p as a vertex or side and returns w=0
+
+    To determine which side of the infinite line directed from
+    A=(x1,y1) to B=(x2,y2), a point P=(x,y) falls on
+    compute the value:
+    d=(x−x1)(y2−y1)−(y−y1)(x2−x1)
+
+    u[0] * v[1] - u[1] * v[0]
+
+    If d<0  then the point lies on one side of the line,
+    If d>0 then it lies on the other side.
+    If d=0 then the point lies exactly on the line.
+    d is a version of the scalar triple product for the xy plane
+    d is the z component of AB x AP
+
     """
-    return False if wind(p, vs) == 0 else True
+    if p in vs:  # on a vertex so use value of side
+        return side
+
+    px, py = p[:2]
+    w = 0  # winding number
+    l = len(vs) # number of vertices
+    for i in range(l):
+        j = (i + 1) % l  # wrap around next vertex
+        if tween2(p, vs[i], vs[j]):  # on a side edge so use value of side
+            return side
+        x, y = vs[i][:2]  # current vertex elements
+        u, v = vs[j][:2]  # next vertex elements
+
+        if y <= py:  # segment starts below ray level with x
+            if v > py:  # segment ends above ray level with x = upward crossing
+                # vertex vs[i] is origin, create vectors to p and vs[j]
+                # compute if point is to the left of line segment by turn of vector
+                if right(sub(p, vs[i]), sub(vs[j], vs[i])):  # turn right = is left
+                    w += 1
+        else:  # segment starts above ray level with x
+            if v <= py: # segment ends below ray level with x = downward crossing
+                # vertex vs[i] is origin, create vectors to p  and vs[j]
+                # compute if point is to the right of line segment by turn of vector
+                if left(sub(p, vs[i]), sub(vs[j], vs[i])):  # turn left = is right
+                    w -= 1
+
+    return False if w == 0 else True  # w is inside if non-zero pos or neg
+
+
+def insideOnly(p, vs):
+    """
+    Returns True if p is strictly inside polygon given by vs, False otherwise.
+    If p on edge or vertex it is considered as outside
+    """
+    return inside(p, vs, side=False) # return False if wind(p, vs) == 0 else True
+
+
+def outside(p, vs, side=True):
+    """
+    Returns True if p is outside polygon given by vs, False otherwise.
+    If side is true then p on edge or vertex is considered as outside.
+    """
+    return False if inside(p, vs, side=not side) else True
+
+
+def outsideOnly(p, vs):
+    """
+    Returns True if p is strictly outside polygon given by vs, False otherwise.
+    If p on edge or vertex it is considered outside
+    """
+    return outside(p, vs, side=False)
+
+
+def sideOnly(p, vs):
+    """
+    Returns True if 2D point p lies on an edge or vertex, False otherwise
+
+    The closed polygon whose sides are formed by connecting the vertex points
+    in sequence vs where each element of vs is a point.
+    Points are 2D sequences (tuples, namedtuples, lists etc)
+
+    """
+    if p in vs:  # on a vertex
+        return True
+    px, py = p[:2]
+    l = len(vs) # number of vertices
+    for i in range(l):
+        j = (i + 1) % l  # wrap around next vertex
+        if tween2(p, vs[i], vs[j]):  # on a side edge
+            return True
+    return False

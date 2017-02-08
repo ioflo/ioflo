@@ -395,84 +395,139 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(w, (0, 0, -2))
 
 
-    def testWind(self):
+    def testPointInPolygon(self):
         """
-        Test the winding count of point in polygon test
+        Test the point in polygon test functions
         """
-        console.terse("{0}\n".format(self.testWind.__doc__))
+        console.terse("{0}\n".format(self.testPointInPolygon.__doc__))
 
-        from ioflo.aid.vectoring import wind, insideOnly
+        from ioflo.aid.vectoring import wind, inside, insideOnly, outside, outsideOnly, sideOnly
 
         # counter clockwise wind
         p = (1, 1)
         vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
         ccw = wind(p, vs)
         self.assertEqual(ccw, 1)
+        self.assertTrue(inside(p, vs))
         self.assertTrue(insideOnly(p, vs))
+        self.assertFalse(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertFalse(sideOnly(p, vs))
 
         # clockwise wind
         vs = ((0, 0), (0, 2), (2, 2), (2, 0)) # cw
         cw = wind(p, vs)
         self.assertEqual(cw, -1)
         self.assertEqual(cw, -ccw)
+        self.assertTrue(inside(p, vs))
         self.assertTrue(insideOnly(p, vs))
+        self.assertFalse(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertFalse(sideOnly(p, vs))
 
         # point not in polygon
         p = (-1, -1)
         vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertFalse(inside(p, vs))
         self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertTrue(outsideOnly(p, vs))
+        self.assertFalse(sideOnly(p, vs))
 
         vs = ((0, 0), (0, 2), (2, 2), (2, 0)) # cw
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertFalse(inside(p, vs))
         self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertTrue(outsideOnly(p, vs))
+        self.assertFalse(sideOnly(p, vs))
 
-        # point is vertex and is not in polygon
+        # point is vertex of polygon
         p = (2, 0)
         vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
         self.assertTrue(p in vs)
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertTrue(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertTrue(sideOnly(p, vs))
 
-        vs = ((0, 0), (0, 2), (2, 2), (2, 0))  # ccw
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0))  # cw
         self.assertTrue(p in vs)
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertTrue(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertTrue(sideOnly(p, vs))
 
-        # point is vertex and is not in polygon
+        # point is vertex
         p = (1, 1)
         vs = ((0, 0), (1, 1), (2, 0), (2, 2), (0, 2))  # ccw
         self.assertTrue(p in vs)
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertTrue(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertTrue(sideOnly(p, vs))
 
-        vs = ((0, 0), (0, 2), (2, 2), (2, 0), (1, 1))  # ccw
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0), (1, 1))  # cw
         self.assertTrue(p in vs)
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertTrue(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertTrue(sideOnly(p, vs))
 
-        # point on side and is not in polygon
+        # point on edge side
         p = (1, 0)
         vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertTrue(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertTrue(sideOnly(p, vs))
 
-        vs = ((0, 0), (0, 2), (2, 2), (2, 0))  # ccw
+        vs = ((0, 0), (0, 2), (2, 2), (2, 0))  # cw
         w = wind(p, vs)
         self.assertEqual(w, 0)
+        self.assertTrue(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
+        self.assertTrue(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertTrue(sideOnly(p, vs))
 
         # side collinear with p y intercept
         p = (0.5, 1)
         vs = ((0, 0), (1, 1), (2, 1), (2, 2), (0, 2))  # ccw
         w = wind(p, vs)
         self.assertEqual(w, 1)
+        self.assertTrue(inside(p, vs))
+        self.assertTrue(insideOnly(p, vs))
+        self.assertFalse(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertFalse(sideOnly(p, vs))
 
-        vs = ((0, 0), (0, 2), (2, 2), (2, 1), (1, 1))  # ccw
+        vs = ((0, 0), (0, 2), (2, 2), (2, 1), (1, 1))  # cw
         w = wind(p, vs)
         self.assertEqual(w, -1)
-
+        self.assertTrue(inside(p, vs))
+        self.assertTrue(insideOnly(p, vs))
+        self.assertFalse(outside(p, vs))
+        self.assertFalse(outsideOnly(p, vs))
+        self.assertFalse(sideOnly(p, vs))
 
 
 
@@ -496,7 +551,7 @@ def runSome():
              'testTrip',
              'testTween',
              'testCross3Product',
-             'testWind',
+             'testPointInPolygon',
             ]
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
