@@ -231,7 +231,7 @@ def wind(p, vs):
     The Sunday algorithm does not handle the case consistently where p is on a vertex
     This modified algorithm accounts for p on edge (vertex or side) as outside
     Because P on the edge could be either inside or outside arbitrarily but there
-    is not good way to determine winding direction in that case it is considered outside
+    is no good way to determine winding direction in that case it is considered outside
     Algorithm checks for p as a vertex or side and returns w=0
 
     To determine which side of the infinite line directed from
@@ -276,9 +276,10 @@ def wind(p, vs):
     return (w)
 
 
-def inside(p, vs):
+def insideOnly(p, vs):
     """
-    Returns True if 2D point p satisfies point-in-polygon test for the
+    Returns True if p is inside polygon given by vs but not on edge or vertex.
+    True if 2D point p satisfies point-in-polygon test for the
     the closed polygon whose sides are formed by connecting the vertex points
     in sequence vs where each element of vs is a point.
     Points are 2D sequences (tuples, namedtuples, lists etc)

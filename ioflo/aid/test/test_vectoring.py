@@ -401,33 +401,33 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testWind.__doc__))
 
-        from ioflo.aid.vectoring import wind, inside
+        from ioflo.aid.vectoring import wind, insideOnly
 
         # counter clockwise wind
         p = (1, 1)
         vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
         ccw = wind(p, vs)
         self.assertEqual(ccw, 1)
-        self.assertTrue(inside(p, vs))
+        self.assertTrue(insideOnly(p, vs))
 
         # clockwise wind
         vs = ((0, 0), (0, 2), (2, 2), (2, 0)) # cw
         cw = wind(p, vs)
         self.assertEqual(cw, -1)
         self.assertEqual(cw, -ccw)
-        self.assertTrue(inside(p, vs))
+        self.assertTrue(insideOnly(p, vs))
 
         # point not in polygon
         p = (-1, -1)
         vs = ((0, 0), (2, 0), (2, 2), (0, 2))  # ccw
         w = wind(p, vs)
         self.assertEqual(w, 0)
-        self.assertFalse(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
 
         vs = ((0, 0), (0, 2), (2, 2), (2, 0)) # cw
         w = wind(p, vs)
         self.assertEqual(w, 0)
-        self.assertFalse(inside(p, vs))
+        self.assertFalse(insideOnly(p, vs))
 
         # point is vertex and is not in polygon
         p = (2, 0)
