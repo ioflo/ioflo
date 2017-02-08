@@ -12,6 +12,28 @@ https://msol.io/blog/tech/2014/09/30/create-a-self-signed-ssl-certificate-with-o
 
 Using OpenSSL
 
+The certs are put in two places
+One for the system in:
+
+/etc/pki/tls/certs/
+
+The other for unittests in:
+
+ioflo/aio/test/tls/certs
+
+Do not use the same certs for the system and unittests since the unittest certs
+are public
+
+For the system:
+
+
+$ sudo -s
+# mkdir -p /etc/pki/tls/certs
+# cd /etc/pki/tls/certs/
+
+
+
+For the unittests
 
 $ cd ioflo/ioflo/aio/test/tls/certs
 
@@ -91,4 +113,12 @@ Google chrome will then accept it as valid.
 
 After 1 year the certificates will be bad.
 
+On systems need to remove write permissions
 
+$ sudo -s
+# chmod 444 client_key.pem client_cert.pem client.pem client_csr.pem
+# chmod 444 server_key.pem server_cert.pem server.pem server_csr.pem
+# chmod 444 localhost.crt localhost.key localhost.pem
+
+chmod 444 is r only no write or execute
+chmod ugo-w
