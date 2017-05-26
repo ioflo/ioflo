@@ -8,10 +8,12 @@ CHANGE LOG
 
 1.6.8
 
+Added more point in polygon functions in vectoring
 Fixed tests to reference TLS certs in test directory not in /etc/pki/..
 Added posix timestamp that works for both python 2.7+ and is aware
 Added optilnal aware keyword parameter to iso8601
-fixed tuuid so includes microseconds
+Fixed tuuid so includes microseconds
+
 
 --------
 20170110
