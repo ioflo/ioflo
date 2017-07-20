@@ -1622,6 +1622,138 @@ class BasicTestCase(unittest.TestCase):
         wireLogBeta.close()
         console.reinit(verbosity=console.Wordage.concise)
 
+    if sys.version_info >= (3, 6):  # test ssl changes to TLS version
+
+        def testTLSConnectionVerifyBothTLS(self):
+            """
+            Test TLS client server connection with neither verify certs
+            """
+            try:
+                import ssl
+            except ImportError:
+                return
+
+            console.terse("{0}\n".format(self.testTLSConnectionVerifyBothTLSv1.__doc__))
+            console.reinit(verbosity=console.Wordage.profuse)
+
+            wireLogAlpha = wiring.WireLog(buffify=True, same=True)
+            result = wireLogAlpha.reopen()
+
+            wireLogBeta = wiring.WireLog(buffify=True,  same=True)
+            result = wireLogBeta.reopen()
+
+            serverKeypath = os.path.join(self.certdirpath, 'server_key.pem')  # local server private key
+            serverCertpath = os.path.join(self.certdirpath, 'server_cert.pem')  # local server public cert
+            clientCafilepath = os.path.join(self.certdirpath, 'client.pem') # remote client public cert
+
+            clientKeypath = os.path.join(self.certdirpath, 'client_key.pem')  # local client private key
+            clientCertpath = os.path.join(self.certdirpath, 'client_cert.pem')  # local client public cert
+            serverCafilepath = os.path.join(self.certdirpath, 'server.pem') # remote server public cert
+
+            alpha = serving.ServerTls(host='localhost',
+                                          port = 6101,
+                                          bufsize=131072,
+                                          wlog=wireLogAlpha,
+                                          context=None,
+                                          version=ssl.PROTOCOL_TLS,
+                                          certify=ssl.CERT_REQUIRED,
+                                          keypath=serverKeypath,
+                                          certpath=serverCertpath,
+                                          cafilepath=clientCafilepath,
+                                          )
+            self.assertIs(alpha.reopen(), True)
+            self.assertEqual(alpha.ha, ('127.0.0.1', 6101))
+
+            serverCertCommonName = 'localhost' # match hostname uses servers's cert commonname
+
+            beta = clienting.ClientTls(ha=alpha.ha,
+                                          bufsize=131072,
+                                          wlog=wireLogBeta,
+                                          context=None,
+                                          version=ssl.PROTOCOL_TLS,
+                                          certify=ssl.CERT_REQUIRED,
+                                          hostify=True,
+                                          certedhost=serverCertCommonName,
+                                          keypath=clientKeypath,
+                                          certpath=clientCertpath,
+                                          cafilepath=serverCafilepath,
+                                          )
+            self.assertIs(beta.reopen(), True)
+            self.assertIs(beta.accepted, False)
+            self.assertIs(beta.connected, False)
+            self.assertIs(beta.cutoff, False)
+
+            console.terse("Connecting and Handshaking beta to alpha\n")
+            while True:
+                beta.serviceConnect()
+                alpha.serviceConnects()
+                if beta.connected and len(alpha.ixes) >= 1:
+                    break
+                time.sleep(0.01)
+
+            self.assertIs(beta.accepted, True)
+            self.assertIs(beta.connected, True)
+            self.assertIs(beta.cutoff, False)
+            self.assertEqual(beta.ca, beta.cs.getsockname())
+            self.assertEqual(beta.ha, beta.cs.getpeername())
+            self.assertIs(beta.connected, True)
+
+            ixBeta = alpha.ixes[beta.ca]
+            self.assertIsNotNone(ixBeta.ca)
+            self.assertIsNotNone(ixBeta.cs)
+
+            self.assertEqual(ixBeta.cs.getsockname(), beta.cs.getpeername())
+            self.assertEqual(ixBeta.cs.getpeername(), beta.cs.getsockname())
+            self.assertEqual(ixBeta.ca, beta.ca)
+            self.assertEqual(ixBeta.ha, beta.ha)
+
+            msgOut = b"Beta sends to Alpha\n"
+            beta.tx(msgOut)
+            while True:
+                beta.serviceTxes()
+                alpha.serviceReceivesAllIx()
+                time.sleep(0.01)
+                if not beta.txes and ixBeta.rxbs:
+                    break
+
+            time.sleep(0.05)
+            alpha.serviceReceivesAllIx()
+
+            msgIn = bytes(ixBeta.rxbs)
+            self.assertEqual(msgIn, msgOut)
+            #index = len(ixBeta.rxbs)
+            ixBeta.clearRxbs()
+
+            msgOut = b'Alpha sends to Beta\n'
+            ixBeta.tx(msgOut)
+            while True:
+                alpha.serviceTxesAllIx()
+                beta.serviceReceives()
+                time.sleep(0.01)
+                if not ixBeta.txes and beta.rxbs:
+                    break
+
+            msgIn = bytes(beta.rxbs)
+            self.assertEqual(msgIn, msgOut)
+            #index = len(beta.rxbs)
+            beta.clearRxbs()
+
+            alpha.close()
+            beta.close()
+
+            self.assertEqual(wireLogAlpha.getRx(), wireLogAlpha.getTx())  # since wlog is same
+            self.assertTrue(b"Beta sends to Alpha\n" in wireLogAlpha.getRx())
+            self.assertTrue(b"Alpha sends to Beta\n" in wireLogAlpha.getRx())
+
+            self.assertEqual(wireLogBeta.getRx(), wireLogBeta.getTx())  # since wlog is same
+            self.assertTrue(b"Beta sends to Alpha\n" in wireLogBeta.getRx())
+            self.assertTrue(b"Alpha sends to Beta\n" in wireLogBeta.getRx())
+
+            wireLogAlpha.close()
+            wireLogBeta.close()
+            console.reinit(verbosity=console.Wordage.concise)
+
+
 
 def runOne(test):
     '''
@@ -1646,6 +1778,9 @@ def runSome():
              'testTLSConnectionVerifyBoth',
              'testTLSConnectionVerifyBothTLSv1',
             ]
+    if sys.version_info >= (3, 6):
+        names.append('testTLSConnectionVerifyBothTLS')
+
     tests.extend(map(BasicTestCase, names))
     suite = unittest.TestSuite(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -1666,4 +1801,4 @@ if __name__ == '__main__' and __package__ is None:
 
     #runOne('testClientAutoReconnect')
 
-
+    #runOne('testTLSConnectionVerifyBothTLS')

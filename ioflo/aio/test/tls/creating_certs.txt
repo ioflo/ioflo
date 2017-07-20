@@ -4,6 +4,12 @@ TLS/SSL Certificates CA Certificates
 
 Need to refresh these every year
 
+to determine current version of python SSL library
+
+import ssl
+>>> ssl.OPENSSL_VERSION
+'OpenSSL 1.0.2l  25 May 2017'
+
 
 http://stackoverflow.com/questions/24675167/ca-certificates-mac-os-x
 
@@ -36,7 +42,7 @@ $ sudo -s
 For the unittests
 
 $ cd ioflo/ioflo/aio/test/tls/certs
-
+$ cd /Data/Code/public/ioflo/ioflo/aio/test/tls/certs/
 -------
 client
 --------
@@ -95,7 +101,7 @@ A challenge password []:
 An optional company name []:
 
 $ openssl req -x509 -days 365 -key server_key.pem -in server_csr.pem -out server_cert.pem
-$ cat  server_key.pem  server_cert.pem > server.pem
+$ cat server_key.pem  server_cert.pem > server.pem
 
 
 $ cp server_key.pem localhost.key
