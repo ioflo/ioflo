@@ -8,7 +8,7 @@ CHANGE LOG
 
 1.7.0
 
-
+Fixed but in tcp/serving on test for incoming socket formation
 
 --------
 20170720

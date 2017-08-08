@@ -736,10 +736,10 @@ class Server(Acceptor):
         self.serviceAccepts()  # populate .axes
         while self.axes:
             cs, ca = self.axes.popleft()
-            if ca != cs.getpeername() or self.eha != cs.getsockname():
+            if ca != cs.getpeername(): #or self.eha != cs.getsockname():
                 raise ValueError("Accepted socket host addresses malformed for "
-                                 "peer ha {0} != {1}, ca {2} != {3}\n".format(
-                                     self.ha, cs.getsockname(), ca, cs.getpeername()))
+                                 "peer. eha {0} != {1}, ca {2} != {3}\n".format(
+                                     self.eha, cs.getsockname(), ca, cs.getpeername()))
             incomer = Incomer(ha=cs.getsockname(),
                               bs=self.bs,
                               ca=cs.getpeername(),
