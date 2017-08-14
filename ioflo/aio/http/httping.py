@@ -847,6 +847,7 @@ class Parsent(object):
             self.dictable = True if dictable else False
         if method is not None:
             self.method = method.upper()
+        self.data = None
 
     def close(self):
         """

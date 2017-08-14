@@ -8,6 +8,8 @@ CHANGE LOG
 
 1.7.2
 
+Fixed bug not clearing .data in Respondent
+Added some support for Falcon HTTPErrors in WSGI Responder
 
 
 
