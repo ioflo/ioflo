@@ -15,3 +15,7 @@ ioflo.egg-info*
 ioflo.egg-info/PKG-INFO
 ioflo.eggs/
 .eggs/
+.gitignore
+.hgignore
+.hgtags
+

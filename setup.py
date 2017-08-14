@@ -11,7 +11,7 @@ $ python setup.py register sdist upload
 
 More secure to use twine to upload  $ pip3 install twine
 $ python setup.py sdist
-$ twine upload dist/ioflo-1.6.8.tar.gz
+$ twine upload dist/ioflo-1.7.2.tar.gz
 
 """
 import sys
