@@ -237,7 +237,7 @@ class IpDevice(Device):
         else:
             ha = ('127.0.0.1', stack.Port)
 
-        super().__init__(stack=stack, ha=ha, **kwa)
+        super(IpDevice, self).__init__(stack=stack, ha=ha, **kwa)
 
     @property
     def host(self):
@@ -300,7 +300,7 @@ class IpLocalDevice(IpDevice, LocalDevice):
         Attributes:
 
         """
-        super().__init__(stack=stack, **kwa)
+        super(IpLocalDevice, self).__init__(stack=stack, **kwa)
 
 
 class IpRemoteDevice(IpDevice, RemoteDevice):
@@ -334,7 +334,7 @@ class IpRemoteDevice(IpDevice, RemoteDevice):
         Attributes:
 
         """
-        super().__init__(stack=stack, **kwa)
+        super(IpRemoteDevice, self).__init__(stack=stack, **kwa)
 
 
 class IpSingleRemoteDevice(IpDevice, SingleRemoteDevice):
@@ -369,4 +369,4 @@ class IpSingleRemoteDevice(IpDevice, SingleRemoteDevice):
         Attributes:
 
         """
-        super().__init__(stack=stack, **kwa)
+        super(IpSingleRemoteDevice, self).__init__(stack=stack, **kwa)

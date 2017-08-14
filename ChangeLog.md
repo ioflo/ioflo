@@ -8,6 +8,8 @@ CHANGE LOG
 
 1.7.1
 
+Fixed python2 support in new functions in timing module
+
 
 --------
 20170808

@@ -54,8 +54,13 @@ class BasicTestCase(unittest.TestCase):
         """
         console.terse("{0}\n".format(self.testTimestamp.__doc__))
 
-        dt = datetime.datetime.now(datetime.timezone.utc)
-        older = (dt - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)).total_seconds()
+        if hasattr(datetime, "timezone"):  # python3.2+
+            dt = datetime.datetime.now(datetime.timezone.utc)
+            older = (dt - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)).total_seconds()
+        else:
+            dt = datetime.datetime.utcnow()  # not aware
+            older = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
+
         ts = timing.timestamp()
         self.assertNotEqual(ts, 0.0)
         self.assertGreaterEqual(ts, older)
@@ -79,11 +84,20 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(stamp, "2000-01-01T00:00:00")
 
         stamp = timing.iso8601(aware=True)
-        self.assertEqual(len(stamp), 32)  # '2017-02-07T23:47:16.498821+00:00'
+        if hasattr(datetime, 'timezone'):  # only aware in python3.2+
+            self.assertEqual(len(stamp), 32)  # '2017-02-07T23:47:16.498821+00:00'
+        else:
+            self.assertEqual(len(stamp), 26)  # '2017-08-14T16:19:36.070661'
 
-        dt = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
-        stamp = timing.iso8601(dt, aware=True)
-        self.assertEqual(stamp, "2000-01-01T00:00:00+00:00")
+        if hasattr(datetime, "timezone"):  # python3.2+
+            dt = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
+            stamp = timing.iso8601(dt, aware=True)
+            self.assertEqual(stamp, "2000-01-01T00:00:00+00:00")
+        else:
+            dt = datetime.datetime(2000, 1, 1)
+            stamp = timing.iso8601(dt)
+            self.assertEqual(stamp, "2000-01-01T00:00:00")
+
 
     def testTuuid(self):
         """

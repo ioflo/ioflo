@@ -237,8 +237,7 @@ def wind(p, vs):
     To determine which side of the infinite line directed from
     A=(x1,y1) to B=(x2,y2), a point P=(x,y) falls on
     compute the value:
-    d=(x−x1)(y2−y1)−(y−y1)(x2−x1)
-
+    d=(x-x1)(y2-y1)-(y-y1)(x2-x1)
     u[0] * v[1] - u[1] * v[0]
 
     If d<0  then the point lies on one side of the line,
@@ -302,7 +301,7 @@ def inside(p, vs, side=True):
     To determine which side of the infinite line directed from
     A=(x1,y1) to B=(x2,y2), a point P=(x,y) falls on
     compute the value:
-    d=(x−x1)(y2−y1)−(y−y1)(x2−x1)
+    d=(x-x1)(y2-y1)-(y-y1)(x2-x1)
 
     u[0] * v[1] - u[1] * v[0]
 

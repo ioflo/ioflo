@@ -30,24 +30,30 @@ TotalSeconds = totalSeconds
 def timestamp(dt=None):
     """
     Returns float posix timestamp at dt if given else now
-    Works for python versions earlier than 3.3
+    Only TZ aware in python 3.2+
     """
     if dt is None:
-        dt = datetime.datetime.now(datetime.timezone.utc)  # make it aware
+        if hasattr(datetime, "timezone"):
+            dt = datetime.datetime.now(datetime.timezone.utc)  # make it aware
+        else:
+            dt = datetime.datetime.utcnow()  # not aware
 
     if hasattr(dt, "timestamp"):  # only in python3.3+
         return dt.timestamp()
-    else:
+    elif hasattr(datetime, "timezone"): # only in python3.2+
         return (dt - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)).total_seconds()
+    else: # not tz aware
+        return (dt - datetime.datetime(1970, 1, 1)).total_seconds()
 
 def iso8601(dt=None, aware=False):
     """
     Returns string datetime stamp in iso 8601 format from datetime object dt
     If dt is missing and aware then use now(timezone.utc) else utcnow() naive
     YYYY-MM-DDTHH:MM:SS.mmmmmm which is strftime '%Y-%m-%dT%H:%M:%S.%f'
+    Only TZ aware in python 3.2+
     """
     if dt is None:
-        if aware:
+        if aware and hasattr(datetime, "timezone"):
             dt = datetime.datetime.now(datetime.timezone.utc)  # make it aware
         else:  # naive
             dt = datetime.datetime.utcnow()  # naive
