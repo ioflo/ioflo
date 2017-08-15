@@ -11,6 +11,8 @@ CHANGE LOG
 Fixed bug not clearing .data in Respondent
 Added some support for Falcon HTTPErrors in WSGI Responder
 
+Added HTTPError class for errors raised while iterating WSGI app
+
 
 
 --------

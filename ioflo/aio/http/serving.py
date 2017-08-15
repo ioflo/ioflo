@@ -470,25 +470,12 @@ class Responder(object):
                 self.write(b'')  # if chunked send empty chunk to terminate
                 self.ended = True
             except Exception as ex:  # handle http exceptions not caught by app
-                if not self.headed and hasattr(ex, 'status'):
+                if not self.headed and isinstance(ex, httping.HTTPError):
                     headers = lodict()
-                    if hasattr(ex, 'headerlist'):  # looks like bottle HTTPError
-                        if ex.headerslist:
-                            headers.update(ex.headerlist)
-                    if hasattr(ex, 'headers'):  # looks like Falcon HTTPError
-                        if ex.headers:
-                            headers.update(ex.headers.items())
+                    headers.update(ex.headers.items())
                     if 'content-type' not in headers:
                         headers['content-type'] = 'text/plain'
-                    msg = b''
-                    if hasattr(ex, 'body'):  # looks like bottle HTTPError
-                        msg = ex.body
-                    if hasattr(ex, 'title'): # looks like Falcon HTTPError
-                        msg = str(ex.title)
-                        if hasattr(ex, 'description'):
-                            msg = msg + '\n' + ex.description
-                    if isinstance(msg, unicode):
-                        msg = msg.encode('iso-8859-1')                        
+                    msg = ex.render()
                     headers['content-length'] = str(len(msg))
                     self.start(ex.status, headers.items(), sys.exc_info())
                     self.write(msg)
