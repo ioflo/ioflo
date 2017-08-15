@@ -679,7 +679,7 @@ class Patron(object):
         self.request = None  # current request odict from .requests in process if any
         self.store = store or storing.Store(stamp=0.0)
 
-        # see if path also includes scheme, netloc, query, fragment
+        # see if path also includes scheme, netloc, host, port, query, fragment
         splits = urlsplit(path)
         scheme = splits.scheme or scheme  # is scheme provided
         scheme = scheme.lower()
