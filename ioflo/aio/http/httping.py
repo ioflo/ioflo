@@ -213,6 +213,75 @@ class PrematureClosure(HTTPException):
         self.args = msg,
         self.msg = msg
 
+
+class HTTPError(Exception):
+    """
+    HTTP error for use with Valet or Other WSGI servers to raise exceptions
+    caught by the WSGI server.
+
+
+    Attributes:
+        status is int HTTP status code, e.g. 400
+        reason is  str HTTP status text, "Unknown Error"
+        title  is str title of error
+
+        headers is dict of extra headers to add to the response
+        error (int): An internal application error code
+    """
+
+    __slots__ = ('status', 'reason', 'title', 'detail', 'headers', 'fault')
+
+    def __init__(self,
+                 status,
+                 reason="",
+                 title="",
+                 detail="",
+                 fault=None,
+                 headers=None):
+        """
+        Parameters:
+            status is int HTTP status response code
+            reason is  str HTTP reason phase for status code
+            title is str title of error
+            detail is str detailed description of error
+            fault is int internal application fault code for tracking
+            headers is dict of extra headers to add to the response
+        """
+        self.status = int(status)
+        self.reason = (str(reason) if reason else
+                             STATUS_DESCRIPTIONS.get(self.status, "Unknown"))
+
+        self.title = title
+        self.detail = detail
+        self.fault = fault if fault is None else int(fault)
+        self.headers = odict(headers) if headers else odict()
+
+    def __repr__(self):
+        return '<%s: %s>' % (self.__class__.__name__, self.status)
+
+    def render(self, jsonify=False):
+        """
+        Render and return the attributes as a bytes
+        If jsonify then render as serialized json
+        """
+        if jsonify:
+            data = odict()
+            data["status"] = self.status
+            data["reason"] = self.reason
+            data["title"] = self.title
+            data["detail"] = self.detail
+            data["fault"] = self.fault
+            body = json.dumps(data, indent=2)
+
+        else:
+            body = "{} {}\n{}\n{}\n{}".format(self.status,
+                                              self.reason,
+                                              self.title,
+                                              self.detail,
+                                              self.fault if self.fault is not None else "")
+        return body.encode('iso-8859-1')
+
+
 # Utility functions
 
 def httpDate1123(dt):
