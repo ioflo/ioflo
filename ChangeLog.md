@@ -15,6 +15,8 @@ Added HTTPError class for errors raised while iterating WSGI app
 
 Changed aio.http.serving.Responder to use HTTPError
 
+Now handles return values from new style generators in WSGI respondent
+
 
 --------
 20170814
