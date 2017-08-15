@@ -1306,3 +1306,4 @@ if __name__ == '__main__' and __package__ is None:
     #runOne('testValetServiceBottle')
     #runOne('testValetServiceBottleStreamSecure')
     #runOne('testHttpError')
+    #runOne('testValetServiceBottleStream')

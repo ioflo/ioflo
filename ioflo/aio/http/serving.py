@@ -466,11 +466,13 @@ class Responder(object):
 
             try:
                 msg = next(self.iterator)
-            except StopIteration:
-                self.write(b'')  # if chunked send empty chunk to terminate
+            except StopIteration as ex:
+                if hasattr(ex, "value") and ex.value:
+                    self.write(ex.value)  # new style generators in python3.3+
+                self.write(b'')  # in case chunked send empty chunk to terminate
                 self.ended = True
-            except Exception as ex:  # handle http exceptions not caught by app
-                if not self.headed and isinstance(ex, httping.HTTPError):
+            except httping.HTTPError as ex:
+                if not self.headed:
                     headers = lodict()
                     headers.update(ex.headers.items())
                     if 'content-type' not in headers:
@@ -482,9 +484,10 @@ class Responder(object):
                     self.ended = True
                 else:
                     raise
-
+            except Exception as ex:  # handle http exceptions not caught by app
+                raise
             else:
-                if msg:
+                if msg:  # only write if not empty allows async processing
                     self.write(msg)
                     if self.length is not None and self.size >= self.length:
                         self.ended = True
