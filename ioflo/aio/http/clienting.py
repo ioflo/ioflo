@@ -792,6 +792,18 @@ class Patron(object):
                               dictable=dictable,
                               redirectable=redirectable)
         self.respondent = respondent
+        
+    def open(self):
+        """
+        Return result of .connector.reopen()
+        """
+        return self.connector.reopen()
+    
+    def close(self):
+        """
+        Call .connecter.close  (shutclose)
+        """
+        self.connector.close()
 
     def transmit(self,
                  method=None,

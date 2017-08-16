@@ -265,6 +265,9 @@ class Client(object):
         Returns True if successful
         Returns False if not so try again later
         """
+        if not self.cs:
+            self.reopen()
+            
         try:
             result = self.cs.connect_ex(self.ha)  # async connect
         except socket.error as ex:

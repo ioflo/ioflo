@@ -604,6 +604,19 @@ class Valet(object):
 
         self.secured = secured
         self.servant = servant
+        
+    def open(self):
+        """
+        Return result of .servant.reopen()
+        """
+        return self.servant.reopen()
+    
+    def close(self):
+        """
+        Call .servant.closeAll()
+        """
+        self.servant.closeAll()
+        
 
     def idle(self):
         """
