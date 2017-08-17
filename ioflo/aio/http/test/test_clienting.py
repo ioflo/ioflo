@@ -132,7 +132,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:6101',
@@ -195,7 +195,6 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogBeta.close()
 
-
     def testNonBlockingRequestStream(self):
         """
         Test NonBlocking Http client with SSE streaming server
@@ -256,7 +255,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /stream HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
@@ -409,7 +408,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /stream HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
@@ -562,7 +561,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /fancy?idify=true&multiply=true HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
@@ -717,7 +716,7 @@ class BasicTestCase(unittest.TestCase):
                                      path=path,
                                      headers=headers)
 
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /fancy?idify=true&multiply=true HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
@@ -882,7 +881,7 @@ class BasicTestCase(unittest.TestCase):
                                          method=method,
                                          path=path,
                                          headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
             b'GET /fancy?idify=true&jsonify=true HTTP/1.1',
             b'Host: 127.0.0.1:6061',
@@ -1038,7 +1037,7 @@ class BasicTestCase(unittest.TestCase):
                                          method=method,
                                          path=path,
                                          headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
             b'GET /fancy?idify=true&jsonify=true HTTP/1.1',
             b'Host: 127.0.0.1:6061',
@@ -1236,7 +1235,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:6061',
@@ -1366,7 +1365,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(ixBeta.ca, beta.connector.ca)
         self.assertEqual(ixBeta.ha, beta.connector.ha)
 
-        msgOut = beta.requester.build()
+        msgOut = beta.requester.rebuild()
         lines = [
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:6101',
@@ -1926,6 +1925,151 @@ class BasicTestCase(unittest.TestCase):
         wireLogAlpha.close()
         wireLogBeta.close()
 
+    def testPatronEchoSimpleFirst(self):
+        """
+        Test Patron Simple First time request pattern
+        """
+        console.terse("{0}\n".format(self.testPatronEchoSimpleFirst.__doc__))
+
+        wireLogAlpha = wiring.WireLog(buffify=True, same=True)
+        result = wireLogAlpha.reopen()
+
+        alpha = tcp.Server(port = 6101, bufsize=131072, wlog=wireLogAlpha)
+        self.assertIs(alpha.reopen(), True)
+        self.assertEqual(alpha.ha, ('0.0.0.0', 6101))
+        self.assertEqual(alpha.eha, ('127.0.0.1', 6101))
+
+        console.terse("{0}\n".format("Building Connector ...\n"))
+
+        wireLogBeta = wiring.WireLog(buffify=True,  same=True)
+        result = wireLogBeta.reopen()
+        host = alpha.eha[0]
+        port = alpha.eha[1]
+        method = u'GET'
+        path = u'/echo?name=fame'
+        headers = odict([('Accept', 'application/json')])
+        beta = clienting.Patron(bufsize=131072,
+                                     wlog=wireLogBeta,
+                                     hostname=host,
+                                     port=port,
+                                     method=method,
+                                     path=path,
+                                     headers=headers,
+                                     reconnectable=True,
+                                     )
+
+        self.assertIs(beta.connector.reopen(), True)
+        self.assertIs(beta.connector.accepted, False)
+        self.assertIs(beta.connector.connected, False)
+        self.assertIs(beta.connector.cutoff, False)
+
+        beta.convey()
+
+        while (not alpha.ixes or  beta.requests or
+               beta.connector.txes or not beta.respondent.ended):
+            self.mockEchoService(alpha)
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+
+        self.assertEqual(len(beta.connector.rxbs), 0)
+        self.assertIs(beta.waited, False)
+        self.assertIs(beta.respondent.ended, True)
+
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response, {'version': (1, 1),
+                                    'status': 200,
+                                    'reason': 'OK',
+                                    'headers':
+                                        {'content-length': '122',
+                                        'content-type': 'application/json',
+                                        'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
+                                        'server': 'IoBook.local'},
+                                    'body': bytearray(b''),
+                                    'data': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
+                                    'request':
+                                        {'host': '127.0.0.1',
+                                         'port': 6101,
+                                         'scheme': 'http',
+                                         'method': 'GET',
+                                         'path': '/echo',
+                                         'qargs': {'name': 'fame'},
+                                         'fragment': '',
+                                         'headers':
+                                             {'accept': 'application/json'},
+                                         'body': b'',
+                                         'data': None,
+                                         'fargs': None,
+                                        }
+                                    })
+
+
+        request = odict([('method', u'GET'),
+                             ('path', u'/echo?name=fame'),
+                             ('qargs', odict()),
+                             ('fragment', u''),
+                             ('headers', odict([('Accept', 'application/json')])),
+                             ('body', None),
+                             ])
+        beta.requests.append(request)
+
+        while (not alpha.ixes or  beta.requests or
+                beta.connector.txes or not beta.respondent.ended):
+            self.mockEchoService(alpha)
+            time.sleep(0.05)
+            beta.serviceAll()
+            time.sleep(0.05)
+
+        self.assertEqual(len(beta.connector.rxbs), 0)
+        self.assertIs(beta.waited, False)
+        self.assertIs(beta.respondent.ended, True)
+
+        self.assertEqual(len(beta.responses), 1)
+        response = beta.responses.popleft()
+        self.assertEqual(response, {'version': (1, 1),
+                                    'status': 200,
+                                    'reason': 'OK',
+                                    'headers':
+                                        {'content-length': '122',
+                                        'content-type': 'application/json',
+                                        'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
+                                        'server': 'IoBook.local'},
+                                    'body': bytearray(b''),
+                                    'data': {'action': None,
+                                             'content': None,
+                                             'query': {'name': 'fame'},
+                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             'verb': 'GET'},
+                                    'error': None,
+                                    'errored': False,
+                                    'request':
+                                        {'host': '127.0.0.1',
+                                         'port': 6101,
+                                         'scheme': 'http',
+                                         'method': 'GET',
+                                         'path': '/echo',
+                                         'qargs': {'name': 'fame'},
+                                         'fragment': '',
+                                         'headers':
+                                             {'accept': 'application/json'},
+                                         'body': b'',
+                                         'data': None,
+                                         'fargs': None,
+                                        }
+                                    })
+
+        alpha.close()
+        beta.connector.close()
+
+        wireLogAlpha.close()
+        wireLogBeta.close()
 
     def mockEchoServicePath(self, server):
         """
@@ -3584,7 +3728,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build(fargs=fargs)
+        msgOut = request.rebuild(fargs=fargs)
 
         self.assertTrue(b'Content-Disposition: form-data; name="text"\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nThis is the life,\nIt is the best.\n\r\n' in msgOut)
         self.assertTrue(b'Content-Disposition: form-data; name="html"\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n<html><body></body><html>\r\n' in msgOut)
@@ -3671,6 +3815,7 @@ def runSome():
              'testPatronServiceEcho',
              'testPatronPipelineEcho',
              'testPatronPipelineEchoSimple',
+             'testPatronEchoSimpleFirst',
              'testPatronPipelineEchoSimplePath',
              'testPatronPipelineEchoSimplePathTrack',
              'testPatronPipelineEchoJson',
@@ -3703,3 +3848,4 @@ if __name__ == '__main__' and __package__ is None:
 
     #runOne('testValetServiceBottle')
     #runOne('testValetServiceBasic')
+    #runOne('testPatronEchoSimpleFirst')

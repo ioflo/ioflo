@@ -169,7 +169,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /echo?name=fame HTTP/1.1',
                    b'Host: 127.0.0.1:8080',
@@ -257,7 +257,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /stream HTTP/1.1',
                    b'Host: 127.0.0.1:8080',
@@ -367,7 +367,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /fancy?idify=true;multiply=true HTTP/1.1',
                    b'Host: 127.0.0.1:8080',
@@ -471,7 +471,7 @@ class BasicTestCase(unittest.TestCase):
                                      method=method,
                                      path=path,
                                      headers=headers)
-        msgOut = request.build()
+        msgOut = request.rebuild()
         lines = [
                    b'GET /fancy?idify=true;jsonify=true HTTP/1.1',
                    b'Host: 127.0.0.1:8080',
@@ -581,7 +581,7 @@ class BasicTestCase(unittest.TestCase):
                                      headers=headers)
 
 
-        msgOut = request.build(fargs=fargs)
+        msgOut = request.rebuild(fargs=fargs)
 
         beta.tx(msgOut)
         while beta.txes or not beta.rxbs:

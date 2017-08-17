@@ -153,18 +153,18 @@ class Requester(object):
         else:
             self.fargs = None
 
-    def build(self,
-              method=None,
-              path=None,
-              qargs=None,
-              fragment=None,
-              headers=None,
-              body=None,
-              data=None,
-              fargs=None):
+    def rebuild(self,
+                method=None,
+                path=None,
+                qargs=None,
+                fragment=None,
+                headers=None,
+                body=None,
+                data=None,
+                fargs=None):
         """
-        Build and return request message
-
+        Reinit then build and return request message
+        This allows sending another request to same destination
         """
         self.reinit(method=method,
                     path=path,
@@ -174,6 +174,14 @@ class Requester(object):
                     body=body,
                     data=data,
                     fargs=fargs)
+
+        return self.build()
+
+    def build(self):
+        """
+        Build and return request message from attributes
+
+        """
         self.lines = []
 
         # need to check for proxy as the start line is different if proxied
@@ -242,10 +250,10 @@ class Requester(object):
         if self.method == u"GET":  # do not send body on GET
                 body = b''
         else:
-            if self.data is not None:
+            if self.data is not None:  # data takes precedence
                 body = ns2b(json.dumps(self.data, separators=(',', ':')))
                 self.headers[u'content-type'] = u'application/json; charset=utf-8'
-            elif self.fargs is not None:
+            elif self.fargs is not None:  # form data args next in precendence
                 if ((u'content-type' in self.headers and
                         self.headers[u'content-type'].startswith(u'multipart/form-data'))):
                     boundary = '____________{0:012x}'.format(random.randint(123456789,
@@ -268,7 +276,7 @@ class Requester(object):
                     form = quote_plus(form, '&=')
                     body = form.encode(encoding='utf-8')
                     self.headers[u'content-type'] = u'application/x-www-form-urlencoded; charset=utf-8'
-            else:
+            else:  # body last in precendence
                 body = self.body
 
         if body and (u'content-length' not in self.headers):
@@ -792,13 +800,13 @@ class Patron(object):
                               dictable=dictable,
                               redirectable=redirectable)
         self.respondent = respondent
-        
+
     def open(self):
         """
         Return result of .connector.reopen()
         """
         return self.connector.reopen()
-    
+
     def close(self):
         """
         Call .connecter.close  (shutclose)
@@ -815,21 +823,32 @@ class Patron(object):
                  data=None,
                  fargs=None):
         """
-        Build and transmit request
-        Add jsoned parameter
+        Rebuild and transmit request
         """
         self.waited = True
-        # build calls reinit
-        request = self.requester.build(method=method,
-                                       path=path,
-                                       qargs=qargs,
-                                       fragment=fragment,
-                                       headers=headers,
-                                       body=body,
-                                       data=data,
-                                       fargs=fargs)
+        # rebuild calls reinit to enable repeated requests same destination
+        request = self.requester.rebuild(method=method,
+                                         path=path,
+                                         qargs=qargs,
+                                         fragment=fragment,
+                                         headers=headers,
+                                         body=body,
+                                         data=data,
+                                         fargs=fargs)
         self.connector.tx(request)
-        self.respondent.reinit(method=method)
+        self.respondent.reinit(method=self.requester.method)
+
+    def convey(self):
+        """
+        Build and transmit request from existing .requester and .respondent attributes
+        Only useful for one time. Continuing requests should use .transmit which
+        reinitializes .requester and .respondent
+        """
+        self.waited = True
+        # rebuild calls reinit to enable repeated requests same destination
+        request = self.requester.build()
+        self.connector.tx(request)
+        #self.respondent.reinit(method=method)
 
     def redirect(self):
         """

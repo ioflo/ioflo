@@ -23,6 +23,11 @@ Some refactoring
 
 Added codesponsor
 
+Added .convey method to Patron to make more conveninet first time request
+
+Some refactoring of Patron and support classes
+
+
 --------
 20170814
 --------
