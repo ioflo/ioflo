@@ -125,7 +125,7 @@ $ ioflo -v terse -f box1.flo
 
 Something like this should print on the console.
 
-```text
+```bash
 ----------------------
 Building ...
 Building Houses for Skedder Skedder ...
@@ -201,4 +201,7 @@ Python 2.6
 
 Python 2.7
 
-Python 3.4
+Python 3.6
+
+
+<a href="https://app.codesponsor.io/link/v1zgv5CNxzGi3oHsfMCbG1Yr/ioflo/ioflo" rel="nofollow"><img src="https://app.codesponsor.io/embed/v1zgv5CNxzGi3oHsfMCbG1Yr/ioflo/ioflo.svg" style="width: 888px; height: 68px;" alt="Sponsor" /></a>
