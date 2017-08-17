@@ -17,6 +17,11 @@ Changed aio.http.serving.Responder to use HTTPError
 
 Now handles return values from new style generators in WSGI respondent
 
+Now Patron connector.accept will reopen as needed makes it easier to send requests
+
+Some refactoring
+
+Added codesponsor
 
 --------
 20170814
