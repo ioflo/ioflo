@@ -824,30 +824,35 @@ class Patron(object):
                  fargs=None):
         """
         Rebuild and transmit request
-        """
-        self.waited = True
-        # rebuild calls reinit to enable repeated requests same destination
-        request = self.requester.rebuild(method=method,
-                                         path=path,
-                                         qargs=qargs,
-                                         fragment=fragment,
-                                         headers=headers,
-                                         body=body,
-                                         data=data,
-                                         fargs=fargs)
-        self.connector.tx(request)
-        self.respondent.reinit(method=self.requester.method)
+        If the parameters are all None then use existing
+        .requester and .respondent attributes otherwise reinit .requester and
+        .respondent if method is not None
 
-    def convey(self):
-        """
-        Build and transmit request from existing .requester and .respondent attributes
-        Only useful for one time. Continuing requests should use .transmit which
-        reinitializes .requester and .respondent
+        Should only use with all None first time after that
+        change one of the parameters.
         """
         self.waited = True
-        # rebuild calls reinit to enable repeated requests same destination
-        request = self.requester.build()
+
+        reinit = any(True for parm in (method, path, qargs, fragment, headers,
+                                       body, data, fargs)
+                     if parm is not None)
+        if reinit:
+            # rebuild calls reinit to enable repeated requests same destination
+            request = self.requester.rebuild(method=method,
+                                             path=path,
+                                             qargs=qargs,
+                                             fragment=fragment,
+                                             headers=headers,
+                                             body=body,
+                                             data=data,
+                                             fargs=fargs)
+        else:
+            request = self.requester.build()
+
         self.connector.tx(request)
+
+        if method is not None:
+            self.respondent.reinit(method=self.requester.method)
 
     def redirect(self):
         """

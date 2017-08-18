@@ -898,7 +898,7 @@ class Parsent(object):
         self.data = None  # content dict deserialized from body json
         self.method = method.upper() if method else u'GET'
 
-        self.makeParser()  # assigns self.msg
+        self.makeParser()  # set up for new msg
 
     def reinit(self,
                msg=None,

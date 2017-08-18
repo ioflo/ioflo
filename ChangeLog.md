@@ -23,13 +23,13 @@ Some refactoring
 
 Added codesponsor
 
-Added .convey method to Patron to make more conveninet first time request
-
 Some refactoring of Patron and support classes
 
 Added support for generator locals "_status" and "_headers" to allow generator
 in WSGI response to update status and headers after start but before first
 non-empty write.
+
+Fixed patron tranmit so can be usef for first time request
 
 --------
 20170814

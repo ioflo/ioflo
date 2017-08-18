@@ -1974,7 +1974,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.connector.connected, False)
         self.assertIs(beta.connector.cutoff, False)
 
-        beta.convey()
+        beta.transmit()
 
         while (not alpha.ixes or  beta.requests or
                beta.connector.txes or not beta.respondent.ended):
@@ -2024,14 +2024,18 @@ class BasicTestCase(unittest.TestCase):
                                     })
 
 
-        request = odict([('method', u'GET'),
-                             ('path', u'/echo?name=fame'),
-                             ('qargs', odict()),
-                             ('fragment', u''),
-                             ('headers', odict([('Accept', 'application/json')])),
-                             ('body', None),
-                             ])
-        beta.requests.append(request)
+        #request = odict([('method', u'GET'),
+                             #('path', u'/echo?name=fame'),
+                             #('qargs', odict()),
+                             #('fragment', u''),
+                             #('headers', odict([('Accept', 'application/json')])),
+                             #('body', None),
+                             #])
+        #beta.requests.append(request)
+
+        beta.transmit(method=u'GET',
+                      path=u'/echo?name=fame',
+                      headers=odict([('Accept', 'application/json')]))
 
         while (not alpha.ixes or  beta.requests or
                 beta.connector.txes or not beta.respondent.ended):

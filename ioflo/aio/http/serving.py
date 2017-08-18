@@ -345,7 +345,7 @@ class Responder(object):
             glocals = self.iterator.gi_frame.f_locals  # generator overrides
         else:
             glocals = odict()
-        
+
         lines = []
 
         _status = glocals.get("_status")
@@ -359,7 +359,7 @@ class Responder(object):
         except UnicodeEncodeError:
             startLine = startLine.encode('idna')
         lines.append(startLine)
-        
+
         _headers = glocals.get("_headers", lodict())
         self.headers.update(_headers.items())  # override
 
@@ -458,7 +458,7 @@ class Responder(object):
 
         self.status = status
         self.headers = lodict(response_headers)
-        
+
         if u'content-length' in self.headers:
             self.length = int(self.headers['content-length'])
             self.chunkable = False  # cannot use chunking with finite content-length
@@ -717,7 +717,7 @@ class Valet(object):
                 self.closeConnection(ca)
                 continue
 
-            if ca not in self.reqs:
+            if ca not in self.reqs:  # point requestant.msg to incomer.rxbs
                 self.reqs[ca] = Requestant(msg=ix.rxbs, incomer=ix)
 
             if ix.timeout > 0.0 and ix.timer.expired:
