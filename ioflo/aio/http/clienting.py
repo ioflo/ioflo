@@ -848,7 +848,6 @@ class Patron(object):
         # rebuild calls reinit to enable repeated requests same destination
         request = self.requester.build()
         self.connector.tx(request)
-        #self.respondent.reinit(method=method)
 
     def redirect(self):
         """

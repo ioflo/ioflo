@@ -294,18 +294,18 @@ class Responder(object):
             environ = wsgi environment dict
             chunkable = True if may send body in chunks
         """
+        status = "200 OK"  # integer or string with reason, WSGI is string with reason
         self.incomer = incomer
         self.app = app
         self.environ = environ
         self.chunkable = True if chunkable else False
-
         self.started = False  # True once start called (start_response)
         self.headed = False  # True once headers sent
         self.chunked = False  # True if should send in chunks
         self.ended = False  # True if response body completely sent
         self.closed = False  # True if connection closed by far side
         self.iterator = None  # iterator on application body
-        self.status = 200  # integer or string with reason
+        self.status = status
         self.headers = lodict()  # headers
         self.length = None  # if content-length provided must not exceed
         self.size = 0  # number of body bytes sent so far
@@ -331,7 +331,7 @@ class Responder(object):
         self.chunked = False
         self.ended = False
         self.iterator = None
-        self.status = 200
+        self.status = "200 OK"
         self.headers = lodict()
         self.length = None
         self.size = 0
@@ -341,12 +341,17 @@ class Responder(object):
         Return built head bytes from .status and .headers
 
         """
+        if hasattr(self.iterator, "gi_frame"):
+            glocals = self.iterator.gi_frame.f_locals  # generator overrides
+        else:
+            glocals = odict()
+        
         lines = []
 
-        if isinstance(self.status, (int, long)):
+        _status = glocals.get("_status")
+        status = _status if _status is not None else self.status  # override
+        if isinstance(status, (int, long)):
             status = "{0} {1}".format(self.status, httping.STATUS_DESCRIPTIONS[self.status])
-        else:
-            status = self.status
 
         startLine = "{0} {1}".format(self.HttpVersionString, status)
         try:
@@ -354,6 +359,9 @@ class Responder(object):
         except UnicodeEncodeError:
             startLine = startLine.encode('idna')
         lines.append(startLine)
+        
+        _headers = glocals.get("_headers", lodict())
+        self.headers.update(_headers.items())  # override
 
         if u'server' not in self.headers:  # create Server header
             self.headers[u'server'] = "Ioflo WSGI Server"
@@ -429,6 +437,14 @@ class Responder(object):
                     raise exc_info[0], exc_info[1], exc_info[2] (python2)
                     Use six.reraise to work for both
 
+        Nonstandard modifiction to allow for iterable/generator of body to change
+           headers and status before first write to support async processing of
+           responses whose iterator/generator yields empty before first non-empty
+           yield.  In .service yielding empty does not cause write so status line
+           and headers are not sent until first non-empty write.
+
+           The mode is that the app.headers and app.status are consulted to see
+           if changed from when .start = wsgi start_response was first called.
         """
         if exc_info:
             try:
@@ -442,7 +458,7 @@ class Responder(object):
 
         self.status = status
         self.headers = lodict(response_headers)
-
+        
         if u'content-length' in self.headers:
             self.length = int(self.headers['content-length'])
             self.chunkable = False  # cannot use chunking with finite content-length
@@ -463,7 +479,6 @@ class Responder(object):
         if not self.closed and not self.ended:
             if self.iterator is None:  # initiate application
                 self.iterator = iter(self.app(self.environ, self.start))
-
             try:
                 msg = next(self.iterator)
             except StopIteration as ex:
@@ -479,13 +494,17 @@ class Responder(object):
                         headers['content-type'] = 'text/plain'
                     msg = ex.render()
                     headers['content-length'] = str(len(msg))
-                    self.start(ex.status, headers.items(), sys.exc_info())
+                    # WSGI status is string of status code and reason
+                    status = "{} {}".format(ex.status, ex.reason)
+                    self.start(status, headers.items(), sys.exc_info())
                     self.write(msg)
                     self.ended = True
                 else:
-                    raise
+                    console.terse("HTTPError streaming body after headers sent.\n"
+                                    "{}\n".format(ex))
             except Exception as ex:  # handle http exceptions not caught by app
-                raise
+                console.terse("Unexcepted Server Error.\n"
+                                    "{}\n".format(ex))
             else:
                 if msg:  # only write if not empty allows async processing
                     self.write(msg)
@@ -604,19 +623,19 @@ class Valet(object):
 
         self.secured = secured
         self.servant = servant
-        
+
     def open(self):
         """
         Return result of .servant.reopen()
         """
         return self.servant.reopen()
-    
+
     def close(self):
         """
         Call .servant.closeAll()
         """
         self.servant.closeAll()
-        
+
 
     def idle(self):
         """

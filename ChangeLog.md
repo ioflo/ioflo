@@ -27,6 +27,9 @@ Added .convey method to Patron to make more conveninet first time request
 
 Some refactoring of Patron and support classes
 
+Added support for generator locals "_status" and "_headers" to allow generator
+in WSGI response to update status and headers after start but before first
+non-empty write.
 
 --------
 20170814
