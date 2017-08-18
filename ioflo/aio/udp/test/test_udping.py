@@ -103,7 +103,7 @@ class BasicTestCase(unittest.TestCase):
         console.terse("Sending beta to beta\n")
         msgOut = b"beta sends to beta"
         beta.send(msgOut, beta.ha)
-        time.sleep(0.05)
+        time.sleep(0.1)
         msgIn, src = beta.receive()
         self.assertEqual(msgOut, msgIn)
         self.assertEqual(src[1], beta.ha[1])

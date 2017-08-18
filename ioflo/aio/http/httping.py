@@ -1031,8 +1031,4 @@ class Parsent(object):
                                        object_pairs_hook=odict)
             except ValueError as ex:
                 self.data = None
-            else:  # valid json so clear out body
-                del self.body[:]  # self.body.clear() python2 bytearrays don't have clear
-
-
 

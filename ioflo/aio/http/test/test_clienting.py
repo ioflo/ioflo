@@ -177,7 +177,8 @@ class BasicTestCase(unittest.TestCase):
         response.dictify()
 
         #self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
-        self.assertEqual(bytes(response.body), b'')
+        self.assertEqual(bytes(response.body), bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url'
+                                                         b'": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
         self.assertEqual(response.data, {'action': None,
                                          'content': None,
                                          'query': {'name': 'fame'},
@@ -1279,8 +1280,8 @@ class BasicTestCase(unittest.TestCase):
 
         response.dictify()
 
-        #self.assertEqual(bytes(response.body), b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url": "http://127.0.0.1:8080/echo?name=fame", "action": null}')
-        self.assertEqual(bytes(response.body), b'')
+        self.assertEqual(bytes(response.body), bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url'
+                                                         b'": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
         self.assertEqual(response.data, {'action': None,
                                          'content': None,
                                          'query': {'name': 'fame'},
@@ -1410,7 +1411,8 @@ class BasicTestCase(unittest.TestCase):
 
         beta.respondent.dictify()
 
-        self.assertEqual(bytes(beta.respondent.body), b'')
+        self.assertEqual(bytes(beta.respondent.body), bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url'
+                                                                b'": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
         self.assertEqual(beta.respondent.data, {'action': None,
                                          'content': None,
                                          'query': {'name': 'fame'},
@@ -1539,7 +1541,8 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.respondent.ended, True)
         self.assertEqual(len(beta.responses), 1)
 
-        self.assertEqual(bytes(beta.respondent.body), b'')
+        self.assertEqual(bytes(beta.respondent.body), bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GET", "url'
+                                                                b'": "http://127.0.0.1:8080/echo?name=fame", "action": null}'))
         self.assertEqual(beta.respondent.data, {'action': None,
                                          'content': None,
                                          'query': {'name': 'fame'},
@@ -1668,7 +1671,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                        b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                        b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -1734,7 +1739,9 @@ class BasicTestCase(unittest.TestCase):
                                          'content-type': 'application/json',
                                          'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                          'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -1848,7 +1855,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -1895,7 +1904,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -1986,7 +1997,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                            b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                            b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2041,7 +2054,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2157,7 +2172,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2204,7 +2221,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                            b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                            b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2306,7 +2325,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                            b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                            b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2356,7 +2377,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2480,7 +2503,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                        b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                        b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2531,7 +2556,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2925,7 +2952,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                            b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                            b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -2972,7 +3001,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -3100,7 +3131,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -3147,7 +3180,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -3270,7 +3305,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -3441,7 +3478,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},
@@ -3650,7 +3689,9 @@ class BasicTestCase(unittest.TestCase):
                                         'content-type': 'application/json',
                                         'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
                                         'server': 'IoBook.local'},
-                                    'body': bytearray(b''),
+                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    b'on": null}'),
                                     'data': {'action': None,
                                              'content': None,
                                              'query': {'name': 'fame'},

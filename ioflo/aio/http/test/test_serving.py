@@ -409,7 +409,10 @@ class BasicTestCase(unittest.TestCase):
         response = beta.responses.popleft()
         self.assertEqual(response['status'], 200)
         self.assertEqual(response['reason'], 'OK')
-        self.assertEqual(response['body'],bytearray(b''))
+        self.assertEqual(response['body'], bytearray(b'{"verb": "GET", "url": "http://localhost:6101/echo?name=fame", "'
+                                                        b'action": null, "query": {"name": "fame"}, "form": {}, "content":'
+                                                        b' null}')
+                                              )
         self.assertEqual(response['data'],{'action': None,
                                             'content': None,
                                             'form': {},
@@ -532,7 +535,9 @@ class BasicTestCase(unittest.TestCase):
         response = beta.responses.popleft()
         self.assertEqual(response['status'], 200)
         self.assertEqual(response['reason'], 'OK')
-        self.assertEqual(response['body'],bytearray(b''))
+        self.assertEqual(response['body'], bytearray(b'{"verb": "GET", "url": "http://localhost:6101/echo?name=fame", "'
+                                                        b'action": null, "query": {"name": "fame"}, "form": {}, "content":'
+                                                        b' null}'))
         self.assertEqual(response['data'],{'action': None,
                                             'content': None,
                                             'form': {},
@@ -656,7 +661,9 @@ class BasicTestCase(unittest.TestCase):
         response = beta.responses.popleft()
         self.assertEqual(response['status'], 200)
         self.assertEqual(response['reason'], 'OK')
-        self.assertEqual(response['body'],bytearray(b''))
+        self.assertEqual(response['body'], bytearray(b'{"verb": "GET", "url": "http://localhost:6101/echo?name=fame", "'
+                                                        b'action": null, "query": {"name": "fame"}, "form": {}, "content":'
+                                                        b' null}'))
         self.assertEqual(response['data'],{'action': None,
                                             'content': None,
                                             'form': {},
@@ -1071,7 +1078,9 @@ class BasicTestCase(unittest.TestCase):
         response = beta.responses.popleft()
         self.assertEqual(response['status'], 200)
         self.assertEqual(response['reason'], 'OK')
-        self.assertEqual(response['body'],bytearray(b''))
+        self.assertEqual(response['body'], bytearray(b'{"verb": "GET", "url": "https://localhost:6101/echo?name=fame", '
+                                                    b'"action": null, "query": {"name": "fame"}, "form": {}, "content"'
+                                                    b': null}'))
         self.assertEqual(response['data'],{'action': None,
                                             'content': None,
                                             'form': {},
