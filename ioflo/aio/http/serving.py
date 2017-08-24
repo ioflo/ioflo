@@ -341,15 +341,11 @@ class Responder(object):
         Return built head bytes from .status and .headers
 
         """
-        if hasattr(self.iterator, "gi_frame"):
-            glocals = self.iterator.gi_frame.f_locals  # generator overrides
-        else:
-            glocals = odict()
-
         lines = []
 
-        _status = glocals.get("_status")
+        _status = getattr(self.iterator, '_status', None)  # if AttributiveGenerator
         status = _status if _status is not None else self.status  # override
+
         if isinstance(status, (int, long)):
             status = "{0} {1}".format(self.status, httping.STATUS_DESCRIPTIONS[self.status])
 
@@ -360,8 +356,8 @@ class Responder(object):
             startLine = startLine.encode('idna')
         lines.append(startLine)
 
-        _headers = glocals.get("_headers", lodict())
-        self.headers.update(_headers.items())  # override
+        # Override if AttributiveGenerator
+        self.headers.update(getattr(self.iterator, '_headers', lodict()))
 
         if u'server' not in self.headers:  # create Server header
             self.headers[u'server'] = "Ioflo WSGI Server"

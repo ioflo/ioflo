@@ -4,8 +4,12 @@ meta class and base class utility classes and functions
 """
 from __future__ import absolute_import, division, print_function
 
-from collections import Iterable, Sequence
+import sys
+from collections import Iterable, Sequence, Generator
 from abc import ABCMeta
+import functools
+import inspect
+import types
 
 # import ioflo modules
 from .sixing import *
@@ -98,3 +102,151 @@ def nonStringSequence(obj):
     """
     return (not isinstance(obj, basestring) and isinstance(obj, Sequence) )
 
+
+if sys.version_info < (3, 0):  # iter .next old style
+    def isIterator(obj):
+        """
+        Returns True if obj is an iterator object, that is,
+
+        has an __iter__ method
+        has a __next__ method
+        .__iter__ is callable and returns obj
+
+        Otherwise returns False
+
+        """
+        if (hasattr(obj, "__iter__") and
+            hasattr(obj, "next") and
+            callable(obj.__iter__) and
+            obj.__iter__() is obj
+           ):
+            return True
+        return False
+
+else:  # iter .__next__ new style
+    def isIterator(obj):
+        """
+        Returns True if obj is an iterator object, that is,
+
+        has an __iter__ method
+        has a __next__ method
+        .__iter__ is callable and returns obj
+
+        Otherwise returns False
+
+        """
+        if (hasattr(obj, "__iter__") and
+            hasattr(obj, "__next__") and
+            callable(obj.__iter__) and
+            obj.__iter__() is obj
+           ):
+            return True
+        return False
+
+
+if sys.version_info >= (3, 6):
+
+    def attributize(genfunc):
+        """
+        Python generators do not support adding attributes.
+        Adding support for attributes provides a way to pass information
+        from a WSGI App that returns a generator to a WSGI server via the generator
+
+        This decorator takes a Duck Typing approach to decorating
+        a generator function or method that returns a new function type instance that
+        when called will return a generator like object that supports attributes.
+        the new object wrapper or skin acts like a generator but with attributes.
+
+        If genfunc is a generator function then a reference to this wrapper/skin
+             is injected as the first positional argument to the orginal
+             generator function.
+        If genfunc is a generator method, that is, its first parameter is 'self'
+            then a reference to this wrapper/skin is injected as the second
+            positional argument to the original generator method
+
+        Usage:
+        # generator function
+        @classing.attributize
+        def bar(skin, req=None, rep=None):
+            skin._status = 400
+            skin._headers = odict(example="Hi")
+            yield b""
+            yield b""
+            yield b"Hello There"
+            return b"Goodbye"
+
+        gen = bar()
+        msg = next(gen)  # attributes set after first next
+        gen._status
+        gen._headers
+
+        # generator method
+        class R:
+            @classing.attributize
+            def bar(self, skin, req=None, rep=None):
+                self.name = "Peter"
+                skin._status = 400
+                skin._headers = odict(example="Hi")
+                yield b""
+                yield b""
+                yield b"Hello There " + self.name.encode()
+                return b"Goodbye"
+
+        r = R()
+        gen = r.bar()
+        msg = next(gen)   # attributes set after first next
+        gen._status
+        gen._headers
+
+        Adding attributes to this injected reference makes them available
+        as attributes of the resultant skin
+
+        The new type is AttributiveGenerator
+
+        Parameters:
+            genfunc is either
+                a generator function that returns a generator object
+                a generator method that return a generator object
+
+        Unlike Python functions, Python generators do not support attributes and the
+        generator locals dict at .gi_frame.f_locals dissappears once the generator
+        is complete so its inconvenient.
+
+        Attributes of generator objects.
+        ['.__next__', '__iter__', 'close', 'gi_code', 'gi_frame', 'gi_running',
+        'gi_yieldfrom', 'send', 'throw']
+        """
+
+        def wrapper(*args, **kwargs):
+            """
+            When called returns instance of AttributiveGenerator instead of generator.
+            """
+            def __iter__(self):
+                return self
+
+            def send(self):
+                raise NotImplementedError
+
+            def throw(self):
+                raise NotImplementedError
+
+            tdict = { '__iter__': __iter__, 'send': send, 'throw':  throw,}
+            # use type to create dynamic instance of class AttributiveGenerator
+            #spec = {'__iter__': lambda self: self, 'send': ,}
+            AG = type("AttributiveGenerator", (Generator,), tdict)
+            ag = AG()  # create  instance so we can inject it into genfunc
+
+            fargs = inspect.getfullargspec(genfunc).args
+            if fargs and fargs[0] == 'self':
+                gen = genfunc(args[0], ag, *args[1:], **kwargs)
+            else:
+                gen = genfunc(ag, *args, **kwargs)  # create generator insert ag ref
+
+            # now add to class references to gen attributes "duckify"
+            for attr in ('__next__', 'close', 'send', 'throw',
+                         'gi_code', 'gi_frame', 'gi_running', 'gi_yieldfrom'):
+                setattr(AG, attr, getattr(gen, attr))
+
+            functools.update_wrapper(wrapper=ag, wrapped=gen)
+            return ag
+        return wrapper
