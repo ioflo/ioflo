@@ -25,9 +25,14 @@ Added codesponsor
 
 Some refactoring of Patron and support classes
 
-Added support for generator locals "_status" and "_headers" to allow generator
+Added attributize decorator of generator functions or methods that supports attributed
+assignment Decorator also injects ref to wrapper into arg list of generator function
+method
+
+
+Added support via ."_status" and ."_headers" to allow AttributiveGenerator
 in WSGI response to update status and headers after start but before first
-non-empty write.
+non-empty write as attributes on decorated generator.
 
 Fixed patron tranmit so can be usef for first time request
 

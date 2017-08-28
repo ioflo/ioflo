@@ -329,6 +329,29 @@ def normalizeHostPort(host, port=None, defaultPort=80):
 
     return (host, port)
 
+def parseQuery(query):
+    """
+    Return odict of parsed query string.
+    Utility function
+    """
+    qargs = odict()
+    if u';' in query:  # as of 2014 W3C semicolon obsolete
+        querySplits = query.split(u';')
+    elif u'&' in query:
+        querySplits = query.split(u'&')
+    else:
+        querySplits = [query]
+    for queryPart in querySplits:  # this prevents duplicates even if desired
+        if queryPart:
+            if '=' in queryPart:
+                key, val = queryPart.split('=', 1)
+                val = unquote(val)
+            else:
+                key = queryPart
+                val = u'true'
+            qargs[key] = val
+    return qargs
+
 def updateQargsQuery(qargs=None, query=u'',):
     """
     Returns duple of updated (qargs, query)
@@ -337,12 +360,14 @@ def updateQargsQuery(qargs=None, query=u'',):
     and the returned query string is generated from the updated qargs
     If provided, qargs may have additional fields not in query string
     This allows combining query args from two sources, a dict and a string
+
+    https://www.w3.org/TR/2014/REC-html5-20141028/forms.html#url-encoded-form-data
     """
     if qargs == None:
         qargs = odict()
 
     if query:
-        if u';' in query:
+        if u';' in query:  # as of 2014 W3C semicolon obsolete
             querySplits = query.split(u';')
         elif u'&' in query:
             querySplits = query.split(u'&')
@@ -360,7 +385,7 @@ def updateQargsQuery(qargs=None, query=u'',):
 
     qargParts = [u"{0}={1}".format(key, quote_plus(str(val)))
                                    for key, val in qargs.items()]
-    query = '&'.join(qargParts)
+    query = '&'.join(qargParts)  # only use ampersand since semicolon obsolete
     return (qargs, query)
 
 def unquoteQuery(query):
@@ -380,7 +405,7 @@ def unquoteQuery(query):
         if part:
             if '=' in part:
                 key, val = part.split('=', 1)
-                val = unquote(val)
+                val = unquote_plus(val)
                 parts.append(u"{0}={1}".format(key, str(val)))
             else:
                 key = part

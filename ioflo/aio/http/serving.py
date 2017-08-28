@@ -347,7 +347,7 @@ class Responder(object):
         status = _status if _status is not None else self.status  # override
 
         if isinstance(status, (int, long)):
-            status = "{0} {1}".format(self.status, httping.STATUS_DESCRIPTIONS[self.status])
+            status = "{0} {1}".format(status, httping.STATUS_DESCRIPTIONS[status])
 
         startLine = "{0} {1}".format(self.HttpVersionString, status)
         try:
