@@ -310,6 +310,57 @@ class lodict(odict):
         super(lodict, self).__init__()  # must do this first
         self.update(*pa, **kwa)
 
+    def __setitem__(self, key, val):
+        """
+        Make key lowercalse then setitem
+        """
+        super(lodict, self).__setitem__(key.lower(), val)
+
+    def __delitem__(self, key):
+        """
+        Make key lowercase then delitem
+        """
+        super(lodict, self).__delitem__(key.lower())
+
+    def __contains__(self, key):
+        """
+        Make key lowercase then test for inclusion
+        """
+        return super(lodict, self).__contains__(key.lower())
+
+    def __getitem__(self, key):
+        """
+        Make key lowercase then getitem
+        """
+        return super(lodict, self).__getitem__(key.lower())
+
+    def get(self, key, default=None):
+        """
+        May key lowercase then get
+        """
+        return super(lodict, self).get(key.lower(), default)
+
+    def setdefault(self, key, default=None, kind=None):
+        """
+        convert key to lower and then
+
+        If key is in the dictionary, return the val at key
+
+        If not, insert key with a value of default and return default.
+        The default value of default is None.
+
+        kind = callable is used to cast the returned value into a specific type.
+
+        Exceptions are suppressed and result in the default value being set
+        """
+        try:
+            val = super(lodict, self).__getitem__(key.lower())
+            return kind(val) if kind else val
+        except Exception:
+            super(lodict, self).__setitem__(key.lower(), default)
+        return default
+
+
     def update(self, *pa, **kwa):
         """
         lodict.update(pa1, pa2, ...) where pa = tuple of positional args,
@@ -334,29 +385,6 @@ class lodict(odict):
         super(lodict, self).update(d)
 
 
-    def __setitem__(self, key, val):
-        """
-        Make key lowercalse then setitem
-        """
-        super(lodict, self).__setitem__(key.lower(), val)
-
-    def __delitem__(self, key):
-        """
-        Make key lowercase then delitem
-        """
-        super(lodict, self).__delitem__(key.lower())
-
-    def __contains__(self, key):
-        """
-        Make key lowercase then test for inclusion
-        """
-        return super(lodict, self).__contains__(key.lower())
-
-    def __getitem__(self, key):
-        """
-        Make key lowercase then getitem
-        """
-        return super(lodict, self).__getitem__(key.lower())
 
 
 class modict(odict):
@@ -388,28 +416,6 @@ class modict(odict):
         """
         super(modict, self).__init__()  # must do this first
         self.update(*pa, **kwa)
-
-    def update(self, *pa, **kwa):
-        """
-        modict.update(pa1, pa2, ...) where pa = tuple of positional args,
-        (pa1, pa2, ...) each paX may be  a sequence of duples (k,v) or a dict
-
-        modict.update(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args,
-        {k1: v1, k2 : v2, ...}
-        """
-        for a in pa:
-            if isinstance(a, modict): #positional arg is modict
-                for k, v in a.iterallitems():
-                    self.append(k, v)
-            elif hasattr(a, 'get'): #positional arg is dictionary
-                for k, v in a.iteritems():
-                    self.append(k, v)
-            else: #positional arg is sequence of duples (k,v)
-                for k, v in a:
-                    self.append(k, v)
-
-        for k,v in kwa.items():
-            self.append(k, v)
 
     def __getitem__(self, key):
         return super(modict, self).__getitem__(key)[-1] #newest
@@ -564,6 +570,28 @@ class modict(odict):
         Return new modict with keys from sequence seq with values set to default
         """
         return modict((k, default) for k in seq)
+
+    def update(self, *pa, **kwa):
+        """
+        modict.update(pa1, pa2, ...) where pa = tuple of positional args,
+        (pa1, pa2, ...) each paX may be  a sequence of duples (k,v) or a dict
+
+        modict.update(k1 = v1, k2 = v2, ...) where kwa = dictionary of keyword args,
+        {k1: v1, k2 : v2, ...}
+        """
+        for a in pa:
+            if isinstance(a, modict): #positional arg is modict
+                for k, v in a.iterallitems():
+                    self.append(k, v)
+            elif hasattr(a, 'get'): #positional arg is dictionary
+                for k, v in a.iteritems():
+                    self.append(k, v)
+            else: #positional arg is sequence of duples (k,v)
+                for k, v in a:
+                    self.append(k, v)
+
+        for k,v in kwa.items():
+            self.append(k, v)
 
     # aliases to mimic other multi-dict APIs
     getone = get
