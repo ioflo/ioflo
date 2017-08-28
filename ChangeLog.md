@@ -34,7 +34,11 @@ Added support via ."_status" and ."_headers" to allow AttributiveGenerator
 in WSGI response to update status and headers after start but before first
 non-empty write as attributes on decorated generator.
 
-Fixed patron tranmit so can be usef for first time request
+Fixed patron trasnmit so can be used for first time request
+
+Added utility function parseQuery
+
+fixed bugs in lodict
 
 --------
 20170814
