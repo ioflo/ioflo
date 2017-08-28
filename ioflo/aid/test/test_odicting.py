@@ -73,6 +73,28 @@ class BasicTestCase(unittest.TestCase):
         stuff = od.sift()
         self.assertEqual(stuff.items(), od.items())
 
+    def testLoDict(self):
+        """
+        Test the lodict
+        """
+        console.terse("{0}\n".format(self.testMoDict.__doc__))
+
+        x = odicting.lodict()
+        x["a"] = 5
+        self.assertEqual(x.items(), [('a', 5)])
+        x["A"] = 6
+        self.assertEqual(x.items(), [('a', 6)])
+        self.assertEqual(x.get("A"), 6)
+
+        y = x.setdefault("a", 10)
+        self.assertEqual(y, 6)
+        y = x.setdefault("A", 10)
+        self.assertEqual(y, 6)
+        z = x.setdefault("b", 1)
+        self.assertEqual(z, 1)
+        self.assertEqual(x.items(), [('a', 6), ('b', 1)])
+
+
     def testMoDict(self):
         """
         Test the modict
@@ -108,6 +130,7 @@ def runSome():
     tests =  []
     names = [
                 'testODict',
+                'testLoDict',
                 'testMoDict',
             ]
     tests.extend(map(BasicTestCase, names))
