@@ -6,6 +6,13 @@ CHANGE LOG
 201708XX  Not yet released
 --------
 
+1.7.3
+
+
+--------
+20170829
+--------
+
 1.7.2
 
 Fixed bug not clearing .data in Respondent
