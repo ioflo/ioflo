@@ -1846,7 +1846,8 @@ class BasicTestCase(unittest.TestCase):
         self.assertIs(beta.respondent.ended, True)
 
         self.assertEqual(len(beta.responses), 1)
-        response = beta.responses.popleft()
+        #response = beta.responses.popleft()
+        response = beta.respond()
         self.assertEqual(response, {'version': (1, 1),
                                     'status': 200,
                                     'reason': 'OK',

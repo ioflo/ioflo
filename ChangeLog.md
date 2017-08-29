@@ -40,6 +40,8 @@ Added utility function parseQuery
 
 fixed bugs in lodict
 
+Added .respond convenience method to Patron
+
 --------
 20170814
 --------

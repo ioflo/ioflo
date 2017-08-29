@@ -813,6 +813,15 @@ class Patron(object):
         """
         self.connector.close()
 
+    def respond(self):
+        """
+        Pops and returns next response from .responses if any
+        Otherwise returns None
+        """
+        if self.responses:
+            return self.responses.popleft()
+        return None
+
     def transmit(self,
                  method=None,
                  path=None,
