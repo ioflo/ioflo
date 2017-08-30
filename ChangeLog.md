@@ -9,7 +9,7 @@ CHANGE LOG
 1.7.4
 
 Use unquote_plus for query args
-
+Fixed bug in Valet erroneously unquoting query_string for environ
 
 --------
 20170830
