@@ -8,6 +8,7 @@ CHANGE LOG
 
 1.7.4
 
+Use unquote_plus for query args
 
 
 --------
