@@ -10,6 +10,7 @@ CHANGE LOG
 
 Use unquote_plus for query args
 Fixed bug in Valet erroneously unquoting query_string for environ
+Added python3.6 condition to exclude test from python2
 
 --------
 20170830
