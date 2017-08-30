@@ -145,7 +145,8 @@ class Requestant(httping.Parsent):
         self.scheme = pathSplits.scheme
         self.hostname = pathSplits.hostname
         self.port = pathSplits.port
-        self.query = httping.unquoteQuery(pathSplits.query)  # unquote only the values
+        self.query = pathSplits.query  # WSGI spec leaves it quoted do not unquote
+        #self.query = httping.unquoteQuery(pathSplits.query)  # unquote only the values
         self.fragment = pathSplits.fragment
 
         leaderParser = httping.parseLeader(raw=self.msg,
