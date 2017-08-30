@@ -377,7 +377,7 @@ def updateQargsQuery(qargs=None, query=u'',):
             if queryPart:
                 if '=' in queryPart:
                     key, val = queryPart.split('=', 1)
-                    val = unquote(val)
+                    val = unquote_plus(val)
                 else:
                     key = queryPart
                     val = u'true'
