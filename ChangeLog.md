@@ -6,7 +6,7 @@ CHANGE LOG
 201709XX  Not yet released
 --------
 
-1.7.3
+1.7.4
 
 
 
