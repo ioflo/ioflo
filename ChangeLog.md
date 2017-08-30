@@ -8,6 +8,7 @@ CHANGE LOG
 
 1.7.3
 
+Move classing import of Generator for python2
 
 --------
 20170829
