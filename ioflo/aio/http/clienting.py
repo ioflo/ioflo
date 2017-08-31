@@ -13,7 +13,7 @@ import os
 import socket
 import errno
 import io
-from collections import deque
+from collections import deque, namedtuple
 import codecs
 import json
 import ssl
@@ -50,6 +50,9 @@ console = getConsole()
 CRLF = b"\r\n"
 LF = b"\n"
 CR = b"\r"
+
+Response = namedtuple('Response', 'version status reason headers body data request errored error')
+
 
 #  Class Definitions
 
@@ -813,13 +816,21 @@ class Patron(object):
         """
         self.connector.close()
 
+    @staticmethod
+    def attrify(response):
+        """
+        Convert response dict into named tuple Response so can access fields
+        as attributes
+        """
+        return Response(**{k:response[k] for k in Response._fields})
+
     def respond(self):
         """
         Pops and returns next response from .responses if any
         Otherwise returns None
         """
         if self.responses:
-            return self.responses.popleft()
+            return self.attrify(self.responses.popleft())
         return None
 
     def transmit(self,
