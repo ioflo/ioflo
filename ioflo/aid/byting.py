@@ -161,8 +161,8 @@ def packify(fmt=u'8', fields=[0x00], size=None, reverse=False):
     Each field in format string is number of bits for the associated bit field
     Fields with length of 1 are treated as has having boolean truthy field values
        that is,   nonzero is True and packs as a 1
-    for 2+ length bit fields the field element is truncated
-    to the number of low order bits in the bit field
+    for 2+ length bit fields the field element is truncated to the number of
+       low order bits in the bit field
     if sum of number of bits in fmt less than size bytes then the last byte in
        the bytearray is right zero padded
     if sum of number of bits in fmt greater than size bytes returns exception
