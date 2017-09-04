@@ -36,34 +36,49 @@ def sign(x):
 
 Sign = sign
 
+def wrap1(angle, wrap=360):
+    """
+    1 sided wrap of angle to interval [0, wrap]
+    angle and wrap may be positive or negative
+    If wrap == 0 just returns angle i.e. don't wrap
+    """
+    if wrap != 0:
+        angle %= wrap  # wrap to full circle first
+    return angle
+
 def wrap2(angle, wrap = 180.0):
-    """Wrap2 = (2 sided one positive one negative) wrap of angle to
-       signed interval [-wrap, + wrap] wrap is half circle
-       if wrap = 0 then don't wrap
-       angle may be positive or negative
-       result is invariant to sign of wrap
+    """
+    2 sided wrap of angle to [-wrap, +wrap]
+    angle and wrap may be positive or negative
+    If wrap == 0 just returns angle ie don't wrap
 
-       Wrap preserves convention so angle can be in compass or Cartesian coordinates
+    Wrap2 = (2 sided one positive one negative) wrap of angle to
+    signed interval [-wrap, + wrap] wrap is half circle
+    if wrap = 0 then don't wrap
+    angle may be positive or negative
+    result is invariant to sign of wrap
 
-       Uses property of python modulo operator that implement true
-       clock or circular arithmetic as location on circle
-       distance % circumference = location
-       if circumference positive then locations postive sign,
-             magnitues increase CW  (CW 0 1 2 3 ... 0)
-       if circumference negative then locations negative sign,
-             magnitudes increase CCW  (CCW 0 -1 -2 -3 ... 0)
+    Wrap preserves convention so angle can be in compass or Cartesian coordinates
 
-       if distance positive then wrap distance CW around circle
-       if distance negative then wrap distance CCW around circle
+    Uses property of python modulo operator that implement true
+    clock or circular arithmetic as location on circle
+    distance % circumference = location
+    if circumference positive then locations postive sign,
+          magnitues increase CW  (CW 0 1 2 3 ... 0)
+    if circumference negative then locations negative sign,
+          magnitudes increase CCW  (CCW 0 -1 -2 -3 ... 0)
 
-       No need for a full wrap in Python since modulo operator does that
-        even for negative angles
-       angle %= 360.0
+    if distance positive then wrap distance CW around circle
+    if distance negative then wrap distance CCW around circle
+
+    No strong need for a full wrap in Python since modulo operator does that
+     even for negative angles
+    angle %= 360.0
 
     """
 
     if wrap != 0.0:
-        angle %= wrap * 2.0 #wrap to full circle first
+        angle %= wrap * 2.0  # wrap to full circle first
         if abs(angle) > abs(wrap): #more than half way round
             angle = (angle - wrap) % (- wrap) #wrap extra on reversed half circle
 
