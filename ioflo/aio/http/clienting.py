@@ -320,7 +320,8 @@ class Respondent(httping.Parsent):
         """
         super(Respondent, self).__init__(**kwa)
 
-        self.status = None  # Status-Code from status line
+        self.status = None  # Status-Code from status line (consider making this code reason)
+        self.code = None  # Status-Code from status line
         self.reason = None  # Reason-Phrase from status line
 
         self.redirectant = None  # Boolean True if received redirect status, need to redirect
@@ -345,6 +346,10 @@ class Respondent(httping.Parsent):
         super(Respondent, self).reinit(**kwa)
         if redirectable is not None:
             self.redirectable = True if redirectable else False
+        self.status = None  
+        self.code = None  
+        self.reason = None
+        self.evented = None 
 
     def close(self):
         """
@@ -430,8 +435,8 @@ class Respondent(httping.Parsent):
                                             kind="continue header line")
             while True:
                 if self.closed:  # connection closed prematurely
-                    raise httping.PrematureClosure("Connection closed "
-                            "unexpectedly while parsing response header")
+                    raise httping.PrematureClosure("Connection closed unexpectedly"
+                            " while parsing response header")
                 headers = next(leaderParser)
                 if headers is not None:
                     leaderParser.close()
@@ -874,6 +879,8 @@ class Patron(object):
 
         if method is not None:
             self.respondent.reinit(method=self.requester.method)
+        else:
+            self.respondent.reinit()  # reset code status reason
 
     def redirect(self):
         """
@@ -1080,7 +1087,7 @@ class Patron(object):
                               " '{1}'\n".format(self.connector.name, ex))
                 raise ex
             time.sleep(0.125)
-            store.advanceStamp(0.125)            
+            self.store.advanceStamp(0.125)            
         return self.respond()
 
     if sys.version_info >= (3, 6):
