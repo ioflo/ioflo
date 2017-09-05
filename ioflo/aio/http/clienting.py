@@ -346,15 +346,15 @@ class Respondent(httping.Parsent):
         super(Respondent, self).reinit(**kwa)
         if redirectable is not None:
             self.redirectable = True if redirectable else False
-        self.status = None  
-        self.code = None  
+        self.status = None
+        self.code = None
         self.reason = None
-        self.evented = None 
+        self.evented = None
 
     def close(self):
         """
-        Assign True to .closed
-        Close event source
+        Call super to assign True to .closed
+        Also close event source
         """
         super(Respondent, self).close()
         if self.eventSource:  # assign True to .eventSource.closed
@@ -416,7 +416,7 @@ class Respondent(httping.Parsent):
         # create generator
         lineParser = httping.parseLine(raw=self.msg, eols=(CRLF, LF), kind="status line")
         while True:  # parse until we get a non-100 status
-            if self.closed:  # connection closed prematurely
+            if self.closed and not self.msg:  # connection closed prematurely
                 raise httping.PrematureClosure("Connection closed unexpectedly"
                                                " while parsing response start line")
 
@@ -434,7 +434,7 @@ class Respondent(httping.Parsent):
                                             eols=(CRLF, LF),
                                             kind="continue header line")
             while True:
-                if self.closed:  # connection closed prematurely
+                if self.closed and not self.msg:  # connection closed prematurely
                     raise httping.PrematureClosure("Connection closed unexpectedly"
                             " while parsing response header")
                 headers = next(leaderParser)
@@ -457,7 +457,7 @@ class Respondent(httping.Parsent):
                                    eols=(CRLF, LF),
                                    kind="leader header line")
         while True:
-            if self.closed:  # connection closed prematurely
+            if self.closed and not self.msg:  # connection closed prematurely
                 raise httping.PrematureClosure("Connection closed unexpectedly"
                                                " while parsing response header")
             headers = next(leaderParser)
@@ -544,7 +544,7 @@ class Respondent(httping.Parsent):
             while True:  # parse all chunks here
                 chunkParser = httping.parseChunk(raw=self.msg)
                 while True:  # parse another chunk
-                    if self.closed:  # connection closed prematurely
+                    if self.closed and not self.msg:  # connection closed prematurely
                         raise httping.PrematureClosure("Connection closed "
                                 "unexpectedly while parsing response body chunk")
                     result = next(chunkParser)
@@ -569,7 +569,7 @@ class Respondent(httping.Parsent):
                                 self.leid != self.eventSource.leid):
                             self.leid = self.eventSource.leid
 
-                    if self.closed:  # no more data so finish
+                    if self.closed and not self.msg:  # no more data so finish
                         chunkParser.close()
                         break
 
@@ -581,7 +581,7 @@ class Respondent(httping.Parsent):
 
         elif self.length != None:  # known content length
             while len(self.msg) < self.length:
-                if self.closed:  # connection closed prematurely
+                if self.closed and not self.msg:  # connection closed prematurely
                     raise httping.PrematureClosure("Connection closed unexpectedly"
                                                    " while parsing response body")
                 (yield None)
@@ -604,7 +604,7 @@ class Respondent(httping.Parsent):
                             self.leid != self.eventSource.leid):
                         self.leid = self.eventSource.leid
 
-                if self.closed:  # no more data so finish
+                if self.closed and not self.msg:  # no more data so finish
                     break
 
                 (yield None)
@@ -1087,7 +1087,7 @@ class Patron(object):
                               " '{1}'\n".format(self.connector.name, ex))
                 raise ex
             time.sleep(0.125)
-            self.store.advanceStamp(0.125)            
+            self.store.advanceStamp(0.125)
         return self.respond()
 
     if sys.version_info >= (3, 6):
@@ -1101,7 +1101,7 @@ class Patron(object):
 
             Runs one iteration of serviceAll on next and yields empty
             bytes while not done.
-            
+
             Assumes store timer is advanced and realtime sleep delay
             is incurred elsewhere.
 
