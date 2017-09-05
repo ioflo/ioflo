@@ -20,6 +20,7 @@ import ssl
 import copy
 import random
 import datetime
+import time
 
 if sys.version > '3':
     from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
@@ -1078,6 +1079,8 @@ class Patron(object):
                 console.terse("Error: Servicing Patron '{0}'."
                               " '{1}'\n".format(self.connector.name, ex))
                 raise ex
+            time.sleep(0.125)
+            store.advanceStamp(0.125)            
         return self.respond()
 
     if sys.version_info >= (3, 6):
@@ -1091,6 +1094,9 @@ class Patron(object):
 
             Runs one iteration of serviceAll on next and yields empty
             bytes while not done.
+            
+            Assumes store timer is advanced and realtime sleep delay
+            is incurred elsewhere.
 
             Returns response as namedtuple or None if timeout.
             """
