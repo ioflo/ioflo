@@ -36,7 +36,7 @@ from email.parser import HeaderParser
 
 # Import ioflo libs
 from ...aid.sixing import *
-from ...aid import aiding
+from ...aid import aiding, timing
 from ...aid.odicting import odict, lodict, modict
 from ...aid.consoling import getConsole
 from ...base import excepting, storing
@@ -1063,4 +1063,45 @@ class Patron(object):
         self.connector.serviceTxes()
         self.serviceResponse()
 
+    def serviceWhile(self, timeout=0.5):
+        """
+        Returns response namedtuple or None if timeout
+        ServiceAll while pending requests or not a response or not timeout
+        This call blocks until done
+        """
+        timer = timing.StoreTimer(store=self.store, duration=timeout)
+        while ((self.requests or self.connector.txes or not self.responses)
+               and not timer.expired):
+            try:
+                self.serviceAll()
+            except Exception as ex:
+                console.terse("Error: Servicing Patron '{0}'."
+                              " '{1}'\n".format(self.connector.name, ex))
+                raise ex
+        return self.respond()
 
+    if sys.version_info >= (3, 6):
+        def serviceWhileGen(self, timeout=0.5):
+            """
+            Generator Method.
+            ServiceAll while pending requests or not a response or not timeout
+
+            Usage:
+            response = yield from .serviceWhileGen(timeout=0.5)
+
+            Runs one iteration of serviceAll on next and yields empty
+            bytes while not done.
+
+            Returns response as namedtuple or None if timeout.
+            """
+            timer = timing.StoreTimer(store=self.store, duration=timeout)
+            while ((self.requests or self.connector.txes or not self.responses)
+                   and not timer.expired):
+                try:
+                    self.serviceAll()
+                except Exception as ex:
+                    console.terse("Error: Servicing Patron '{0}'."
+                                  " '{1}'\n".format(self.connector.name, ex))
+                    raise ex
+                yield b''  # this is eventually yielded by wsgi app while waiting
+            return self.respond()
