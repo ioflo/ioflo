@@ -12,6 +12,7 @@ Use unquote_plus for query args
 Fixed bug in Valet erroneously unquoting query_string for environ
 Added python3.6 condition to exclude test from python2
 Patron.response now returns namedtuple to make it more convenient to access fields
+Improved stability of Patron parsing responses from slow servers
 
 --------
 20170830
