@@ -641,48 +641,56 @@ class Patron(object):
                  body=b'',
                  data=None,
                  fargs=None,
+                 requests=None,
                  msg=None,
                  dictable=None,
                  events=None,
-                 requests=None,
-                 responses=None,
                  redirectable=True,
                  redirects=None,
+                 responses=None,
                  **kwa):
         """
         Initialization method for instance.
-        kwa needed to pass other init parameters to connector
+        Parameters:
+            connector is instance of tcp.Client or tcp.ClientTls or None
+            requester is instance of Requester or None
+            respondent is instance of Respondent or None
 
-        connector = instance of Outgoer or OutgoerTls or None
-        requester = instance of Requester or None
-        respondent = instance of Respondent or None
+            store is reference to data store instance
+            name is user friendly name for connector (connection)
+            uid is unique identifier for connector (connection)
+            bufsize is buffer size for connector
+            wlog is opened WireLog instance if any for connector
+            hostname is host address or hostname of remote server for connector
+                connector.hostname is used for requester
+            port = socket port of remote server for connector
+                connector.port is used for requester
+            kwa are passed as other init parameters to connector
 
-        if either of requester, respondent instances are not provided (None)
-        some or all of these parameters will be used for initialization
+            scheme is http scheme for requester
+            method is http request method verb for requester and respondent
+            path is http url path section for requester
+                   path may include scheme and netloc which takes priority
+            headers is dict of http headers if any for requester
+            qargs is dict of http query args if any for requester
+            fragment is http fragment if any for requester
+            body is byte or bytearray of request body for requester
+            data is dict of request body json if any for requester
+            fargs is dict of request body form args if any for requester
+            requests is deque of requests if any to be processed by requester
+                each request is dict
 
-        name = user friendly name for connection
-        uid = unique identifier for connection
-        bufsize = buffer size
-        wlog = WireLog instance if any
-        host = host address or hostname of remote server
-        port = socket port of remote server
-        scheme = http scheme
-        method = http request method verb unicode
-        path = http url path section in unicode
-               path may include scheme and netloc which takes priority
-        qargs = dict of http query args
-        fragment = http fragment
-        headers = dict of http headers
-        body = byte or binary array of request body bytes or bytearray
-        data = dict of request body json if any
-        fargs = dict of request body form args if any
-        msg = bytearray of response msg to parse
-        dictable = Boolean flag If True attempt to convert body from json
-        events = deque of events if any
-        requests = deque of requests if any each request is dict
-        responses = deque of responses if any each response is dict
-        redirectable = Boolean is allow redirects
-        redirects = list of redirects if any each redirect is dict
+            msg is bytearray of response msg to parse by respondent
+            dictable is Boolean flag for respondent
+                If True attempt to convert body from json
+            events is reference to deque of events if any processed by respondent
+            redirectable is Boolean to allow redirects to be processed by respondent
+            redirects is list of redirects if any processed by respondent
+                each redirect is dict
+            responses is deque of responses if any processed by respondent
+                 each response is dict
+
+
         """
         # .requests is deque of dicts of request data
         self.requests = requests if requests is not None else deque()
