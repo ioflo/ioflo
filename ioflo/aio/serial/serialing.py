@@ -314,7 +314,8 @@ class SerialNb(object):
                                     baudrate=self.speed,
                                     timeout=0,
                                     writeTimeout=0)
-        self.serial.nonblocking()
+        if getattr(self.serial, "nonblocking", False):
+            self.serial.nonblocking()
         self.serial.reset_input_buffer()
         self.opened = True
 
