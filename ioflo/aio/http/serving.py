@@ -516,11 +516,11 @@ class Valet(object):
     Timeout = 5.0  # default server connection timeout
 
     def __init__(self,
+                 store=None,
                  app=None,
                  reqs=None,
                  reps=None,
                  servant=None,
-                 store=None,
                  name='',
                  bufsize=8096,
                  wlog=None,
@@ -533,30 +533,45 @@ class Valet(object):
                  **kwa):
         """
         Initialization method for instance.
-        app = wsgi application callable
-        reqs = odict of Requestant instances keyed by ca
-        reps = odict of running Wsgi Responder instances keyed by ca
-        servant = instance of Server or ServerTls or None
-        store = Datastore for timers
 
-        kwa needed to pass additional parameters to servant
+        Parameters:
+            store is Datastore for timers
+            app is wsgi application callable
+            reqs is odict of Requestant instances keyed by ca
+            reps is odict of running Wsgi Responder instances keyed by ca
+            servant is instance of Server or ServerTls or None
 
-        if servantinstances are not provided (None)
-        some or all of these parameters will be used for initialization
+            name is user friendly name for servant
+            bufsize is buffer size for servant
+            wlog is WireLog instance if any for servant
+            ha is  host address duple (host, port) for local servant listen socket
+            host is host address for local servant listen socket,
+                '' means any interface on host
+            port is socket port for local servant listen socket
+            eha is external destination address for servant
+                for incoming connections used in TLS
+            scheme is http scheme u'http' or u'https' or empty
+                for servant and WSGI environment
+            kwa needed to pass additional parameters to servant
 
-        name = user friendly name for servant
-        bufsize = buffer size
-        wlog = WireLog instance if any
-        ha = host address duple (host, port) for local servant listen socket
-        host = host address for local servant listen socket, '' means any interface on host
-        port = socket port for local servant listen socket
-        eha = external destination address for incoming connections used in TLS
-        scheme = http scheme u'http' or u'https' or empty
+            timeout is timeout in seconds for dropping idle connections
+
+        Attributes:
+            .store is Datastore for timers
+            .app is wsgi application callable
+            .reqs is odict of Requestant instances keyed by ca
+            .reps is odict of running Wsgi Responder instances keyed by ca
+            .servant is instance of Server or ServerTls or None
+            .timeout is timeout in seconds for dropping idle connections
+            .scheme is http scheme http or https for servant and environment
+            .secured is Boolean true if TLS
 
         """
         self.app = app
-        self.reqs = reqs if reqs is not None else odict()
-        self.reps = reps if reps is not None else odict()
+        self.reqs = reqs if reqs is not None else odict()  # allows external view
+        self.reqs.clear()  # items should only be assigned by valet
+        self.reps = reps if reps is not None else odict()  # allows external view
+        self.reps.clear()  # items should only be assigned by valet
         self.store = store or storing.Store(stamp=0.0)
         if not name:
             name = "Ioflo_WSGI_server"

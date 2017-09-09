@@ -622,10 +622,10 @@ class Patron(object):
     Patron class nonblocking HTTP client connection manager
     """
     def __init__(self,
+                 store=None,
                  connector=None,
                  requester=None,
                  respondent=None,
-                 store=None,
                  name='',
                  uid=0,
                  bufsize=8096,
@@ -652,11 +652,11 @@ class Patron(object):
         """
         Initialization method for instance.
         Parameters:
+            store is reference to data store instance
             connector is instance of tcp.Client or tcp.ClientTls or None
             requester is instance of Requester or None
             respondent is instance of Respondent or None
 
-            store is reference to data store instance
             name is user friendly name for connector (connection)
             uid is unique identifier for connector (connection)
             bufsize is buffer size for connector
