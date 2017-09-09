@@ -13,6 +13,8 @@ Fixed bug in Valet erroneously unquoting query_string for environ
 Added python3.6 condition to exclude test from python2
 Patron.response now returns namedtuple to make it more convenient to access fields
 Improved stability of Patron parsing responses from slow servers
+Some refactoring of Patron and Valet
+Fixed windows bug in serialing
 
 --------
 20170830
