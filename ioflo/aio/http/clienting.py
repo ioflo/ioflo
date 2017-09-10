@@ -1057,7 +1057,7 @@ class Patron(object):
             if self.respondent:
                 self.respondent.close()  # close any pending or current response parsing
 
-            if self.connector.reconnectable:
+            if self.connector.reconnectable:  # useful for server sent event stream
                 if self.connector.timeout > 0.0 and self.connector.timer.expired:  # timed out
                     self.connector.reopen()
                     if self.respondent.evented:
