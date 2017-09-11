@@ -15,6 +15,7 @@ Patron.response now returns namedtuple to make it more convenient to access fiel
 Improved stability of Patron parsing responses from slow servers
 Some refactoring of Patron and Valet
 Fixed windows bug in serialing
+change Share so .update or .create when passed in another Share works
 
 --------
 20170830

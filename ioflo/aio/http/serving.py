@@ -611,6 +611,8 @@ class Valet(object):
             if servant.ha != ha:
                 ValueError("Provided ha '{0}:{1}' incompatible with servant".format(ha[0], ha[1]))
             # at some point may want to support changing the ha of provided servant
+            if name:
+                servant.name = name
 
         else:  # what about timeouts for servant connections
             if secured:
