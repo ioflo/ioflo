@@ -701,7 +701,7 @@ class Patron(object):
         # .events is deque of dicts of response server sent event data
         self.events = events if events is not None else deque()
         self.waited = False  # Boolean True If sent request but waiting for response
-        self.request = None  # current request odict from .requests in process if any
+        self.latest = None  # latest request odict from .requests in process if any
         self.store = store or storing.Store(stamp=0.0)
 
         # see if path also includes scheme, netloc, host, port, query, fragment
@@ -745,6 +745,8 @@ class Patron(object):
             if connector.ha != ha:
                 ValueError("Provided ha '{0}' incompatible with connector".format(hostname))
             # at some point may want to support changing the hostname and ha of provided connector
+            if name:
+                connector.name = name
         else:
             if secured:
                 connector = ClientTls(store=self.store,
@@ -847,6 +849,54 @@ class Patron(object):
             return self.attrify(self.responses.popleft())
         return None
 
+    def request(self,
+                method=None,
+                path=None,
+                qargs=None,
+                fragment=None,
+                headers=None,
+                body=None,
+                data=None,
+                fargs=None,
+                reply=None):
+        """
+        Create and append request odict onto .requests with updated values from
+        parameters. Use existing .requester values if not provided except for
+        body. Body/Data/fargs must be newly provided.
+        This is a differential request that reuses latest values if not changed.
+        Requires that patron already be setup with scheme host port
+
+        request = odict([('method', method),
+                         ('path', path),
+                         ('qargs', odict([("auth", self.token.value)])),
+                         ('headers', odict([('Accept', 'application/json'),
+                                            ('Connection', 'Keep-Alive'),
+                                            ('Keep-Alive', 'timeout=60, max=100'),
+                                            ])),
+                         ('body', body),
+                         ('reply', odict([('rid', rid), ('rdeck', replies)])),
+                         ])
+
+        self.patron.value.requests.append(request)
+        """
+        request = odict()
+        request['method'] = method.upper() if method is not None else self.requester.method
+        request["path"] = path if path is not None else self.requester.path
+        request["qargs"] = qargs if qargs is not None else self.requester.qargs.copy()
+        request["fragment"] = fragment if qargs is not None else self.requester.fragment
+        request["headers"] = lodict(headers) if headers is not None else self.requester.headers.copy()
+        request["body"] = body if body is not None else b''
+        if body is not None:  # body should be bytes
+            if isinstance(body, unicode):
+                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+                body = body.encode('iso-8859-1')
+        else:
+            body = b''
+        request["body"] = body
+        request["data"] = data
+        request["fargs"] = fargs
+        self.requests.append(request)
+
     def transmit(self,
                  method=None,
                  path=None,
@@ -855,9 +905,14 @@ class Patron(object):
                  headers=None,
                  body=None,
                  data=None,
-                 fargs=None):
+                 fargs=None,
+                 **kwa):
         """
         Rebuild and transmit request
+        Assumes that .waited is not True. Do not use bare unless know that there
+        is no current request/reponse in process otherwise it clobbers .requester
+        attributes
+
         If the parameters are all None then use existing
         .requester and .respondent attributes otherwise reinit .requester and
         .respondent if method is not None
@@ -969,17 +1024,18 @@ class Patron(object):
         """
         if not self.waited:
             if self.requests:
-                self.request = request = self.requests.popleft()
+                self.latest = request = self.requests.popleft()
                 # future check host port scheme if need to reconnect on new ha
                 # reconnect here
-                self.transmit(method=request.get('method'),
-                             path=request.get('path'),
-                             qargs=request.get('qargs'),
-                             fragment=request.get('fragment'),
-                             headers=request.get('headers'),
-                             body=request.get('body'),
-                             data=request.get('data'),
-                             fargs=request.get('fargs'))
+                self.transmit(**request)  # expand items in request
+                #self.transmit(method=request.get('method'),
+                              #path=request.get('path'),
+                              #qargs=request.get('qargs'),
+                              #fragment=request.get('fragment'),
+                              #headers=request.get('headers'),
+                              #body=request.get('body'),
+                              #data=request.get('data'),
+                              #fargs=request.get('fargs'))
 
     def serviceResponse(self):
         """
@@ -998,8 +1054,8 @@ class Patron(object):
                 self.respondent.dictify()
 
                 if not self.respondent.evented:
-                    if self.request:  # use saved request attribute
-                        request = copy.copy(self.request)
+                    if self.latest:  # use saved request attribute
+                        request = copy.copy(self.latest)
                         request.update([
                                         ('host', self.requester.hostname),
                                         ('port', self.requester.port),
@@ -1013,7 +1069,7 @@ class Patron(object):
                                         ('data', self.requester.data),
                                         ('fargs', copy.copy(self.requester.fargs)),
                                        ])
-                        self.request = None
+                        self.latest = None
                     else:
                         request = odict([
                                          ('host', self.requester.hostname),

@@ -2066,7 +2066,7 @@ class BasicTestCase(unittest.TestCase):
                              #])
         #beta.requests.append(request)
 
-        beta.transmit(method=u'GET',
+        beta.request(method=u'GET',
                       path=u'/echo?name=fame',
                       headers=odict([('Accept', 'application/json')]))
 
