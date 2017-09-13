@@ -16,6 +16,9 @@ Improved stability of Patron parsing responses from slow servers
 Some refactoring of Patron and Valet
 Fixed windows bug in serialing
 change Share so .update or .create when passed in another Share works
+Fixed issue with using transmit with Patron if waiting on request/response.
+Refactored to have new .request method that uses existing parameters to generate
+new request and append  to .requests this then honors .waiting flag
 
 --------
 20170830
