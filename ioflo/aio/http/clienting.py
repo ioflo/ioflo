@@ -858,7 +858,8 @@ class Patron(object):
                 body=None,
                 data=None,
                 fargs=None,
-                reply=None):
+                reply=None,
+                **kwa):
         """
         Create and append request odict onto .requests with updated values from
         parameters. Use existing .requester values if not provided except for
@@ -895,6 +896,12 @@ class Patron(object):
         request["body"] = body
         request["data"] = data
         request["fargs"] = fargs
+        # not sent but supports associating requests with responses
+        if reply is not None:
+            request["reply"] = reply
+        for k, v in kwa.items():  # extra stuff not sent
+            if v is not None:
+                request[k] = v
         self.requests.append(request)
 
     def transmit(self,
