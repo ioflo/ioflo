@@ -782,15 +782,15 @@ class Valet(object):
         """
         Service pending responders
         """
-        for ca, respondent in self.reps.items():
-            if respondent.closed:
+        for ca, responder in self.reps.items():
+            if responder.closed:
                 self.closeConnection(ca)
                 continue
 
-            if not respondent.ended:
-                respondent.service()
+            if not responder.ended:
+                responder.service()
 
-            if respondent.ended:
+            if responder.ended:
                 requestant = self.reqs[ca]
                 if requestant.persisted:
                     if requestant.parser is None:  # reuse
