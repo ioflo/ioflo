@@ -8,6 +8,16 @@ CHANGE LOG
 
 1.7.5
 
+Some refactoring
+The ioflo project will have two version branches. The version 1.X.X  branch
+will maintain  compatibility with Python 2.7.X and Python 3.5.  But this will be mainly
+maintenance and backport of some new features
+
+New development and features will by in large be done in the 2.X.X version branch
+which will require Python 3.6.X and will follow updates to Python without
+maintaining backwards compatibility to old versions of Python. There are too
+many innovative features in Python 3.6 that Ioflo wants to exploit.
+
 
 --------
 20170913
