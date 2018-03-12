@@ -3,12 +3,22 @@ CHANGE LOG
 -------------------
 
 --------
-201709XX  Not yet released
+20170913
 --------
 
-1.7.3
+1.7.4
 
-
+Use unquote_plus for query args
+Fixed bug in Valet erroneously unquoting query_string for environ
+Added python3.6 condition to exclude test from python2
+Patron.response now returns namedtuple to make it more convenient to access fields
+Improved stability of Patron parsing responses from slow servers
+Some refactoring of Patron and Valet
+Fixed windows bug in serialing
+change Share so .update or .create when passed in another Share works
+Fixed issue with using transmit with Patron if waiting on request/response.
+Refactored to add Patron.request method that uses existing parameters to generate
+   a new request and append  to .requests. This honors .waiting flag
 
 --------
 20170830

@@ -32,7 +32,7 @@ except ImportError:
 # Import ioflo libs
 from ioflo.aid.sixing import *
 from ioflo.aid.timing import Timer, StoreTimer
-from ioflo.aid.odicting import odict
+from ioflo.aid.odicting import odict, lodict
 from ioflo.aid.consoling import getConsole
 from ioflo.base import storing
 
@@ -1847,40 +1847,72 @@ class BasicTestCase(unittest.TestCase):
 
         self.assertEqual(len(beta.responses), 1)
         #response = beta.responses.popleft()
+        #self.assertEqual(response, {'version': (1, 1),
+                                    #'status': 200,
+                                    #'reason': 'OK',
+                                    #'headers':
+                                        #{'content-length': '122',
+                                        #'content-type': 'application/json',
+                                        #'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
+                                        #'server': 'IoBook.local'},
+                                    #'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
+                                                    #b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
+                                                    #b'on": null}'),
+                                    #'data': {'action': None,
+                                             #'content': None,
+                                             #'query': {'name': 'fame'},
+                                             #'url': 'http://127.0.0.1:8080/echo?name=fame',
+                                             #'verb': 'GET'},
+                                    #'error': None,
+                                    #'errored': False,
+                                    #'request':
+                                        #{'host': '127.0.0.1',
+                                         #'port': 6101,
+                                         #'scheme': 'http',
+                                         #'method': 'GET',
+                                         #'path': '/echo',
+                                         #'qargs': {'name': 'fame'},
+                                         #'fragment': '',
+                                         #'headers':
+                                             #{'accept': 'application/json'},
+                                         #'body': b'',
+                                         #'data': None,
+                                         #'fargs': None,
+                                        #}
+                                    #})
+
         response = beta.respond()
-        self.assertEqual(response, {'version': (1, 1),
-                                    'status': 200,
-                                    'reason': 'OK',
-                                    'headers':
-                                        {'content-length': '122',
-                                        'content-type': 'application/json',
-                                        'date': 'Thu, 30 Apr 2015 19:37:17 GMT',
-                                        'server': 'IoBook.local'},
-                                    'body': bytearray(b'{"content": null, "query": {"name": "fame"}, "verb": "GE'
-                                                    b'T", "url": "http://127.0.0.1:8080/echo?name=fame", "acti'
-                                                    b'on": null}'),
-                                    'data': {'action': None,
-                                             'content': None,
-                                             'query': {'name': 'fame'},
-                                             'url': 'http://127.0.0.1:8080/echo?name=fame',
-                                             'verb': 'GET'},
-                                    'error': None,
-                                    'errored': False,
-                                    'request':
-                                        {'host': '127.0.0.1',
-                                         'port': 6101,
-                                         'scheme': 'http',
-                                         'method': 'GET',
-                                         'path': '/echo',
-                                         'qargs': {'name': 'fame'},
-                                         'fragment': '',
-                                         'headers':
-                                             {'accept': 'application/json'},
-                                         'body': b'',
-                                         'data': None,
-                                         'fargs': None,
-                                        }
-                                    })
+        self.assertEqual(response, clienting.Response(
+            version=(1, 1),
+            status=200,
+            reason='OK',
+            headers=lodict([('content-length', '122'),
+                            ('content-type', 'application/json'),
+                            ('date', 'Thu, 30 Apr 2015 19:37:17 GMT'),
+                            ('server', 'IoBook.local')]),
+            body=bytearray(b'{"content": null, '
+                           b'"query": {"name": "fame"}, '
+                           b'"verb": "GET", '
+                           b'"url": "http://127.0.0.1:8080/echo?name=fame", '
+                           b'"action": null}'),
+            data=odict([('content', None),
+                        ('query', odict([('name', 'fame')])),
+                        ('verb', 'GET'),
+                        ('url', 'http://127.0.0.1:8080/echo?name=fame'),
+                        ('action', None)]),
+            request=odict([('method', 'GET'),
+                        ('path', '/echo'),
+                        ('qargs', odict([('name', 'fame')])),
+                        ('fragment', ''),
+                        ('headers', lodict([('accept', 'application/json')])),
+                        ('body', b''),
+                        ('host', '127.0.0.1'),
+                        ('port', 6101),
+                        ('scheme', 'http'),
+                        ('data', None),
+                        ('fargs', None)]),
+            errored=False,
+            error=None))
 
         beta.requests.append(request)
 
@@ -2034,7 +2066,7 @@ class BasicTestCase(unittest.TestCase):
                              #])
         #beta.requests.append(request)
 
-        beta.transmit(method=u'GET',
+        beta.request(method=u'GET',
                       path=u'/echo?name=fame',
                       headers=odict([('Accept', 'application/json')]))
 

@@ -775,7 +775,8 @@ class Share(object):
            Create if not already exist.
         """
         for a in pa:
-            if isinstance(a, dict): #positional arg is dictionary
+            if (isinstance(a, dict) or
+                    (hasattr(a, "get") and hasattr(a, "items"))): #positional arg is dictionary
                 for k, v in a.items():
                     setattr(self._data, k, v)
             else: #positional arg is sequence of duples (k,v)
@@ -803,7 +804,8 @@ class Share(object):
         """
         update = False  #do we need to update stamp
         for a in pa:
-            if isinstance(a, dict): #positional arg is dictionary
+            if (isinstance(a, dict) or
+                    (hasattr(a, "get") and hasattr(a, "items"))): #positional arg is dictionary
                 for k, v in a.items():
                     if not hasattr(self._data, k):
                         setattr(self._data, k, v)

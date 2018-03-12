@@ -314,7 +314,7 @@ class SerialNb(object):
                                     baudrate=self.speed,
                                     timeout=0,
                                     writeTimeout=0)
-        self.serial.nonblocking()
+        #self.serial.nonblocking()
         self.serial.reset_input_buffer()
         self.opened = True
 
@@ -330,7 +330,7 @@ class SerialNb(object):
         Closes .serial
         """
         if self.serial:
-            self.serial.reset_output_buffer()            
+            self.serial.reset_output_buffer()
             self.serial.close()
             self.serial = None
             self.opened = False

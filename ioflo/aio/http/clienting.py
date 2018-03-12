@@ -13,13 +13,14 @@ import os
 import socket
 import errno
 import io
-from collections import deque
+from collections import deque, namedtuple
 import codecs
 import json
 import ssl
 import copy
 import random
 import datetime
+import time
 
 if sys.version > '3':
     from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
@@ -36,7 +37,7 @@ from email.parser import HeaderParser
 
 # Import ioflo libs
 from ...aid.sixing import *
-from ...aid import aiding
+from ...aid import aiding, timing
 from ...aid.odicting import odict, lodict, modict
 from ...aid.consoling import getConsole
 from ...base import excepting, storing
@@ -50,6 +51,9 @@ console = getConsole()
 CRLF = b"\r\n"
 LF = b"\n"
 CR = b"\r"
+
+Response = namedtuple('Response', 'version status reason headers body data request errored error')
+
 
 #  Class Definitions
 
@@ -316,7 +320,8 @@ class Respondent(httping.Parsent):
         """
         super(Respondent, self).__init__(**kwa)
 
-        self.status = None  # Status-Code from status line
+        self.status = None  # Status-Code from status line (consider making this code reason)
+        self.code = None  # Status-Code from status line
         self.reason = None  # Reason-Phrase from status line
 
         self.redirectant = None  # Boolean True if received redirect status, need to redirect
@@ -341,11 +346,15 @@ class Respondent(httping.Parsent):
         super(Respondent, self).reinit(**kwa)
         if redirectable is not None:
             self.redirectable = True if redirectable else False
+        self.status = None
+        self.code = None
+        self.reason = None
+        self.evented = None
 
     def close(self):
         """
-        Assign True to .closed
-        Close event source
+        Call super to assign True to .closed
+        Also close event source
         """
         super(Respondent, self).close()
         if self.eventSource:  # assign True to .eventSource.closed
@@ -407,7 +416,7 @@ class Respondent(httping.Parsent):
         # create generator
         lineParser = httping.parseLine(raw=self.msg, eols=(CRLF, LF), kind="status line")
         while True:  # parse until we get a non-100 status
-            if self.closed:  # connection closed prematurely
+            if self.closed and not self.msg:  # connection closed prematurely
                 raise httping.PrematureClosure("Connection closed unexpectedly"
                                                " while parsing response start line")
 
@@ -425,9 +434,9 @@ class Respondent(httping.Parsent):
                                             eols=(CRLF, LF),
                                             kind="continue header line")
             while True:
-                if self.closed:  # connection closed prematurely
-                    raise httping.PrematureClosure("Connection closed "
-                            "unexpectedly while parsing response header")
+                if self.closed and not self.msg:  # connection closed prematurely
+                    raise httping.PrematureClosure("Connection closed unexpectedly"
+                            " while parsing response header")
                 headers = next(leaderParser)
                 if headers is not None:
                     leaderParser.close()
@@ -448,7 +457,7 @@ class Respondent(httping.Parsent):
                                    eols=(CRLF, LF),
                                    kind="leader header line")
         while True:
-            if self.closed:  # connection closed prematurely
+            if self.closed and not self.msg:  # connection closed prematurely
                 raise httping.PrematureClosure("Connection closed unexpectedly"
                                                " while parsing response header")
             headers = next(leaderParser)
@@ -535,7 +544,7 @@ class Respondent(httping.Parsent):
             while True:  # parse all chunks here
                 chunkParser = httping.parseChunk(raw=self.msg)
                 while True:  # parse another chunk
-                    if self.closed:  # connection closed prematurely
+                    if self.closed and not self.msg:  # connection closed prematurely
                         raise httping.PrematureClosure("Connection closed "
                                 "unexpectedly while parsing response body chunk")
                     result = next(chunkParser)
@@ -560,7 +569,7 @@ class Respondent(httping.Parsent):
                                 self.leid != self.eventSource.leid):
                             self.leid = self.eventSource.leid
 
-                    if self.closed:  # no more data so finish
+                    if self.closed and not self.msg:  # no more data so finish
                         chunkParser.close()
                         break
 
@@ -572,7 +581,7 @@ class Respondent(httping.Parsent):
 
         elif self.length != None:  # known content length
             while len(self.msg) < self.length:
-                if self.closed:  # connection closed prematurely
+                if self.closed and not self.msg:  # connection closed prematurely
                     raise httping.PrematureClosure("Connection closed unexpectedly"
                                                    " while parsing response body")
                 (yield None)
@@ -595,7 +604,7 @@ class Respondent(httping.Parsent):
                             self.leid != self.eventSource.leid):
                         self.leid = self.eventSource.leid
 
-                if self.closed:  # no more data so finish
+                if self.closed and not self.msg:  # no more data so finish
                     break
 
                 (yield None)
@@ -613,10 +622,10 @@ class Patron(object):
     Patron class nonblocking HTTP client connection manager
     """
     def __init__(self,
+                 store=None,
                  connector=None,
                  requester=None,
                  respondent=None,
-                 store=None,
                  name='',
                  uid=0,
                  bufsize=8096,
@@ -632,48 +641,56 @@ class Patron(object):
                  body=b'',
                  data=None,
                  fargs=None,
+                 requests=None,
                  msg=None,
                  dictable=None,
                  events=None,
-                 requests=None,
-                 responses=None,
                  redirectable=True,
                  redirects=None,
+                 responses=None,
                  **kwa):
         """
         Initialization method for instance.
-        kwa needed to pass other init parameters to connector
+        Parameters:
+            store is reference to data store instance
+            connector is instance of tcp.Client or tcp.ClientTls or None
+            requester is instance of Requester or None
+            respondent is instance of Respondent or None
 
-        connector = instance of Outgoer or OutgoerTls or None
-        requester = instance of Requester or None
-        respondent = instance of Respondent or None
+            name is user friendly name for connector (connection)
+            uid is unique identifier for connector (connection)
+            bufsize is buffer size for connector
+            wlog is opened WireLog instance if any for connector
+            hostname is host address or hostname of remote server for connector
+                connector.hostname is used for requester
+            port = socket port of remote server for connector
+                connector.port is used for requester
+            kwa are passed as other init parameters to connector
 
-        if either of requester, respondent instances are not provided (None)
-        some or all of these parameters will be used for initialization
+            scheme is http scheme for requester
+            method is http request method verb for requester and respondent
+            path is http url path section for requester
+                   path may include scheme and netloc which takes priority
+            headers is dict of http headers if any for requester
+            qargs is dict of http query args if any for requester
+            fragment is http fragment if any for requester
+            body is byte or bytearray of request body for requester
+            data is dict of request body json if any for requester
+            fargs is dict of request body form args if any for requester
+            requests is deque of requests if any to be processed by requester
+                each request is dict
 
-        name = user friendly name for connection
-        uid = unique identifier for connection
-        bufsize = buffer size
-        wlog = WireLog instance if any
-        host = host address or hostname of remote server
-        port = socket port of remote server
-        scheme = http scheme
-        method = http request method verb unicode
-        path = http url path section in unicode
-               path may include scheme and netloc which takes priority
-        qargs = dict of http query args
-        fragment = http fragment
-        headers = dict of http headers
-        body = byte or binary array of request body bytes or bytearray
-        data = dict of request body json if any
-        fargs = dict of request body form args if any
-        msg = bytearray of response msg to parse
-        dictable = Boolean flag If True attempt to convert body from json
-        events = deque of events if any
-        requests = deque of requests if any each request is dict
-        responses = deque of responses if any each response is dict
-        redirectable = Boolean is allow redirects
-        redirects = list of redirects if any each redirect is dict
+            msg is bytearray of response msg to parse by respondent
+            dictable is Boolean flag for respondent
+                If True attempt to convert body from json
+            events is reference to deque of events if any processed by respondent
+            redirectable is Boolean to allow redirects to be processed by respondent
+            redirects is list of redirects if any processed by respondent
+                each redirect is dict
+            responses is deque of responses if any processed by respondent
+                 each response is dict
+
+
         """
         # .requests is deque of dicts of request data
         self.requests = requests if requests is not None else deque()
@@ -684,7 +701,7 @@ class Patron(object):
         # .events is deque of dicts of response server sent event data
         self.events = events if events is not None else deque()
         self.waited = False  # Boolean True If sent request but waiting for response
-        self.request = None  # current request odict from .requests in process if any
+        self.latest = None  # latest request odict from .requests in process if any
         self.store = store or storing.Store(stamp=0.0)
 
         # see if path also includes scheme, netloc, host, port, query, fragment
@@ -728,6 +745,8 @@ class Patron(object):
             if connector.ha != ha:
                 ValueError("Provided ha '{0}' incompatible with connector".format(hostname))
             # at some point may want to support changing the hostname and ha of provided connector
+            if name:
+                connector.name = name
         else:
             if secured:
                 connector = ClientTls(store=self.store,
@@ -813,14 +832,77 @@ class Patron(object):
         """
         self.connector.close()
 
+    @staticmethod
+    def attrify(response):
+        """
+        Convert response dict into named tuple Response so can access fields
+        as attributes
+        """
+        return Response(**{k:response[k] for k in Response._fields})
+
     def respond(self):
         """
         Pops and returns next response from .responses if any
         Otherwise returns None
         """
         if self.responses:
-            return self.responses.popleft()
+            return self.attrify(self.responses.popleft())
         return None
+
+    def request(self,
+                method=None,
+                path=None,
+                qargs=None,
+                fragment=None,
+                headers=None,
+                body=None,
+                data=None,
+                fargs=None,
+                reply=None,
+                **kwa):
+        """
+        Create and append request odict onto .requests with updated values from
+        parameters. Use existing .requester values if not provided except for
+        body. Body/Data/fargs must be newly provided.
+        This is a differential request that reuses latest values if not changed.
+        Requires that patron already be setup with scheme host port
+
+        request = odict([('method', method),
+                         ('path', path),
+                         ('qargs', odict([("auth", self.token.value)])),
+                         ('headers', odict([('Accept', 'application/json'),
+                                            ('Connection', 'Keep-Alive'),
+                                            ('Keep-Alive', 'timeout=60, max=100'),
+                                            ])),
+                         ('body', body),
+                         ('reply', odict([('rid', rid), ('rdeck', replies)])),
+                         ])
+
+        self.patron.value.requests.append(request)
+        """
+        request = odict()
+        request['method'] = method.upper() if method is not None else self.requester.method
+        request["path"] = path if path is not None else self.requester.path
+        request["qargs"] = qargs if qargs is not None else self.requester.qargs.copy()
+        request["fragment"] = fragment if qargs is not None else self.requester.fragment
+        request["headers"] = lodict(headers) if headers is not None else self.requester.headers.copy()
+        request["body"] = body if body is not None else b''
+        if body is not None:  # body should be bytes
+            if isinstance(body, unicode):
+                # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
+                body = body.encode('iso-8859-1')
+        else:
+            body = b''
+        request["body"] = body
+        request["data"] = data
+        request["fargs"] = fargs
+        # not sent but supports associating requests with responses
+        if reply is not None:
+            request["reply"] = reply
+        for k, v in kwa.items():  # extra stuff not sent
+            if v is not None:
+                request[k] = v
+        self.requests.append(request)
 
     def transmit(self,
                  method=None,
@@ -830,9 +912,14 @@ class Patron(object):
                  headers=None,
                  body=None,
                  data=None,
-                 fargs=None):
+                 fargs=None,
+                 **kwa):
         """
         Rebuild and transmit request
+        Assumes that .waited is not True. Do not use bare unless know that there
+        is no current request/reponse in process otherwise it clobbers .requester
+        attributes
+
         If the parameters are all None then use existing
         .requester and .respondent attributes otherwise reinit .requester and
         .respondent if method is not None
@@ -862,6 +949,8 @@ class Patron(object):
 
         if method is not None:
             self.respondent.reinit(method=self.requester.method)
+        else:
+            self.respondent.reinit()  # reset code status reason
 
     def redirect(self):
         """
@@ -942,17 +1031,18 @@ class Patron(object):
         """
         if not self.waited:
             if self.requests:
-                self.request = request = self.requests.popleft()
+                self.latest = request = self.requests.popleft()
                 # future check host port scheme if need to reconnect on new ha
                 # reconnect here
-                self.transmit(method=request.get('method'),
-                             path=request.get('path'),
-                             qargs=request.get('qargs'),
-                             fragment=request.get('fragment'),
-                             headers=request.get('headers'),
-                             body=request.get('body'),
-                             data=request.get('data'),
-                             fargs=request.get('fargs'))
+                self.transmit(**request)  # expand items in request
+                #self.transmit(method=request.get('method'),
+                              #path=request.get('path'),
+                              #qargs=request.get('qargs'),
+                              #fragment=request.get('fragment'),
+                              #headers=request.get('headers'),
+                              #body=request.get('body'),
+                              #data=request.get('data'),
+                              #fargs=request.get('fargs'))
 
     def serviceResponse(self):
         """
@@ -971,8 +1061,8 @@ class Patron(object):
                 self.respondent.dictify()
 
                 if not self.respondent.evented:
-                    if self.request:  # use saved request attribute
-                        request = copy.copy(self.request)
+                    if self.latest:  # use saved request attribute
+                        request = copy.copy(self.latest)
                         request.update([
                                         ('host', self.requester.hostname),
                                         ('port', self.requester.port),
@@ -986,7 +1076,7 @@ class Patron(object):
                                         ('data', self.requester.data),
                                         ('fargs', copy.copy(self.requester.fargs)),
                                        ])
-                        self.request = None
+                        self.latest = None
                     else:
                         request = odict([
                                          ('host', self.requester.hostname),
@@ -1030,7 +1120,7 @@ class Patron(object):
             if self.respondent:
                 self.respondent.close()  # close any pending or current response parsing
 
-            if self.connector.reconnectable:
+            if self.connector.reconnectable:  # useful for server sent event stream
                 if self.connector.timeout > 0.0 and self.connector.timer.expired:  # timed out
                     self.connector.reopen()
                     if self.respondent.evented:
@@ -1052,4 +1142,50 @@ class Patron(object):
         self.connector.serviceTxes()
         self.serviceResponse()
 
+    def serviceWhile(self, timeout=0.5):
+        """
+        Returns response namedtuple or None if timeout
+        ServiceAll while pending requests or not a response or not timeout
+        This call blocks until done
+        """
+        timer = timing.StoreTimer(store=self.store, duration=timeout)
+        while ((self.requests or self.connector.txes or not self.responses)
+               and not timer.expired):
+            try:
+                self.serviceAll()
+            except Exception as ex:
+                console.terse("Error: Servicing Patron '{0}'."
+                              " '{1}'\n".format(self.connector.name, ex))
+                raise ex
+            time.sleep(0.125)
+            self.store.advanceStamp(0.125)
+        return self.respond()
 
+    if sys.version_info >= (3, 6):
+        def serviceWhileGen(self, timeout=0.5):
+            """
+            Generator Method.
+            ServiceAll while pending requests or not a response or not timeout
+
+            Usage:
+            response = yield from .serviceWhileGen(timeout=0.5)
+
+            Runs one iteration of serviceAll on next and yields empty
+            bytes while not done.
+
+            Assumes store timer is advanced and realtime sleep delay
+            is incurred elsewhere.
+
+            Returns response as namedtuple or None if timeout.
+            """
+            timer = timing.StoreTimer(store=self.store, duration=timeout)
+            while ((self.requests or self.connector.txes or not self.responses)
+                   and not timer.expired):
+                try:
+                    self.serviceAll()
+                except Exception as ex:
+                    console.terse("Error: Servicing Patron '{0}'."
+                                  " '{1}'\n".format(self.connector.name, ex))
+                    raise ex
+                yield b''  # this is eventually yielded by wsgi app while waiting
+            return self.respond()

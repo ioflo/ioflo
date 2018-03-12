@@ -377,7 +377,7 @@ def updateQargsQuery(qargs=None, query=u'',):
             if queryPart:
                 if '=' in queryPart:
                     key, val = queryPart.split('=', 1)
-                    val = unquote(val)
+                    val = unquote_plus(val)
                 else:
                     key = queryPart
                     val = u'true'
@@ -908,6 +908,7 @@ class Parsent(object):
         self.jsoned = None    # is content application/json
         self.encoding = 'ISO-8859-1'  # encoding charset if provided else default
         self.persisted = None   # persist connection until client closes
+        self.started = None  # True first time parse called and .msg is not empty
         self.headed = None    # head completely parsed
         self.bodied =  None   # body completely parsed
         self.ended = None     # response from server has ended no more remaining
@@ -994,6 +995,13 @@ class Parsent(object):
         self.closed = False
         self.errored = False
         self.error = None
+
+        while not self.started:
+            if self.msg:
+                self.started = True
+                break
+            (yield None)
+
         try:
             headParser = self.parseHead()
             while True:
@@ -1015,6 +1023,7 @@ class Parsent(object):
             self.error = str(ex)
 
         self.ended = True
+        self.started = False
         (yield True)
         return
 
