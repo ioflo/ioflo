@@ -141,6 +141,19 @@ def blendCosine(d=0.0, a=0.166666667, b=0.0, h=1.0):
         return 0.0
 
 
+def blendSinc(d, u=1.0):
+    """
+       blending function sinc
+       d = delta x = x - center
+       u = uncertainty radius of xabs estimate error
+
+       returns blend
+    """
+    u = float(u)
+
+    return math.sin(d/u) / (d/u)
+
+
 def compensatoryAnd(m, g=0.5):
     """
        anding function
@@ -158,16 +171,3 @@ def compensatoryAnd(m, g=0.5):
         product2 *= (1 - mem)
 
     return math.pow(product1, 1 - g) * math.pow((1 - product2), g)
-
-
-def sinc(d, u=1.0):
-    """
-       blending function sinc
-       d = delta x = x - center
-       u = uncertainty radius of xabs estimate error
-
-       returns blend
-    """
-    u = float(u)
-
-    return math.sin(d/u) / (d/u)
