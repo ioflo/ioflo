@@ -117,6 +117,9 @@ def blendCauchian(d=0.0, a=1.0, b=0.0, c=2.0, h=1.0):
     c = float(c)
     h = float(h)
 
+    if a == 0:
+        raise ValueError("Param a must be a non zero value.")
+
     return h / (1 + math.pow(abs((d-b)/a), 2*c))
 
 
