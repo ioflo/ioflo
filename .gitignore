@@ -17,4 +17,5 @@ ioflo.eggs/
 .eggs/
 .hgignore
 .hgtags
+.idea/
 
