@@ -98,3 +98,62 @@ def blend3(d = 0.0, u = 1.0, s = 0.05):
     return b
 
 Blend3 = blend3
+
+
+def blendSpike(d=0.0, u=0.0, s=1.0):
+    """
+        blending function spike
+        d - Delta x = xabs - xdr
+        u - Horizontal offset
+        s - Tuning scale factor
+
+        returns blend
+    """
+
+    d = float(d)
+    u = float(u)
+    s = float(s)
+
+    b = math.e**(-(abs(s * (d - u))))
+
+    return b
+
+BlendSpike = blendSpike
+
+def blendSigmoidInc(d=0.0, u=0.0, s=1.0):
+    """
+        blending function increasing sigmoid
+        d - Delta x = xabs - xdr
+        u - Horizontal offset
+        s - Tuning scale factor
+
+        returns blend
+    """
+    d = float(d)
+    u = float(u)
+    s = float(s)
+
+    b = 1.0/(1+math.e**(s*(u-d)))
+
+    return b
+
+BlendSigmoidInc = blendSigmoidInc
+
+def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
+    """
+        blending function decreasing sigmoid
+        d - Delta x = xabs - xdr
+        u - Horizontal offset
+        s - Tuning scale factor
+
+        returns blend
+    """
+    d = float(d)
+    u = float(u)
+    s = float(s)
+
+    b = 1.0 - (1.0 / (1 + math.e ** (s * (u - d))))
+
+    return b
+
+BlendSigmoidDec = blendSigmoidDec
