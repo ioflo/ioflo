@@ -100,6 +100,82 @@ def blend3(d = 0.0, u = 1.0, s = 0.05):
 Blend3 = blend3
 
 
+
+def blendCauchian(d=0.0, a=1.0, b=0.0, c=2.0, h=1.0):
+    """
+       blending function polynomial
+       d = x value
+       a = area under curve/uncertainty radius
+       b = horizontal shift
+       c = curvature of function/tuning scale factor
+       h = height of the set
+
+       returns blend
+    """
+    d = float(d)
+    a = float(a)
+    b = float(b)
+    c = float(c)
+    h = float(h)
+
+    if a == 0:
+        raise ValueError("Param a must be a non zero value.")
+
+    return h / (1 + math.pow(abs((d-b)/a), 2*c))
+
+
+def blendCosine(d=0.0, a=0.166666667, b=0.0, h=1.0):
+    """
+       blending function polynomial
+       d = x value
+       a = area under curve/uncertainty radius
+       b = horizontal shift
+       h = height of the set
+
+       returns blend
+    """
+    d = float(d)
+    a = float(a)
+    b = float(b)
+    h = float(h)
+
+    if b - 1.0/a <= d <= b + 1.0/a:
+        return 0.5 * h * (1 + math.cos(a * math.pi * (d - b)))
+    else:
+        return 0.0
+
+
+def blendSinc(d, u=1.0):
+    """
+       blending function sinc
+       d = delta x = x - center
+       u = uncertainty radius of xabs estimate error
+
+       returns blend
+    """
+    u = float(u)
+
+    return math.sin(d/u) / (d/u)
+
+
+def compensatoryAnd(m, g=0.5):
+    """
+       anding function
+       m = list of membership values for x derived from n membership functions
+       g = gamma value 0=product 1=algebraic sum
+
+       returns compensatory AND value of x
+    """
+    g = float(g)
+
+    product1 = 1
+    product2 = 1
+    for mem in m:
+        product1 *= mem
+        product2 *= (1 - mem)
+
+    return math.pow(product1, 1 - g) * math.pow((1 - product2), g)
+
 def blendSpike(d=0.0, u=0.0, s=1.0):
     """
         blending function spike
@@ -157,3 +233,4 @@ def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
     return b
 
 BlendSigmoidDec = blendSigmoidDec
+
