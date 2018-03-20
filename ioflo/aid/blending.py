@@ -100,6 +100,39 @@ def blend3(d = 0.0, u = 1.0, s = 0.05):
 Blend3 = blend3
 
 
+def blendConcaveInc(d = 0.0, u = 1.0, s = 1.0, h = 1.0):
+    d = float(d)
+    u = float(u)
+    s = float(s)
+    
+    m = (2 * s - u - d) 
+    if m == 0:
+        return h
+    
+    if d >= s:
+        return h
+    else:
+        b = h * (s - u) / (2 * s - u - d)    
+    
+    return b
+
+def blendConcaveDec(d = 0.0, u = 2.0, s = 1.0, h = 1.0):
+    d = float(d) 
+    u = float(u)
+    s = float(s)
+    
+    m = (u - 2 * s + d) 
+    if m == 0:
+        return h
+    
+    if d <= s:
+        return h
+    else:
+        b = (h * (u - s)) / (u - 2 * s + d)    
+    
+    return b
+=======
+
 
 def blendCauchian(d=0.0, a=1.0, b=0.0, c=2.0, h=1.0):
     """
@@ -233,4 +266,5 @@ def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
     return b
 
 BlendSigmoidDec = blendSigmoidDec
+
 
