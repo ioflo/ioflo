@@ -66,8 +66,6 @@ def testBlendSinc():
     for d in D:
         results.append((round(d, 3), round(blendSinc(d), 3)))
 
-    print(results)
-
     # Test u=1.0
     assert results == [(-3.1, 0.013),
                        (-2.6, 0.198),
