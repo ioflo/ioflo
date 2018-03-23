@@ -25,6 +25,16 @@ def fuzzyOr(m):
 FuzzyOr = fuzzyOr
 
 
+def fuzzyNot(x):
+    """
+    fuzzy not
+    x = single membership value to be noted
+
+    returns the inverse membership value
+    """
+    return 1 - x
+
+
 def compensatoryAnd(m, g=0.5):
     """
        anding function

@@ -13,6 +13,12 @@ def testFuzzyOr():
     assert fuzzyOr([-10, 5]) == 5
 
 
+def testFuzzyNot():
+    assert round(fuzzyNot(0.98), 3) == 0.02
+    assert round(fuzzyNot(0.5), 3) == 0.5
+    assert round(fuzzyNot(0.02), 3) == 0.98
+
+
 def testCompensatoryAnd():
     # test algebraic product
     assert compensatoryAnd([0.1, 0.02], 0) == 0.002
