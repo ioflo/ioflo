@@ -103,7 +103,18 @@ def blend3(d=0.0, u=1.0, s=0.05):
 Blend3 = blend3
 
 
+
 def blendConcaveInc(d=0.0, u=1.0, s=1.0, h=1.0):
+    """
+       blending function increasing concave
+       d = delta x = xabs - xdr
+       u = uncertainty radius of xabs estimate error
+       s = tuning scale factor
+
+       eq 3.12
+
+       returns blend
+    """
     d = float(d)
     u = float(u)
     s = float(s)
@@ -115,7 +126,7 @@ def blendConcaveInc(d=0.0, u=1.0, s=1.0, h=1.0):
     if d >= s:
         return h
     else:
-        b = h * (s - u) / (2 * s - u - d)    
+        b = h * (s - u) / m    
     
     return b
 
@@ -123,6 +134,16 @@ BlendConcaveInc = blendConcaveInc
 
 
 def blendConcaveDec(d=0.0, u=2.0, s=1.0, h=1.0):
+    """
+       blending function decreasing concave
+       d = delta x = xabs - xdr
+       u = uncertainty radius of xabs estimate error
+       s = tuning scale factor
+
+       eq 3.13
+
+       returns blend
+    """
     d = float(d) 
     u = float(u)
     s = float(s)
@@ -134,12 +155,49 @@ def blendConcaveDec(d=0.0, u=2.0, s=1.0, h=1.0):
     if d <= s:
         return h
     else:
-        b = (h * (u - s)) / (u - 2 * s + d)    
+        b = (h * (u - s)) / m   
     
     return b
 
 BlendConcaveDec = blendConcaveDec
 
+def blendConcaveCombined(d=0.0, u1=0.5, u2=2.0, s1=1.0, s2=1.5, h=1.0):
+    """
+        blending function combined concave
+
+        Combines the increasing and decreasing concave
+        functions into one function.
+        Proceeds from the increasing function, changes
+        to the decreasing function when d > s2
+
+        u1 for the increasing portion of the function
+        u2 for decreasing
+        s1 for increasing, s2 for decreasing
+
+       returns blend
+    """
+    d = float(d)
+    u1 = float(u1)
+    u2 = float(u2)    
+    s1 = float(s1)
+    s2 = float(s2)
+    
+    m = (2 * s1 - u1 - d) 
+    n = (u2 - 2 * s2 + d) 
+    #print(m, n)
+    if m == 0:
+        return h
+    elif n == 0: 
+        return h
+    
+    if d >= s1 and d <= s2:
+        return h
+    elif d < s1:
+        b = h * (s1 - u1) / m   
+    elif d > s2:
+        b = (h * (u2 - s2)) / n
+    
+    return b
 
 def blendCauchian(d=0.0, a=1.0, b=0.0, c=2.0, h=1.0):
     """
