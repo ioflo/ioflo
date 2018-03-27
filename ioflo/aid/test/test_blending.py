@@ -354,7 +354,7 @@ class BasicTestCase(unittest.TestCase):
         out = []
         for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
-            b = blendTriangular(d, 0)  
+            b = blending.blendTriangular(d, 0)  
             out.append((round(d, 3), round(b, 3)))
 
         self.assertEqual(out, [(-1.1, 0.0), 
