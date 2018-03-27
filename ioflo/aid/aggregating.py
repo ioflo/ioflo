@@ -121,6 +121,8 @@ Owa = owa
 def owg(w, wm):
     """
        Ordered Weighted Geometric Averaging Operator
+       More info can be found here:
+        ftp://decsai.ugr.es/pub/arai/tech_rep/decision/libroOWG.pdf
        w = [1,0,0,0] = AND
        w = [0,0,0,1] = OR
        w = [1/n,1/n,1/n,1/n] = Geometric Average where n=len(w)
