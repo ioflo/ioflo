@@ -333,7 +333,7 @@ def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
 
 BlendSigmoidDec = blendSigmoidDec
 
-def blendTriangular(d, u = 0.1, s = 0.4, c = 0.9):
+def blendTriangular(d, u=0.1, s=0.4, c=0.9):
     """
     Triangular blending funciton, taken from eq. 3.5
     
