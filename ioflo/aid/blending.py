@@ -257,10 +257,15 @@ def blendSinc(d, u=1.0):
     """
     u = float(u)
 
-    if u == 0 or d == 0:
+    if d == 0:
+        return 1
+
+    if u == 0:
         raise ValueError("Params cannot be zero.")
 
-    return math.sin(d/u) / (d/u)
+    mu = math.sin(d/u) / (d/u)
+
+    return mu if mu >= 0 else 0
 
 BlendSinc = blendSinc
 
