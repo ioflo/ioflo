@@ -161,6 +161,7 @@ def blendConcaveDec(d=0.0, u=2.0, s=1.0, h=1.0):
 
 BlendConcaveDec = blendConcaveDec
 
+
 def blendConcaveCombined(d=0.0, u1=0.5, u2=2.0, s1=1.0, s2=1.5, h=1.0):
     """
         blending function combined concave
@@ -198,6 +199,8 @@ def blendConcaveCombined(d=0.0, u1=0.5, u2=2.0, s1=1.0, s2=1.5, h=1.0):
         b = (h * (u2 - s2)) / n
     
     return b
+
+BlendConcaveCombined = blendConcaveCombined
 
 def blendCauchian(d=0.0, a=1.0, b=0.0, c=2.0, h=1.0):
     """
@@ -329,3 +332,37 @@ def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
     return b
 
 BlendSigmoidDec = blendSigmoidDec
+
+def blendTriangular(d, u=0.1, s=0.4, c=0.9):
+    """
+    Triangular blending funciton, taken from eq. 3.5
+    
+    c must be greater than s
+    s must be greater than u
+    u is the beginning point of the triangle
+    c is the endpoint of the triangle
+    s is the peak of the triangle
+    """
+    d = float(d)
+    u = float(u)
+    s = float(s)
+    c = float(c)
+
+    if (s - u) == 0:
+        return 0
+    if (c - s) == 0:
+        return 0
+    
+    if d <= u: 
+        b = 0.0
+    elif d > u and d <= s:
+        b = (d - u)/(s - u)
+    elif d > s and d < c:
+        b = (c - d)/(c - s)
+    else: 
+        b = 0.0
+    return b
+
+BlendTriangular = blendTriangular
+
+
