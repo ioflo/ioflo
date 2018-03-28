@@ -13,7 +13,7 @@ from .consoling import getConsole
 console = getConsole()
 
 
-def blend0(d = 0.0, u = 1.0, s = 1.0):
+def blend0(d=0.0, u=1.0, s=1.0):
     """
        blending function trapezoid
        d = delta x = xabs - xdr
@@ -38,7 +38,8 @@ def blend0(d = 0.0, u = 1.0, s = 1.0):
 
 Blend0 = blend0
 
-def blend1(d = 0.0, u = 1.0, s = 1.0):
+
+def blend1(d=0.0, u=1.0, s=1.0):
     """
        blending function pisig
        d = delta x = xabs - xdr
@@ -61,7 +62,8 @@ def blend1(d = 0.0, u = 1.0, s = 1.0):
 
 Blend1 = blend1
 
-def blend2(d = 0.0, u = 1.0, s = 5.0):
+
+def blend2(d=0.0, u=1.0, s=5.0):
     """
        blending function gaussian
        d = delta x = xabs - xdr
@@ -80,7 +82,8 @@ def blend2(d = 0.0, u = 1.0, s = 5.0):
 
 Blend2 = blend2
 
-def blend3(d = 0.0, u = 1.0, s = 0.05):
+
+def blend3(d=0.0, u=1.0, s=0.05):
     """
        blending function polynomial
        d = delta x = xabs - xdr
@@ -100,7 +103,8 @@ def blend3(d = 0.0, u = 1.0, s = 0.05):
 Blend3 = blend3
 
 
-def blendConcaveInc(d = 0.0, u = 1.0, s = 1.0, h = 1.0):
+
+def blendConcaveInc(d=0.0, u=1.0, s=1.0, h=1.0):
     """
        blending function increasing concave
        d = delta x = xabs - xdr
@@ -128,7 +132,12 @@ def blendConcaveInc(d = 0.0, u = 1.0, s = 1.0, h = 1.0):
 
 BlendConcaveInc = blendConcaveInc
 
+<<<<<<< HEAD
 def blendConcaveDec(d = 0.0, u = 2.0, s = 1.0, h = 1.0):
+=======
+
+def blendConcaveDec(d=0.0, u=2.0, s=1.0, h=1.0):
+>>>>>>> 01b85284d055c2edfb56df0b1e9858ba022c06df
     """
        blending function decreasing concave
        d = delta x = xabs - xdr
@@ -156,7 +165,11 @@ def blendConcaveDec(d = 0.0, u = 2.0, s = 1.0, h = 1.0):
 
 BlendConcaveDec = blendConcaveDec
 
+<<<<<<< HEAD
 def blendConcaveCombined(d = 0.0, u1 = 0.5, u2 = 2.0, s1 = 1.0, s2 = 1.5, h = 1.0):
+=======
+def blendConcaveCombined(d=0.0, u1=0.5, u2=2.0, s1=1.0, s2=1.5, h=1.0):
+>>>>>>> 01b85284d055c2edfb56df0b1e9858ba022c06df
     """
         blending function combined concave
 
@@ -218,6 +231,8 @@ def blendCauchian(d=0.0, a=1.0, b=0.0, c=2.0, h=1.0):
 
     return h / (1 + math.pow(abs((d-b)/a), 2*c))
 
+BlendCauchian = blendCauchian
+
 
 def blendCosine(d=0.0, a=0.166666667, b=0.0, h=1.0):
     """
@@ -239,37 +254,26 @@ def blendCosine(d=0.0, a=0.166666667, b=0.0, h=1.0):
     else:
         return 0.0
 
+BlendCosine = blendCosine
+
 
 def blendSinc(d, u=1.0):
     """
        blending function sinc
-       d = delta x = x - center
+       d = delta x = x - horizontal shift
        u = uncertainty radius of xabs estimate error
 
        returns blend
     """
     u = float(u)
 
+    if u == 0 or d == 0:
+        raise ValueError("Params cannot be zero.")
+
     return math.sin(d/u) / (d/u)
 
+BlendSinc = blendSinc
 
-def compensatoryAnd(m, g=0.5):
-    """
-       anding function
-       m = list of membership values for x derived from n membership functions
-       g = gamma value 0=product 1=algebraic sum
-
-       returns compensatory AND value of x
-    """
-    g = float(g)
-
-    product1 = 1
-    product2 = 1
-    for mem in m:
-        product1 *= mem
-        product2 *= (1 - mem)
-
-    return math.pow(product1, 1 - g) * math.pow((1 - product2), g)
 
 def blendSpike(d=0.0, u=0.0, s=1.0):
     """
@@ -291,6 +295,7 @@ def blendSpike(d=0.0, u=0.0, s=1.0):
 
 BlendSpike = blendSpike
 
+
 def blendSigmoidInc(d=0.0, u=0.0, s=1.0):
     """
         blending function increasing sigmoid
@@ -310,6 +315,7 @@ def blendSigmoidInc(d=0.0, u=0.0, s=1.0):
 
 BlendSigmoidInc = blendSigmoidInc
 
+
 def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
     """
         blending function decreasing sigmoid
@@ -328,6 +334,7 @@ def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
     return b
 
 BlendSigmoidDec = blendSigmoidDec
+<<<<<<< HEAD
 
 def blendTriangular(d, u = 0.1, s = 0.4, c = 0.9):
     """
@@ -362,3 +369,5 @@ def blendTriangular(d, u = 0.1, s = 0.4, c = 0.9):
 BlendTriangular = blendTriangular
 
 
+=======
+>>>>>>> 01b85284d055c2edfb56df0b1e9858ba022c06df
