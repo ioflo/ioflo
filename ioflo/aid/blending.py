@@ -132,12 +132,8 @@ def blendConcaveInc(d=0.0, u=1.0, s=1.0, h=1.0):
 
 BlendConcaveInc = blendConcaveInc
 
-<<<<<<< HEAD
-def blendConcaveDec(d = 0.0, u = 2.0, s = 1.0, h = 1.0):
-=======
 
 def blendConcaveDec(d=0.0, u=2.0, s=1.0, h=1.0):
->>>>>>> 01b85284d055c2edfb56df0b1e9858ba022c06df
     """
        blending function decreasing concave
        d = delta x = xabs - xdr
@@ -165,11 +161,8 @@ def blendConcaveDec(d=0.0, u=2.0, s=1.0, h=1.0):
 
 BlendConcaveDec = blendConcaveDec
 
-<<<<<<< HEAD
-def blendConcaveCombined(d = 0.0, u1 = 0.5, u2 = 2.0, s1 = 1.0, s2 = 1.5, h = 1.0):
-=======
+
 def blendConcaveCombined(d=0.0, u1=0.5, u2=2.0, s1=1.0, s2=1.5, h=1.0):
->>>>>>> 01b85284d055c2edfb56df0b1e9858ba022c06df
     """
         blending function combined concave
 
@@ -334,7 +327,6 @@ def blendSigmoidDec(d=0.0, u=0.0, s=1.0):
     return b
 
 BlendSigmoidDec = blendSigmoidDec
-<<<<<<< HEAD
 
 def blendTriangular(d, u = 0.1, s = 0.4, c = 0.9):
     """
@@ -369,5 +361,3 @@ def blendTriangular(d, u = 0.1, s = 0.4, c = 0.9):
 BlendTriangular = blendTriangular
 
 
-=======
->>>>>>> 01b85284d055c2edfb56df0b1e9858ba022c06df
