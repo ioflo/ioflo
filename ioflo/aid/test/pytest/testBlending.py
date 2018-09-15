@@ -1,11 +1,10 @@
 import pytest
-import numpy as np
 
 from ioflo.aid.blending import *
 
 
 def testBlendCauchian():
-    D = [x for x in np.arange(-3, 3.5, .5)]
+    D = [i / 2 - 3 for i in range(0, 13)]
 
     results = []
     for d in D:
@@ -36,7 +35,7 @@ def testBlendCauchian():
 
 
 def testBlendCosine():
-    D = [x for x in np.arange(-2.5, 3, .5)]
+    D = [i / 2 - 2.5 for i in range(0, 11)]
 
     results = []
     for d in D:
@@ -60,7 +59,7 @@ def testBlendCosine():
 
 
 def testBlendSinc():
-    D = [x for x in np.arange(-3.5, 4.0, .5)]
+    D = [i / 2 -3.5 for i in range(0, 15)]
 
     results = []
     for d in D:
