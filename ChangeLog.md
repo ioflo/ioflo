@@ -3,7 +3,7 @@ CHANGE LOG
 -------------------
 
 --------
-201709XX  Not released yet
+20180915  Not released yet
 --------
 
 1.7.5
