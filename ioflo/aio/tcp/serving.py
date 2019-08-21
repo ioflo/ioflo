@@ -815,7 +815,7 @@ class Server(Acceptor):
             emsg = "Invalid connection address '{0}'".format(ca)
             raise ValueError(emsg)
         if shutclose:
-            self.ixes[ca].shutclose()
+            self.ixes[ca].shutclose()  #  alias of .close()
         del self.ixes[ca]
 
     def catRxbsIx(self, ca):

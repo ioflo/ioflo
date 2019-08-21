@@ -150,7 +150,6 @@ class Requestant(httping.Parsent):
         self.hostname = pathSplits.hostname
         self.port = pathSplits.port
         self.query = pathSplits.query  # WSGI spec leaves it quoted do not unquote
-        #self.query = httping.unquoteQuery(pathSplits.query)  # unquote only the values
         self.fragment = pathSplits.fragment
 
         leaderParser = httping.parseLeader(raw=self.msg,
@@ -320,6 +319,9 @@ class Responder(object):
         """
         Close any resources
         """
+        if not self.closed and not self.ended:
+            self.write(b'')  # in case chunked send empty chunk to terminate
+        self.ended = True        
         self.closed = True
 
     def reset(self, environ, chunkable=None):
@@ -650,8 +652,18 @@ class Valet(object):
 
     def close(self):
         """
-        Call .servant.closeAll()
+        Close all reqs, reps, and ixes
+        
         """
+        # closeConnection closes everything so we start with reqs
+        for ca in list(self.reqs.keys()):  # need list as closeConnection deletes
+            self.closeConnection(ca)
+        
+        # just in case there is an orphan rep    
+        for ca in list(self.reps.keys()):  # need list as closeConnection deletes
+            self.closeConnection(ca)        
+            
+        # just in case there is an orphan ix        
         self.servant.closeAll()
 
 
@@ -715,13 +727,13 @@ class Valet(object):
         """
         Close and remove connection given by ca
         """
-        self.servant.removeIx(ca)
         if ca in self.reqs:
             self.reqs[ca].close()  # this signals request parser
             del self.reqs[ca]
         if ca in self.reps:
             self.reps[ca].close()  # this signals response handler
             del self.reps[ca]
+        self.servant.removeIx(ca)
 
     def serviceConnects(self):
         """
