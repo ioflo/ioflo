@@ -321,7 +321,7 @@ class Responder(object):
         """
         if not self.closed and not self.ended:
             self.write(b'')  # in case chunked send empty chunk to terminate
-        self.ended = True        
+        self.ended = True
         self.closed = True
 
     def reset(self, environ, chunkable=None):
@@ -653,17 +653,17 @@ class Valet(object):
     def close(self):
         """
         Close all reqs, reps, and ixes
-        
+
         """
-        # closeConnection closes everything so we start with reqs
+        # start with reqs
         for ca in list(self.reqs.keys()):  # need list as closeConnection deletes
             self.closeConnection(ca)
-        
-        # just in case there is an orphan rep    
+
+        # just in case there is an orphan rep
         for ca in list(self.reps.keys()):  # need list as closeConnection deletes
-            self.closeConnection(ca)        
-            
-        # just in case there is an orphan ix        
+            self.closeConnection(ca)
+
+        # just in case there is an orphan ix
         self.servant.closeAll()
 
 
@@ -732,6 +732,8 @@ class Valet(object):
             del self.reqs[ca]
         if ca in self.reps:
             self.reps[ca].close()  # this signals response handler
+            if ca in self.servant.ixes:
+                self.servant.ixes[ca].serviceTxes()  #  send final bytes to socket
             del self.reps[ca]
         self.servant.removeIx(ca)
 
