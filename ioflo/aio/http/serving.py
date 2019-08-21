@@ -101,6 +101,10 @@ class Requestant(httping.Parsent):
             if connection and "keep-alive" in connection.lower():
                 self.persisted = True
 
+        if self.persisted:  # override timeout so server never timesout
+            self.incomer.timeout =  0.0  # never timesout
+
+
     def parseHead(self):
         """
         Generator to parse headers in heading of .msg
