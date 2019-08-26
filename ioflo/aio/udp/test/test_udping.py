@@ -99,11 +99,13 @@ class BasicTestCase(unittest.TestCase):
         msgIn, src = alpha.receive()
         self.assertEqual(msgOut, msgIn)
         self.assertEqual(src[1], beta.ha[1])
+        time.sleep(0.05)
 
         console.terse("Sending beta to beta\n")
         msgOut = b"beta sends to beta"
         beta.send(msgOut, beta.ha)
-        time.sleep(0.1)
+        time.sleep(0.05)
+        time.sleep(0.05)
         msgIn, src = beta.receive()
         self.assertEqual(msgOut, msgIn)
         self.assertEqual(src[1], beta.ha[1])
@@ -169,6 +171,7 @@ class BasicTestCase(unittest.TestCase):
 
         alpha.close()
         beta.close()
+        time.sleep(0.1)
 
         beta = udping.SocketUdpNb(host="",  # any
                                   port=6102,
@@ -187,6 +190,7 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(src[1], beta.ha[1])
 
         beta.close()
+        time.sleep(0.1)
         self.assertIs(alpha.opened, False)
         self.assertIs(beta.opened, False)
         console.reinit(verbosity=console.Wordage.concise)
