@@ -61,10 +61,10 @@ else:
     PYTHON_SCRIPTS = ['scripts/ioflo', 'scripts/ioflo2',]
 
 setup(
-    name='ioflo',
+    name='ioflo1',
     version=__version__,
     description='Flow Based Programming Automated Reasoning Engine and Automation Operation System',
-    long_description='Enabling the Programmable World. http://ioflo.com  ',
+    long_description='Deprecated Python2 support Ioflo1. Enabling the Programmable World. http://ioflo.com  ',
     url='https://github.com/ioflo/ioflo',
     download_url='https://github.com/ioflo/ioflo/archive/master.zip',
     author=__author__,
