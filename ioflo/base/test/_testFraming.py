@@ -91,7 +91,7 @@ def TestFrame():
 
         fr2.runner.send(START)
 
-        for i in xrange(3):
+        for i in range(3):
             status = fr2.runner.send(RUN)
 
 

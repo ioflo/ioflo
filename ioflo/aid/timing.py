@@ -16,7 +16,7 @@ from ..base import excepting
 from .consoling import getConsole
 console = getConsole()
 
-TIME1970 = long(2208988800) #offset secs between SNTP epoch=1900 & unix epoch=1970
+TIME1970 = 2208988800 #offset secs between SNTP epoch=1900 & unix epoch=1970
 
 
 def totalSeconds(td):

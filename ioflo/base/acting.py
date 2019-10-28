@@ -159,7 +159,7 @@ class Act(object):
 
             #  compute .inode
             self.inode = (self.ioinits or odict()).get('inode', ioinits.get('inode', self.inode))
-            if self.inode is not None and not isinstance(self.inode, basestring):
+            if self.inode is not None and not isinstance(self.inode, (str, bytes)):
                 raise ValueError("Nonstring inode '{0}'".format(self.inode))
             if self.inode and not self.inode.endswith("."):  # ensure node not share path
                 self.inode = "{0}.".format(self.inode)
@@ -747,7 +747,7 @@ class Actor(object):
             if val is None:  # use default assume no way to be inadvertent
                 val = ""  # empty string for val defaults ipath to same as key
 
-            if isinstance(val, basestring):
+            if isinstance(val, (str, bytes)):
                 ipath = val
                 iown = None
                 ival = odict() # effectively will not change share

@@ -5,6 +5,14 @@ CHANGE LOG
 --------
 20191028
 --------
+ 2.0.0
+
+Python 3.7.4 or later from now on latest version of python
+
+
+--------
+20191028
+--------
 
 1.7.7
 

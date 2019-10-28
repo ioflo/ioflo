@@ -4,18 +4,11 @@ Unittests for http serving module
 """
 
 import sys
-if sys.version > '3':
-    xrange = range
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
 
-if sys.version > '3':
-    from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
-else:
-    from urlparse import urlsplit
-    from urllib import quote, quote_plus, unquote, unquote_plus
+import unittest
+
+from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
+
 
 import os
 import time

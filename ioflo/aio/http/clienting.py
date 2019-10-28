@@ -22,11 +22,7 @@ import random
 import datetime
 import time
 
-if sys.version > '3':
-    from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
-else:
-    from urlparse import urlsplit
-    from urllib import quote, quote_plus, unquote, unquote_plus
+from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
 
 try:
     import simplejson as json
@@ -98,7 +94,7 @@ class Requester(object):
         self.qargs = qargs if qargs is not None else odict()
         self.fragment = fragment
         self.headers = lodict(headers) if headers else lodict()
-        if body and isinstance(body, unicode):  # use default
+        if body and isinstance(body, str):  # use default
             # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
             body = body.encode('iso-8859-1')
         self.body = body or b''
@@ -142,7 +138,7 @@ class Requester(object):
         if headers is not None:
             self.headers = lodict(headers)
         if body is not None:  # body should be bytes
-            if isinstance(body, unicode):
+            if isinstance(body, str):
                 # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
                 body = body.encode('iso-8859-1')
             self.body = body
@@ -888,7 +884,7 @@ class Patron(object):
         request["headers"] = lodict(headers) if headers is not None else self.requester.headers.copy()
         request["body"] = body if body is not None else b''
         if body is not None:  # body should be bytes
-            if isinstance(body, unicode):
+            if isinstance(body, str):
                 # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
                 body = body.encode('iso-8859-1')
         else:

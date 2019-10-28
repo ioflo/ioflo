@@ -62,7 +62,7 @@ class NonStringIterable:
     @classmethod
     def __subclasshook__(cls, C):
         if cls is NonStringIterable:
-            if (not issubclass(C, basestring) and issubclass(C, Iterable)):
+            if (not issubclass(C, (str, bytes)) and issubclass(C, Iterable)):
                 return True
         return NotImplemented
 
@@ -75,7 +75,7 @@ class NonStringSequence:
     @classmethod
     def __subclasshook__(cls, C):
         if cls is NonStringSequence:
-            if (not issubclass(C, basestring) and issubclass(C, Sequence)):
+            if (not issubclass(C, (str, bytes)) and issubclass(C, Sequence)):
                 return True
         return NotImplemented
 
@@ -85,12 +85,11 @@ def nonStringIterable(obj):
 
     Future proof way that is compatible with both Python3 and Python2 to check
     for non string iterables.
-    Assumes in Python3 that, basestring = (str, bytes)
 
     Faster way that is less future proof
-    return (hasattr(x, '__iter__') and not isinstance(x, basestring))
+    return (hasattr(x, '__iter__') and not isinstance(x, (str, bytes)))
     """
-    return (not isinstance(obj, basestring) and isinstance(obj, Iterable))
+    return (not isinstance(obj, (str, bytes)) and isinstance(obj, Iterable))
 
 def nonStringSequence(obj):
     """
@@ -98,9 +97,9 @@ def nonStringSequence(obj):
 
     Future proof way that is compatible with both Python3 and Python2 to check
     for non string sequences.
-    Assumes in Python3 that, basestring = (str, bytes)
+
     """
-    return (not isinstance(obj, basestring) and isinstance(obj, Sequence) )
+    return (not isinstance(obj, (str, bytes)) and isinstance(obj, Sequence) )
 
 
 if sys.version_info < (3, 0):  # iter .next old style

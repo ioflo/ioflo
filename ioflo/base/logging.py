@@ -659,7 +659,7 @@ class Log(registering.StoriedRegistrar):
             return '\t%0.4f'
         elif isinstance(value, bool):
             return '\t%s'
-        elif isinstance(value, int) or isinstance(value, long):
+        elif isinstance(value, int):
             return '\t%d'
         else:
             return '\t%s'

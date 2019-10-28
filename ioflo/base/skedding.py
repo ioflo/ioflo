@@ -5,8 +5,7 @@
 #print( "module {0}".format(__name__))
 
 import sys
-if sys.version > '3':
-    xrange = range
+
 import os
 import time
 from collections import deque
@@ -264,7 +263,7 @@ class Skedder(object):
 
                     more = False #are any taskers RUNNING or STARTED
 
-                    for i in xrange(len(ready)): #attempt to run each ready tasker
+                    for i in range(len(ready)): #attempt to run each ready tasker
                         tasker, retime, period = ready.popleft() #pop it off
 
                         if retime > stamp: #not time yet
@@ -335,7 +334,7 @@ class Skedder(object):
             #its generator is responsible for releasing resources
 
             console.terse("Aborting all ready Taskers ...\n")
-            for i in xrange(len(ready)): #run each ready tasker once
+            for i in range(len(ready)): #run each ready tasker once
                 tasker,retime,period = ready.popleft() #pop it off
 
                 try:

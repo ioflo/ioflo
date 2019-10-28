@@ -118,7 +118,7 @@ def MoveToHSD(north = 0.0, east = 0.0,
        Returns new position after moving on heading at speed for duration
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
 
-       north east order since lat long
+       north east order since lat lon
     """
     north += duration * (speed * math.cos(DEGTORAD * heading))
     east += duration * (speed * math.sin(DEGTORAD * heading))
@@ -132,7 +132,7 @@ def RotateFSToNE(heading = 0.0, forward = 0.0, starboard = 0.0):
        rotates Forward Starboard vector to North East vector
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
 
-       north east order since lat long
+       north east order since lat lon
     """
     ch = math.cos(DEGTORAD * heading)
     sh = math.sin(DEGTORAD * heading)
@@ -146,7 +146,7 @@ def RotateNEToFS(heading = 0.0, north = 0.0, east = 0.0):
        Rotate north east vector to Forward Starboard
        heading in compass coordinates, 0 deg is north, up, cw rotation increases
 
-       north east order since lat long
+       north east order since lat lon
     """
     ch = math.cos(DEGTORAD * heading)
     sh = math.sin(DEGTORAD * heading)

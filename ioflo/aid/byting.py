@@ -68,7 +68,7 @@ def unhexize(h=u''):
         h = u'0' + h #prepend a zero to make even number
 
     b = b''
-    for i in xrange(0, len(h), 2):
+    for i in range(0, len(h), 2):
         s = h[i:i+2]
         b = b + struct.pack('!B', int(s, 16))
 
@@ -100,7 +100,7 @@ def unhexify(h=u''):
     if len(h) % 2: #odd number of characters
         h = u'0' + h #prepend a zero to make even number
     b = bytearray([])
-    for i in xrange(0, len(h), 2):
+    for i in range(0, len(h), 2):
         s = h[i:i+2]
         b.append(int(s, 16))
     return b

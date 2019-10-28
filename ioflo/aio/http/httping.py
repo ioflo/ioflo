@@ -12,11 +12,8 @@ from collections import deque
 import codecs
 import json
 
-if sys.version > '3':
-    from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
-else:
-    from urlparse import urlsplit
-    from urllib import quote, quote_plus, unquote, unquote_plus
+from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
+
 
 try:
     import simplejson as json
@@ -420,12 +417,12 @@ def packHeader(name, *values):
 
     For example: h.packHeader('Accept', 'text/html')
     """
-    if isinstance(name, unicode):  # not bytes
+    if isinstance(name, str):  # not bytes
         name = name.encode('ascii')
     name = name.title()  # make title case
     values = list(values)  # make copy
     for i, value in enumerate(values):
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             values[i] = value.encode('iso-8859-1')
         elif isinstance(value, int):
             values[i] = str(value).encode('ascii')

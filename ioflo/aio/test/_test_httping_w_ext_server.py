@@ -4,12 +4,8 @@ Unittests for nonblocking module
 """
 
 import sys
-if sys.version > '3':
-    xrange = range
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+
+import unittest
 
 import os
 import time
@@ -18,15 +14,9 @@ import shutil
 import socket
 import errno
 
-if sys.version > '3':
-    from http.client import HTTPConnection
-else:
-    from httplib import HTTPConnection
+from http.client import HTTPConnection
+from urllib.parse import urlsplit
 
-if sys.version > '3':
-    from urllib.parse import urlsplit
-else:
-    from urlparse import urlsplit
 
 try:
     import simplejson as json

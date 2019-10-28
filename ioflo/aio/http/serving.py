@@ -21,11 +21,7 @@ import copy
 import random
 import datetime
 
-if sys.version > '3':
-    from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
-else:
-    from urlparse import urlsplit
-    from urllib import quote, quote_plus, unquote, unquote_plus
+from urllib.parse import urlsplit, quote, quote_plus, unquote, unquote_plus
 
 try:
     import simplejson as json
@@ -353,7 +349,7 @@ class Responder(object):
         _status = getattr(self.iterator, '_status', None)  # if AttributiveGenerator
         status = _status if _status is not None else self.status  # override
 
-        if isinstance(status, (int, long)):
+        if isinstance(status, int):
             status = "{0} {1}".format(status, httping.STATUS_DESCRIPTIONS[status])
 
         startLine = "{0} {1}".format(self.HttpVersionString, status)
@@ -858,7 +854,7 @@ class CustomResponder(object):
         self.steward = steward
         self.status = status
         self.headers = lodict(headers) if headers else lodict()
-        if body and isinstance(body, unicode):  # use default
+        if body and isinstance(body, str):  # use default
             # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
             body = body.encode('iso-8859-1')
         self.body = body or b''
@@ -885,7 +881,7 @@ class CustomResponder(object):
         if headers is not None:
             self.headers = lodict(headers)
         if body is not None:  # body should be bytes
-            if isinstance(body, unicode):
+            if isinstance(body, str):
                 # RFC 2616 Section 3.7.1 default charset of iso-8859-1.
                 body = body.encode('iso-8859-1')
             self.body = body

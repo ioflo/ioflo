@@ -66,9 +66,8 @@ optional arguments:
                         statistics into file path given by optional argument.
                         Default statistics file path is
                         /tmp/ioflo/profile/NAME.
-```
 
-<a href="https://app.codesponsor.io/link/v1zgv5CNxzGi3oHsfMCbG1Yr/ioflo/ioflo" rel="nofollow"><img src="https://app.codesponsor.io/embed/v1zgv5CNxzGi3oHsfMCbG1Yr/ioflo/ioflo.svg" style="width: 888px; height: 68px;" alt="Sponsor" /></a>
+```
 
 Example:
 
@@ -199,9 +198,6 @@ https://github.com/ioflo/ioflo_manuals
 APACHE 2.0
 
 #### Supported Python Versions
-Python 2.6
 
-Python 2.7
-
-Python 3.6
+Python 3.7.4 +
 

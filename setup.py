@@ -40,25 +40,16 @@ IOFLO_METADATA = os.path.join(SETUP_DIRNAME, 'ioflo', '__metadata__.py')
 exec(compile(open(IOFLO_METADATA).read(), IOFLO_METADATA, 'exec'))
 
 
-if sys.version_info > (3,7,4):
-    msg = "FAIL: Requires Python 3.7.4 or earlier, but setup.py was run using {}.{}.{}"
+if sys.version_info < (3,7,4):
+    msg = "FAIL: Requires Python 3.7.4 or later, but setup.py was run using {}.{}.{}"
     v = sys.version_info
     print(msg.format(v.major, v.minor, v.micro))
-    print("NOTE: Installation failed. Run setup.py using Python 2.6 to 3.7.4")
+    print("NOTE: Installation failed. Run setup.py using Python 3.7.4 or later")
     sys.exit(1)
 
 
-PYTHON26_REQUIRES = []
-if sys.version_info < (2, 7): #tuple comparison element by element
-    PYTHON26_REQUIRES.extend(['importlib>=1.0.3',
-                              'argparse>=1.2.1'])
-
-REQUIRES = [] + PYTHON26_REQUIRES
-
-if sys.version_info > (3,):
-    PYTHON_SCRIPTS = ['scripts/ioflo', 'scripts/ioflo3',]
-else:
-    PYTHON_SCRIPTS = ['scripts/ioflo', 'scripts/ioflo2',]
+REQUIRES = []
+PYTHON_SCRIPTS =
 
 setup(
     name='ioflo',
@@ -82,7 +73,8 @@ setup(
         'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
     install_requires=REQUIRES,
+    python_requires='>=3.7.4',
     setup_requires=["setuptools_git >= 1.1", ],
     extras_require={},
-    scripts=PYTHON_SCRIPTS,)
+    scripts=['scripts/ioflo', 'scripts/ioflo3',],)
 

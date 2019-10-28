@@ -3,8 +3,7 @@
 """
 #print("module {0}".format(__name__))
 import sys
-if sys.version > '3':
-    xrange = range
+
 import copy
 from collections import deque, Mapping
 import uuid
@@ -811,7 +810,7 @@ class Framer(tasking.Tasker):
         """
         fars = far.outline
         l = min(len(nears), len(fars))
-        for i in xrange(l):
+        for i in range(l):
             if (nears[i] is far) or (nears[i] is not fars[i]): #first effective uncommon member
                 return (nears[i:], fars[i:], nears[:i])
 
@@ -832,7 +831,7 @@ class Framer(tasking.Tasker):
         n = near
         f = far
         l = min(len(n), len(f))
-        for i in xrange(l):
+        for i in range(l):
             if n[i] is not f[i]: #first uncommon member
                 exits = n[i:]
                 #exits.reverse() #bottom up order

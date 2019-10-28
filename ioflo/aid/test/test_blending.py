@@ -58,7 +58,7 @@ class BasicTestCase(unittest.TestCase):
         span = u + s
         ss = span / steps
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
             b = blending.blend0(d,u,s)
             out.append((round(d, 3), round(b, 3)))
@@ -88,7 +88,7 @@ class BasicTestCase(unittest.TestCase):
                                 (1.1, 0.0)])
 
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
             b = blending.blend1(d,u,s)
             out.append((round(d, 3), round(b, 3)))
@@ -118,7 +118,7 @@ class BasicTestCase(unittest.TestCase):
                                 (1.1, 1.0)])
 
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
             b = blending.blend2(d,u,s)
             out.append((round(d, 3), round(b, 3)))
@@ -148,7 +148,7 @@ class BasicTestCase(unittest.TestCase):
                                 (1.1, 1.0)])
 
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
             b = blending.blend3(d,u,s)
             out.append((round(d, 3), round(b, 3)))
@@ -178,7 +178,7 @@ class BasicTestCase(unittest.TestCase):
                                 (1.1, 0.996)])
 
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
             b = blending.blendSpike(d, u, s)
             out.append((round(d, 3), round(b, 3)))
@@ -208,7 +208,7 @@ class BasicTestCase(unittest.TestCase):
                                (1.1, 0.529)])
 
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
             b = blending.blendSigmoidInc(d, u, s)
             out.append((round(d, 3), round(b, 3)))
@@ -238,7 +238,7 @@ class BasicTestCase(unittest.TestCase):
                                (1.1, 0.654)])
 
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
             b = blending.blendSigmoidDec(d, u, s)
             out.append((round(d, 3), round(b, 3)))
@@ -268,9 +268,9 @@ class BasicTestCase(unittest.TestCase):
                                (1.1, 0.346)])
 
         out = []
-        for x in xrange(-(steps + 1), steps + 2, 1):
+        for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
-            b = blending.blendConcaveInc(d, 0)  
+            b = blending.blendConcaveInc(d, 0)
             out.append((round(d, 3), round(b, 3)))
 
         self.assertEqual(out, [(-1.1, 0.323),
@@ -298,9 +298,9 @@ class BasicTestCase(unittest.TestCase):
                                (1.1, 1.0)])
 
         out = []
-        for x in xrange((steps), steps + 20, 1):
+        for x in range((steps), steps + 20, 1):
             d = x * ss
-            b = blending.blendConcaveDec(d)  
+            b = blending.blendConcaveDec(d)
             out.append((round(d, 3), round(b, 3)))
 
         self.assertEqual(out, [(1.0, 1.0),
@@ -325,60 +325,60 @@ class BasicTestCase(unittest.TestCase):
                                (2.9, 0.345)])
 
         out = []
-        for x in xrange((steps - 5), steps + 15, 1):
+        for x in range((steps - 5), steps + 15, 1):
             d = x * ss
-            b = blending.blendConcaveCombined(d)  
+            b = blending.blendConcaveCombined(d)
             out.append((round(d, 3), round(b, 3)))
 
-        self.assertEqual(out, [(0.5, 0.5), 
-                                (0.6, 0.556), 
-                                (0.7, 0.625), 
-                                (0.8, 0.714), 
-                                (0.9, 0.833), 
-                                (1.0, 1.0), 
-                                (1.1, 1.0), 
-                                (1.2, 1.0), 
-                                (1.3, 1.0), 
-                                (1.4, 1.0), 
-                                (1.5, 1.0), 
-                                (1.6, 0.833), 
-                                (1.7, 0.714), 
-                                (1.8, 0.625), 
-                                (1.9, 0.556), 
-                                (2.0, 0.5), 
-                                (2.1, 0.455), 
-                                (2.2, 0.417), 
-                                (2.3, 0.385), 
+        self.assertEqual(out, [(0.5, 0.5),
+                                (0.6, 0.556),
+                                (0.7, 0.625),
+                                (0.8, 0.714),
+                                (0.9, 0.833),
+                                (1.0, 1.0),
+                                (1.1, 1.0),
+                                (1.2, 1.0),
+                                (1.3, 1.0),
+                                (1.4, 1.0),
+                                (1.5, 1.0),
+                                (1.6, 0.833),
+                                (1.7, 0.714),
+                                (1.8, 0.625),
+                                (1.9, 0.556),
+                                (2.0, 0.5),
+                                (2.1, 0.455),
+                                (2.2, 0.417),
+                                (2.3, 0.385),
                                 (2.4, 0.357)])
 
         out = []
         for x in range(-(steps + 1), steps + 2, 1):
             d = x * ss
-            b = blending.blendTriangular(d, 0)  
+            b = blending.blendTriangular(d, 0)
             out.append((round(d, 3), round(b, 3)))
 
-        self.assertEqual(out, [(-1.1, 0.0), 
-                                (-1.0, 0.0), 
-                                (-0.9, 0.0), 
-                                (-0.8, 0.0), 
-                                (-0.7, 0.0), 
-                                (-0.6, 0.0), 
-                                (-0.5, 0.0), 
-                                (-0.4, 0.0), 
-                                (-0.3, 0.0), 
-                                (-0.2, 0.0), 
-                                (-0.1, 0.0), 
-                                (0.0, 0.0), 
-                                (0.1, 0.25), 
-                                (0.2, 0.5), 
-                                (0.3, 0.75), 
-                                (0.4, 1.0), 
-                                (0.5, 0.8), 
-                                (0.6, 0.6), 
-                                (0.7, 0.4), 
-                                (0.8, 0.2), 
-                                (0.9, 0.0), 
-                                (1.0, 0.0), 
+        self.assertEqual(out, [(-1.1, 0.0),
+                                (-1.0, 0.0),
+                                (-0.9, 0.0),
+                                (-0.8, 0.0),
+                                (-0.7, 0.0),
+                                (-0.6, 0.0),
+                                (-0.5, 0.0),
+                                (-0.4, 0.0),
+                                (-0.3, 0.0),
+                                (-0.2, 0.0),
+                                (-0.1, 0.0),
+                                (0.0, 0.0),
+                                (0.1, 0.25),
+                                (0.2, 0.5),
+                                (0.3, 0.75),
+                                (0.4, 1.0),
+                                (0.5, 0.8),
+                                (0.6, 0.6),
+                                (0.7, 0.4),
+                                (0.8, 0.2),
+                                (0.9, 0.0),
+                                (1.0, 0.0),
                                 (1.1, 0.0)])
 
 

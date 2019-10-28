@@ -71,14 +71,11 @@ class BasicTestCase(testing.FrameIofloTestCase):
         actor = actor()  # create instance
         self.assertIsInstance(actor, acting.Actor )
         self.assertEqual(actor.__class__.__name__, "BlueBeard")
-        if sys.version > '3':
-            self.assertEqual(actor.action.__self__.__class__.__name__, "BlueBeard")
-            self.assertIs(actor.action.__func__, bearded)
-            self.assertIs(actor.action.__self__, actor)
-        else:
-            self.assertEqual(actor.action.im_class.__name__, "BlueBeard")
-            self.assertIs(actor.action.im_func, bearded)
-            self.assertIs(actor.action.im_self, actor)
+
+        self.assertEqual(actor.action.__self__.__class__.__name__, "BlueBeard")
+        self.assertIs(actor.action.__func__, bearded)
+        self.assertIs(actor.action.__self__, actor)
+
         self.assertEqual(actor.action.__doc__, '\n            Actor action method\n            ')
         self.assertEqual(actor.action.__name__, 'bearded')
 
@@ -113,14 +110,11 @@ class BasicTestCase(testing.FrameIofloTestCase):
         actor = actor()  # create instance
         self.assertIsInstance(actor, doing.Doer )
         self.assertEqual(actor.__class__.__name__, "BlackSmith")
-        if sys.version > '3':
-            self.assertEqual(actor.action.__self__.__class__.__name__, "BlackSmith")
-            self.assertIs(actor.action.__func__, blackened)
-            self.assertIs(actor.action.__self__, actor)
-        else:
-            self.assertEqual(actor.action.im_class.__name__, "BlackSmith")
-            self.assertIs(actor.action.im_func, blackened)
-            self.assertIs(actor.action.im_self, actor)
+
+        self.assertEqual(actor.action.__self__.__class__.__name__, "BlackSmith")
+        self.assertIs(actor.action.__func__, blackened)
+        self.assertIs(actor.action.__self__, actor)
+
         self.assertEqual(actor.action.__doc__, '\n            Doer action method\n            ')
         self.assertEqual(actor.action.__name__, 'blackened')
 
@@ -155,14 +149,11 @@ class BasicTestCase(testing.FrameIofloTestCase):
         self.assertEqual(act.actor.name, "TestDoer")
         self.assertIsInstance(act.actor, doing.Doer)
         self.assertEqual(act.actor.__class__.__name__, "TestDoer")
-        if sys.version > '3':
-            self.assertEqual(act.actor.action.__self__.__class__.__name__, "TestDoer")
-            self.assertIs(act.actor.action.__func__, action)
-            self.assertIs(act.actor.action.__self__, act.actor)
-        else:
-            self.assertEqual(act.actor.action.im_class.__name__, "TestDoer")
-            self.assertIs(act.actor.action.im_func, action)
-            self.assertIs(act.actor.action.im_self, act.actor)
+
+        self.assertEqual(act.actor.action.__self__.__class__.__name__, "TestDoer")
+        self.assertIs(act.actor.action.__func__, action)
+        self.assertIs(act.actor.action.__self__, act.actor)
+
         self.assertEqual(act.actor.action.__doc__, '\n            Doer action method\n            ')
         self.assertEqual(act.actor.action.__name__, 'action')
 
