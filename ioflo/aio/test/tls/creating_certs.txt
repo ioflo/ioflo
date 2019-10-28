@@ -2,7 +2,9 @@
 TLS/SSL Certificates CA Certificates
 =======================
 
-Need to refresh these every year
+Need to refresh these every year.
+For tests change this to every 25 years or 10000 days
+
 
 to determine current version of python SSL library
 
@@ -60,10 +62,10 @@ If you enter '.', the field will be left blank.
 Country Name (2 letter code) [AU]:US
 State or Province Name (full name) [Some-State]:UTAH
 Locality Name (eg, city) []:Lindon
-Organization Name (eg, company) [Internet Widgits Pty Ltd]: Fillin
-Organizational Unit Name (eg, section) []: fillin
+Organization Name (eg, company) [Internet Widgits Pty Ltd]: Ioflo
+Organizational Unit Name (eg, section) []: HQ
 Common Name (e.g. server FQDN or YOUR name) []:localhost
-Email Address []: fillin
+Email Address []: sam@ioflo.com
 
 Please enter the following 'extra' attributes
 to be sent with your certificate request
@@ -71,6 +73,7 @@ A challenge password []:
 An optional company name []:
 
 $ openssl req -x509 -days 365 -key client_key.pem -in client_csr.pem -out client_cert.pem
+$ openssl req -x509 -days 10000 -key client_key.pem -in client_csr.pem -out client_cert.pem
 $ cat  client_key.pem  client_cert.pem > client.pem
 
 ------
@@ -90,10 +93,10 @@ If you enter '.', the field will be left blank.
 Country Name (2 letter code) [AU]:US
 State or Province Name (full name) [Some-State]:Utah
 Locality Name (eg, city) []:Lindon
-Organization Name (eg, company) [Internet Widgits Pty Ltd]: fillin
-Organizational Unit Name (eg, section) []: fillin
+Organization Name (eg, company) [Internet Widgits Pty Ltd]: Ioflo
+Organizational Unit Name (eg, section) []: HQ
 Common Name (e.g. server FQDN or YOUR name) []:localhost
-Email Address []: fillin
+Email Address []: sam@ioflo.com
 
 Please enter the following 'extra' attributes
 to be sent with your certificate request
@@ -101,6 +104,7 @@ A challenge password []:
 An optional company name []:
 
 $ openssl req -x509 -days 365 -key server_key.pem -in server_csr.pem -out server_cert.pem
+$ openssl req -x509 -days 10000 -key server_key.pem -in server_csr.pem -out server_cert.pem
 $ cat server_key.pem  server_cert.pem > server.pem
 
 

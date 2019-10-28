@@ -3,6 +3,18 @@ CHANGE LOG
 -------------------
 
 --------
+20191028
+--------
+
+1.7.7
+
+Fixed TLS certs in tests
+Fixed up as version to split to Python3. Python2 is now deprecated ioflo1 is the
+  version to support python2  so 1.X.X
+  ioflo  version 2.X.X will require python 3.7+
+
+
+--------
 20190820
 --------
 

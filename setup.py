@@ -40,6 +40,14 @@ IOFLO_METADATA = os.path.join(SETUP_DIRNAME, 'ioflo', '__metadata__.py')
 exec(compile(open(IOFLO_METADATA).read(), IOFLO_METADATA, 'exec'))
 
 
+if sys.version_info > (3,7,4):
+    msg = "FAIL: Requires Python 3.7.4 or earlier, but setup.py was run using {}.{}.{}"
+    v = sys.version_info
+    print(msg.format(v.major, v.minor, v.micro))
+    print("NOTE: Installation failed. Run setup.py using Python 2.6 to 3.7.4")
+    sys.exit(1)
+
+
 PYTHON26_REQUIRES = []
 if sys.version_info < (2, 7): #tuple comparison element by element
     PYTHON26_REQUIRES.extend(['importlib>=1.0.3',
