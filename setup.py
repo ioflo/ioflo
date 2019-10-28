@@ -48,8 +48,6 @@ if sys.version_info < (3,7,4):
     sys.exit(1)
 
 
-REQUIRES = []
-PYTHON_SCRIPTS =
 
 setup(
     name='ioflo',
@@ -72,7 +70,7 @@ setup(
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LICENSE*.txt' 'LEGAL'],
         'ioflo': ['app/plan/*.flo', 'app/plan/*/*.flo',
                   'app/plan/*.txt', 'app/plan/*/*.txt',],},
-    install_requires=REQUIRES,
+    install_requires=[],
     python_requires='>=3.7.4',
     setup_requires=["setuptools_git >= 1.1", ],
     extras_require={},
