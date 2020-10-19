@@ -267,7 +267,7 @@ class Client(object):
         """
         if not self.cs:
             self.reopen()
-            
+
         try:
             result = self.cs.connect_ex(self.ha)  # async connect
         except socket.error as ex:
