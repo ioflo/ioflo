@@ -268,13 +268,13 @@ class Requester(object):
                                          '\r\n{2}'.format(boundary, key, val))
                     formParts.append('\r\n--{0}--'.format(boundary))
                     form = "".join(formParts)
-                    body = form.encode(encoding='utf-8')
+                    body = form.encode('utf-8')
                     self.headers[u'content-type'] = u'multipart/form-data; boundary={0}'.format(boundary)
                 else:
                     formParts = [u"{0}={1}".format(key, val) for key, val in self.fargs.items()]
                     form = u'&'.join(formParts)
                     form = quote_plus(form, '&=')
-                    body = form.encode(encoding='utf-8')
+                    body = form.encode('utf-8')
                     self.headers[u'content-type'] = u'application/x-www-form-urlencoded; charset=utf-8'
             else:  # body last in precendence
                 body = self.body
