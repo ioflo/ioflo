@@ -746,7 +746,7 @@ class EventSource(object):
                 if edata:  # data so dispatch event by appending to .events
                     if self.dictable:
                         try:
-                            ejson = json.loads(edata, encoding='utf-8', object_pairs_hook=odict)
+                            ejson = json.loads(edata, object_pairs_hook=odict)
                         except ValueError as ex:
                             ejson = None
                         else:  # valid json set edata to ejson
@@ -1058,7 +1058,6 @@ class Parsent(object):
         if self.jsoned or self.dictable:  # attempt to deserialize json
             try:
                 self.data = json.loads(self.body.decode('utf-8'),
-                                       encoding='utf-8',
                                        object_pairs_hook=odict)
             except ValueError as ex:
                 self.data = None
