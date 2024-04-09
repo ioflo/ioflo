@@ -5,7 +5,7 @@ meta class and base class utility classes and functions
 from __future__ import absolute_import, division, print_function
 
 import sys
-from collections import Iterable, Sequence
+from collections.abc import Iterable, Sequence
 from abc import ABCMeta
 import functools
 import inspect
@@ -123,7 +123,7 @@ def isIterator(obj):
 
 
 
-from collections import Generator
+from collections.abc import Generator
 
 def attributize(genfunc):
     """
