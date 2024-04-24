@@ -10,7 +10,7 @@ import collections
 
 from .sixing import *
 
-class oset(collections.MutableSet):
+class oset(collections.abc.MutableSet):
     """
     Ordered Set, preserves order of entry in set
 

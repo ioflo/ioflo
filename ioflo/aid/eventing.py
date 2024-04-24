@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import sys
 import os
 import datetime
-from collections import Set  # both set and frozen set
+from collections.abc import Set  # both set and frozen set
 
 # Import ioflo libs
 from .sixing import *
