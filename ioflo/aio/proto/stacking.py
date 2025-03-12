@@ -250,7 +250,7 @@ class Stack(MixIn):
 
     def clearStat(self, key):
         """
-        Set the specified state counter to zero
+        Set the specified stat counter to zero
         """
         if key in self.stats:
             self.stats[key] = 0
@@ -321,7 +321,7 @@ class Stack(MixIn):
         except ValueError as ex:
             emsg = "{}: Error packing pkt.\n{}\n{}\n".format(self.name, pkt, ex)
             console.terse(emsg)
-            self.incState("pkt_pack_error")
+            self.incStat("pkt_pack_error")
         else:
             self.txPkts.append(pkt)
 
@@ -336,7 +336,7 @@ class Stack(MixIn):
         except ValueError as ex:
             emsg = "{}: Error packing msg.\n{}\n{}\n".format(self.name, msg, ex)
             console.terse(emsg)
-            self.incState("pkt_pack_error")
+            self.incStat("pkt_pack_error")
             return None
         return packet
 
@@ -406,7 +406,7 @@ class Stack(MixIn):
         except ValueError as ex:
             emsg = "{}: Error parsing raw.\n{}\n{}\n".format(self.name, raw, ex)
             console.terse(emsg)
-            self.incState("pkt_parse_error")
+            self.incStat("pkt_parse_error")
             return None
         return packet
 
@@ -666,7 +666,7 @@ class RemoteStack(Stack):
         except ValueError as ex:
             emsg = "{}: Error packing pkt.\n{}\n{}\n".format(self.name, pkt, ex)
             console.terse(emsg)
-            self.incState("pkt_pack_error")
+            self.incStat("pkt_pack_error")
         else:
             self.txPkts.append((pkt, ha))
 
@@ -682,7 +682,7 @@ class RemoteStack(Stack):
         except ValueError as ex:
             emsg = "{}: Error packing msg.\n{}\n{}\n".format(self.name, msg, ex)
             console.terse(emsg)
-            self.incState("pkt_pack_error")
+            self.incStat("pkt_pack_error")
             return None
         return packet
 
