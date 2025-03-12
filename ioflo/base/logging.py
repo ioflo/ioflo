@@ -10,7 +10,8 @@ import datetime
 import copy
 import io
 
-from collections import deque, MutableSequence, MutableMapping, Mapping
+from collections import deque
+from collections.abc import MutableSequence, MutableMapping, Mapping
 
 from ..aid.sixing import *
 from .globaling import *

@@ -5,7 +5,8 @@
 
 import time
 import struct
-from collections import deque, Mapping
+from collections import deque
+from collections.abc import Mapping
 from functools import wraps
 import inspect
 import copy

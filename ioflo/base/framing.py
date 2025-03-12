@@ -5,7 +5,8 @@
 import sys
 
 import copy
-from collections import deque, Mapping
+from collections import deque
+from collections.abc import Mapping
 import uuid
 
 from ..aid.sixing import *
