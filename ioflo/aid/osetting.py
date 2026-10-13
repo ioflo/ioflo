@@ -6,7 +6,7 @@ http://code.activestate.com/recipes/576694/
 """
 from __future__ import absolute_import, division, print_function
 
-import collections
+import collections.abc
 
 from .sixing import *
 
