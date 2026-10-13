@@ -49,7 +49,7 @@ foo = optimize._make_constants(foo)
 
 
 OPTIMIZE = True
-from types import FunctionType, ClassType
+from types import FunctionType
 from opcode import opmap, HAVE_ARGUMENT, EXTENDED_ARG
 if OPTIMIZE:
     globals().update(opmap)
@@ -184,7 +184,7 @@ def bind_all(mc, builtin_only=False, stoplist=[],  verbose=False):
         elif type(v) is FunctionType:
             newv = _make_constants(v, builtin_only, stoplist,  verbose)
             setattr(mc, k, newv)
-        elif type(v) in (type, ClassType):
+        elif isinstance(v, type):
             bind_all(v, builtin_only, stoplist, verbose)
 
 if not OPTIMIZE:
