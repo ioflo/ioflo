@@ -584,7 +584,7 @@ class modict(odict):
                 for k, v in a.iterallitems():
                     self.append(k, v)
             elif hasattr(a, 'get'): #positional arg is dictionary
-                for k, v in a.iteritems():
+                for k, v in a.items():
                     self.append(k, v)
             else: #positional arg is sequence of duples (k,v)
                 for k, v in a:
