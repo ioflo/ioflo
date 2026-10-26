@@ -193,7 +193,7 @@ class SimulatorMotionUuv(SimulatorBase):
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
         """
-        for key, value in kwa.iteritems():
+        for key, value in kwa.items():
             if key in self.ionames:
                 getattr(self, key).value = value
 
@@ -443,7 +443,7 @@ class SimulatorMotionUsv(SimulatorBase):
     def reset(self, **kwa):
         """Resets simulated motion state to passed in parameters
         """
-        for key, value in kwa.iteritems():
+        for key, value in kwa.items():
             if key in self.ionames:
                 getattr(self, key).value = value
 

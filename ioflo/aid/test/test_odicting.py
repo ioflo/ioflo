@@ -111,6 +111,11 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(z, 1)
         self.assertEqual(x.listitems(), [('a', [5, 6]), ('b', [1])])
 
+        x.update(dict(b=2))
+        self.assertEqual(x.listitems(), [('a', [5, 6]), ('b', [1, 2])])
+        y = odicting.modict(dict(c=3))
+        self.assertEqual(y.items(), [('c', 3)])
+
 
 
 
